@@ -1,0 +1,21 @@
+<!-- <div class="layout-container d-flex">
+    <app-sidenav class="layout-sidenav"></app-sidenav>
+  
+    <div class="layout-content flex-grow-1">
+      <router-outlet></router-outlet>
+    </div>
+</div> -->
+
+<mat-drawer-container class="drawer-container">
+    <mat-drawer #drawer mode="over" class="drawer"
+                (mouseenter)="openDrawer(drawer)"
+                (mouseleave)="closeDrawer(drawer)">
+      <app-sidenav></app-sidenav>
+    </mat-drawer>
+  
+    <mat-drawer-content (mousemove)="checkEdgeHover($event, drawer)">
+      <div class="main-content">
+        <router-outlet></router-outlet>
+      </div>
+    </mat-drawer-content>
+  </mat-drawer-container>
