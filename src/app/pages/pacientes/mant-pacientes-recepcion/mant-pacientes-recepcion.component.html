@@ -1,0 +1,353 @@
+
+<div class="row mt-2">
+    <div class="col-12 col-xxl-7 mb-2">
+        <form [formGroup]="pacienteForm">
+        <mat-card>
+
+            <mat-card-title>
+
+                <div class="row align-items-center">
+                    
+                    <div class="col-lg-5 col-auto">
+                        DATOS PERSONALES
+                    </div>
+
+                    <div class="col-auto">
+                        <label><strong>HC:</strong></label>
+                    </div>
+
+                    <div class="col-auto">
+                        <label><strong>{{ pacienteForm.get('hc')?.value }}</strong></label>
+                    </div>
+
+                </div>
+                
+            </mat-card-title>
+            
+            <mat-card-content>
+                        
+                <div class="row mt-2 align-items-center">
+        
+                    <div class="col-lg-2">
+                        <mat-form-field appearance="outline">
+                            <mat-label>Tipo Doc</mat-label>
+                                <mat-select formControlName="tipoDoc">
+                                    <mat-option value="DNI">DNI</mat-option>
+                                    <mat-option value="CE">CE</mat-option>
+                                    <mat-option value="PASAPORTE">Pasaporte</mat-option>
+                                </mat-select>
+                        </mat-form-field>
+                    </div>                          
+                            
+                    <div class="col-lg-3">
+                        <mat-form-field appearance="outline">
+                            <mat-label >Nro. Documento</mat-label>
+                            <input matInput formControlName="nroDoc">
+                            <mat-error *ngIf="pacienteForm.get('nroDoc')?.hasError('invalidDNI')">
+                                DNI debe tener 8 números
+                            </mat-error>
+                        
+                            <mat-error *ngIf="pacienteForm.get('nroDoc')?.hasError('invalidCE')">
+                                CE tiene hasta 13 caracteres
+                            </mat-error>
+                        
+                            <mat-error *ngIf="pacienteForm.get('nroDoc')?.hasError('invalidPasaporte')">
+                                Pasaporte tiene hasta 16 caracteres
+                            </mat-error>
+                        </mat-form-field>
+                    </div>
+
+                    <div class="col-lg-3">
+                        <mat-form-field appearance="outline">
+                            <mat-label>Fecha Nac - mm/dd/yyyy</mat-label>
+                                <input matInput [matDatepicker]="picker" readonly="true" formControlName="fechaNacimiento" (dateChange)="actualizarEdad()">
+                                <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+                                <mat-datepicker #picker disabled="false"></mat-datepicker>
+                        </mat-form-field>
+                    </div>
+        
+                    <div class="col-lg-3">
+                        {{pacienteForm.get('edad')?.value}}
+                    </div>
+
+                </div>
+                        
+                <div class="row mt-1 mb-1">
+                    <div class="col-lg-3">
+                        <mat-form-field appearance="outline">
+                            <mat-label>Apellido Paterno</mat-label>
+                            <input matInput formControlName="apePatCliente">
+                            <mat-error *ngIf="pacienteForm.get('apePatCliente')?.hasError('required')">
+                                Apellido es ogligatorio
+                            </mat-error>
+                            <mat-error *ngIf="pacienteForm.get('apePatCliente')?.hasError('pattern')">
+                                Solo letras
+                            </mat-error>
+                        </mat-form-field>
+                    </div>
+
+                    <div class="col-lg-3">
+                        <mat-form-field appearance="outline">
+                            <mat-label>Apellido Materno</mat-label>
+                            <input matInput formControlName="apeMatCliente">
+                            <mat-error *ngIf="pacienteForm.get('apeMatCliente')?.hasError('pattern')">
+                                Solo letras
+                            </mat-error>
+                        </mat-form-field>
+                    </div>
+
+                    <div class="col-lg-4">
+                        <mat-form-field appearance="outline">
+                            <mat-label>Nombres</mat-label>
+                            <input matInput formControlName="nombreCliente">
+                            <mat-error *ngIf="pacienteForm.get('nombreCliente')?.hasError('required')">
+                                Nombre es ogligatorio
+                            </mat-error>
+                            <mat-error *ngIf="pacienteForm.get('nombreCliente')?.hasError('pattern')">
+                                Solo letras
+                            </mat-error>
+                        </mat-form-field>
+                    </div>
+
+                    <div class="col-lg-2">
+                        <mat-form-field appearance="outline">
+                            <mat-label>Sexo</mat-label>
+                            <mat-select formControlName="sexoCliente">
+                                <mat-option value="M">Masculino</mat-option>
+                                <mat-option value="F">Femenino</mat-option>
+                            </mat-select>
+                        </mat-form-field>
+                    </div>
+
+                </div>
+
+            </mat-card-content>
+            
+        </mat-card>
+
+        <mat-card class="mt-2">
+            <mat-card-title>
+                <div class="row align-items-center">
+                    <div class="col-lg-5 col-auto">
+                        DATOS DE CONTACTO
+                    </div>
+                </div>
+            </mat-card-title>
+            
+            <mat-card-content>
+                        
+                <div class="row mt-2">
+        
+                    <div class="col-lg-4">
+                        <mat-form-field appearance="outline">
+                            <mat-label>Departamento</mat-label>
+                                <mat-select formControlName="departamentoCliente">
+                                    <mat-option *ngFor="let depart of departamentos" [value]="depart.id">{{ depart.nombre }}</mat-option>
+                                </mat-select>
+                        </mat-form-field>
+                    </div>
+
+                    <div class="col-lg-4">
+                        <mat-form-field appearance="outline">
+                            <mat-label>Provincia</mat-label>
+                                <mat-select formControlName="provinciaCliente">
+                                    <mat-option *ngFor="let provin of provincias" [value]="provin.id_Prov">{{ provin.nombre }}</mat-option>
+                                </mat-select>
+                        </mat-form-field>
+                    </div>
+
+                    <div class="col-lg-4">
+                        <mat-form-field appearance="outline">
+                            <mat-label>Distrito</mat-label>
+                                <mat-select formControlName="distritoCliente">
+                                    <mat-option *ngFor="let distri of distritos" [value]="distri.id_Ditrito">{{ distri.nombre }}</mat-option>
+                                </mat-select>
+                                <mat-error *ngIf="pacienteForm.get('distritoCliente')?.invalid">
+                                    Por favor seleccione distrito
+                                  </mat-error>
+                        </mat-form-field>
+                    </div>
+
+                </div>
+
+                <div class="row mt-1">
+
+                    <div class="col-lg-8">
+                        <mat-form-field appearance="outline">
+                            <mat-label>Dirección</mat-label>
+                            <input matInput formControlName="direcCliente">
+                        </mat-form-field>
+                    </div>
+
+                    <div class="col-lg-4">
+                        <mat-form-field appearance="outline">
+                            <mat-label>e-mail</mat-label>
+                            <input matInput formControlName="mailCliente">
+                        </mat-form-field>
+                    </div>
+
+                </div>
+
+                <div class="row mt-1 align-items-center">
+        
+                    <div class="col-lg-4">
+                        <mat-form-field appearance="outline" class="w-100">
+                          <mat-label>Número de teléfono</mat-label>
+                          <input matInput [formControl]="phoneNumber">
+                          <mat-error *ngIf="phoneNumber.hasError('required') && phoneNumber.touched">
+                            Número requerido
+                          </mat-error>
+                        </mat-form-field>
+                      </div>
+                    
+                      <div class="col-lg-4">
+                        <mat-form-field appearance="outline" class="w-100">
+                          <mat-label>Descripción</mat-label>
+                          <input matInput [formControl]="descriptionPhone" placeholder="Ej: Personal">
+                          <mat-error *ngIf="descriptionPhone.hasError('required') && descriptionPhone.touched">
+                            Descripción requerida
+                          </mat-error>
+                        </mat-form-field>
+                      </div>
+                    
+                      <div class="col-lg-4">
+                        <!-- <button mat-raised-button color="primary" (click)="agregarTelefonoDesdeInput()">
+                          Agregar Teléfono
+                        </button> -->
+                        <button mat-flat-button color="primary" (click)="agregarTelefono()">
+                            <mat-icon class="me-1">add</mat-icon>
+                            Agregar Teléfono
+                          </button>
+                      </div>
+
+                </div>
+
+                <div class="row">
+
+                    <div class="col-lg-12">
+                        <table mat-table [dataSource]="dataSourceTelefonos" class="tabla-telefonos mt-2 mb-2" formArrayName="phones">
+
+                        <!-- Número -->
+                        <ng-container matColumnDef="phoneNumber">
+                          <th mat-header-cell *matHeaderCellDef> Número </th>
+                          <td mat-cell *matCellDef="let row; let i = index" [formGroupName]="i">
+                            {{ row.get('phoneNumber')?.value }}
+                          </td>
+                        </ng-container>
+                      
+                        <!-- Descripción -->
+                        <ng-container matColumnDef="descriptionPhone">
+                          <th mat-header-cell *matHeaderCellDef> Descripción </th>
+                          <td mat-cell *matCellDef="let row; let i = index" [formGroupName]="i">
+                            {{ row.get('descriptionPhone')?.value }}
+                          </td>
+                        </ng-container>
+                      
+                        <!-- Acciones -->
+                        <ng-container matColumnDef="acciones">
+                          <th mat-header-cell *matHeaderCellDef> Opciones </th>
+                          <td mat-cell *matCellDef="let row; let i = index" [formGroupName]="i">
+                            {{ row.get('descriptionPhone')?.value }}
+                          </td>
+                        </ng-container>
+                      
+                        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+
+                      </table>
+
+                    </div>
+                      
+
+                </div>
+
+
+
+            </mat-card-content>
+
+        </mat-card>
+
+        <div class="row mt-4">
+
+            <div class="col col-4 text-center">
+                <button mat-raised-button color="secondary" (click)="nuevoCliente()">
+                  Nuevo Paciente
+                </button>
+            </div>
+    
+    
+            <div class="col col-4 text-center">
+                <button mat-raised-button color="primary" (click)="registraPaciente()">
+                  Registrar Paciente
+                </button>
+            </div>
+
+        </div>
+
+        
+
+
+        </form>
+    </div>
+    
+    <div class="col-12 col-xxl-5">
+
+                <div class="row align-items-center">
+
+                    <div class="col-6 col-auto">
+                        <label><strong>Listado de Pacientes</strong></label>
+                    </div>
+
+                    <div class="col-6 col-auto">
+                        <input class=" form-control form-control-sm" type="text" placeholder="Busque paciente"
+                        [(ngModel)]="terminoBusqueda"
+                        (input)="buscarClientes()" >
+                    </div>
+
+                    
+                </div>
+
+                <table mat-table [dataSource]="dataSourcePacientes" class="tabla-pacientes mt-1">
+    
+                    <!-- N° -->
+                    <ng-container matColumnDef="nro">
+                        <th mat-header-cell *matHeaderCellDef> N° </th>
+                        <td mat-cell *matCellDef="let paciente ; let i = index"> {{ i + 1 }} </td>
+                    </ng-container>
+                    
+                    <!-- HC -->
+                    <ng-container matColumnDef="hc" >
+                        <th mat-header-cell *matHeaderCellDef> HC </th>
+                        <td mat-cell *matCellDef="let paciente"> {{ paciente.hc }} </td>
+                    </ng-container>
+                    
+                    <!-- Apellidos y Nombres  -->
+                    <ng-container matColumnDef="nombreCompleto">
+                        <th mat-header-cell *matHeaderCellDef> Apellidos y Nombres </th>
+                        <td mat-cell *matCellDef="let paciente">
+                            {{ paciente.apePatCliente }} {{ paciente.apeMatCliente }} {{ paciente.nombreCliente }}
+                        </td>
+                    </ng-container>
+                    
+                    <!-- Tipo Documento -->
+                    <ng-container matColumnDef="tipoDoc">
+                        <th mat-header-cell *matHeaderCellDef> Tipo Doc </th>
+                        <td mat-cell *matCellDef="let paciente"> {{ paciente.tipoDoc }} </td>
+                    </ng-container>
+                    
+                    <!-- Nro. Documento -->
+                    <ng-container matColumnDef="nroDoc">
+                        <th mat-header-cell *matHeaderCellDef> Nro. Doc </th>
+                        <td mat-cell *matCellDef="let paciente"> {{ paciente.nroDoc }} </td>
+                    </ng-container>
+                    
+                    <!-- Filas -->
+                    <tr mat-header-row *matHeaderRowDef="columnasTablaPaciente"></tr>
+                    <tr mat-row *matRowDef="let row; columns: columnasTablaPaciente;" (click)="cargarCliente(row)"></tr>
+            
+                </table> 
+    
+    </div>
+    
+</div>
+

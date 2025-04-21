@@ -1,4 +1,42 @@
 /* You can add global styles to this file, and also import other style files */
+@use '@angular/material' as mat;
+@import 'bootstrap/dist/css/bootstrap.min.css';
 
 html, body { height: 100%; }
 body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+
+// Customize the entire app. Change :root to your selector if you want to scope the styles.
+:root {
+    @include mat.datepicker-overrides((
+      calendar-date-selected-state-text-color: orange,
+      calendar-date-selected-state-background-color: rgb(3, 58, 160),
+    ));
+
+    @include mat.form-field-overrides((
+        container-height: 40px,
+        container-vertical-padding: 8px,
+        container-text-size: 15px,
+        outlined-label-text-size: 13px,
+        outlined-label-text-populated-size: 13px,
+    ));
+
+    @include mat.table-overrides((
+        header-container-height: 35px,
+        row-item-container-height: 35px,
+        header-headline-size: 13px,
+        row-item-label-text-color: #333333,
+        row-item-outline-color: #e0e0e0,
+        row-item-outline-width: 1px,
+    ));
+
+    @include mat.card-overrides((
+      elevated-container-color: rgb(255, 255, 255),
+      title-text-size: 1rem,
+    ));
+
+    @include mat.select-overrides((
+      panel-background-color: rgb(255, 255, 255),
+      trigger-text-size: 15px
+    ));
+
+  }
