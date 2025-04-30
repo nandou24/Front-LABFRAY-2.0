@@ -17,6 +17,16 @@ export const routes: Routes = [
             loadComponent: () =>
               import('./pages/pacientes/mant-pacientes-recepcion/mant-pacientes-recepcion.component').then(m => m.MantPacientesRecepcionComponent),
           },
+          {
+            path: 'itemLab',
+            loadComponent: () =>
+              import('./pages/laboratorio/mant-item-lab/mant-item-lab.component').then(m => m.MantItemLabComponent),
+          },
+          {
+            path: 'pruebaLab',
+            loadComponent: () =>
+              import('./pages/laboratorio/mant-prueba-lab/mant-prueba-lab.component').then(m => m.MantPruebaLabComponent),
+          },
           // {
           //   path: '',
           //   redirectTo: 'home',

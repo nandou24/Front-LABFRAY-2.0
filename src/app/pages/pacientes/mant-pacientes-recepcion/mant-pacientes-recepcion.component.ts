@@ -1,7 +1,7 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { AbstractControl, FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidatorFn, Validators } from '@angular/forms';
+import { AbstractControl, FormArray, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatCardModule } from '@angular/material/card';
@@ -96,14 +96,16 @@ export class MantPacientesRecepcionComponent implements OnInit {
       nombreCliente: ['', [Validators.required,
                       Validators.pattern(/^[a-zA-ZÀ-ÿ\u00f1\u00d1\s]+$/)
                     ]],
-      fechaNacimiento: [''],
+      fechaNacimiento: ['', [Validators.required,
+                      this.fechaNoFuturaValidator()
+                    ]],
       edad: [{ value: '', disabled: true }],
-      sexoCliente: [''],
+      sexoCliente: ['', Validators.required],
       departamentoCliente: ['15'],
       provinciaCliente: ['01'],
-      distritoCliente: [''],
+      distritoCliente: ['', Validators.required],
       direcCliente:[''],
-      mailCliente: [''],
+      mailCliente: ['', Validators.email],
       phones: this._fb.array([])
   });
 
@@ -111,41 +113,38 @@ export class MantPacientesRecepcionComponent implements OnInit {
     return this.pacienteForm.get('phones') as FormArray;
   }
 
-  @ViewChild(MatTable) table!: MatTable<any>;
-  displayedColumns: string[] = ['phoneNumber', 'descriptionPhone', 'acciones'];
-  dataSourceTelefonos = new MatTableDataSource<FormGroup>();
+  fechaNoFuturaValidator(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const fecha = control.value;
+      if (!fecha) return null;
+  
+      const fechaActual = new Date();
+      if (new Date(fecha) > fechaActual) {
+        return { fechaFutura: true };
+      }
+  
+      return null;
+    };
+  }
 
   public addPhone: boolean = false;
 
   agregarTelefono() {
 
-    if (this.phoneNumber.invalid || this.descriptionPhone.invalid) {
-      this.phoneNumber.markAsTouched();
-      this.descriptionPhone.markAsTouched();
-      return;
-    }
-  
-    const nuevoTelefono = this._fb.group({
-      phoneNumber: this.phoneNumber.value,
-      descriptionPhone: this.descriptionPhone.value
+    const telefonoForm = this._fb.group({
+      phoneNumber: ['', [Validators.required, Validators.pattern(/^\d{9,11}$/)]],
+      descriptionPhone: ['', [Validators.required, Validators.maxLength(30)]]
     });
-    this.phones.push(nuevoTelefono);
-    this.phoneNumber.reset();
-    this.descriptionPhone.reset();
-    this.dataSourceTelefonos.data = this.phones.controls as FormGroup[]; // importante
-    this.table.renderRows(); // forza el refresco visual
+  
+    this.phones.push(telefonoForm);
 
   }
   
   eliminarTelefono(index: number) {
     this.phones.removeAt(index);
-    //this.dataSource.data = this.phones.controls as FormGroup[];
-    //this.table.renderRows();
   }
 
-  phoneNumber = this._fb.control('', [Validators.required]);
-  descriptionPhone = this._fb.control('', [Validators.required]);
-
+  @ViewChild(MatTable) table!: MatTable<any>;
   //Tabla pacientes
   columnasTablaPaciente: string[] = ['nro', 'hc', 'nombreCompleto', 'tipoDoc', 'nroDoc'];
   dataSourcePacientes = new MatTableDataSource<IPaciente>();
@@ -197,7 +196,6 @@ export class MantPacientesRecepcionComponent implements OnInit {
       this.phones.push(this.crearTelefonoGroup(phone));
     });
 
-    this.dataSourceTelefonos.data = this.phones.controls as FormGroup[]; // importante
     this.actualizarEdad();
 
   }
@@ -270,6 +268,12 @@ export class MantPacientesRecepcionComponent implements OnInit {
 
   registraPaciente(){
 
+    if(this.pacienteForm.invalid){
+
+      this.pacienteForm.markAllAsTouched();
+      return
+    }
+
     this.formSubmitted = true;
   
     if(this.pacienteForm.valid && this.validarArrayTelefono()){
@@ -299,7 +303,7 @@ export class MantPacientesRecepcionComponent implements OnInit {
                 confirmButtonText: 'Ok',
               });
               this.ultimosClientes();
-              //this.nuevoCliente();
+              this.nuevoCliente();
               //this._router.navigateByUrl('/auth/login');
             }else{
               //this.pacienteForm.get('fechaNacimiento')?.setValue(fechaSeleccionada);
@@ -329,7 +333,53 @@ export class MantPacientesRecepcionComponent implements OnInit {
     // this.filaSeleccionada = null;
   }
 
+  //actualizar cliente
+  actualizarPaciente(): void {
+
+    if(this.pacienteForm.invalid){
+
+      this.pacienteForm.markAllAsTouched();
+      return
+    }
+
+    this.formSubmitted = true;
+  
+    if(this.pacienteForm.valid && this.validarArrayTelefono()){
+
+      Swal.fire({
+        title: '¿Estás seguro?',
+        text: '¿Deseas confirmar la actualización de este paciente?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, confirmar',
+        cancelButtonText: 'Cancelar',
+      }).then((result) => {
+    
+        const body: IPaciente = this.pacienteForm.value; //capturando los valores del component.ts
+
+        this._pacienteService.actualizarPaciente(body.hc,body).subscribe((res) => {
+          if (res !== 'ERROR') {
+            Swal.fire({
+              title: 'Confirmado',
+              text: 'Paciente Actualizado',
+              icon: 'success',
+              confirmButtonText: 'Ok',
+            });
+            this.ultimosClientes();
+            this.nuevoCliente();
+          }else{
+            //this.pacienteForm.get('fechaNacimiento')?.setValue(fechaSeleccionada);
+          }
+        });
+      })
+    }else{
+      console.log('No Procede Actualización')
+    }
+  }
+
 }
+
+
 
 export function documentValidator(tipoDocControlName: string): ValidatorFn {
   return (control: AbstractControl) => {
@@ -341,17 +391,17 @@ export function documentValidator(tipoDocControlName: string): ValidatorFn {
 
     if (tipoDoc === 'DNI') {
       // DNI: exactamente 8 dígitos numéricos
-      if (!/^\d{8}$/.test(nroDoc)) {
+      if (nroDoc.length>0 && !/^\d{8}$/.test(nroDoc)) {
         return { invalidDNI: true };
       }
     } else if (tipoDoc === 'CE') {
       // CE: máximo 13 caracteres alfanuméricos
-      if (!/^[a-zA-Z0-9]{1,13}$/.test(nroDoc)) {
+      if (nroDoc.length>0 && !/^[a-zA-Z0-9]{1,13}$/.test(nroDoc)) {
         return { invalidCE: true };
       }
     } else if (tipoDoc === 'PASAPORTE') {
       // Pasaporte: máximo 16 caracteres alfanuméricos
-      if (!/^[a-zA-Z0-9]{1,16}$/.test(nroDoc)) {
+      if (nroDoc.length>0 && !/^[a-zA-Z0-9]{1,16}$/.test(nroDoc)) {
         return { invalidPasaporte: true };
       }
     }

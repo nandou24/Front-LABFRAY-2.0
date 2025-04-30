@@ -1,0 +1,391 @@
+<div class="row" style="align-items: center;">
+    <h5 class="text-center" style="font-weight: 500;">MANTENIMIENTO DE PRUEBA DE LABORATORIO</h5>
+</div>
+
+<form [formGroup]="myFormPruebaLab">
+
+    <div class="contenedor-flex">
+
+        <div class="contenedor-formulario">
+
+            <mat-card class="mb-2">
+    
+                <mat-card-title>
+
+                    <div class="row align-items-center">
+                    
+                        <div class="col-lg-5 col-auto">
+                            Prueba de Laboratorio
+                        </div>
+    
+                        <div class="col-auto">
+                            <label><strong>Código Prueba:</strong></label>
+                        </div>
+    
+                        <div class="col-auto">
+                            <label><strong>{{ myFormPruebaLab.get('codPruebaLab')?.value }}</strong></label>
+                        </div>
+    
+                    </div>
+
+                </mat-card-title>
+        
+                <mat-card-content class="mb-2">
+
+                    <div class="formulario-flex mt-2">
+
+                        <div class="fila-flex">
+
+                            <div class="campo-flex-25">
+                                <mat-form-field appearance="outline">
+                                    <mat-label>Nombre de Prueba</mat-label>
+                                    <input matInput formControlName="nombrePruebaLab">
+                                    <mat-error *ngIf="myFormPruebaLab.get('nombrePruebaLab')?.hasError('required')">
+                                        Nombre es requerido
+                                    </mat-error>
+                                </mat-form-field>
+                            </div>
+            
+                            <div class="campo-flex-25">
+                                <mat-form-field appearance="outline">
+                                    <mat-label>Area de Laboratorio</mat-label>
+                                    <mat-select formControlName="areaLab">
+                                        <mat-option value="Bioquímica">Bioquímica</mat-option>
+                                        <mat-option value="Hematología">Hematología</mat-option>
+                                        <mat-option value="Inmunología">Inmunología</mat-option>
+                                        <mat-option value="Microbiología">Microbiología</mat-option>
+                                        <mat-option value="Toxicología">Toxicología</mat-option>
+                                        <mat-option value="Biología Molecular">Biología Molecular</mat-option>
+                                        <mat-option value="Otros">Otros</mat-option>
+                                    </mat-select>
+                                    <mat-error *ngIf="myFormPruebaLab.get('areaLab')?.hasError('required')">
+                                        Requerido
+                                    </mat-error>
+                                </mat-form-field>
+                            </div>
+    
+                            <div class="campo-flex-25">
+                                <mat-form-field appearance="outline">
+                                    <mat-label>Tiempo de Entrega (Días)</mat-label>
+                                    <input matInput formControlName="tiempoEntrega">
+                                    <mat-error *ngIf="myFormPruebaLab.get('tiempoEntrega')?.hasError('required')">
+                                        Requerido
+                                    </mat-error>
+                                </mat-form-field>
+                            </div>
+    
+                            <div class="campo-flex-25">
+                                <mat-form-field appearance="outline">
+                                    <mat-label>Estado</mat-label>
+                                    <mat-select formControlName="estadoPrueba">
+                                        <mat-option value="Activo">Activo</mat-option>
+                                        <mat-option value="Inactivo">Inactivo</mat-option>
+                                    </mat-select>
+                                    <mat-error *ngIf="myFormPruebaLab.get('estadoPrueba')?.hasError('required')">
+                                        Requerido
+                                    </mat-error>
+                                </mat-form-field>
+                            </div>
+
+                        </div>
+
+                        <div class="fila-flex">
+
+                            <div class="campo-flex-50">
+                                <mat-form-field appearance="outline">
+                                    <mat-label>Condiciones Pre Analíticas - PACIENTE</mat-label>
+                                    <textarea rows="4" matInput formControlName="condPreAnalitPaciente"></textarea>
+                                    <mat-error *ngIf="myFormPruebaLab.get('condPreAnalitPaciente')?.hasError('required')">
+                                        Requerido
+                                    </mat-error>
+                                </mat-form-field>
+                            </div>
+    
+                            <div class="campo-flex-50">
+                                <mat-form-field appearance="outline">
+                                    <mat-label>Condiciones Pre Analíticas - REFERENCIAS</mat-label>
+                                    <textarea rows="4" matInput formControlName="condPreAnalitRefer"></textarea>
+                                    <mat-error *ngIf="myFormPruebaLab.get('condPreAnalitRefer')?.hasError('required')">
+                                        Requerido
+                                    </mat-error>
+                                </mat-form-field>
+                            </div>
+
+                        </div>
+                        
+
+                        <div class="fila-flex">
+
+                            <!-- Tipo de Muestra -->
+                            <div class="campo-flex-50">
+
+                              <div class="grupo-checkbox">
+
+                                <label class="mb-2"><strong>Tipo de Muestra</strong></label>
+                                <div class="checkbox-grid" formGroupName="tipoMuestra">
+                                    <mat-checkbox formControlName="suero">Suero</mat-checkbox>
+                                    <mat-checkbox formControlName="sangreTotal">Sangre Total</mat-checkbox>
+                                    <mat-checkbox formControlName="plasmaCitratado">Plasma Citratado</mat-checkbox>
+                                    <mat-checkbox formControlName="orinaAleatoria">Orina Aleatoria</mat-checkbox>
+                                    <mat-checkbox formControlName="orina24Horas">Orina 24 horas</mat-checkbox>
+                                    <mat-checkbox formControlName="heces">Heces</mat-checkbox>
+                                    <mat-checkbox formControlName="esputo">Esputo</mat-checkbox>
+                                    <mat-checkbox formControlName="saliva">Saliva</mat-checkbox>
+                                    <mat-checkbox formControlName="raspado">Raspado</mat-checkbox>
+                                    <mat-checkbox formControlName="hisopado">Hisopado</mat-checkbox>
+                                    <mat-checkbox formControlName="secrecion">Secreción</mat-checkbox>
+                                    <mat-checkbox formControlName="cintaAdhesiva">Cinta Adhesiva</mat-checkbox>
+                                    <mat-checkbox formControlName="otro">Otro</mat-checkbox>
+                                </div>
+
+                              </div>
+
+                              <div class="text-danger text-center" style="font-size: 14px;" *ngIf="!validarTipoMuestra() && formSubmitted">
+                                Por favor seleccione al menos un tipo de muestra
+                              </div> 
+                                
+                            </div>
+
+                            <!-- Tipo de Envase -->
+                            <div class="campo-flex-50">
+
+                              <div class="grupo-checkbox">
+
+                                <label class="mb-2"><strong>Tipo de Tubo / Envase</strong></label>
+                                <div class="checkbox-grid" formGroupName="tipoTuboEnvase">
+                                <mat-checkbox formControlName="TuboLila">Tubo Lila (EDTA K2)</mat-checkbox>
+                                <mat-checkbox formControlName="TuboAmarillo">Tubo Amarillo (Gel)</mat-checkbox>
+                                <mat-checkbox formControlName="TuboCeleste">Tubo Celeste (Citrato)</mat-checkbox>
+                                <mat-checkbox formControlName="TuboPlomo">Tubo Plomo (Fluoruro)</mat-checkbox>
+                                <mat-checkbox formControlName="TuboVerde">Tubo Verde (Heparina)</mat-checkbox>
+                                <mat-checkbox formControlName="Criovial">Criovial</mat-checkbox>
+                                <mat-checkbox formControlName="FrascoEsteril">Frasco Estéril</mat-checkbox>
+                                <mat-checkbox formControlName="FrascoNoEsteril">Frasco No Estéril</mat-checkbox>
+                                <mat-checkbox formControlName="FrasconEspatula">Frasco con Espátula</mat-checkbox>
+                                <mat-checkbox formControlName="Hemocultivo">Frasco Hemocultivo</mat-checkbox>
+                                <mat-checkbox formControlName="MedioTransporte">Medio de Transporte</mat-checkbox>
+                                <mat-checkbox formControlName="Lamina">Lámina</mat-checkbox>
+                                </div>
+
+                              </div>
+
+                              <div class="text-danger text-center" style="font-size: 14px;" *ngIf="!validarTipoEnvase() && formSubmitted">
+                                Por favor seleccione al menos un tipo de envase
+                              </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </mat-card-content>
+
+            </mat-card>
+
+            <div class="fila-flex">
+
+              <div class="tabla-flex-50">
+
+                <mat-card>
+
+                  <mat-card-title>
+  
+                      <div class="row align-items-center">
+                      
+                          <div class="col-lg-5 col-auto">
+                              Items disponibles
+                          </div>
+      
+                      </div>
+  
+                  </mat-card-title>
+  
+                  <mat-card-content class="mb-2">
+                  
+                    <div class="tabla-container">
+                      <mat-form-field appearance="outline" class="mt-2">
+                          <mat-label>Buscar Item</mat-label>
+                          <input matInput [formControl]="terminoBusquedaItemsControl" placeholder="Escribe el nombre de la prueba">
+                          @if (terminoBusquedaItems) {
+                              <button type="button" matSuffix mat-icon-button aria-label="Clear" (click)="terminoBusquedaItemsControl.setValue(''); ultimosItems(5)">
+                                <mat-icon>close</mat-icon>
+                              </button>
+                            }
+                      </mat-form-field>
+                      <table mat-table [dataSource]="dataSourceItemsDisponibles">
+                        
+                        <!-- Definir las columnas -->
+                        <ng-container matColumnDef="codigo">
+                          <th mat-header-cell *matHeaderCellDef>Código</th>
+                          <td mat-cell *matCellDef="let item">{{ item.codItemLab }}</td>
+                        </ng-container>
+                
+                        <ng-container matColumnDef="nombre">
+                          <th mat-header-cell *matHeaderCellDef>Nombre</th>
+                          <td mat-cell *matCellDef="let item">{{ item.nombreItemLab }}</td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="perteneceA">
+                          <th mat-header-cell *matHeaderCellDef>Pertenece</th>
+                          <td mat-cell *matCellDef="let item">{{ item.perteneceA }}</td>
+                        </ng-container>
+                
+                        <ng-container matColumnDef="accion">
+                          <th mat-header-cell *matHeaderCellDef>Acción</th>
+                          <td mat-cell *matCellDef="let item">
+                            <button mat-icon-button color="primary" type="button" (click)="agregarItem(item)">
+                              <mat-icon>add</mat-icon>
+                            </button>
+                          </td>
+                        </ng-container>
+                
+                        <tr mat-header-row *matHeaderRowDef="columnasDisponibles"></tr>
+                        <tr mat-row *matRowDef="let row; columns: columnasDisponibles;"></tr>
+                
+                      </table>
+                    </div>
+
+                  </mat-card-content>
+                
+                </mat-card>
+
+              </div>
+              
+                <!-- Tabla de Ítems Seleccionados -->
+                <div class="tabla-flex-50">
+
+                  <mat-card>
+
+                    <mat-card-title>
+    
+                        <div class="row align-items-center">
+                        
+                            <div class="col-lg-5 col-auto">
+                                Items Seleccionados
+                            </div>
+        
+                        </div>
+    
+                    </mat-card-title>
+    
+                    <mat-card-content class="mb-2">
+                    
+                      <div class="tabla-container">
+                        <table mat-table [dataSource]="dataSourceItemsSeleccionados" class="mat-elevation-z8 tabla">
+                          
+                          <!-- Definir las columnas -->
+                          <ng-container matColumnDef="codigo">
+                            <th mat-header-cell *matHeaderCellDef>Código</th>
+                            <td mat-cell *matCellDef="let item">{{ item.codItemLab }}</td>
+                          </ng-container>
+                  
+                          <ng-container matColumnDef="nombre">
+                            <th mat-header-cell *matHeaderCellDef>Nombre</th>
+                            <td mat-cell *matCellDef="let item">{{ item.nombreItemLab }}</td>
+                          </ng-container>
+                  
+                          <ng-container matColumnDef="perteneceA">
+                            <th mat-header-cell *matHeaderCellDef>Pertenece</th>
+                            <td mat-cell *matCellDef="let item">{{ item.perteneceA }}</td>
+                          </ng-container>
+
+                          <ng-container matColumnDef="accion">
+                            <th mat-header-cell *matHeaderCellDef>Acción</th>
+                            <td mat-cell *matCellDef="let item">
+                              <button mat-icon-button color="warn" type="button" (click)="removerItem(item)">
+                                <mat-icon>delete</mat-icon>
+                              </button>
+                            </td>
+                          </ng-container>
+                  
+                          <tr mat-header-row *matHeaderRowDef="columnasSeleccionados"></tr>
+                          <tr mat-row *matRowDef="let row; columns: columnasSeleccionados;"></tr>
+                  
+                        </table>
+                      </div>
+
+                    </mat-card-content>
+
+                    <div class="text-danger text-center" style="font-size: 14px;" *ngIf="!validarArrayItems() && formSubmitted">
+                      Seleccione al menos un item
+                    </div> 
+                  
+                  </mat-card>
+
+                </div>
+              
+            </div>
+
+            <div class="row mt-4">
+
+              <div class="col col-4 text-center">
+                  <button mat-raised-button class="btn-nuevo"  type="button" (click)="nuevaPrueba()">
+                    Nueva Prueba
+                  </button>
+              </div>
+      
+      
+              <div class="col col-4 text-center">
+                  <button mat-raised-button class="btn-registrar" *ngIf="!pruebaSeleccionada" type="button" (click)="registraPrueba()">
+                    Registrar Prueba
+                  </button>
+              </div>
+      
+              <div class="col col-4 text-center">
+                  <button mat-raised-button class="btn-actualizar" type="button" (click)="actualizarPrueba()">
+                    Actualizar Prueba
+                  </button>
+              </div>
+      
+          </div>
+
+        </div>
+
+        <div class="contenedor-tablaDerecha">
+
+            <mat-card class="tabla-pruebas-card">
+                <mat-card-title>
+                    Pruebas Registradas
+                </mat-card-title>
+               
+                <mat-card-content>
+                  <mat-form-field appearance="outline" class="mt-2">
+                      <mat-label>Buscar Prueba</mat-label>
+                      <input matInput (input)="buscarPrueba()" [(ngModel)]="terminoBusqueda" [ngModelOptions]="{standalone: true}" placeholder="Escribe el nombre de la prueba">
+                      @if (terminoBusqueda) {
+                          <button type="button" matSuffix mat-icon-button aria-label="Clear" (click)="terminoBusqueda=''; ultimasPruebas()">
+                            <mat-icon>close</mat-icon>
+                          </button>
+                        }
+                  </mat-form-field>
+
+                  <table mat-table [dataSource]="dataSourcePruebas" class="mat-elevation-z8">
+          
+                    <!-- Columnas -->
+                    <ng-container matColumnDef="codigo">
+                      <th mat-header-cell *matHeaderCellDef> Código </th>
+                      <td mat-cell *matCellDef="let prueba"> {{ prueba.codPruebaLab }} </td>
+                    </ng-container>
+          
+                    <ng-container matColumnDef="nombre">
+                      <th mat-header-cell *matHeaderCellDef> Nombre </th>
+                      <td mat-cell *matCellDef="let prueba"> {{ prueba.nombrePruebaLab }} </td>
+                    </ng-container>
+          
+                    <ng-container matColumnDef="areaLab">
+                      <th mat-header-cell *matHeaderCellDef> Área </th>
+                      <td mat-cell *matCellDef="let prueba"> {{ prueba.areaLab }} </td>
+                    </ng-container>
+          
+                    <tr mat-header-row *matHeaderRowDef="columnasPruebas"></tr>
+                    <tr mat-row *matRowDef="let row; columns: columnasPruebas;" (click)="cargarPruebas(row)"></tr>
+                  </table>
+                </mat-card-content>
+              </mat-card>
+
+        </div>
+
+    </div>
+
+</form>

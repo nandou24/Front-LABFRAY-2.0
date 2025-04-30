@@ -45,22 +45,6 @@ mat-option {
     color: #ffffff;
 }
 
-
-.mat-column-numero {
-    width: 20%;
-    text-align: center;
-}
-
-.mat-column-descripcion {
-    width: 60%;
-    text-align: left;
-}
-
-.mat-column-acciones {
-    width: 20%;
-    text-align: center;
-}
-
 .mat-column-nro {
     width: 5%;
     text-align: center;
@@ -98,4 +82,57 @@ mat-option {
 
 .input-busqueda{
     height: 25px;
+}
+
+.telefono-fieldset {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 1rem 1rem 0.5rem 1rem;
+    position: relative;
+}
+  
+.telefono-fieldset legend {
+    font-size: 0.9rem; // más pequeño
+    font-weight: 500;
+    width: auto;
+    color: #0f3369; // azul institucional
+    background-color: #ffffff;
+    padding: 0 0.5rem;
+    margin-left: 1rem;
+    position: absolute;
+    top: -0.6rem;
+}
+
+.btn-telefono {
+    font-size: 0.75rem; // texto más pequeño
+    padding: 0.25rem 0.75rem; // menos padding
+    min-height: auto; // evita altura mínima
+    line-height: 1.2;
+}
+
+.btn-registrar {
+    background-color: #14532d !important; // verde oscuro
+    color: white !important;
+  
+    &:hover {
+      background-color: #077732 !important;
+    }
+}
+  
+.btn-actualizar {
+    background-color: #ecb80b !important; // amarillo suave
+    color: #154cb3 !important;
+  
+    &:hover {
+      background-color: #ffda06 !important;
+    }
+}
+  
+.btn-nuevo {
+    background-color: #8d9097 !important; // azul moderno
+    color: white !important;
+
+    &:hover {
+        background-color: #b9b7b7 !important;
+    }
 }

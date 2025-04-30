@@ -39,4 +39,9 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
       trigger-text-size: 15px
     ));
 
+    @include mat.checkbox-overrides((
+      label-text-size: 13px,
+      state-layer-size: 25px,
+    ));
+
   }

@@ -1,0 +1,328 @@
+
+<div class="row mt-2" style="align-items: center;">
+    <h5 class="text-center" style="font-weight: 500;">MANTENIMIENTO DE ITEMS DE LABORATORIO</h5>
+</div> 
+
+<form [formGroup]="myFormItemLab">
+
+    <div class="contenedor-flex">
+        
+        <div class="contenedor-formulario">
+
+            <mat-card>
+    
+                <mat-card-title>
+
+                    <div class="row align-items-center">
+                    
+                        <div class="col-lg-5 col-auto">
+                            Item de Laboratorio
+                        </div>
+    
+                        <div class="col-auto">
+                            <label><strong>Código Item:</strong></label>
+                        </div>
+    
+                        <div class="col-auto">
+                            <label><strong>{{ myFormItemLab.get('codItemLab')?.value }}</strong></label>
+                        </div>
+    
+                    </div>
+
+                </mat-card-title>
+        
+                
+                <mat-card-content class="mb-2">
+                
+                    <div class="formulario-flex mt-2">
+
+                        <div class="campo-flex">
+                            <mat-form-field appearance="outline">
+                                <mat-label>Nombre de Item</mat-label>
+                                <input matInput formControlName="nombreItemLab">
+                                <mat-error *ngIf="myFormItemLab.get('nombreItemLab')?.hasError('required')">
+                                    Nombre es requerido
+                                </mat-error>
+                            </mat-form-field>
+                        </div>
+        
+                        <div class="campo-flex">
+                            <mat-form-field appearance="outline">
+                                <mat-label>Método</mat-label>
+                                <input matInput formControlName="metodoItemLab">
+                                <mat-error *ngIf="myFormItemLab.get('metodoItemLab')?.hasError('required')">
+                                    Método es requerido
+                                </mat-error>
+                            </mat-form-field>
+                        </div>
+        
+                        <div class="campo-flex">
+                            <mat-form-field appearance="outline">
+                                <mat-label>Unidades</mat-label>
+                                <input matInput formControlName="unidadesRef">
+                                <mat-error *ngIf="myFormItemLab.get('unidadesRef')?.hasError('required')">
+                                    Unidades es requerido
+                                </mat-error>
+                            </mat-form-field>
+                        </div>
+            
+                    <!-- aqui se agregará la plantilla de los valores de referencia del item -->
+
+                        <div class="campo-flex">
+                            <mat-form-field appearance="outline">
+                                <mat-label>Plantilla Valores</mat-label>
+                                <textarea rows="3" matInput formControlName="plantillaValores"></textarea>
+                                <mat-error *ngIf="myFormItemLab.get('plantillaValores')?.hasError('required')">
+                                    Debe ingresar una plantilla de valores de referencia
+                                </mat-error>
+                            </mat-form-field>
+                        </div>
+
+                        <div class="campo-flex">
+                            <mat-form-field appearance="outline">
+                                <mat-label>Pertenece a</mat-label>
+                                <input matInput formControlName="perteneceA">
+                                <mat-error *ngIf="myFormItemLab.get('perteneceA')?.hasError('required')">
+                                    Ingrese a que prueba pertenece
+                                </mat-error>
+                            </mat-form-field>
+                        </div>
+        
+                        <div class="campo-flex">
+                            <mat-slide-toggle formControlName="poseeValidacion">Posee validación</mat-slide-toggle>
+                        </div>
+        
+
+                    </div>
+        
+                </mat-card-content>
+        
+            </mat-card> 
+
+            <mat-card class="mt-2">
+    
+                <mat-card-title>
+                    Parámetros de Validación
+                </mat-card-title>
+    
+                <mat-card-content>
+                                
+                        <div class="row mt-2 text-center">
+                            <button mat-flat-button color="primary" class="btn-telefono" type="button" (click)="agregarValidacion()">
+                                <mat-icon class="me-1">add</mat-icon>
+                                Agregar Validación
+                            </button>
+                        </div>
+    
+                        <div class="row mt-2">
+                        
+                            <div formArrayName="paramValidacion" *ngFor="let validacionGroup of paramValidacion.controls; let i = index">
+            
+                                <div [formGroupName]="i" class="flex-row-container" >
+                                
+                                    <div [style.flex]="setFlex(2, '%')" class="flex-item mb-3">
+                                        <span>{{ i + 1 }}</span>
+                                    </div>
+                
+                                    <div [style.flex]="setFlex(23, '%')" class="flex-item">
+                                        <mat-form-field appearance="outline" class="full-width">
+                                            <mat-label>Desripción</mat-label>
+                                            <input matInput formControlName="descrValidacion">
+                                        <mat-error *ngIf="validacionGroup.get('descrValidacion')?.hasError('required')">
+                                            Requerido
+                                        </mat-error>
+
+                                        </mat-form-field>
+                                    </div>
+                            
+                                    <div [style.flex]="setFlex(10, '%')" class="flex-item">
+                                        <mat-form-field appearance="outline">
+                                            <mat-label>Sexo</mat-label>
+                                            <mat-select formControlName="sexo">
+                                                <mat-option value="Masculino">Masculino</mat-option>
+                                                <mat-option value="Femenino">Femenino</mat-option>
+                                                <mat-option value="Unisex">Unisex</mat-option>
+                                            </mat-select>
+                                            <mat-error *ngIf="validacionGroup.get('sexo')?.hasError('required')">
+                                                Requerido
+                                            </mat-error>
+                                        </mat-form-field>
+                                    </div>
+            
+                                    <div [style.flex]="setFlex(10, '%')" class="flex-item mb-4">
+                                        <mat-slide-toggle formControlName="edadIndistinta">
+                                        Sin edad
+                                        </mat-slide-toggle>
+                                    </div>
+                
+                                    <div [style.flex]="setFlex(7, '%')" class="flex-item">
+                                        <mat-form-field appearance="outline" class="full-width">
+                                            <mat-label>Edad Mín</mat-label>
+                                            <input matInput formControlName="edadMin">
+                                            <mat-error *ngIf="validacionGroup.get('edadMin')?.hasError('required')">
+                                                Requerido
+                                            </mat-error>
+                                        </mat-form-field>
+                                    </div>
+            
+                                    <div [style.flex]="setFlex(7, '%')" class="flex-item">
+                                        <mat-form-field appearance="outline" class="full-width">
+                                            <mat-label>Edad Max</mat-label>
+                                            <input matInput formControlName="edadMax">
+                                            <mat-error *ngIf="validacionGroup.get('edadMax')?.hasError('required')">
+                                                Requerido
+                                            </mat-error>
+                                        </mat-form-field>
+                                    </div>
+                
+                                    <div [style.flex]="setFlex(15, '%')" class="flex-item">
+                                        <mat-form-field appearance="outline" class="full-width">
+                                        <mat-label>Seleccione Regla</mat-label>
+                                        <mat-select formControlName="descRegla">
+                                            <mat-option value="Igual a">Igual a</mat-option>
+                                            <mat-option value="Entre">Entre</mat-option>
+                                            <mat-option value="Mayor que">Mayor que</mat-option>
+                                            <mat-option value="Menor que">Menor que</mat-option>
+                                            <mat-option value="Mayor o igual que">Mayor o igual que</mat-option>
+                                            <mat-option value="Menor o igual que">Menor o igual que</mat-option>
+                                        </mat-select>
+                                        <mat-error *ngIf="validacionGroup.get('descRegla')?.hasError('required')">
+                                            Requerido
+                                        </mat-error>
+                                        </mat-form-field>
+                                    </div>
+            
+                                    <div [style.flex]="setFlex(8, '%')" class="flex-item">
+                                        <mat-form-field appearance="outline" class="full-width">
+                                        <mat-label>Valor Min</mat-label>
+                                        <input matInput formControlName="valor1">
+                                        <!-- <mat-error *ngIf="validacionGroup.get('descriptionPhone')?.hasError('required')">
+                                            Requerido
+                                        </mat-error>
+                                        <mat-error *ngIf="validacionGroup.get('descriptionPhone')?.hasError('maxlength')">
+                                            Máximo 30 caracteres
+                                        </mat-error> -->
+                                        </mat-form-field>
+                                    </div>
+                
+                                    
+                                    <div [style.flex]="setFlex(8, '%')" class="flex-item">
+                                        <mat-form-field appearance="outline" class="full-width">
+                                        <mat-label>Valor Max</mat-label>
+                                        <input matInput formControlName="valor2">
+                                        <!-- <mat-error *ngIf="validacionGroup.get('descriptionPhone')?.hasError('required')">
+                                            Requerido
+                                        </mat-error>
+                                        <mat-error *ngIf="validacionGroup.get('descriptionPhone')?.hasError('maxlength')">
+                                            Máximo 30 caracteres
+                                        </mat-error> -->
+                                        </mat-form-field>
+                                    </div>
+            
+                                    <div [style.flex]="setFlex(2, '%')" class="flex-item">
+                                    
+                                        <button mat-icon-button class="mb-3" color="warn" type="button" (click)="eliminarValidacion(i)">
+                                            <mat-icon>delete</mat-icon>
+                                        </button>
+
+                                    </div>
+
+                                </div>
+            
+                            </div>
+    
+                        </div>
+
+                        <span class="text-danger text-center" *ngIf="!validarArrayValores() && formSubmitted">
+                            Por favor ingrese al menos una validación
+                        </span>
+    
+                </mat-card-content>
+    
+            </mat-card>
+
+            <div class="row mt-4">
+
+                <div class="col col-4 text-center">
+                    <button mat-raised-button class="btn-nuevo"  type="button" (click)="nuevoItem()">
+                      Nuevo Item
+                    </button>
+                </div>
+        
+        
+                <div class="col col-4 text-center">
+                    <button mat-raised-button class="btn-registrar" type="button" (click)="registraItemLab()">
+                      Registrar Item
+                    </button>
+                </div>
+        
+                <div class="col col-4 text-center">
+                    <button mat-raised-button class="btn-actualizar" type="button" (click)="actualizarItem()">
+                      Actualizar Item
+                    </button>
+                </div>
+        
+            </div>
+
+        </div>
+
+        <div class="listado-items-container"
+            [class.expandido]="listadoExpandido"
+            (click)="expandirListado()"
+            (mouseleave)="colapsarListado()">
+
+            <mat-card>
+        
+                <mat-card-title>
+                    Listado de Items
+                </mat-card-title>
+        
+                <mat-card-content>
+
+                    <mat-form-field appearance="outline" class="mt-2">
+                        <mat-label>Buscar Item</mat-label>
+                        <input matInput (input)="buscarItems()" [(ngModel)]="terminoBusqueda" [ngModelOptions]="{standalone: true}" placeholder="Escribe el nombre del item">
+                    </mat-form-field>
+                
+                    <table mat-table [dataSource]="dataSourceItems">
+                            
+                        <ng-container matColumnDef="Codigo" >
+                            <th mat-header-cell *matHeaderCellDef> Código </th>
+                            <td mat-cell *matCellDef="let item"> {{ item.codItemLab }} </td>
+                        </ng-container>
+                        
+                        <ng-container matColumnDef="NombreItem">
+                            <th mat-header-cell *matHeaderCellDef> Item </th>
+                            <td mat-cell *matCellDef="let item"> {{ item.nombreItemLab }} </td>
+                        </ng-container>
+                        
+                        <ng-container matColumnDef="Metodo">
+                            <th mat-header-cell *matHeaderCellDef> Método </th>
+                            <td mat-cell *matCellDef="let item"> {{ item.metodoItemLab }} </td>
+                        </ng-container>
+    
+                        <ng-container matColumnDef="Validacion">
+                            <th mat-header-cell *matHeaderCellDef> Validación </th>
+                            <td mat-cell *matCellDef="let item"> {{ item.poseeValidacion ? 'Si' : 'No'}} </td>
+                        </ng-container>
+                        
+                        <ng-container matColumnDef="PerteneceA">
+                            <th mat-header-cell *matHeaderCellDef> Pertence a </th>
+                            <td mat-cell *matCellDef="let item"> {{ item.perteneceA }} </td>
+                        </ng-container>
+                        
+                        <!-- Filas -->
+                        <tr mat-header-row *matHeaderRowDef="columnasTablaPaciente"></tr>
+                        <tr mat-row *matRowDef="let row; columns: columnasTablaPaciente;" (click)="cargarItemLab(row)"></tr>
+                
+                    </table>        
+        
+                </mat-card-content>
+        
+            </mat-card> 
+
+        </div>
+
+    </div>
+
+</form>
