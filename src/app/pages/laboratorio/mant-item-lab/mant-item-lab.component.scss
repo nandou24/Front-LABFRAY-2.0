@@ -107,11 +107,12 @@ mat-option {
     cursor: pointer;
 }
 
-.mat-mdc-row:hover .mat-mdc-cell {
+.mat-mdc-row:hover .mat-mdc-cell,
+.mat-mdc-row:hover .mat-mdc-cell mat-icon {
     background-color: #0b4b48;
     color: #ffffff;
+    fill: #ffffff;
 }
-
 
 .listado-items-container {
     position: relative;

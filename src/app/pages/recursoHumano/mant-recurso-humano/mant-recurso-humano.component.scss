@@ -1,0 +1,66 @@
+mat-form-field {
+    //min-width: 0;
+    width: 100%;
+}
+
+mat-option {
+    font-size: 13px;
+    //color: #0f3369;  // Azul Bootstrap
+}
+
+::ng-deep .mat-mdc-tab-body-content {
+    overflow-x: hidden !important; /* evita barra horizontal */
+}
+
+.contenedor-flex {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: flex-start;
+}
+
+//Aplicando flex al formulario
+.contenedor-formulario {
+    flex: 0 0 70%;
+    //min-width: 300px;
+}
+  
+.contenedor-tablaDerecha {
+    flex: 1 1 28%;
+    //min-width: 300px;
+}
+
+.formulario-flex {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px; /* Separación entre campos */
+    row-gap: 8px;
+}
+  
+.campo-flex {
+    flex: 1 1 calc(25% - 12px); /* 4 columnas en pantallas grandes */
+    //min-width: 200px;
+}
+
+@media (max-width: 1430px){
+
+    .contenedor-formulario,
+    .contenedor-tablaDerecha {
+      flex: 0 0 100%;
+    }
+
+}
+
+/* Tablets (2 columnas) */
+@media (max-width: 991px) {
+    .campo-flex {
+      flex: 1 1 calc(50% - 8px); /* 2 columnas */
+    }
+}
+
+/* Celulares (1 columna) */
+@media (max-width: 767px) {
+    .campo-flex {
+      flex: 1 1 100%; /* 1 columna */
+    }
+}

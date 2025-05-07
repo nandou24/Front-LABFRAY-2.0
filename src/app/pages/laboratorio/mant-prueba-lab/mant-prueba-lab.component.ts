@@ -9,13 +9,14 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTable, MatTableDataSource, MatTableModule } from '@angular/material/table';
-import { IPruebaLab } from '../../models/pruebaLab.models';
-import { IItemLab } from '../../models/items.models';
+import { IPruebaLab } from '../../../models/pruebaLab.models';
+import { IItemLab } from '../../../models/items.models';
 import { MatButtonModule } from '@angular/material/button';
-import { PruebaLabService } from '../../services/mantenimiento/pruebaLab/prueba-lab.service';
-import { ItemLabService } from '../../services/mantenimiento/itemLab/item-lab.service';
+import { PruebaLabService } from '../../../services/mantenimiento/pruebaLab/prueba-lab.service';
+import { ItemLabService } from '../../../services/mantenimiento/itemLab/item-lab.service';
 import Swal from 'sweetalert2';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
+
 
 @Component({
   selector: 'app-mant-prueba-lab',

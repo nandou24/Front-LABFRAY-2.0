@@ -1,0 +1,136 @@
+<div class="row mt-2" style="align-items: center;">
+    <h5 class="text-center" style="font-weight: 500;">MANTENIMIENTO DE SERVICIOS</h5>
+</div> 
+
+<form [formGroup]="myFormRecHumano">
+
+    <div class="contenedor-flex">
+
+        <div class="contenedor-formulario">
+    
+            <mat-tab-group mat-stretch-tabs="false" mat-align-tabs="start">
+
+                <mat-tab label="Personales">
+
+                        <div class="formulario-flex mt-4">
+                    
+                            <div class="campo-flex">
+                                <mat-form-field appearance="outline">
+                                    <mat-label>Tipo Doc</mat-label>
+                                        <mat-select formControlName="tipoDoc">
+                                            <mat-option value="DNI">DNI</mat-option>
+                                            <mat-option value="CE">CE</mat-option>
+                                            <mat-option value="PASAPORTE">Pasaporte</mat-option>
+                                        </mat-select>
+                                </mat-form-field>
+                            </div>                          
+                                    
+                            <div class="campo-flex">
+                                <mat-form-field appearance="outline">
+                                    <mat-label >Nro. Documento</mat-label>
+                                    <input matInput formControlName="nroDoc">
+                                    <mat-error *ngIf="myFormRecHumano.get('nroDoc')?.hasError('required')">
+                                        Obligatorio
+                                    </mat-error>
+
+                                    <mat-error *ngIf="myFormRecHumano.get('nroDoc')?.hasError('invalidDNI')">
+                                        DNI debe tener 8 números
+                                    </mat-error>
+                                
+                                    <mat-error *ngIf="myFormRecHumano.get('nroDoc')?.hasError('invalidCE')">
+                                        CE tiene hasta 13 caracteres
+                                    </mat-error>
+                                
+                                    <mat-error *ngIf="myFormRecHumano.get('nroDoc')?.hasError('invalidPasaporte')">
+                                        Pasaporte tiene hasta 16 caracteres
+                                    </mat-error>
+                                </mat-form-field>
+                            </div>
+
+                            <div class="campo-flex">
+                                <mat-form-field appearance="outline">
+                                    <mat-label>Fecha Nac - mm/dd/yyyy</mat-label>
+                                        <input matInput [matDatepicker]="picker" readonly="true" formControlName="fechaNacimiento" (dateChange)="actualizarEdad()">
+                                        <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+                                        <mat-datepicker #picker disabled="false"></mat-datepicker>
+                                        <mat-error *ngIf="myFormRecHumano.get('fechaNacimiento')?.hasError('required')">
+                                            Obligatorio
+                                        </mat-error>
+                                        <mat-error *ngIf="myFormRecHumano.get('fechaNacimiento')?.hasError('fechaFutura')">
+                                            Fecha no puede ser futura
+                                        </mat-error>
+                                </mat-form-field>
+                            </div>
+
+                            <div class="campo-flex mt-2 text-center">
+                                {{myFormRecHumano.get('edad')?.value}}
+                            </div>
+
+                            <div class="campo-flex">
+                                <mat-form-field appearance="outline">
+                                    <mat-label>Apellido Paterno</mat-label>
+                                    <input matInput formControlName="apePatRecHumano">
+                                    <mat-error *ngIf="myFormRecHumano.get('apePatRecHumano')?.hasError('required')">
+                                        Obligatorio
+                                    </mat-error>
+                                    <mat-error *ngIf="myFormRecHumano.get('apePatRecHumano')?.hasError('pattern')">
+                                        Solo letras
+                                    </mat-error>
+                                </mat-form-field>
+                            </div>
+
+                            <div class="campo-flex">
+                                <mat-form-field appearance="outline">
+                                    <mat-label>Apellido Materno</mat-label>
+                                    <input matInput formControlName="apeMatRecHumano">
+                                    <mat-error *ngIf="myFormRecHumano.get('apeMatRecHumano')?.hasError('pattern')">
+                                        Solo letras
+                                    </mat-error>
+                                </mat-form-field>
+                            </div>
+
+                            <div class="campo-flex">
+                                <mat-form-field appearance="outline">
+                                    <mat-label>Nombres</mat-label>
+                                    <input matInput formControlName="nombreRecHumano">
+                                    <mat-error *ngIf="myFormRecHumano.get('nombreRecHumano')?.hasError('required')">
+                                        Obligatorio
+                                    </mat-error>
+                                    <mat-error *ngIf="myFormRecHumano.get('nombreRecHumano')?.hasError('pattern')">
+                                        Solo letras
+                                    </mat-error>
+                                </mat-form-field>
+                            </div>
+
+                            <div class="campo-flex">
+                                <mat-form-field appearance="outline">
+                                    <mat-label>Sexo</mat-label>
+                                    <mat-select formControlName="sexoRecHumano">
+                                        <mat-option value="M">Masculino</mat-option>
+                                        <mat-option value="F">Femenino</mat-option>
+                                    </mat-select>
+                                    <mat-error *ngIf="myFormRecHumano.get('sexoRecHumano')?.hasError('required')">
+                                        Obligatorio
+                                    </mat-error>
+                                </mat-form-field>
+                            </div>
+
+                        </div>
+
+                </mat-tab>
+
+                <mat-tab label="Contacto">Datos de Contacto</mat-tab>
+                <mat-tab label="Profesionales">Datos Profesionales</mat-tab>
+                <mat-tab label="Laborales">Datos Laborales</mat-tab>
+
+            </mat-tab-group>
+
+        </div>
+
+        <div class="contenedor-tablaDerecha">
+
+        </div>
+
+    </div>
+
+</form>

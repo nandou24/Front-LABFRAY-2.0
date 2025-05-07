@@ -44,4 +44,9 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
       state-layer-size: 25px,
     ));
 
+    // @include mat.tabs-overrides((
+    //   active-indicator-color: rgb(23, 83, 75),
+    //   divider-color: rgb(3, 58, 160),
+    // ));
+
   }

@@ -10,9 +10,9 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatTable, MatTableDataSource, MatTableModule } from '@angular/material/table';
-import { IItemLab } from '../../models/items.models';
-import { ItemLabService } from '../../services/mantenimiento/itemLab/item-lab.service';
+import { IItemLab } from '../../../models/items.models';
 import Swal from 'sweetalert2';
+import { ItemLabService } from '../../../services/mantenimiento/itemLab/item-lab.service';
 
 @Component({
   selector: 'app-mant-item-lab',
@@ -36,7 +36,7 @@ import Swal from 'sweetalert2';
 export class MantItemLabComponent implements OnInit {
 
   constructor(
-    private _itemLabService: ItemLabService,
+    private _itemLabService: ItemLabService
   ){}
   
   ngOnInit(): void {

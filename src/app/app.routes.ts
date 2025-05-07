@@ -27,6 +27,16 @@ export const routes: Routes = [
             loadComponent: () =>
               import('./pages/laboratorio/mant-prueba-lab/mant-prueba-lab.component').then(m => m.MantPruebaLabComponent),
           },
+          {
+            path: 'servicios',
+            loadComponent: () =>
+              import('./pages/servicios/mant-servicio/mant-servicio.component').then(m => m.MantServicioComponent),
+          },
+          {
+            path: 'recursoHumano',
+            loadComponent: () =>
+              import('./pages/recursoHumano/mant-recurso-humano/mant-recurso-humano.component').then(m => m.MantRecursoHumanoComponent),
+          },
           // {
           //   path: '',
           //   redirectTo: 'home',

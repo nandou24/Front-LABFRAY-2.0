@@ -1,0 +1,304 @@
+<div class="row mt-2" style="align-items: center;">
+    <h5 class="text-center" style="font-weight: 500;">MANTENIMIENTO DE SERVICIOS</h5>
+</div> 
+
+<form [formGroup]="myFormServicio">
+
+    <div class="contenedor-flex">
+
+        <div class="contenedor-formulario">
+
+            <mat-card>
+    
+                <mat-card-title>
+    
+                    <div class="row align-items-center">
+                    
+                        <div class="col-lg-5 col-auto">
+                            Datos del Servicio
+                        </div>
+    
+                        <div class="col-auto">
+                            <label><strong>Código Servicio:</strong></label>
+                        </div>
+    
+                        <div class="col-auto">
+                            <label><strong>{{ myFormServicio.get('codServicio')?.value }}</strong></label>
+                        </div>
+    
+                    </div>
+    
+                </mat-card-title>
+        
+                
+                <mat-card-content class="mb-2">
+                
+                    <div class="formulario-flex mt-2">
+
+                        <div  class="campo-flex">
+                            <mat-form-field appearance="outline">
+                                <mat-label>Tipo de Servicio</mat-label>
+                                <mat-select formControlName="tipoServicio">
+                                    <mat-option value="Laboratorio">Laboratorio</mat-option>
+                                    <mat-option value="Ecografía">Ecografía</mat-option>
+                                    <mat-option value="Consulta Médica">Consulta Médica</mat-option>
+                                    <mat-option value="Procedimiento">Procedimiento</mat-option>
+                                </mat-select>
+                                <mat-error *ngIf="myFormServicio.get('tipoServicio')?.hasError('required')">
+                                    Requerido
+                                </mat-error>
+                            </mat-form-field>
+                        </div>
+    
+                        <div class="campo-flex">
+                            <mat-form-field appearance="outline">
+                                <mat-label>Nombre de Servicio</mat-label>
+                                <input matInput formControlName="nombreServicio">
+                                <mat-error *ngIf="myFormServicio.get('nombreServicio')?.hasError('required')">
+                                    Nombre es requerido
+                                </mat-error>
+                            </mat-form-field>
+                        </div>
+
+                        <div class="campo-flex">
+                            <mat-form-field appearance="outline">
+                                <mat-label>Precio de Referencia</mat-label>
+                                <input matInput formControlName="precioServicio">
+                                <mat-error *ngIf="myFormServicio.get('precioServicio')?.hasError('required')">
+                                    Precio es requerido
+                                </mat-error>
+                            </mat-form-field>
+                        </div>
+
+                        <div class="campo-flex">
+                            <mat-slide-toggle formControlName="estadoServicio">Estado</mat-slide-toggle>
+                        </div>
+        
+                        <div class="campo-flex">
+                            <mat-form-field appearance="outline">
+                                <mat-label>Descripción</mat-label>
+                                <input matInput formControlName="descripcionServicio">
+                            </mat-form-field>
+                        </div>
+    
+                    </div>
+        
+                </mat-card-content>
+        
+            </mat-card> 
+
+            <div class="fila-flex mt-1">
+
+                <div class="tabla-flex-50">
+
+                    <mat-card>
+    
+                      <mat-card-title>
+      
+                          <div class="row align-items-center">
+                                  Exámenes disponibles          
+                          </div>
+      
+                      </mat-card-title>
+      
+                      <mat-card-content class="mt-2">
+                      
+                        <div class="tabla-container">
+
+                            <div class="fila-flex">
+
+                                <div class="tabla-flex-50">
+
+                                    <mat-form-field appearance="outline">
+                                        <mat-label>Tipo de Examen</mat-label>
+                                        <mat-select [formControl]="tipoServicioTabla">
+                                            <mat-option value="Laboratorio">Laboratorio</mat-option>
+                                            <mat-option value="Ecografía">Ecografía</mat-option>
+                                            <mat-option value="Consulta Médica">Consulta Médica</mat-option>
+                                            <mat-option value="Procedimiento">Procedimiento</mat-option>
+                                        </mat-select>
+                                        <!-- <mat-error *ngIf="myFormServicio.get('areaLab')?.hasError('required')">
+                                            Requerido
+                                        </mat-error> -->
+                                    </mat-form-field>
+
+                                </div>    
+
+                                <div class="tabla-flex-50">
+
+                                    <mat-form-field appearance="outline">
+                                        <mat-label>Buscar Examen</mat-label>
+                                        <input matInput [formControl]="terminoBusquedaExamenesControl"
+                                            (keyup)="filtrarExamenes()"
+                                            (focus)="seleccionarTexto($event)">
+
+                                    </mat-form-field>
+
+                                </div>
+
+                            </div>
+
+                            <table mat-table [dataSource]="dataSourceExamenesDisponibles">
+                                
+                                <!-- Definir las columnas -->
+                                <ng-container matColumnDef="codigo">
+                                <th mat-header-cell *matHeaderCellDef>Código</th>
+                                <td mat-cell *matCellDef="let examen">{{ examen.codExamen }}</td>
+                                </ng-container>
+                        
+                                <ng-container matColumnDef="nombre">
+                                <th mat-header-cell *matHeaderCellDef>Nombre</th>
+                                <td mat-cell *matCellDef="let examen">{{ examen.nombreExamen }}</td>
+                                </ng-container>
+        
+                                <ng-container matColumnDef="accion">
+                                <th mat-header-cell *matHeaderCellDef>Acción</th>
+                                <td mat-cell *matCellDef="let examen">
+                                    <button mat-icon-button color="primary" type="button" (click)="agregarExamen(examen)">
+                                    <mat-icon>add</mat-icon>
+                                    </button>
+                                </td>
+                                </ng-container>
+                        
+                                <tr mat-header-row *matHeaderRowDef="columnasDisponibles"></tr>
+                                <tr mat-row *matRowDef="let row; columns: columnasDisponibles;"></tr>
+                        
+                            </table>
+
+                            <mat-paginator #MatPaginatorExamenes [pageSizeOptions]="[5, 10, 25]" showFirstLastButtons></mat-paginator>
+
+                        </div>
+    
+                      </mat-card-content>
+                    
+                    </mat-card>
+    
+                </div>
+    
+                <div class="tabla-flex-50">
+    
+                    <mat-card>
+    
+                      <mat-card-title>
+      
+                          <div class="row align-items-center">
+                                  Exámenes seleccionados          
+                          </div>
+      
+                      </mat-card-title>
+      
+                      <mat-card-content class="mb-2">
+                      
+                        <div class="tabla-container">
+
+                          <table mat-table [dataSource]="dataSourceExamenesSeleccionados">
+                            
+                            <!-- Definir las columnas -->
+                            <ng-container matColumnDef="codigo">
+                              <th mat-header-cell *matHeaderCellDef>Código</th>
+                              <td mat-cell *matCellDef="let servicio">{{ servicio.codExamen }}</td>
+                            </ng-container>
+                    
+                            <ng-container matColumnDef="nombre">
+                              <th mat-header-cell *matHeaderCellDef>Nombre</th>
+                              <td mat-cell *matCellDef="let servicio">{{ servicio.nombreExamen }}</td>
+                            </ng-container>
+
+                            <ng-container matColumnDef="accion">
+                              <th mat-header-cell *matHeaderCellDef>Acción</th>
+                              <td mat-cell *matCellDef="let servicio">
+                                <button mat-icon-button color="primary" type="button" (click)="removerExamen(servicio)">
+                                  <mat-icon>delete</mat-icon>
+                                </button>
+                              </td>
+                            </ng-container>
+                    
+                            <tr mat-header-row *matHeaderRowDef="columnasDisponibles"></tr>
+                            <tr mat-row *matRowDef="let row; columns: columnasDisponibles;"></tr>
+                    
+                          </table>
+                        </div>
+    
+                      </mat-card-content>
+                    
+                    </mat-card>
+    
+                </div>
+
+            </div>
+
+            <div class="row mt-4">
+
+                <div class="col col-4 text-center">
+                    <button mat-raised-button class="btn-nuevo"  type="button" (click)="nuevoServicio()">
+                      Nuevo Servicio
+                    </button>
+                </div>
+        
+        
+                <div class="col col-4 text-center">
+                    <button mat-raised-button class="btn-registrar" *ngIf="!pruebaSeleccionada" type="button" (click)="registraServicio()">
+                      Registrar Servicio
+                    </button>
+                </div>
+        
+                <div class="col col-4 text-center">
+                    <button mat-raised-button class="btn-actualizar" type="button" (click)="actualizarServicio()">
+                      Actualizar Servicio
+                    </button>
+                </div>
+        
+            </div>
+
+        </div>
+
+        <div class="contenedor-tablaDerecha">
+
+            <mat-card class="tabla-pruebas-card">
+                <mat-card-title>
+                    Servicios Registrados
+                </mat-card-title>
+               
+                <mat-card-content>
+
+                    <mat-form-field appearance="outline" class="mt-2">
+                        <mat-label>Buscar Servicio</mat-label>
+                        <input matInput [formControl]="terminoBusquedaServicioControl"
+                            (keyup)="filtrarServicio()"
+                            (focus)="seleccionarTexto($event)">
+                    </mat-form-field>
+    
+                  <table mat-table [dataSource]="dataSourceServicios" class="mat-elevation-z8">
+          
+                    <!-- Columnas -->
+                    <ng-container matColumnDef="codigo">
+                      <th mat-header-cell *matHeaderCellDef> Código </th>
+                      <td mat-cell *matCellDef="let servicio"> {{ servicio.codServicio }} </td>
+                    </ng-container>
+          
+                    <ng-container matColumnDef="nombre">
+                      <th mat-header-cell *matHeaderCellDef> Nombre </th>
+                      <td mat-cell *matCellDef="let servicio"> {{ servicio.nombreServicio }} </td>
+                    </ng-container>
+          
+                    <ng-container matColumnDef="precio">
+                      <th mat-header-cell *matHeaderCellDef> Precio </th>
+                      <td mat-cell *matCellDef="let servicio"> {{ servicio.precioServicio }} </td>
+                    </ng-container>
+          
+                    <tr mat-header-row *matHeaderRowDef="columnasServicios"></tr>
+                    <tr mat-row *matRowDef="let row; columns: columnasServicios;" (click)="cargarServicio(row)"></tr>
+                  </table>
+
+                  <div>
+                    <mat-paginator #MatPaginatorServicios [pageSizeOptions]="[5, 10, 25]" showFirstLastButtons></mat-paginator>
+                  </div>
+
+                </mat-card-content>
+              </mat-card>
+    
+        </div>
+
+    </div>
+
+</form>

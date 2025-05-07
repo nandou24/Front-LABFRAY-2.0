@@ -1,9 +1,10 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { IGetLastPruebasLab, IPruebaLab, IPruebaLabPostDTO } from '../../../models/pruebaLab.models';
-import { environment } from '../../../../../environments/enviroment';
+
 import { catchError, map, Observable, of } from 'rxjs';
 import Swal from 'sweetalert2';
+import { IGetLastPruebasLab, IPruebaLab, IPruebaLabPostDTO } from '../../../models/pruebaLab.models';
+import { environment } from '../../../../environments/enviroment';
 
 @Injectable({
   providedIn: 'root'

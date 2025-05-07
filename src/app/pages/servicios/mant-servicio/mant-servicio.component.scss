@@ -30,52 +30,8 @@ mat-option {
     fill: #ffffff;
 }
 
-//Flex para los campos del item
-.formulario-flex {
-    display: block;
-    width: 100%;
-}
-
-.fila-flex {
-    display: flex;
-    flex-wrap: wrap;
-    //margin-bottom: 1rem;
-}
-  
-.campo-flex-25 {
-    flex: 0 0 25%;
-    padding-left: 0.5rem;
-    padding-right: 0.5rem;
-    padding-top: 0.2rem;
-    padding-bottom: 0.2rem;
-}
-
-.campo-flex-50 {
-    flex: 0 0 50%;
-    padding-left: 0.5rem;
-    padding-right: 0.5rem;
-    padding-top: 0.2rem;
-    padding-bottom: 0.2rem;
-}
-
-.checkbox-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0px;
-}
-  
-.checkbox-grid mat-checkbox {
-    flex: 1 1 calc(33.3333% - 10px); /* 3 columnas en desktop */
-    min-width: 100px;
-}
-
-.tabla-container {
-    overflow-x: auto; /* Que la tabla pueda desplazarse si no entra */
-}
-
-.tabla-flex-50 {
-    flex: 0 0 50%;
-    padding: 0.5rem;
+.mat-mdc-card-content:last-child{
+    padding-bottom: 0%;
 }
 
 .contenedor-flex {
@@ -84,29 +40,48 @@ mat-option {
     gap: 16px;
     align-items: flex-start;
 }
-  
+
+//Aplicando flex al formulario
 .contenedor-formulario {
-    flex: 0 0 70%;
+    flex: 0 0 65%;
     //min-width: 300px;
 }
   
 .contenedor-tablaDerecha {
-    flex: 1 1 28%;
+    flex: 1 1 33%;
     //min-width: 300px;
 }
+
+.formulario-flex {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px; /* Separación entre campos */
+    row-gap: 8px;
+}
   
-.grupo-checkbox {
-    border: 1px solid #cbd5e0;
-    border-radius: 10px;
-    padding: 12px;
+.campo-flex {
+    flex: 1 1 calc(25% - 12px); /* 4 columnas en pantallas grandes */
+    min-width: 200px;
+}
+
+//Tablas
+.fila-flex {
+    display: flex;
+    flex-wrap: wrap;
+    //margin-bottom: 1rem;
+}
+
+.tabla-container {
+    overflow-x: auto; /* Que la tabla pueda desplazarse si no entra */
+}
+
+.tabla-flex-50 {
+    flex: 0 0 50%;
+    padding: 0.2rem;
 }
 
 @media (max-width: 1430px){
 
-    .campo-flex-25 {
-        flex: 0 0 50%; /* 2 columnas */
-    }
-    
     .contenedor-formulario,
     .contenedor-tablaDerecha {
       flex: 0 0 100%;
@@ -114,26 +89,21 @@ mat-option {
 
 }
 
-
 /* Tablets (2 columnas) */
 @media (max-width: 991px) {
-
-    /* Tablets (1 columna) */
-    .campo-flex-50 {
-        flex: 0 0 100%; /* 1 columna */
+    .campo-flex {
+      flex: 1 1 calc(50% - 8px); /* 2 columnas */
     }
-
     .tabla-flex-50 {
         flex: 0 0 100%;
         padding: 0.5rem;
     }
-
 }
 
 /* Celulares (1 columna) */
 @media (max-width: 767px) {
-    .campo-flex-25, .campo-flex-50 {
-      flex: 0 0 100%; /* 1 columna */
+    .campo-flex {
+      flex: 1 1 100%; /* 1 columna */
     }
 }
 
