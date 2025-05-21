@@ -12,6 +12,25 @@ mat-option {
     overflow-x: hidden !important; /* evita barra horizontal */
 }
 
+.telefono-fieldset {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 1rem 1rem 0.5rem 1rem;
+    position: relative;
+}
+  
+.telefono-fieldset legend {
+    font-size: 0.9rem; // más pequeño
+    font-weight: 500;
+    width: auto;
+    color: #0f3369; // azul institucional
+    background-color: #ffffff;
+    padding: 0 0.5rem;
+    margin-left: 1rem;
+    position: absolute;
+    top: -0.6rem;
+}
+
 .contenedor-flex {
     display: flex;
     flex-wrap: wrap;
@@ -21,12 +40,12 @@ mat-option {
 
 //Aplicando flex al formulario
 .contenedor-formulario {
-    flex: 0 0 70%;
+    flex: 0 0 60%;
     //min-width: 300px;
 }
   
 .contenedor-tablaDerecha {
-    flex: 1 1 28%;
+    flex: 1 1 38%;
     //min-width: 300px;
 }
 
@@ -36,9 +55,31 @@ mat-option {
     gap: 16px; /* Separación entre campos */
     row-gap: 8px;
 }
+
+.row-flex{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px; /* Separación entre campos */
+    row-gap: 8px;
+}
   
 .campo-flex {
-    flex: 1 1 calc(25% - 12px); /* 4 columnas en pantallas grandes */
+    flex: 1 1 calc(50% - 12px); /* 4 columnas en pantallas grandes */
+    //min-width: 200px;
+}
+
+.campo-flex-1 {
+    flex: 1 1 calc(100% - 12px); /* 4 columnas en pantallas grandes */
+    //min-width: 200px;
+}
+
+.campo-flex-2 {
+    flex: 1 1 calc(50% - 12px); /* 4 columnas en pantallas grandes */
+    //min-width: 200px;
+}
+
+.campo-flex-3 {
+    flex: 1 1 calc(33.333% - 12px); /* 4 columnas en pantallas grandes */
     //min-width: 200px;
 }
 
@@ -56,6 +97,16 @@ mat-option {
     .campo-flex {
       flex: 1 1 calc(50% - 8px); /* 2 columnas */
     }
+
+    .campo-flex-2 {
+        flex: 1 1 calc(50% - 12px); /* 4 columnas en pantallas grandes */
+        //min-width: 200px;
+    }
+
+    .campo-flex-3 {
+        flex: 1 1 calc(33.33% - 12px); /* 4 columnas en pantallas grandes */
+        //min-width: 200px;
+    }
 }
 
 /* Celulares (1 columna) */
@@ -63,4 +114,15 @@ mat-option {
     .campo-flex {
       flex: 1 1 100%; /* 1 columna */
     }
+
+    .campo-flex-2 {
+        flex: 1 1 calc(100% - 12px); /* 4 columnas en pantallas grandes */
+        //min-width: 200px;
+    }
+
+    .campo-flex-3 {
+        flex: 1 1 calc(100% - 12px); /* 4 columnas en pantallas grandes */
+        //min-width: 200px;
+    }
+
 }

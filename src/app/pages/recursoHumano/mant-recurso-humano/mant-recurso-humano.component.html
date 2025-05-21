@@ -1,8 +1,8 @@
-<div class="row mt-2" style="align-items: center;">
-    <h5 class="text-center" style="font-weight: 500;">MANTENIMIENTO DE SERVICIOS</h5>
-</div> 
-
 <form [formGroup]="myFormRecHumano">
+
+    <div class="row mt-2" style="align-items: center;">
+        <h5 class="text-center" style="font-weight: 500;">RECURSOS HUMANOS</h5>
+    </div>
 
     <div class="contenedor-flex">
 
@@ -119,7 +119,138 @@
 
                 </mat-tab>
 
-                <mat-tab label="Contacto">Datos de Contacto</mat-tab>
+                <mat-tab label="Contacto">
+
+                    <!-- <div class="formulario-flex mt-4"> -->
+            
+                        <div class="row-flex mt-4">
+
+                            <div class="campo-flex-3">
+                                <mat-form-field appearance="outline">
+                                    <mat-label>Departamento</mat-label>
+                                        <mat-select formControlName="departamentoRecHumano">
+                                            <mat-option *ngFor="let depart of departamentos" [value]="depart.id">{{ depart.nombre }}</mat-option>
+                                        </mat-select>
+                                </mat-form-field>
+                            </div>
+
+                            <div class="campo-flex-3">
+                                <mat-form-field appearance="outline">
+                                    <mat-label>Provincia</mat-label>
+                                        <mat-select formControlName="provinciaRecHumano">
+                                            <mat-option *ngFor="let provin of provincias" [value]="provin.id_Prov">{{ provin.nombre }}</mat-option>
+                                        </mat-select>
+                                </mat-form-field>
+                            </div>
+
+                            <div class="campo-flex-3">
+                                <mat-form-field appearance="outline">
+                                    <mat-label>Distrito</mat-label>
+                                        <mat-select formControlName="distritoRecHumano">
+                                            <mat-option *ngFor="let distri of distritos" [value]="distri.id_Ditrito">{{ distri.nombre }}</mat-option>
+                                        </mat-select>
+                                        <mat-error *ngIf="myFormRecHumano.get('distritoRecHumano')?.invalid">
+                                            Obligatorio
+                                        </mat-error>
+                                </mat-form-field>
+                            </div>
+
+                        </div>
+
+                        <div class="row-flex">
+
+                            <div class="campo-flex-2">
+                                <mat-form-field appearance="outline">
+                                    <mat-label>Dirección</mat-label>
+                                    <input matInput formControlName="direcRecHumano">
+                                </mat-form-field>
+                            </div>
+
+                            <div class="campo-flex-2">
+                                <mat-form-field appearance="outline">
+                                    <mat-label>e-mail</mat-label>
+                                    <input matInput formControlName="mailRecHumano">
+                                    <mat-error *ngIf="myFormRecHumano.get('mailRecHumano')?.hasError('email')">
+                                        Ingrese correo válido
+                                    </mat-error>
+                                </mat-form-field>
+                            </div>
+
+                        </div>
+
+                            
+
+
+                        <fieldset class="telefono-fieldset mt-2 mb-3">
+                            <legend>TELÉFONOS</legend>
+
+                            <div class="row mt-1">
+                                
+                                <div class="col-lg-3 text-center">
+                                    <button mat-flat-button color="primary" class="btn-telefono" type="button" (click)="agregarTelefono()">
+                                        <mat-icon class="me-1">add</mat-icon>
+                                        Agregar Teléfono
+                                    </button>
+                                </div>
+            
+                                <div class="col-lg-9">
+            
+                                    <div formArrayName="phones" *ngFor="let telGroup of phones.controls; let i = index">
+            
+                                        <div [formGroupName]="i" class="row align-items-center">
+                
+                                        <div class="col-lg-4">
+                                            <mat-form-field appearance="outline">
+                                            <mat-label>Teléfono</mat-label>
+                                            <input matInput formControlName="phoneNumber">
+                                            <mat-error *ngIf="telGroup.get('phoneNumber')?.hasError('required')">
+                                                Número requerido
+                                            </mat-error>
+                                            <mat-error *ngIf="telGroup.get('phoneNumber')?.hasError('pattern')">
+                                                Solo números de 9 a 11 dígitos
+                                            </mat-error>
+                                            </mat-form-field>
+                                        </div>
+                                    
+                                        <div class="col-lg-7">
+                                            <mat-form-field appearance="outline">
+                                            <mat-label>Descripción</mat-label>
+                                            <input matInput formControlName="descriptionPhone">
+                                            <mat-error *ngIf="telGroup.get('descriptionPhone')?.hasError('required')">
+                                                Requerido
+                                            </mat-error>
+                                            <mat-error *ngIf="telGroup.get('descriptionPhone')?.hasError('maxlength')">
+                                                Máximo 30 caracteres
+                                            </mat-error>
+                                            </mat-form-field>
+                                        </div>
+                                    
+                                        <div class="col-lg-1">
+                                            <button mat-icon-button class="mb-3" color="warn" type="button" (click)="eliminarTelefono(i)">
+                                            <mat-icon>delete</mat-icon>
+                                            </button>
+                                        </div>
+                
+                                        </div>
+                
+                                    </div>
+            
+                                </div>
+
+                            </div>
+
+                            <div *ngIf="!validarArrayTelefono() && formSubmitted" class="text-danger mt-2" style="font-size: 14px; text-align: center;">
+                                Debe agregar al menos un número de teléfono
+                            </div>
+
+                        </fieldset>
+
+                    <!-- </div> -->
+                    
+
+
+                </mat-tab>
+
                 <mat-tab label="Profesionales">Datos Profesionales</mat-tab>
                 <mat-tab label="Laborales">Datos Laborales</mat-tab>
 
@@ -128,6 +259,46 @@
         </div>
 
         <div class="contenedor-tablaDerecha">
+
+            <table mat-table [dataSource]="dataSourceRecursoHumano" class="tabla-pacientes mt-1">
+    
+                    <!-- N° -->
+                    <ng-container matColumnDef="nro">
+                        <th mat-header-cell *matHeaderCellDef> N° </th>
+                        <td mat-cell *matCellDef="let recHumano ; let i = index"> {{ i + 1 }} </td>
+                    </ng-container>
+                    
+                    <!-- HC -->
+                    <ng-container matColumnDef="codigo" >
+                        <th mat-header-cell *matHeaderCellDef> Código </th>
+                        <td mat-cell *matCellDef="let recHumano"> {{ recHumano.codRecHumano }} </td>
+                    </ng-container>
+                    
+                    <!-- Apellidos y Nombres  -->
+                    <ng-container matColumnDef="nombreCompleto">
+                        <th mat-header-cell *matHeaderCellDef> Apellidos y Nombres </th>
+                        <td mat-cell *matCellDef="let recHumano">
+                            {{ recHumano.apePatRecHumano }} {{ recHumano.apeMatRecHumano }} {{ recHumano.nombreRecHumano }}
+                        </td>
+                    </ng-container>
+                    
+                    <!-- Tipo Documento -->
+                    <ng-container matColumnDef="tipoDoc">
+                        <th mat-header-cell *matHeaderCellDef> Tipo Doc </th>
+                        <td mat-cell *matCellDef="let recHumano"> {{ recHumano.tipoDoc }} </td>
+                    </ng-container>
+                    
+                    <!-- Nro. Documento -->
+                    <ng-container matColumnDef="nroDoc">
+                        <th mat-header-cell *matHeaderCellDef> Nro. Doc </th>
+                        <td mat-cell *matCellDef="let recHumano"> {{ recHumano.nroDoc }} </td>
+                    </ng-container>
+                    
+                    <!-- Filas -->
+                    <tr mat-header-row *matHeaderRowDef="columnasTablaRecursoHumano"></tr>
+                    <tr mat-row *matRowDef="let row; columns: columnasTablaRecursoHumano;" (click)="cargarRecursoHumano(row)"></tr>
+            
+                </table>
 
         </div>
 
