@@ -3,6 +3,25 @@ mat-form-field {
     width: 100%;
 }
 
+//Inicio CARD-----------
+mat-card-title {
+    background-color: #0f3369;  // Azul Bootstrap
+    color: white;
+    padding-left: 1.5rem;
+    padding-top: 0.1rem;
+    padding-bottom: 0.1rem;
+    font-weight: lighter;
+    //font-size: 18px;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+}
+
+.mat-mdc-card-content:last-child{
+    padding-bottom: 0%;
+}
+
+//Fin CARD--------------
+
 mat-option {
     font-size: 13px;
     //color: #0f3369;  // Azul Bootstrap
@@ -12,19 +31,29 @@ mat-option {
     overflow-x: hidden !important; /* evita barra horizontal */
 }
 
-.telefono-fieldset {
+//para los items de cada fila de parámetros de validación
+.flex-item {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 0;
+    text-align: center;
+    flex: 0 0 auto;
+}
+
+.campo-fieldset {
     border: 1px solid #ddd;
     border-radius: 8px;
     padding: 1rem 1rem 0.5rem 1rem;
     position: relative;
 }
   
-.telefono-fieldset legend {
+.campo-fieldset legend {
     font-size: 0.9rem; // más pequeño
     font-weight: 500;
     width: auto;
     color: #0f3369; // azul institucional
-    background-color: #ffffff;
+    background-color: #f9f9f9;
     padding: 0 0.5rem;
     margin-left: 1rem;
     position: absolute;
@@ -59,8 +88,8 @@ mat-option {
 .row-flex{
     display: flex;
     flex-wrap: wrap;
-    gap: 16px; /* Separación entre campos */
-    row-gap: 8px;
+    gap: 10px; /* Separación entre campos */
+    row-gap: 0px;
 }
   
 .campo-flex {
@@ -81,6 +110,24 @@ mat-option {
 .campo-flex-3 {
     flex: 1 1 calc(33.333% - 12px); /* 4 columnas en pantallas grandes */
     //min-width: 200px;
+}
+
+.campo-flex-4 {
+    flex: 1 1 calc(25% - 30px); /* 4 columnas en pantallas grandes */
+    //min-width: 200px;
+}
+
+//para las filas de parametros de validación
+.flex-row-container {
+    transition: background-color 0.3s ease, box-shadow 0.3s ease; /* ⚡ Transición suave */
+}
+
+//para las filas de parametros de validación
+/* Aplicamos hover para TODAS las resoluciones */
+.flex-row-container:hover {
+    background-color: #dfe9f3; /* Fondo azul clarito */
+    border-radius: 8px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.15); /* Sombra suave */
 }
 
 @media (max-width: 1430px){
@@ -107,6 +154,15 @@ mat-option {
         flex: 1 1 calc(33.33% - 12px); /* 4 columnas en pantallas grandes */
         //min-width: 200px;
     }
+
+    .campo-flex-4 {
+        flex: 1 1 calc(25% - 60px); /* 4 columnas en pantallas grandes */
+        //min-width: 200px;
+    }
+
+    .flex-item {
+      flex: 1 1 48% !important; /* Cada item ocupará 100% cuando sea pequeño */
+    }
 }
 
 /* Celulares (1 columna) */
@@ -125,4 +181,47 @@ mat-option {
         //min-width: 200px;
     }
 
+    .campo-flex-4 {
+        flex: 1 1 calc(100% - 12px); /* 4 columnas en pantallas grandes */
+        //min-width: 200px;
+    }
+
+    .flex-item {
+      flex: 1 1 100% !important; /* Cada item ocupará 100% cuando sea pequeño */
+    }
+
+}
+
+.btn-registrar {
+    background-color: #14532d !important; // verde oscuro
+    color: white !important;
+  
+    &:hover {
+      background-color: #077732 !important;
+    }
+}
+  
+.btn-actualizar {
+    background-color: #ecb80b !important; // amarillo suave
+    color: #154cb3 !important;
+  
+    &:hover {
+      background-color: #ffda06 !important;
+    }
+}
+  
+.btn-nuevo {
+    background-color: #8d9097 !important; // azul moderno
+    color: white !important;
+
+    &:hover {
+        background-color: #b9b7b7 !important;
+    }
+}
+
+.btn-telefono {
+    font-size: 0.75rem; // texto más pequeño
+    padding: 0.25rem 0.75rem; // menos padding
+    min-height: auto; // evita altura mínima
+    line-height: 1.2;
 }

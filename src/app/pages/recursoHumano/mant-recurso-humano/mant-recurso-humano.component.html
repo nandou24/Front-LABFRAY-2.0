@@ -12,293 +12,539 @@
 
                 <mat-tab label="Personales">
 
-                        <div class="formulario-flex mt-4">
-                    
-                            <div class="campo-flex">
-                                <mat-form-field appearance="outline">
-                                    <mat-label>Tipo Doc</mat-label>
-                                        <mat-select formControlName="tipoDoc">
-                                            <mat-option value="DNI">DNI</mat-option>
-                                            <mat-option value="CE">CE</mat-option>
-                                            <mat-option value="PASAPORTE">Pasaporte</mat-option>
-                                        </mat-select>
-                                </mat-form-field>
-                            </div>                          
-                                    
-                            <div class="campo-flex">
-                                <mat-form-field appearance="outline">
-                                    <mat-label >Nro. Documento</mat-label>
-                                    <input matInput formControlName="nroDoc">
-                                    <mat-error *ngIf="myFormRecHumano.get('nroDoc')?.hasError('required')">
-                                        Obligatorio
-                                    </mat-error>
-
-                                    <mat-error *ngIf="myFormRecHumano.get('nroDoc')?.hasError('invalidDNI')">
-                                        DNI debe tener 8 números
-                                    </mat-error>
-                                
-                                    <mat-error *ngIf="myFormRecHumano.get('nroDoc')?.hasError('invalidCE')">
-                                        CE tiene hasta 13 caracteres
-                                    </mat-error>
-                                
-                                    <mat-error *ngIf="myFormRecHumano.get('nroDoc')?.hasError('invalidPasaporte')">
-                                        Pasaporte tiene hasta 16 caracteres
-                                    </mat-error>
-                                </mat-form-field>
-                            </div>
-
-                            <div class="campo-flex">
-                                <mat-form-field appearance="outline">
-                                    <mat-label>Fecha Nac - mm/dd/yyyy</mat-label>
-                                        <input matInput [matDatepicker]="picker" readonly="true" formControlName="fechaNacimiento" (dateChange)="actualizarEdad()">
-                                        <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
-                                        <mat-datepicker #picker disabled="false"></mat-datepicker>
-                                        <mat-error *ngIf="myFormRecHumano.get('fechaNacimiento')?.hasError('required')">
-                                            Obligatorio
-                                        </mat-error>
-                                        <mat-error *ngIf="myFormRecHumano.get('fechaNacimiento')?.hasError('fechaFutura')">
-                                            Fecha no puede ser futura
-                                        </mat-error>
-                                </mat-form-field>
-                            </div>
-
-                            <div class="campo-flex mt-2 text-center">
-                                {{myFormRecHumano.get('edad')?.value}}
-                            </div>
-
-                            <div class="campo-flex">
-                                <mat-form-field appearance="outline">
-                                    <mat-label>Apellido Paterno</mat-label>
-                                    <input matInput formControlName="apePatRecHumano">
-                                    <mat-error *ngIf="myFormRecHumano.get('apePatRecHumano')?.hasError('required')">
-                                        Obligatorio
-                                    </mat-error>
-                                    <mat-error *ngIf="myFormRecHumano.get('apePatRecHumano')?.hasError('pattern')">
-                                        Solo letras
-                                    </mat-error>
-                                </mat-form-field>
-                            </div>
-
-                            <div class="campo-flex">
-                                <mat-form-field appearance="outline">
-                                    <mat-label>Apellido Materno</mat-label>
-                                    <input matInput formControlName="apeMatRecHumano">
-                                    <mat-error *ngIf="myFormRecHumano.get('apeMatRecHumano')?.hasError('pattern')">
-                                        Solo letras
-                                    </mat-error>
-                                </mat-form-field>
-                            </div>
-
-                            <div class="campo-flex">
-                                <mat-form-field appearance="outline">
-                                    <mat-label>Nombres</mat-label>
-                                    <input matInput formControlName="nombreRecHumano">
-                                    <mat-error *ngIf="myFormRecHumano.get('nombreRecHumano')?.hasError('required')">
-                                        Obligatorio
-                                    </mat-error>
-                                    <mat-error *ngIf="myFormRecHumano.get('nombreRecHumano')?.hasError('pattern')">
-                                        Solo letras
-                                    </mat-error>
-                                </mat-form-field>
-                            </div>
-
-                            <div class="campo-flex">
-                                <mat-form-field appearance="outline">
-                                    <mat-label>Sexo</mat-label>
-                                    <mat-select formControlName="sexoRecHumano">
-                                        <mat-option value="M">Masculino</mat-option>
-                                        <mat-option value="F">Femenino</mat-option>
+                    <div class="formulario-flex mt-4">
+                
+                        <div class="campo-flex">
+                            <mat-form-field appearance="outline">
+                                <mat-label>Tipo Doc</mat-label>
+                                    <mat-select formControlName="tipoDoc">
+                                        <mat-option value="DNI">DNI</mat-option>
+                                        <mat-option value="CE">CE</mat-option>
+                                        <mat-option value="PASAPORTE">Pasaporte</mat-option>
                                     </mat-select>
-                                    <mat-error *ngIf="myFormRecHumano.get('sexoRecHumano')?.hasError('required')">
+                            </mat-form-field>
+                        </div>                          
+                                
+                        <div class="campo-flex">
+                            <mat-form-field appearance="outline">
+                                <mat-label >Nro. Documento</mat-label>
+                                <input matInput formControlName="nroDoc">
+                                <mat-error *ngIf="myFormRecHumano.get('nroDoc')?.hasError('required')">
+                                    Obligatorio
+                                </mat-error>
+
+                                <mat-error *ngIf="myFormRecHumano.get('nroDoc')?.hasError('invalidDNI')">
+                                    DNI debe tener 8 números
+                                </mat-error>
+                            
+                                <mat-error *ngIf="myFormRecHumano.get('nroDoc')?.hasError('invalidCE')">
+                                    CE tiene hasta 13 caracteres
+                                </mat-error>
+                            
+                                <mat-error *ngIf="myFormRecHumano.get('nroDoc')?.hasError('invalidPasaporte')">
+                                    Pasaporte tiene hasta 16 caracteres
+                                </mat-error>
+                            </mat-form-field>
+                        </div>
+
+                        <div class="campo-flex">
+                            <mat-form-field appearance="outline">
+                                <mat-label>Fecha Nac - mm/dd/yyyy</mat-label>
+                                    <input matInput [matDatepicker]="picker" readonly="true" formControlName="fechaNacimiento" (dateChange)="actualizarEdad()">
+                                    <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+                                    <mat-datepicker #picker disabled="false"></mat-datepicker>
+                                    <mat-error *ngIf="myFormRecHumano.get('fechaNacimiento')?.hasError('required')">
                                         Obligatorio
                                     </mat-error>
-                                </mat-form-field>
-                            </div>
-
+                                    <mat-error *ngIf="myFormRecHumano.get('fechaNacimiento')?.hasError('fechaFutura')">
+                                        Fecha no puede ser futura
+                                    </mat-error>
+                            </mat-form-field>
                         </div>
+
+                        <div class="campo-flex mt-2 text-center">
+                            {{myFormRecHumano.get('edad')?.value}}
+                        </div>
+
+                        <div class="campo-flex">
+                            <mat-form-field appearance="outline">
+                                <mat-label>Apellido Paterno</mat-label>
+                                <input matInput formControlName="apePatRecHumano">
+                                <mat-error *ngIf="myFormRecHumano.get('apePatRecHumano')?.hasError('required')">
+                                    Obligatorio
+                                </mat-error>
+                                <mat-error *ngIf="myFormRecHumano.get('apePatRecHumano')?.hasError('pattern')">
+                                    Solo letras
+                                </mat-error>
+                            </mat-form-field>
+                        </div>
+
+                        <div class="campo-flex">
+                            <mat-form-field appearance="outline">
+                                <mat-label>Apellido Materno</mat-label>
+                                <input matInput formControlName="apeMatRecHumano">
+                                <mat-error *ngIf="myFormRecHumano.get('apeMatRecHumano')?.hasError('pattern')">
+                                    Solo letras
+                                </mat-error>
+                            </mat-form-field>
+                        </div>
+
+                        <div class="campo-flex">
+                            <mat-form-field appearance="outline">
+                                <mat-label>Nombres</mat-label>
+                                <input matInput formControlName="nombreRecHumano">
+                                <mat-error *ngIf="myFormRecHumano.get('nombreRecHumano')?.hasError('required')">
+                                    Obligatorio
+                                </mat-error>
+                                <mat-error *ngIf="myFormRecHumano.get('nombreRecHumano')?.hasError('pattern')">
+                                    Solo letras
+                                </mat-error>
+                            </mat-form-field>
+                        </div>
+
+                        <div class="campo-flex">
+                            <mat-form-field appearance="outline">
+                                <mat-label>Sexo</mat-label>
+                                <mat-select formControlName="sexoRecHumano">
+                                    <mat-option value="Masculino">Masculino</mat-option>
+                                    <mat-option value="Femenino">Femenino</mat-option>
+                                </mat-select>
+                                <mat-error *ngIf="myFormRecHumano.get('sexoRecHumano')?.hasError('required')">
+                                    Obligatorio
+                                </mat-error>
+                            </mat-form-field>
+                        </div>
+
+                    </div>
 
                 </mat-tab>
 
                 <mat-tab label="Contacto">
-
-                    <!-- <div class="formulario-flex mt-4"> -->
             
-                        <div class="row-flex mt-4">
+                    <div class="row-flex mt-4">
 
-                            <div class="campo-flex-3">
-                                <mat-form-field appearance="outline">
-                                    <mat-label>Departamento</mat-label>
-                                        <mat-select formControlName="departamentoRecHumano">
-                                            <mat-option *ngFor="let depart of departamentos" [value]="depart.id">{{ depart.nombre }}</mat-option>
-                                        </mat-select>
-                                </mat-form-field>
-                            </div>
-
-                            <div class="campo-flex-3">
-                                <mat-form-field appearance="outline">
-                                    <mat-label>Provincia</mat-label>
-                                        <mat-select formControlName="provinciaRecHumano">
-                                            <mat-option *ngFor="let provin of provincias" [value]="provin.id_Prov">{{ provin.nombre }}</mat-option>
-                                        </mat-select>
-                                </mat-form-field>
-                            </div>
-
-                            <div class="campo-flex-3">
-                                <mat-form-field appearance="outline">
-                                    <mat-label>Distrito</mat-label>
-                                        <mat-select formControlName="distritoRecHumano">
-                                            <mat-option *ngFor="let distri of distritos" [value]="distri.id_Ditrito">{{ distri.nombre }}</mat-option>
-                                        </mat-select>
-                                        <mat-error *ngIf="myFormRecHumano.get('distritoRecHumano')?.invalid">
-                                            Obligatorio
-                                        </mat-error>
-                                </mat-form-field>
-                            </div>
-
+                        <div class="campo-flex-3">
+                            <mat-form-field appearance="outline">
+                                <mat-label>Departamento</mat-label>
+                                    <mat-select formControlName="departamentoRecHumano">
+                                        <mat-option *ngFor="let depart of departamentos" [value]="depart.id">{{ depart.nombre }}</mat-option>
+                                    </mat-select>
+                            </mat-form-field>
                         </div>
 
-                        <div class="row-flex">
+                        <div class="campo-flex-3">
+                            <mat-form-field appearance="outline">
+                                <mat-label>Provincia</mat-label>
+                                    <mat-select formControlName="provinciaRecHumano">
+                                        <mat-option *ngFor="let provin of provincias" [value]="provin.id_Prov">{{ provin.nombre }}</mat-option>
+                                    </mat-select>
+                            </mat-form-field>
+                        </div>
 
-                            <div class="campo-flex-2">
-                                <mat-form-field appearance="outline">
-                                    <mat-label>Dirección</mat-label>
-                                    <input matInput formControlName="direcRecHumano">
-                                </mat-form-field>
-                            </div>
-
-                            <div class="campo-flex-2">
-                                <mat-form-field appearance="outline">
-                                    <mat-label>e-mail</mat-label>
-                                    <input matInput formControlName="mailRecHumano">
-                                    <mat-error *ngIf="myFormRecHumano.get('mailRecHumano')?.hasError('email')">
-                                        Ingrese correo válido
+                        <div class="campo-flex-3">
+                            <mat-form-field appearance="outline">
+                                <mat-label>Distrito</mat-label>
+                                    <mat-select formControlName="distritoRecHumano">
+                                        <mat-option *ngFor="let distri of distritos" [value]="distri.id_Ditrito">{{ distri.nombre }}</mat-option>
+                                    </mat-select>
+                                    <mat-error *ngIf="myFormRecHumano.get('distritoRecHumano')?.invalid">
+                                        Obligatorio
                                     </mat-error>
-                                </mat-form-field>
-                            </div>
-
+                            </mat-form-field>
                         </div>
 
+                    </div>
+
+                    <div class="row-flex">
+
+                        <div class="campo-flex-2">
+                            <mat-form-field appearance="outline">
+                                <mat-label>Dirección</mat-label>
+                                <input matInput formControlName="direcRecHumano">
+                            </mat-form-field>
+                        </div>
+
+                        <div class="campo-flex-2">
+                            <mat-form-field appearance="outline">
+                                <mat-label>e-mail</mat-label>
+                                <input matInput formControlName="mailRecHumano">
+                                <mat-error *ngIf="myFormRecHumano.get('mailRecHumano')?.hasError('email')">
+                                    Ingrese correo válido
+                                </mat-error>
+                            </mat-form-field>
+                        </div>
+
+                    </div>
+
+                    <fieldset class="campo-fieldset mt-2 mb-3">
+                        <legend>TELÉFONOS</legend>
+
+                        <div class="row mt-1">
                             
-
-
-                        <fieldset class="telefono-fieldset mt-2 mb-3">
-                            <legend>TELÉFONOS</legend>
-
-                            <div class="row mt-1">
+                            <div class="col-lg-3 text-center">
+                                <button mat-flat-button color="primary" class="btn-telefono" type="button" (click)="agregarTelefono()">
+                                    <mat-icon class="me-1">add</mat-icon>
+                                    Agregar Teléfono
+                                </button>
+                            </div>
+        
+                            <div class="col-lg-9">
+        
+                                <div formArrayName="phones" *ngFor="let telGroup of phones.controls; let i = index">
+        
+                                    <div [formGroupName]="i" class="row align-items-center">
+            
+                                    <div class="col-lg-4">
+                                        <mat-form-field appearance="outline">
+                                        <mat-label>Teléfono</mat-label>
+                                        <input matInput formControlName="phoneNumber">
+                                        <mat-error *ngIf="telGroup.get('phoneNumber')?.hasError('required')">
+                                            Número requerido
+                                        </mat-error>
+                                        <mat-error *ngIf="telGroup.get('phoneNumber')?.hasError('pattern')">
+                                            Solo números de 9 a 11 dígitos
+                                        </mat-error>
+                                        </mat-form-field>
+                                    </div>
                                 
-                                <div class="col-lg-3 text-center">
-                                    <button mat-flat-button color="primary" class="btn-telefono" type="button" (click)="agregarTelefono()">
-                                        <mat-icon class="me-1">add</mat-icon>
-                                        Agregar Teléfono
-                                    </button>
-                                </div>
+                                    <div class="col-lg-7">
+                                        <mat-form-field appearance="outline">
+                                        <mat-label>Descripción</mat-label>
+                                        <input matInput formControlName="descriptionPhone">
+                                        <mat-error *ngIf="telGroup.get('descriptionPhone')?.hasError('required')">
+                                            Requerido
+                                        </mat-error>
+                                        <mat-error *ngIf="telGroup.get('descriptionPhone')?.hasError('maxlength')">
+                                            Máximo 30 caracteres
+                                        </mat-error>
+                                        </mat-form-field>
+                                    </div>
+                                
+                                    <div class="col-lg-1">
+                                        <button mat-icon-button class="mb-3" color="warn" type="button" (click)="eliminarTelefono(i)">
+                                        <mat-icon>delete</mat-icon>
+                                        </button>
+                                    </div>
             
-                                <div class="col-lg-9">
-            
-                                    <div formArrayName="phones" *ngFor="let telGroup of phones.controls; let i = index">
-            
-                                        <div [formGroupName]="i" class="row align-items-center">
-                
-                                        <div class="col-lg-4">
-                                            <mat-form-field appearance="outline">
-                                            <mat-label>Teléfono</mat-label>
-                                            <input matInput formControlName="phoneNumber">
-                                            <mat-error *ngIf="telGroup.get('phoneNumber')?.hasError('required')">
-                                                Número requerido
-                                            </mat-error>
-                                            <mat-error *ngIf="telGroup.get('phoneNumber')?.hasError('pattern')">
-                                                Solo números de 9 a 11 dígitos
-                                            </mat-error>
-                                            </mat-form-field>
-                                        </div>
-                                    
-                                        <div class="col-lg-7">
-                                            <mat-form-field appearance="outline">
-                                            <mat-label>Descripción</mat-label>
-                                            <input matInput formControlName="descriptionPhone">
-                                            <mat-error *ngIf="telGroup.get('descriptionPhone')?.hasError('required')">
-                                                Requerido
-                                            </mat-error>
-                                            <mat-error *ngIf="telGroup.get('descriptionPhone')?.hasError('maxlength')">
-                                                Máximo 30 caracteres
-                                            </mat-error>
-                                            </mat-form-field>
-                                        </div>
-                                    
-                                        <div class="col-lg-1">
-                                            <button mat-icon-button class="mb-3" color="warn" type="button" (click)="eliminarTelefono(i)">
-                                            <mat-icon>delete</mat-icon>
-                                            </button>
-                                        </div>
-                
-                                        </div>
-                
                                     </div>
             
                                 </div>
-
+        
                             </div>
 
-                            <div *ngIf="!validarArrayTelefono() && formSubmitted" class="text-danger mt-2" style="font-size: 14px; text-align: center;">
-                                Debe agregar al menos un número de teléfono
-                            </div>
+                        </div>
 
-                        </fieldset>
+                        <div *ngIf="!validarArrayTelefono() && formSubmitted" class="text-danger mt-2" style="font-size: 14px; text-align: center;">
+                            Debe agregar al menos un número de teléfono
+                        </div>
 
-                    <!-- </div> -->
-                    
-
+                    </fieldset>
 
                 </mat-tab>
 
-                <mat-tab label="Profesionales">Datos Profesionales</mat-tab>
+                <mat-tab label="Profesionales">
+                    
+                    <div class="row-flex mt-4">
+
+                        <div class="campo-flex-3">
+                            <mat-form-field appearance="outline">
+                                <mat-label>Grado de Instrucción</mat-label>
+                                <mat-select formControlName="gradoInstruccion">
+                                    <mat-option value="1">Básica</mat-option>
+                                    <mat-option value="2">Técnica Incompleta </mat-option>
+                                    <mat-option value="3">Técnica Completa </mat-option>
+                                    <mat-option value="4">Universitaria Incompleta </mat-option>
+                                    <mat-option value="5">Universitaria Completa </mat-option>
+                                </mat-select>
+                                <mat-error *ngIf="myFormRecHumano.get('gradoInstruccion')?.hasError('required')">
+                                    Obligatorio
+                                </mat-error>
+                            </mat-form-field>
+                        </div>
+
+                    </div>
+
+                    <fieldset class="campo-fieldset mt-2 mb-3">
+                        <legend>PROFESIONES</legend>
+
+                        <div class="row">
+                
+                            <div formArrayName="profesionesRecurso" *ngFor="let recHumanoGroup of profesionesRecurso.controls; let i = index">
+    
+                                <div [formGroupName]="i" class="flex-row-container">
+        
+                                    <div class="row-flex mt-2">
+
+                                        <div class="campo-flex-3">
+                                            <mat-form-field appearance="outline">
+                                                <mat-label>Nivel de Profesión</mat-label>
+                                                <mat-select formControlName="nivelProfesion">
+                                                    <mat-option value="Técnica">Técnica</mat-option>
+                                                    <mat-option value="Universitaria">Universitaria</mat-option>
+                                                </mat-select>
+                                                <mat-error *ngIf="myFormRecHumano.get('nivelProfesion')?.hasError('required')">
+                                                    Obligatorio
+                                                </mat-error>
+                                            </mat-form-field>
+                                        </div>
+                                    
+                                        <div class="campo-flex-3">
+                                            <mat-form-field appearance="outline">
+                                                <mat-label>Profesión</mat-label>
+                                                <mat-select formControlName="profesion">
+                                                    <mat-option value="Enfermero">Enfermero</mat-option>
+                                                    <mat-option value="Médico">Médico</mat-option>
+                                                    <mat-option value="Nutricionista">Nutricionista</mat-option>
+                                                    <mat-option value="Odontólogo">Odontólogo</mat-option>
+                                                    <mat-option value="Psicólogo">Psicólogo</mat-option>
+                                                    <mat-option value="Tecnólogo Médico">Tecnólogo Médico</mat-option>
+                                                    <mat-option value="Trabajador Social">Trabajador Social</mat-option>
+                                                    <mat-option value="Ingeniero de Sistemas">Ingeniero de Sistemas</mat-option>
+                                                </mat-select>
+                                                <mat-error *ngIf="myFormRecHumano.get('profesion')?.hasError('required')">
+                                                    Obligatorio
+                                                </mat-error>
+                                            </mat-form-field>
+                                        </div>
+
+                                        <div class="campo-flex-3">
+                                            <mat-form-field appearance="outline">
+                                                <mat-label>Centro de Estudios</mat-label>
+                                                <input matInput formControlName="centroEstudiosProfesion">
+                                                <mat-error *ngIf="myFormRecHumano.get('centroEstudiosProfesion')?.hasError('pattern')">
+                                                    Solo letras
+                                                </mat-error>
+                                            </mat-form-field>
+                                        </div>
+
+                                    </div>
+
+                                    <div class="row-flex">
+
+                                        <div class="campo-flex-4 mb-3 text-center">
+                                            <mat-slide-toggle formControlName="titulo">Título</mat-slide-toggle>
+                                        </div>
+
+                                        <div class="campo-flex-4">
+                                            <mat-form-field appearance="outline">
+                                                <mat-label>Colegiatura</mat-label>
+                                                <input matInput formControlName="nroColegiatura">
+                                                <mat-error *ngIf="myFormRecHumano.get('nroColegiatura')?.hasError('pattern')">
+                                                    Solo letras
+                                                </mat-error>
+                                            </mat-form-field>
+                                        </div>
+
+                                        <div class="campo-flex-4">
+                                            <mat-form-field appearance="outline">
+                                                <mat-label>Año de Egreso</mat-label>
+                                                <input matInput formControlName="anioEgresoProfesion">
+                                                <mat-error *ngIf="myFormRecHumano.get('anioEgresoProfesion')?.hasError('pattern')">
+                                                    Solo números
+                                                </mat-error>
+                                            </mat-form-field>
+                                        </div>
+
+                                        <div class="campo-flex-4 mb-2 text-center">
+                                            <button mat-icon-button class="mb-3" color="warn" type="button" (click)="eliminarProfesion(i)">
+                                            <mat-icon>delete</mat-icon>
+                                            </button>
+                                        </div>
+
+                                    </div>
+        
+                                </div>
+        
+                            </div>
+
+
+                            <div class="text-center mt-2">
+                                <button mat-flat-button color="primary" class="btn-telefono" type="button" (click)="agregarProfesion()">
+                                    <mat-icon class="me-1">add</mat-icon>
+                                    Agregar Profesión
+                                </button>
+                            </div>
+
+                        </div>
+
+                        <div *ngIf="!validarArrayTelefono() && formSubmitted" class="text-danger mt-2" style="font-size: 14px; text-align: center;">
+                            Debe agregar al menos un número de teléfono
+                        </div>
+
+                    </fieldset>
+
+                    <fieldset class="campo-fieldset mt-2 mb-3">
+                        <legend>ESPECIALIDADES</legend>
+
+                        <div class="row">
+                
+                            <div formArrayName="especialidadesRecurso" *ngFor="let recHumanoGroup of especialidadesRecurso.controls; let i = index">
+    
+                                <div [formGroupName]="i" class="flex-row-container">
+        
+                                    <div class="row-flex mt-2">
+                                  
+                                        <div [style.flex]="setFlex(30, '%')" class="flex-item">
+                                            <mat-form-field appearance="outline">
+                                                <mat-label>Especialdiad</mat-label>
+                                                <mat-select formControlName="especialidad">
+                                                    <mat-option value="Pediatría">Pediatría</mat-option>
+                                                    <mat-option value="Radiólogía">Radiólogía</mat-option>
+                                                    <mat-option value="Ginecología y Obstetricia">Ginecología y Obstetricia</mat-option>
+                                                </mat-select>
+                                                <mat-error *ngIf="myFormRecHumano.get('profesion')?.hasError('required')">
+                                                    Obligatorio
+                                                </mat-error>
+                                            </mat-form-field>
+                                        </div>
+
+                                        <div [style.flex]="setFlex(30, '%')" class="flex-item">
+                                            <mat-form-field appearance="outline">
+                                                <mat-label>Centro de Estudios</mat-label>
+                                                <input matInput formControlName="centroEstudiosEspecialidad">
+                                                <mat-error *ngIf="myFormRecHumano.get('centroEstudiosEspecialidad')?.hasError('pattern')">
+                                                    Solo letras
+                                                </mat-error>
+                                            </mat-form-field>
+                                        </div>
+
+                                        <div [style.flex]="setFlex(15, '%')" class="flex-item">
+                                            <mat-form-field appearance="outline">
+                                                <mat-label>RNE</mat-label>
+                                                <input matInput formControlName="rne">
+                                                <mat-error *ngIf="myFormRecHumano.get('rne')?.hasError('pattern')">
+                                                    Solo letras
+                                                </mat-error>
+                                            </mat-form-field>
+                                        </div>
+
+                                        <div [style.flex]="setFlex(15, '%')" class="flex-item">
+                                            <mat-form-field appearance="outline">
+                                                <mat-label>Año de Egreso</mat-label>
+                                                <input matInput formControlName="anioEgresoEspecialidad">
+                                                <mat-error *ngIf="myFormRecHumano.get('anioEgresoEspecialidad')?.hasError('pattern')">
+                                                    Solo números
+                                                </mat-error>
+                                            </mat-form-field>
+                                        </div>
+
+                                        <div [style.flex]="setFlex(5, '%')" class="flex-item align-items-center">
+                                            <button mat-icon-button class="mb-3" color="warn" type="button" (click)="eliminarEspecialidad(i)">
+                                            <mat-icon>delete</mat-icon>
+                                            </button>
+                                        </div>
+
+                                    </div>
+        
+                                </div>
+        
+                            </div>
+
+
+                            <div class="text-center mt-2">
+                                <button mat-flat-button color="primary" class="btn-telefono" type="button" (click)="agregarEspecialidad()">
+                                    <mat-icon class="me-1">add</mat-icon>
+                                    Agregar Especialidad
+                                </button>
+                            </div>
+
+                        </div>
+
+                        <div *ngIf="!validarArrayTelefono() && formSubmitted" class="text-danger mt-2" style="font-size: 14px; text-align: center;">
+                            Debe agregar al menos un número de teléfono
+                        </div>
+
+                    </fieldset>
+
+                </mat-tab>
+
                 <mat-tab label="Laborales">Datos Laborales</mat-tab>
 
             </mat-tab-group>
+
+            <div class="row mt-4">
+
+                <div class="col col-4 text-center">
+                    <button mat-raised-button class="btn-nuevo"  type="button" (click)="nuevoRecHumano()">
+                      Nuevo Recurso Humano
+                    </button>
+                </div>
+        
+        
+                <div class="col col-4 text-center">
+                    <button mat-raised-button class="btn-registrar" *ngIf="!recHumanoSeleccionado" type="button" (click)="registraRecHumano()">
+                      Registrar Recurso Humano
+                    </button>
+                </div>
+        
+                <div class="col col-4 text-center">
+                    <button mat-raised-button class="btn-actualizar" type="button" (click)="actualizarRecHumano()">
+                      Actualizar Recurso Humano
+                    </button>
+                </div>
+        
+            </div>
 
         </div>
 
         <div class="contenedor-tablaDerecha">
 
-            <table mat-table [dataSource]="dataSourceRecursoHumano" class="tabla-pacientes mt-1">
-    
-                    <!-- N° -->
-                    <ng-container matColumnDef="nro">
-                        <th mat-header-cell *matHeaderCellDef> N° </th>
-                        <td mat-cell *matCellDef="let recHumano ; let i = index"> {{ i + 1 }} </td>
-                    </ng-container>
-                    
-                    <!-- HC -->
-                    <ng-container matColumnDef="codigo" >
-                        <th mat-header-cell *matHeaderCellDef> Código </th>
-                        <td mat-cell *matCellDef="let recHumano"> {{ recHumano.codRecHumano }} </td>
-                    </ng-container>
-                    
-                    <!-- Apellidos y Nombres  -->
-                    <ng-container matColumnDef="nombreCompleto">
-                        <th mat-header-cell *matHeaderCellDef> Apellidos y Nombres </th>
-                        <td mat-cell *matCellDef="let recHumano">
-                            {{ recHumano.apePatRecHumano }} {{ recHumano.apeMatRecHumano }} {{ recHumano.nombreRecHumano }}
-                        </td>
-                    </ng-container>
-                    
-                    <!-- Tipo Documento -->
-                    <ng-container matColumnDef="tipoDoc">
-                        <th mat-header-cell *matHeaderCellDef> Tipo Doc </th>
-                        <td mat-cell *matCellDef="let recHumano"> {{ recHumano.tipoDoc }} </td>
-                    </ng-container>
-                    
-                    <!-- Nro. Documento -->
-                    <ng-container matColumnDef="nroDoc">
-                        <th mat-header-cell *matHeaderCellDef> Nro. Doc </th>
-                        <td mat-cell *matCellDef="let recHumano"> {{ recHumano.nroDoc }} </td>
-                    </ng-container>
-                    
-                    <!-- Filas -->
-                    <tr mat-header-row *matHeaderRowDef="columnasTablaRecursoHumano"></tr>
-                    <tr mat-row *matRowDef="let row; columns: columnasTablaRecursoHumano;" (click)="cargarRecursoHumano(row)"></tr>
-            
-                </table>
+            <mat-card class="tabla-recHumano-card">
+                
+                <mat-card-title>
+                    Recursos Humanos Registrados
+                </mat-card-title>
+
+                <mat-card-content>
+
+                    <mat-form-field appearance="outline" class="mt-2">
+                        <mat-label>Buscar Recurso Humano</mat-label>
+                        <input matInput [formControl]="terminoBusquedaRecHumanoControl"
+                            (keyup)="filtrarServicio()"
+                            (focus)="seleccionarTexto($event)">
+                    </mat-form-field>
+
+                    <table mat-table [dataSource]="dataSourceRecursoHumano" class="tabla-pacientes mt-1">
+        
+                        <!-- N° -->
+                        <ng-container matColumnDef="nro">
+                            <th mat-header-cell *matHeaderCellDef> N° </th>
+                            <td mat-cell *matCellDef="let recHumano ; let i = index"> {{ i + 1 }} </td>
+                        </ng-container>
+                        
+                        <!-- HC -->
+                        <ng-container matColumnDef="codigo" >
+                            <th mat-header-cell *matHeaderCellDef> Código </th>
+                            <td mat-cell *matCellDef="let recHumano"> {{ recHumano.codRecHumano }} </td>
+                        </ng-container>
+                        
+                        <!-- Apellidos y Nombres  -->
+                        <ng-container matColumnDef="nombreCompleto">
+                            <th mat-header-cell *matHeaderCellDef> Apellidos y Nombres </th>
+                            <td mat-cell *matCellDef="let recHumano">
+                                {{ recHumano.apePatRecHumano }} {{ recHumano.apeMatRecHumano }} {{ recHumano.nombreRecHumano }}
+                            </td>
+                        </ng-container>
+                                            
+                        <!-- Nro. Documento -->
+                        <ng-container matColumnDef="nroDoc">
+                            <th mat-header-cell *matHeaderCellDef> Nro. Doc </th>
+                            <td mat-cell *matCellDef="let recHumano"> {{ recHumano.tipoDoc }} - {{ recHumano.nroDoc }} </td>
+                        </ng-container>
+                        
+                        <!-- Filas -->
+                        <tr mat-header-row *matHeaderRowDef="columnasTablaRecursoHumano"></tr>
+                        <tr mat-row *matRowDef="let row; columns: columnasTablaRecursoHumano;" (click)="cargarRecursoHumano(row)"></tr>
+                
+                    </table>
+
+                        <div>
+                            <mat-paginator #MatPaginatorRecHumano [pageSizeOptions]="[5, 10, 25]" showFirstLastButtons></mat-paginator>
+                        </div>
+
+                </mat-card-content>
+
+            </mat-card>            
 
         </div>
 

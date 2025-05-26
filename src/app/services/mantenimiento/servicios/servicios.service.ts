@@ -43,7 +43,7 @@ export class ServiciosService {
       }));        
   }
 
-  getServicios(): Observable<IServicio[]> {
+  getAllServicios(): Observable<IServicio[]> {
     return this._http
       .get<IGetLastServicio>(
         `${environment.baseUrl}/api/servicio/latest`

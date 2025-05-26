@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, inject, OnInit, ViewChild } from '@angular/core';
 import { AbstractControl, FormArray, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -8,7 +8,7 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { MatPaginator } from '@angular/material/paginator';
+import { MatPaginator, MatPaginatorIntl } from '@angular/material/paginator';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatTable, MatTableDataSource, MatTableModule } from '@angular/material/table';
@@ -16,6 +16,7 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { UbigeoService } from '../../../services/utilitarios/ubigeo.service';
 import { IRecHumano } from '../../../models/recursoHumano.models';
 import { RecursoHumanoService } from '../../../services/mantenimiento/recursoHumano/recurso-humano.service';
+import { customPaginatorIntl } from '../../../services/utilitarios/mat-paginator-intl';
 
 @Component({
   selector: 'app-mant-recurso-humano',
@@ -36,10 +37,14 @@ import { RecursoHumanoService } from '../../../services/mantenimiento/recursoHum
             MatNativeDateModule,
             CommonModule
         ],
+  providers: [
+          { provide: MatPaginatorIntl,
+            useFactory: customPaginatorIntl }
+        ],
   templateUrl: './mant-recurso-humano.component.html',
   styleUrl: './mant-recurso-humano.component.scss'
 })
-export class MantRecursoHumanoComponent {
+export class MantRecursoHumanoComponent implements OnInit, AfterViewInit {
 
   constructor(
       private _recHumanoService: RecursoHumanoService,
@@ -52,7 +57,8 @@ export class MantRecursoHumanoComponent {
     this.distritos = this._ubigeoService.getDistrito('15','01')
     this.onDepartamentoChange();
     this.onProvinciaChange();
-    this.ultimosRecHumano()
+    this.ultimosRecHumano();
+    //this.traerRecHumanos();
   }
 
   private _fb = inject(FormBuilder);
@@ -94,6 +100,19 @@ export class MantRecursoHumanoComponent {
     return this.myFormRecHumano.get('phones') as FormArray;
   }
 
+  get profesionesRecurso(): FormArray {
+    return this.myFormRecHumano.get('profesionesRecurso') as FormArray;
+  }
+
+  get especialidadesRecurso(): FormArray {
+    return this.myFormRecHumano.get('especialidadesRecurso') as FormArray;
+  }
+
+  seleccionarTexto(event: FocusEvent): void {
+    const input = event.target as HTMLInputElement;
+    input.select();
+  }
+
   departamentos: any[] = [];
   provincias: any[] = [];
   distritos: any[] = [];
@@ -133,6 +152,11 @@ export class MantRecursoHumanoComponent {
     };
   }
 
+  //setear los anchos
+  setFlex(valor: number, unidad: 'px' | '%' = 'px'): string {
+    return `0 0 ${valor}${unidad}`;
+  }
+
   public addPhone: boolean = false;
 
   agregarTelefono() {
@@ -150,6 +174,43 @@ export class MantRecursoHumanoComponent {
     this.phones.removeAt(index);
   }
 
+  agregarProfesion() {
+
+    const profesionForm = this._fb.group({
+      nivelProfesion: ['', [Validators.required]],
+      titulo: ['', [Validators.required]],
+      profesion: ['', [Validators.required]],
+      nroColegiatura: [''],
+      centroEstudiosProfesion: [''],
+      anioEgresoProfesion: [''],
+    });
+  
+    this.profesionesRecurso.push(profesionForm);
+
+  }
+
+   eliminarProfesion(index: number) {
+    this.profesionesRecurso.removeAt(index);
+  }
+
+  agregarEspecialidad() {
+
+    const especialidadForm = this._fb.group({
+      especialidad: ['', [Validators.required]],
+      centroEstudiosEspecialidad: [''],
+      rne: ['', [Validators.required]],
+      anioEgresoEspecialidad: ['']
+    });
+  
+    this.especialidadesRecurso.push(especialidadForm);
+
+  }
+
+  eliminarEspecialidad(index: number) {
+    this.especialidadesRecurso.removeAt(index);
+  }
+
+
   public formSubmitted: boolean = false;
 
   validarArrayTelefono(): boolean{
@@ -163,9 +224,14 @@ export class MantRecursoHumanoComponent {
 
   }
 
-   @ViewChild(MatTable) table!: MatTable<any>;
+  @ViewChild(MatTable) table!: MatTable<any>;
+  @ViewChild('MatPaginatorRecHumano') paginatorRecHumano!: MatPaginator;
+  ngAfterViewInit() {
+      this.dataSourceRecursoHumano.paginator = this.paginatorRecHumano;
+  }
+
   //Tabla rrhh
-  columnasTablaRecursoHumano: string[] = ['nro', 'codigo', 'nombreCompleto', 'tipoDoc', 'nroDoc'];
+  columnasTablaRecursoHumano: string[] = ['nro', 'codigo', 'nombreCompleto', 'nroDoc'];
   dataSourceRecursoHumano = new MatTableDataSource<IRecHumano>();
 
   cargarRecursoHumano(recursoHumano: IRecHumano): void {
@@ -204,8 +270,10 @@ export class MantRecursoHumanoComponent {
     });
   }
 
+  
+
   ultimosRecHumano(): void {
-    this._recHumanoService.getLastRecHumanos(20).subscribe(recHumano => {
+    this._recHumanoService.getLastRecHumanos(0).subscribe(recHumano => {
       this.dataSourceRecursoHumano.data = recHumano;
     });
   }
@@ -255,6 +323,28 @@ export class MantRecursoHumanoComponent {
     return `${years} años, ${months} meses, y ${days} días`;
 
   }
+
+  terminoBusquedaRecHumanoControl = new FormControl('');
+
+  filtrarServicio() {
+    const termino = this.terminoBusquedaRecHumanoControl.value || '';
+    this.dataSourceRecursoHumano.filter = termino.trim().toLowerCase();
+  }
+
+  recHumanoSeleccionado = false;
+
+  registraRecHumano(){
+
+  }
+
+  actualizarRecHumano(){
+    
+  }
+
+  nuevoRecHumano(){
+
+  }
+
 
 }
 

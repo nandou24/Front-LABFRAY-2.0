@@ -1,4 +1,4 @@
-import { Component, inject, ViewChild, AfterViewInit } from '@angular/core';
+import { Component, inject, ViewChild, AfterViewInit, OnInit } from '@angular/core';
 import { AbstractControl, FormArray, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ServiciosService } from '../../../services/mantenimiento/servicios/servicios.service';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -39,7 +39,7 @@ import Swal from 'sweetalert2';
   templateUrl: './mant-servicio.component.html',
   styleUrl: './mant-servicio.component.scss'
 })
-export class MantServicioComponent {
+export class MantServicioComponent implements OnInit, AfterViewInit {
 
   constructor(
     private _servicioService: ServiciosService
@@ -325,7 +325,7 @@ export class MantServicioComponent {
 
   traerServicios(){
 
-    this._servicioService.getServicios().subscribe({
+    this._servicioService.getAllServicios().subscribe({
       next: (res: IServicio[]) => {
         this.dataSourceServicios.data = res;
       },

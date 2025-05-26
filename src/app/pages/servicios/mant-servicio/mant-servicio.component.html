@@ -254,7 +254,7 @@
 
         <div class="contenedor-tablaDerecha">
 
-            <mat-card class="tabla-pruebas-card">
+            <mat-card class="tabla-servicios-card">
                 <mat-card-title>
                     Servicios Registrados
                 </mat-card-title>
@@ -268,31 +268,31 @@
                             (focus)="seleccionarTexto($event)">
                     </mat-form-field>
     
-                  <table mat-table [dataSource]="dataSourceServicios" class="mat-elevation-z8">
-          
-                    <!-- Columnas -->
-                    <ng-container matColumnDef="codigo">
-                      <th mat-header-cell *matHeaderCellDef> Código </th>
-                      <td mat-cell *matCellDef="let servicio"> {{ servicio.codServicio }} </td>
-                    </ng-container>
-          
-                    <ng-container matColumnDef="nombre">
-                      <th mat-header-cell *matHeaderCellDef> Nombre </th>
-                      <td mat-cell *matCellDef="let servicio"> {{ servicio.nombreServicio }} </td>
-                    </ng-container>
-          
-                    <ng-container matColumnDef="precio">
-                      <th mat-header-cell *matHeaderCellDef> Precio </th>
-                      <td mat-cell *matCellDef="let servicio"> {{ servicio.precioServicio }} </td>
-                    </ng-container>
-          
-                    <tr mat-header-row *matHeaderRowDef="columnasServicios"></tr>
-                    <tr mat-row *matRowDef="let row; columns: columnasServicios;" (click)="cargarServicio(row)"></tr>
-                  </table>
+                    <table mat-table [dataSource]="dataSourceServicios" class="mat-elevation-z8">
+            
+                        <!-- Columnas -->
+                        <ng-container matColumnDef="codigo">
+                        <th mat-header-cell *matHeaderCellDef> Código </th>
+                        <td mat-cell *matCellDef="let servicio"> {{ servicio.codServicio }} </td>
+                        </ng-container>
+            
+                        <ng-container matColumnDef="nombre">
+                        <th mat-header-cell *matHeaderCellDef> Nombre </th>
+                        <td mat-cell *matCellDef="let servicio"> {{ servicio.nombreServicio }} </td>
+                        </ng-container>
+            
+                        <ng-container matColumnDef="precio">
+                        <th mat-header-cell *matHeaderCellDef> Precio </th>
+                        <td mat-cell *matCellDef="let servicio"> {{ servicio.precioServicio }} </td>
+                        </ng-container>
+            
+                        <tr mat-header-row *matHeaderRowDef="columnasServicios"></tr>
+                        <tr mat-row *matRowDef="let row; columns: columnasServicios;" (click)="cargarServicio(row)"></tr>
+                    </table>
 
-                  <div>
-                    <mat-paginator #MatPaginatorServicios [pageSizeOptions]="[5, 10, 25]" showFirstLastButtons></mat-paginator>
-                  </div>
+                    <div>
+                        <mat-paginator #MatPaginatorServicios [pageSizeOptions]="[5, 10, 25]" showFirstLastButtons></mat-paginator>
+                    </div>
 
                 </mat-card-content>
               </mat-card>

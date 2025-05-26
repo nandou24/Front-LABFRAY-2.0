@@ -66,7 +66,6 @@ export class RecursoHumanoService {
       })); ;
       
   }
- 
 
   getRecHumano(terminoBusqueda : any): Observable<IRecHumano[]> {
     const params = new HttpParams().set('search',terminoBusqueda)
