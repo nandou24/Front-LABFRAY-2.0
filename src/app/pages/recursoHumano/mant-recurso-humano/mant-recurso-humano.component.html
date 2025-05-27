@@ -22,6 +22,9 @@
                                         <mat-option value="CE">CE</mat-option>
                                         <mat-option value="PASAPORTE">Pasaporte</mat-option>
                                     </mat-select>
+                                    <mat-error *ngIf="myFormRecHumano.get('tipoDoc')?.hasError('required')">
+                                        Obligatorio
+                                    </mat-error>
                             </mat-form-field>
                         </div>                          
                                 
@@ -343,6 +346,14 @@
                                                     Solo números
                                                 </mat-error>
                                             </mat-form-field>
+                                        </div>
+
+                                        <div class="campo-flex-4 mb-3 text-center">
+                                            <mat-slide-toggle color="primary"
+                                                [checked]="recHumanoGroup.get('profesionSolicitante')?.value"
+                                                (change)="seleccionarProfesionSolicitante(i)">
+                                                Solicitante
+                                            </mat-slide-toggle>
                                         </div>
 
                                         <div class="campo-flex-4 mb-2 text-center">

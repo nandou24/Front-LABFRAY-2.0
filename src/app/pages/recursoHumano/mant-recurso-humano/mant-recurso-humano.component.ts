@@ -17,6 +17,7 @@ import { UbigeoService } from '../../../services/utilitarios/ubigeo.service';
 import { IRecHumano } from '../../../models/recursoHumano.models';
 import { RecursoHumanoService } from '../../../services/mantenimiento/recursoHumano/recurso-humano.service';
 import { customPaginatorIntl } from '../../../services/utilitarios/mat-paginator-intl';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-mant-recurso-humano',
@@ -65,7 +66,7 @@ export class MantRecursoHumanoComponent implements OnInit, AfterViewInit {
 
   public myFormRecHumano:FormGroup  = this._fb.group({
     codRecHumano:'',
-    tipoDoc: ['0', [Validators.required]],
+    tipoDoc: ['', [Validators.required]],
     nroDoc: ['', [Validators.required,
                   documentValidator('tipoDoc')
                 ]],
@@ -75,14 +76,13 @@ export class MantRecursoHumanoComponent implements OnInit, AfterViewInit {
     apePatRecHumano:['',[Validators.required,
                         Validators.pattern(/^[a-zA-ZÀ-ÿ\u00f1\u00d1\s]+$/)
                       ]],
-    apeMatRecHumano:['',[Validators.required,
-                        Validators.pattern(/^[a-zA-ZÀ-ÿ\u00f1\u00d1\s]+$/)
+    apeMatRecHumano:['',[Validators.pattern(/^[a-zA-ZÀ-ÿ\u00f1\u00d1\s]+$/)
                       ]],
     fechaNacimiento: ['', [Validators.required,
                         this.fechaNoFuturaValidator()
                       ]],
     edad: [{ value: '', disabled: true }],
-    sexoRecHumano:['0',[Validators.required]],
+    sexoRecHumano:['',[Validators.required]],
     departamentoRecHumano: ['15'],
     provinciaRecHumano: ['01'],
     distritoRecHumano: ['',[Validators.required]],
@@ -157,7 +157,7 @@ export class MantRecursoHumanoComponent implements OnInit, AfterViewInit {
     return `0 0 ${valor}${unidad}`;
   }
 
-  public addPhone: boolean = false;
+  //public addPhone: boolean = false;
 
   agregarTelefono() {
 
@@ -261,6 +261,19 @@ export class MantRecursoHumanoComponent implements OnInit, AfterViewInit {
 
     this.actualizarEdad();
 
+    this.profesionesRecurso.clear();
+    // Agregar cada profesión al FormArray
+    recursoHumano.profesionesRecurso.forEach((profesion: any) => {
+      const esSolicitante = recursoHumano.profesionSolicitante?.profesion === profesion.profesion;
+      this.profesionesRecurso.push(this.crearProfesionGroup(profesion, esSolicitante));
+    });
+
+    this.especialidadesRecurso.clear();
+    // Agregar cada especialidad al FormArray
+    recursoHumano.especialidadesRecurso.forEach((especialidad: any) => {
+      this.especialidadesRecurso.push(this.crearEspecialidadGroup(especialidad));
+    });
+
   }
 
   private crearTelefonoGroup(phone: any): FormGroup {
@@ -270,7 +283,27 @@ export class MantRecursoHumanoComponent implements OnInit, AfterViewInit {
     });
   }
 
-  
+  private crearProfesionGroup(profesion: any, esSolicitante: boolean): FormGroup {
+    return this._fb.group({
+      nivelProfesion: [profesion.nivelProfesion],
+      titulo: [profesion.titulo],
+      profesion: [profesion.profesion],
+      nroColegiatura: [profesion.nroColegiatura],
+      centroEstudiosProfesion: [profesion.centroEstudiosProfesion],
+      anioEgresoProfesion: [profesion.anioEgresoProfesion],
+      profesionSolicitante: [esSolicitante]
+    });
+  }
+
+  private crearEspecialidadGroup(especialidad: any): FormGroup {
+    return this._fb.group({
+      especialidad: [especialidad.especialidad],
+      rne: [especialidad.rne],
+      centroEstudiosEspecialidad: [especialidad.centroEstudiosEspecialidad],
+      anioEgresoEspecialidad: [especialidad.anioEgresoEspecialidad]
+    });
+  }
+
 
   ultimosRecHumano(): void {
     this._recHumanoService.getLastRecHumanos(0).subscribe(recHumano => {
@@ -331,10 +364,85 @@ export class MantRecursoHumanoComponent implements OnInit, AfterViewInit {
     this.dataSourceRecursoHumano.filter = termino.trim().toLowerCase();
   }
 
+  seleccionarProfesionSolicitante(index: number) {
+    this.profesionesRecurso.controls.forEach((group, i) => {
+      group.get('profesionSolicitante')?.setValue(i === index);
+    });
+
+    // Actualiza también en el form principal si lo estás usando para guardar
+    const { profesion, nroColegiatura } = this.profesionesRecurso.at(index).value;
+    this.myFormRecHumano.get('profesionSolicitante')?.setValue(
+      profesion,
+      nroColegiatura
+    );
+  }
+
   recHumanoSeleccionado = false;
 
   registraRecHumano(){
 
+    if(this.myFormRecHumano.invalid){
+
+      this.myFormRecHumano.markAllAsTouched();
+      return
+    }
+
+    this.formSubmitted = true;
+
+    Swal.fire({
+        title: '¿Estás seguro?',
+        text: '¿Deseas confirmar la creación de este recuso?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, confirmar',
+        cancelButtonText: 'Cancelar',
+      }).then((result) => {
+
+        if (result.isConfirmed) {
+
+          console.log('Procede registro')
+          const body: IRecHumano = this.myFormRecHumano.value; 
+
+          this._recHumanoService.registrarRecHumano(body).subscribe({
+            next: (res) => {
+              if (res.ok) {
+                this.mostrarAlertaExito("registrado");
+                this.ultimosRecHumano();
+                this.nuevoRecHumano();
+              } else {
+                const mensaje = res.msg || 'Ocurrió un error inesperado.';
+                this.mostrarAlertaError(mensaje);
+              }
+            },
+            error: (error) => {
+              const mensaje = error?.error?.msg || 'Error inesperado al registrar.';
+              this.mostrarAlertaError(mensaje);
+            }
+
+          });
+
+        }
+
+      })
+
+  }
+
+  private mostrarAlertaExito(tipo: string): void {
+    Swal.fire({
+      title: 'Confirmado',
+      text: 'Servicio '+tipo+' correctamente',
+      icon: 'success',
+      confirmButtonText: 'Ok'
+    });
+  }
+  
+  private mostrarAlertaError(mensaje: string): void {
+    Swal.fire({
+      title: 'ERROR!',
+      text: mensaje,
+      icon: 'error',
+      confirmButtonText: 'Ok',
+    });
   }
 
   actualizarRecHumano(){
@@ -342,6 +450,19 @@ export class MantRecursoHumanoComponent implements OnInit, AfterViewInit {
   }
 
   nuevoRecHumano(){
+
+    this.myFormRecHumano.reset(); // Reinicia todos los campos del formulario
+    this.formSubmitted = false; // Restablece el estado de validación del formulario 
+    this.phones.clear();// Limpia el FormArray de teléfonos, si es necesario
+    this.profesionesRecurso.clear();
+    this.especialidadesRecurso.clear();
+    this.myFormRecHumano.patchValue({
+      departamentoRecHumano: '15',
+      provinciaRecHumano: '01',
+      distritoRecHumano: '',
+      profesionSolicitante: { profesion: "", nroColegiatura: "" } 
+    });
+    this.recHumanoSeleccionado = false;
 
   }
 

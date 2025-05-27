@@ -17,31 +17,13 @@ export class RecursoHumanoService {
   ) { }
 
   public registrarRecHumano(body: IRecHumano){
-    console.log("Enviando valores desde servicio")
+    console.log("Enviando valores desde registro recurso humano")
     
     return this._http
       .post<IRecHumanoPostDTO>(
         `${environment.baseUrl}/api/recursoHumano/newRecHumano`,body
       )
-      .pipe(
-        map((data) => {
-          if (data.ok) {
-            return data.ok;
-          } else {
-            throw new Error('ERROR');
-          }
-        }),
-        catchError((err) => {
-          console.log(err.error.msg);
-          Swal.fire({
-            title: 'ERROR!',
-            text: err.error.msg,
-            icon: 'error',
-            confirmButtonText: 'Ok',
-          });
-          return of('ERROR');
-        })
-      );
+
   }
 
   getLastRecHumanos(cantidad:number): Observable<IRecHumano[]> {
