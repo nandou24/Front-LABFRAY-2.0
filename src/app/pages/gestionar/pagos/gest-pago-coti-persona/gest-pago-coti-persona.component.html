@@ -1,0 +1,417 @@
+ <form [formGroup]="myFormPagoPersona">
+
+    <div class="contenedor-flex" >
+
+        <div class="contenedor-formulario">
+
+            <div class="row-flex" style="align-items: center;">
+
+                <div [style.flex]="setFlex(45,'%')" class="flex-item quicksand-totales">
+                    <h5 class="text-center mb-3" style="font-weight: 700;">PAGO DE COTIZACIONES - PACIENTES</h5>
+                </div>
+
+                <div [style.flex]="setFlex(18,'%')" class="flex-item">
+                    <mat-form-field appearance="outline">
+                        <mat-label>N° Pago</mat-label>
+                        <input matInput formControlName="codPago" readonly>
+                    </mat-form-field>
+                </div>
+
+            </div>
+
+            <fieldset class="campo-fieldset">
+
+                <legend>Detalle de Cotización</legend>
+
+                <div class="row-flex">
+
+                    <div [style.flex]="setFlex(25,'%')" class="flex-item">
+                        <mat-form-field appearance="outline" >
+                            <mat-label>N° Cotización</mat-label>
+                            <input matInput formControlName="codCotizacion" readonly>
+                        </mat-form-field>
+                    </div>
+
+                    <div [style.flex]="setFlex(10,'%')" class="flex-item">
+                        <mat-form-field appearance="outline" >
+                            <mat-label>Versión</mat-label>
+                            <input matInput formControlName="version" readonly>
+                        </mat-form-field>
+                    </div>
+
+                    <div [style.flex]="setFlex(20,'%')" class="flex-item">
+                        <mat-form-field appearance="outline" >
+                            <mat-label>Fecha Cotización</mat-label>
+                            <input matInput formControlName="fechaCotizacion" readonly>
+                        </mat-form-field>
+                    </div>
+
+                    <div [style.flex]="setFlex(20,'%')" class="flex-item">
+                        <mat-form-field appearance="outline" >
+                            <mat-label>Estado</mat-label>
+                            <input matInput formControlName="estadoCotizacion" readonly>
+                        </mat-form-field>
+                    </div>
+
+                    <div [style.flex]="setFlex(20,'%')" class="flex-item">
+                        <mat-form-field appearance="outline" >
+                            <mat-label>Historia Clíncia</mat-label>
+                            <input matInput formControlName="codCliente" readonly>
+                        </mat-form-field>
+                    </div>
+
+                </div>
+
+                <div class="row-flex">
+
+                    <div [style.flex]="setFlex(50,'%')" class="flex-item">
+                        <mat-form-field appearance="outline">
+                            <mat-label>Nombre de Paciente</mat-label>
+                            <input matInput formControlName="nomCliente" readonly>
+                        </mat-form-field>
+                    </div>
+
+                    <div [style.flex]="setFlex(20,'%')" class="flex-item">
+                        <mat-form-field appearance="outline">
+                            <mat-label>Tipo de Documento</mat-label>
+                            <input matInput formControlName="tipoDoc" readonly>
+                        </mat-form-field>
+                    </div>
+
+                    <div [style.flex]="setFlex(27,'%')" class="flex-item">
+                        <mat-form-field appearance="outline">
+                            <mat-label>Nro de Documento</mat-label>
+                            <input matInput formControlName="nroDoc" readonly>
+                        </mat-form-field>
+                    </div>
+                    
+                </div>
+
+                <div class="row-flex">
+                    <div [style.flex]="setFlex(50,'%')" class="flex-item">
+                        <mat-form-field appearance="outline">
+                            <mat-label>Solicitante</mat-label>
+                            <input matInput formControlName="nomSolicitante" readonly>
+                        </mat-form-field>
+                    </div>
+                    <div [style.flex]="setFlex(27,'%')" class="flex-item">
+                        <mat-form-field appearance="outline">
+                            <mat-label>Profesión</mat-label>
+                            <input matInput formControlName="profesionSolicitante" readonly>
+                        </mat-form-field>
+                    </div>
+                    <div [style.flex]="setFlex(20,'%')" class="flex-item">
+                        <mat-form-field appearance="outline">
+                            <mat-label>Colegiatura</mat-label>
+                            <input matInput formControlName="colegiatura" readonly>
+                        </mat-form-field>
+                    </div>
+                </div>
+
+                <mat-card class="mt-2 mb-2">
+                
+                    <mat-card-title>
+                        Servicios Cotizados
+                    </mat-card-title>
+                
+                    <mat-card-content>
+
+                        <table mat-table [dataSource]="dataSourceServiciosCotizados">
+
+                            <ng-container matColumnDef="codigo">
+                                <th mat-header-cell *matHeaderCellDef class="text-center">Código</th>
+                                <td mat-cell *matCellDef="let row" class="text-center">{{ row.get('codServicio')?.value }}</td>
+                            </ng-container>
+
+                            <ng-container matColumnDef="tipo">
+                                <th mat-header-cell *matHeaderCellDef class="text-center">Tipo</th>
+                                <td mat-cell *matCellDef="let row" class="text-center">{{ row.get('tipoServicio')?.value }}</td>
+                            </ng-container>
+
+                            <ng-container matColumnDef="nombre">
+                                <th mat-header-cell *matHeaderCellDef class="text-center">Nombre</th>
+                                <td mat-cell *matCellDef="let row">{{ row.get('nombreServicio')?.value }}</td>
+                            </ng-container>
+
+                            <ng-container matColumnDef="cantidad">
+                                <th mat-header-cell *matHeaderCellDef class="text-center">Cantidad</th>
+                                <td mat-cell *matCellDef="let row" class="text-center">{{ row.get('cantidad')?.value }}</td>
+                            </ng-container>
+
+                            <ng-container matColumnDef="precioLista">
+                                <th mat-header-cell *matHeaderCellDef class="text-center">Precio Lista</th>
+                                <td mat-cell *matCellDef="let row" class="text-center">S/ {{ row.get('precioLista')?.value }}</td>
+                            </ng-container>
+
+                            <ng-container matColumnDef="diferencia">
+                                <th mat-header-cell *matHeaderCellDef class="text-center">Descuento o Aum.</th>
+                                <td mat-cell *matCellDef="let row" class="text-center">S/ {{ row.get('diferencia')?.value}}</td>
+                            </ng-container>
+
+                            <ng-container matColumnDef="precioVenta">
+                                <th mat-header-cell *matHeaderCellDef class="text-center">Precio Venta</th>
+                                <td mat-cell *matCellDef="let row" class="text-center">S/ {{ row.get('precioVenta')?.value}}</td>                            
+                            </ng-container>
+
+                            <ng-container matColumnDef="descuentoPorcentaje">
+                                <th mat-header-cell *matHeaderCellDef class="text-center">Descuento (%)</th>
+                                <td mat-cell *matCellDef="let row" class="text-center">S/ {{ row.get('descuentoPorcentaje')?.value}}</td>    
+                            </ng-container>
+
+                            <ng-container matColumnDef="totalUnitario">
+                                <th mat-header-cell *matHeaderCellDef class="text-center">Total Unitario</th>
+                                <td mat-cell *matCellDef="let row" class="text-center">S/ {{ row.get('totalUnitario')?.value }}</td>
+                            </ng-container>
+
+                            <tr mat-header-row *matHeaderRowDef="columnasTablaServiciosCotizados"></tr>
+                            <tr mat-row *matRowDef="let row; let i = index; columns: columnasTablaServiciosCotizados" [formGroup]="row"></tr>
+
+                        </table>
+
+                        <div class="row-flex mt-3">
+
+                            <div [style.flex]="setFlex(15,'%')" class="flex-item">
+                                <mat-form-field appearance="outline">
+                                    <mat-label>Total Precio Lista</mat-label>
+                                    <input class="text-center" matInput [value]="myFormPagoPersona.get('sumaTotalesPrecioLista')?.value | number: '1.2-2'" readonly>
+                                </mat-form-field>
+                            </div>
+
+                            <div [style.flex]="setFlex(15,'%')" class="flex-item">
+                                <mat-form-field appearance="outline">
+                                    <mat-label>Descuento</mat-label>
+                                    <input class="text-center" matInput [value]="myFormPagoPersona.get('descuentoTotal')?.value | number: '1.2-2'" readonly>
+                                </mat-form-field>
+                            </div>
+
+                            <div [style.flex]="setFlex(15,'%')" class="flex-item">
+                                <mat-form-field appearance="outline">
+                                    <mat-label>Sub Total</mat-label>
+                                    <input class="text-center" matInput [value]="myFormPagoPersona.get('subTotal')?.value | number: '1.2-2'" readonly>
+                                </mat-form-field>
+                            </div>
+
+                            <div [style.flex]="setFlex(15,'%')" class="flex-item">
+                                <mat-form-field appearance="outline">
+                                    <mat-label>IGV (18%)</mat-label>
+                                    <input class="text-center" matInput [value]="myFormPagoPersona.get('igv')?.value | number: '1.2-2'" readonly>
+                                </mat-form-field>
+                            </div>
+
+                            <div [style.flex]="setFlex(20,'%')" class="flex-item">
+                                <mat-form-field appearance="outline">
+                                    <mat-label>Monto Final</mat-label>
+                                    <input class="text-center" style="font-weight: 600; font-size: 18px;" matInput [value]="myFormPagoPersona.get('total')?.value | number: '1.2-2'" readonly>
+                                </mat-form-field>
+                            </div>
+
+                        </div>
+
+                    </mat-card-content>
+
+                </mat-card>
+            
+            </fieldset>
+
+            <fieldset class="campo-fieldset mt-3">
+
+                <legend>Detalle de Pagos</legend>
+
+                <div class="mt-2">
+                
+                    <div formArrayName="detallePagos" *ngFor="let pagosGroup of detallePagos.controls; let i = index" >                       
+
+                        <div [formGroupName]="i" class="row-flex" >
+
+                            <div [style.flex]="setFlex(20,'%')" class="flex-item">
+                                <mat-form-field appearance="outline">
+                                    <mat-label>Fecha de Pago - mm/dd/yyyy</mat-label>
+                                    <input matInput [matDatepicker]="picker" formControlName="fechaPago">
+                                    <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+                                    <mat-datepicker #picker></mat-datepicker>
+
+                                </mat-form-field>
+                            </div>
+
+                            <div [style.flex]="setFlex(18,'%')" class="flex-item">
+                                <mat-form-field appearance="outline">
+                                    <mat-label>Método de Pago</mat-label>
+                                    <mat-select formControlName="metodoPago">
+                                        <mat-option value="Efectivo">Efectivo</mat-option>
+                                        <mat-option value="Transferencia">Transferencia</mat-option>
+                                        <mat-option value="Yape">Yape</mat-option>
+                                        <mat-option value="Plin">Plin</mat-option>
+                                        <mat-option value="Tarjeta Crédito">Tarjeta Crédito</mat-option>
+                                        <mat-option value="Tarjeta Débito">Tarjeta Débito</mat-option>
+                                    </mat-select>
+                                </mat-form-field>
+                            </div>
+
+                            <div [style.flex]="setFlex(10,'%')" class="flex-item">
+                                <mat-form-field appearance="outline">
+                                    <mat-label>Monto</mat-label>
+                                    <input matInput formControlName="monto" type="number" min="0" step="0.01">
+                                </mat-form-field>
+                            </div>
+
+                            <div [style.flex]="setFlex(18,'%')" class="flex-item">
+                                <mat-form-field appearance="outline">
+                                    <mat-label>Nro de Operación</mat-label>
+                                    <input matInput formControlName="nroOperacion">
+                                </mat-form-field>
+                            </div>
+
+                            <div [style.flex]="setFlex(18,'%')" class="flex-item">
+                                <mat-form-field appearance="outline">
+                                    <mat-label>Banco destino</mat-label>
+                                    <input matInput formControlName="bancoDestino">
+                                </mat-form-field>
+                            </div>
+
+                            <div [style.flex]="setFlex(8,'%')" class="flex-item d-flex align-items-center">
+                                <button mat-icon-button class="mb-3" type="button" (click)="removerPago(i)">
+                                    <mat-icon>delete</mat-icon>
+                                </button>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="row-flex">
+
+                        <div [style.flex]="setFlex(20,'%')" class="flex-item">
+                            <button mat-raised-button class="mb-2" type="button" (click)="agregarPago()">
+                                <mat-icon>add</mat-icon> Agregar Pago
+                            </button>
+                        </div>
+
+                        <div [style.flex]="setFlex(20,'%')" class="flex-item">
+                            <h3 class="quicksand-totales" style="font-weight: 600;">Falta pagar: {{myFormPagoPersona.get('faltaPagar')?.value}}</h3>
+                        </div>
+
+                    </div>
+
+                </div>
+            </fieldset>
+
+        </div>
+
+        <div class="contenedor-tablaDerecha">
+
+            <mat-card>
+                <mat-card-title>
+                    Cotizaciones por pagar
+                </mat-card-title>
+
+                <mat-card-content>
+                    
+                    <mat-form-field appearance="outline">
+                        <mat-label>Buscar Cotización</mat-label>
+                        <input matInput [formControl]="terminoBusquedaCotizacion">
+                    </mat-form-field>
+
+                    <table mat-table [dataSource]="cotizaciones">
+
+                        <ng-container matColumnDef="codCoti">
+                            <th mat-header-cell *matHeaderCellDef>Cod Coti</th>
+                            <td mat-cell *matCellDef="let cotizacion">{{ cotizacion.codCotizacion }}</td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="paciente">
+                            <th mat-header-cell *matHeaderCellDef>Paciente</th>
+                            <td mat-cell *matCellDef="let cotizacion">{{ cotizacion.historial[cotizacion.historial.length - 1].nomCliente }}</td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="documento">
+                            <th mat-header-cell *matHeaderCellDef>Documento</th>
+                            <td mat-cell *matCellDef="let cotizacion">
+                            {{ cotizacion.historial[cotizacion.historial.length - 1].tipoDoc}} {{ cotizacion.historial[cotizacion.historial.length - 1].nroDoc }}
+                            </td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="versiones">
+                            <th mat-header-cell *matHeaderCellDef>Vers.</th>
+                            <td mat-cell *matCellDef="let cotizacion">{{ cotizacion.historial.length }}</td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="estado">
+                            <th mat-header-cell *matHeaderCellDef>Estado</th>
+                            <td mat-cell *matCellDef="let cotizacion">{{ cotizacion.estadoCotizacion }}</td>
+                        </ng-container>
+
+                        <tr mat-header-row *matHeaderRowDef="['codCoti','paciente','documento','versiones','estado']"></tr>
+                        <tr mat-row *matRowDef="let row; columns: ['codCoti','paciente','documento','versiones','estado'];" (click)="cargarCotizacion(row)"></tr>
+
+                    </table>
+
+                    <div *ngIf="cotizaciones.length === 0" class="text-center mt-2">
+                    No se encontraron cotizaciones.
+                    </div>
+
+                </mat-card-content>
+            </mat-card>
+
+            <mat-card class="mt-2">
+                <mat-card-title>
+                    Pagos realizados
+                </mat-card-title>
+
+                <mat-card-content>
+                    
+                    <mat-form-field appearance="outline">
+                        <mat-label>Buscar Pagos</mat-label>
+                        <input matInput [formControl]="terminoBusquedaCotizacion">
+                    </mat-form-field>
+
+                    <table mat-table [dataSource]="pagos">
+
+                        <ng-container matColumnDef="codPago">
+                            <th mat-header-cell *matHeaderCellDef>Cod Pago</th>
+                            <td mat-cell *matCellDef="let pago">{{ pago.codPago }}</td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="codCoti">
+                            <th mat-header-cell *matHeaderCellDef>Cod Coti</th>
+                            <td mat-cell *matCellDef="let pago">{{ pago.codCotizacion }}</td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="fecha">
+                            <th mat-header-cell *matHeaderCellDef>Fecha</th>
+                            <td mat-cell *matCellDef="let pago">{{ pago.fechaPago }}</td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="paciente">
+                            <th mat-header-cell *matHeaderCellDef>Paciente</th>
+                            <td mat-cell *matCellDef="let pago">{{ pago.nomCliente }}</td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="documento">
+                            <th mat-header-cell *matHeaderCellDef>Documento</th>
+                            <td mat-cell *matCellDef="let pago">
+                            {{ pago.tipoDoc}} {{ pago.nroDoc }}
+                            </td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="estado">
+                            <th mat-header-cell *matHeaderCellDef>Estado</th>
+                            <td mat-cell *matCellDef="let pago">{{ pago.estadPago }}</td>
+                        </ng-container>
+
+                        <tr mat-header-row *matHeaderRowDef="['codPago','codCoti','fecha','paciente','documento','estado']"></tr>
+                        <tr mat-row *matRowDef="let row; columns: ['codPago','codCoti','fecha','paciente','documento','estado'];" (click)="cargarPagos(row)"></tr>
+
+                    </table>
+
+                    <div *ngIf="cotizaciones.length === 0" class="text-center mt-2">
+                    No se encontraron cotizaciones.
+                    </div>
+
+                </mat-card-content>
+            </mat-card>
+
+        </div>
+
+    </div>
+
+ </form>

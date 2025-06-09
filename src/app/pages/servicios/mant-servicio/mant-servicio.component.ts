@@ -61,6 +61,7 @@ export class MantServicioComponent implements OnInit, AfterViewInit {
     descripcionServicio: [''],
     precioServicio: ['',[Validators.required]],
     estadoServicio: [true],
+    favoritoServicio: [false],
     examenesServicio: this._fb.array([])
 
   });
@@ -77,7 +78,10 @@ export class MantServicioComponent implements OnInit, AfterViewInit {
     this.dataSourceServicios.paginator = this.paginatorServicios;
     this.dataSourceExamenesDisponibles.paginator = this.paginatorExamenes;
   }
-  
+
+  setFlex(valor: number, unidad: 'px' | '%' = 'px'): string {
+    return `0 0 ${valor}${unidad}`;
+  }  
 
   //Tabla items disponibles
   columnasDisponibles: string[] = ['codigo', 'nombre', 'accion'];
@@ -374,7 +378,8 @@ export class MantServicioComponent implements OnInit, AfterViewInit {
       nombreServicio: servicio.nombreServicio,
       descripcionServicio: servicio.descripcionServicio,
       precioServicio: servicio.precioServicio,
-      estadoServicio: servicio.estadoServicio
+      estadoServicio: servicio.estadoServicio,
+      favoritoServicio: servicio.favoritoServicio
     });
   
     this.examenesServicio.clear();

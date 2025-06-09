@@ -37,6 +37,23 @@ export const routes: Routes = [
             loadComponent: () =>
               import('./pages/recursoHumano/mant-recurso-humano/mant-recurso-humano.component').then(m => m.MantRecursoHumanoComponent),
           },
+          {
+            path: 'referencia-medico',
+            loadComponent: () =>
+              import('./pages/referencias/referencia-medico/referencia-medico.component').then(m => m.ReferenciaMedicoComponent),
+          },
+          {
+            path: 'cotiPersona',
+            loadComponent: () =>
+              import('./pages/gestionar/cotizacion/gest-coti-persona/gest-coti-persona.component').then(m => m.GestCotiPersonaComponent),
+          },
+          {
+            path: 'pagoCotiPersona',
+            loadComponent: () =>
+              import('./pages/gestionar/pagos/gest-pago-coti-persona/gest-pago-coti-persona.component').then(m => m.GestPagoCotiPersonaComponent),
+          },
+
+         
           // {
           //   path: '',
           //   redirectTo: 'home',

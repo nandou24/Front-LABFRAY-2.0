@@ -33,9 +33,9 @@
                 
                 <mat-card-content class="mb-2">
                 
-                    <div class="formulario-flex mt-2">
+                    <div class="row-flex mt-2">
 
-                        <div  class="campo-flex">
+                        <div [style.flex]="setFlex(20,'%')" class="flex-item">
                             <mat-form-field appearance="outline">
                                 <mat-label>Tipo de Servicio</mat-label>
                                 <mat-select formControlName="tipoServicio">
@@ -50,7 +50,7 @@
                             </mat-form-field>
                         </div>
     
-                        <div class="campo-flex">
+                        <div [style.flex]="setFlex(30,'%')" class="flex-item">
                             <mat-form-field appearance="outline">
                                 <mat-label>Nombre de Servicio</mat-label>
                                 <input matInput formControlName="nombreServicio">
@@ -60,7 +60,7 @@
                             </mat-form-field>
                         </div>
 
-                        <div class="campo-flex">
+                        <div [style.flex]="setFlex(15,'%')" class="flex-item">
                             <mat-form-field appearance="outline">
                                 <mat-label>Precio de Referencia</mat-label>
                                 <input matInput formControlName="precioServicio">
@@ -70,11 +70,19 @@
                             </mat-form-field>
                         </div>
 
-                        <div class="campo-flex">
-                            <mat-slide-toggle formControlName="estadoServicio">Estado</mat-slide-toggle>
+                        <div [style.flex]="setFlex(15,'%')" class="flex-item mb-3">
+                            <mat-slide-toggle formControlName="estadoServicio">Activo</mat-slide-toggle>
                         </div>
-        
-                        <div class="campo-flex">
+
+                        <div [style.flex]="setFlex(15,'%')" class="flex-item mb-3">
+                            <mat-slide-toggle formControlName="favoritoServicio">Favorito</mat-slide-toggle>
+                        </div>
+
+                    </div>
+                    
+                    <div class="row-flex mt-2">
+
+                        <div [style.flex]="setFlex(95,'%')" class="flex-item">
                             <mat-form-field appearance="outline">
                                 <mat-label>Descripción</mat-label>
                                 <input matInput formControlName="descripcionServicio">

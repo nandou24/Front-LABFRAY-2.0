@@ -56,12 +56,6 @@ export class PacienteService {
         return data.pacientes;
       }));
       
-      // .pipe(
-      //   map(res => res.pacientes),
-      //   catchError(err => {
-      //     console.error('Error al obtener pacientes:', err);
-      //     return of([]); // o throwError si prefieres propagarlo
-      //   })
   }
 
   getLastPatientsCotizacion(cantidad:number): Observable<IPaciente[]> {

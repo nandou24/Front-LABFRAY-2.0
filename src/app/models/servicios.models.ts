@@ -7,6 +7,7 @@ export interface IServicio {
     descripcionServicio: string,
     precioServicio: number,
     estadoServicio: string,
+    favoritoServicio: boolean,
     examenesServicio: Array<any>[] 
 }
 

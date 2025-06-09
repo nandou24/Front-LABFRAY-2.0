@@ -89,7 +89,7 @@ export class MantRecursoHumanoComponent implements OnInit, AfterViewInit {
     direcRecHumano:[''],
     mailRecHumano: ['', [Validators.email]],
     phones: this._fb.array([], Validators.required),
-    gradoInstruccion:['0'],
+    gradoInstruccion:['',[Validators.required]],
     profesionesRecurso: this._fb.array([]),
     profesionSolicitante: new FormControl(null),
     especialidadesRecurso: this._fb.array([]),
@@ -178,13 +178,13 @@ export class MantRecursoHumanoComponent implements OnInit, AfterViewInit {
 
     const profesionForm = this._fb.group({
       nivelProfesion: ['', [Validators.required]],
-      titulo: ['', [Validators.required]],
+      titulo: [''],
       profesion: ['', [Validators.required]],
       nroColegiatura: [''],
       centroEstudiosProfesion: [''],
       anioEgresoProfesion: [''],
     });
-  
+      
     this.profesionesRecurso.push(profesionForm);
 
   }
@@ -235,6 +235,8 @@ export class MantRecursoHumanoComponent implements OnInit, AfterViewInit {
   dataSourceRecursoHumano = new MatTableDataSource<IRecHumano>();
 
   cargarRecursoHumano(recursoHumano: IRecHumano): void {
+
+    this.recHumanoSeleccionado = true;
 
     this.myFormRecHumano.patchValue({ 
       codRecHumano: recursoHumano.codRecHumano,
@@ -313,7 +315,6 @@ export class MantRecursoHumanoComponent implements OnInit, AfterViewInit {
 
   actualizarEdad(){
 
-    console.log("Entro actualizar edad")
     const fecha = this.myFormRecHumano.get('fechaNacimiento')?.value;
     const edadCalculada = this.calcularEdad(fecha);
     this.myFormRecHumano.get('edad')?.setValue(edadCalculada);
@@ -322,12 +323,7 @@ export class MantRecursoHumanoComponent implements OnInit, AfterViewInit {
 
   calcularEdad(fechaNacimiento: Date | string): string {
 
-    console.log("Entro calcular edad")
-    console.log(fechaNacimiento)
-
     if (!fechaNacimiento) return '';
-
-    console.log(fechaNacimiento)
 
     const birthDate = typeof fechaNacimiento === 'string' ? new Date(fechaNacimiento) : fechaNacimiento;
     if (isNaN(birthDate.getTime())) return '';
@@ -352,7 +348,6 @@ export class MantRecursoHumanoComponent implements OnInit, AfterViewInit {
     }
 
     // Devolver el resultado en años, meses y días
-    console.log(`${years} años, ${months} meses, y ${days} días`)
     return `${years} años, ${months} meses, y ${days} días`;
 
   }
@@ -365,21 +360,31 @@ export class MantRecursoHumanoComponent implements OnInit, AfterViewInit {
   }
 
   seleccionarProfesionSolicitante(index: number) {
-    this.profesionesRecurso.controls.forEach((group, i) => {
-      group.get('profesionSolicitante')?.setValue(i === index);
-    });
 
-    // Actualiza también en el form principal si lo estás usando para guardar
-    const { profesion, nroColegiatura } = this.profesionesRecurso.at(index).value;
-    this.myFormRecHumano.get('profesionSolicitante')?.setValue(
-      profesion,
-      nroColegiatura
-    );
+    const grupo = this.profesionesRecurso.at(index);
+    const estabaActivo = grupo.get('profesionSolicitante')?.value;
+
+    if (estabaActivo) {
+      // Si estaba activo, lo apago y limpio el principal
+      grupo.get('profesionSolicitante')?.setValue(false);
+      this.myFormRecHumano.get('profesionSolicitante')?.reset();
+    } else {
+      // Si estaba apagado, activo este y apago los demás
+      this.profesionesRecurso.controls.forEach((group, i) => {
+        group.get('profesionSolicitante')?.setValue(i === index);
+      });
+
+      const { profesion, nroColegiatura } = grupo.value;
+      this.myFormRecHumano.get('profesionSolicitante')?.setValue({ profesion, nroColegiatura });
+    }
+
   }
 
   recHumanoSeleccionado = false;
 
   registraRecHumano(){
+
+    this.formSubmitted = true;
 
     if(this.myFormRecHumano.invalid){
 
@@ -387,11 +392,13 @@ export class MantRecursoHumanoComponent implements OnInit, AfterViewInit {
       return
     }
 
-    this.formSubmitted = true;
+    if(!this.validarArrayTelefono()){
+      return
+    }
 
     Swal.fire({
         title: '¿Estás seguro?',
-        text: '¿Deseas confirmar la creación de este recuso?',
+        text: '¿Deseas confirmar la creación de este recuso humano?',
         icon: 'question',
         showCancelButton: true,
         confirmButtonText: 'Sí, confirmar',
@@ -406,7 +413,7 @@ export class MantRecursoHumanoComponent implements OnInit, AfterViewInit {
           this._recHumanoService.registrarRecHumano(body).subscribe({
             next: (res) => {
               if (res.ok) {
-                this.mostrarAlertaExito("registrado");
+                this.mostrarAlertaExito("Recurso registrado");
                 this.ultimosRecHumano();
                 this.nuevoRecHumano();
               } else {
@@ -430,7 +437,7 @@ export class MantRecursoHumanoComponent implements OnInit, AfterViewInit {
   private mostrarAlertaExito(tipo: string): void {
     Swal.fire({
       title: 'Confirmado',
-      text: 'Servicio '+tipo+' correctamente',
+      text: tipo+' correctamente',
       icon: 'success',
       confirmButtonText: 'Ok'
     });
@@ -446,6 +453,51 @@ export class MantRecursoHumanoComponent implements OnInit, AfterViewInit {
   }
 
   actualizarRecHumano(){
+
+    this.formSubmitted = true;
+
+    if(this.myFormRecHumano.invalid){
+    
+      this.myFormRecHumano.markAllAsTouched();
+      return
+    }
+
+    if(!this.validarArrayTelefono()){
+      return
+    }
+
+    Swal.fire({
+      title: '¿Estás seguro?',
+      text: '¿Deseas confirmar la actualización de este recurso humano?',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, confirmar',
+      cancelButtonText: 'Cancelar',
+    }).then((result) => {
+    
+    if (result.isConfirmed) {
+    
+      console.log('Procede actualización')
+      const formValue  = this.myFormRecHumano.value;
+
+      this._recHumanoService.actualizarRecHumano(formValue.codRecHumano,formValue).subscribe({
+        next: (res) => {
+          if (res.ok) {
+            this.mostrarAlertaExito("actualizado");
+            this.ultimosRecHumano();
+            this.nuevoRecHumano();
+          } else {
+            const mensaje = res.msg || 'Ocurrió un error inesperado.';
+            this.mostrarAlertaError(mensaje);
+          }
+        },
+        error: (error) => {
+          const mensaje = error?.error?.msg || 'Error inesperado al registrar.';
+          this.mostrarAlertaError(mensaje);
+        }
+      });
+
+    }})
     
   }
 
@@ -477,17 +529,17 @@ export function documentValidator(tipoDocControlName: string): ValidatorFn {
     const tipoDoc = parent.get(tipoDocControlName)?.value; // Obtén el valor de tipoDoc
     const nroDoc = control.value; // Obtén el valor del número de documento
 
-    if (tipoDoc === '0') {
+    if (tipoDoc === 'DNI') {
       // DNI: exactamente 8 dígitos numéricos
       if (!/^\d{8}$/.test(nroDoc)) {
         return { invalidDNI: true };
       }
-    } else if (tipoDoc === '1') {
+    } else if (tipoDoc === 'CE') {
       // CE: máximo 13 caracteres alfanuméricos
       if (!/^[a-zA-Z0-9]{1,13}$/.test(nroDoc)) {
         return { invalidCE: true };
       }
-    } else if (tipoDoc === '2') {
+    } else if (tipoDoc === 'PASAPORTE') {
       // Pasaporte: máximo 16 caracteres alfanuméricos
       if (!/^[a-zA-Z0-9]{1,16}$/.test(nroDoc)) {
         return { invalidPasaporte: true };

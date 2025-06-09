@@ -80,6 +80,21 @@ mat-option {
     padding: 0.2rem;
 }
 
+.row-flex{
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 0px;
+}
+
+.flex-item {
+    justify-content: center;
+    min-width: 0;
+    text-align: center;
+}
+  
+
 @media (max-width: 1430px){
 
     .contenedor-formulario,

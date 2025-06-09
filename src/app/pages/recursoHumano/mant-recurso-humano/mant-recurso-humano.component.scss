@@ -1,5 +1,4 @@
 mat-form-field {
-    //min-width: 0;
     width: 100%;
 }
 
@@ -33,12 +32,12 @@ mat-option {
 
 //para los items de cada fila de parámetros de validación
 .flex-item {
-    display: flex;
-    flex-direction: column;
+    // display: flex;
+    // flex-direction: column;
     justify-content: center;
     min-width: 0;
     text-align: center;
-    flex: 0 0 auto;
+    // flex: 0 0 auto;
 }
 
 .campo-fieldset {
@@ -78,44 +77,14 @@ mat-option {
     //min-width: 300px;
 }
 
-.formulario-flex {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 16px; /* Separación entre campos */
-    row-gap: 8px;
-}
-
 .row-flex{
     display: flex;
     flex-wrap: wrap;
+    align-items: center;
     gap: 10px; /* Separación entre campos */
-    row-gap: 0px;
+    margin-bottom: 8px;
 }
   
-.campo-flex {
-    flex: 1 1 calc(50% - 12px); /* 4 columnas en pantallas grandes */
-    //min-width: 200px;
-}
-
-.campo-flex-1 {
-    flex: 1 1 calc(100% - 12px); /* 4 columnas en pantallas grandes */
-    //min-width: 200px;
-}
-
-.campo-flex-2 {
-    flex: 1 1 calc(50% - 12px); /* 4 columnas en pantallas grandes */
-    //min-width: 200px;
-}
-
-.campo-flex-3 {
-    flex: 1 1 calc(33.333% - 12px); /* 4 columnas en pantallas grandes */
-    //min-width: 200px;
-}
-
-.campo-flex-4 {
-    flex: 1 1 calc(25% - 30px); /* 4 columnas en pantallas grandes */
-    //min-width: 200px;
-}
 
 //para las filas de parametros de validación
 .flex-row-container {
@@ -141,24 +110,6 @@ mat-option {
 
 /* Tablets (2 columnas) */
 @media (max-width: 991px) {
-    .campo-flex {
-      flex: 1 1 calc(50% - 8px); /* 2 columnas */
-    }
-
-    .campo-flex-2 {
-        flex: 1 1 calc(50% - 12px); /* 4 columnas en pantallas grandes */
-        //min-width: 200px;
-    }
-
-    .campo-flex-3 {
-        flex: 1 1 calc(33.33% - 12px); /* 4 columnas en pantallas grandes */
-        //min-width: 200px;
-    }
-
-    .campo-flex-4 {
-        flex: 1 1 calc(25% - 60px); /* 4 columnas en pantallas grandes */
-        //min-width: 200px;
-    }
 
     .flex-item {
       flex: 1 1 48% !important; /* Cada item ocupará 100% cuando sea pequeño */
@@ -167,24 +118,6 @@ mat-option {
 
 /* Celulares (1 columna) */
 @media (max-width: 767px) {
-    .campo-flex {
-      flex: 1 1 100%; /* 1 columna */
-    }
-
-    .campo-flex-2 {
-        flex: 1 1 calc(100% - 12px); /* 4 columnas en pantallas grandes */
-        //min-width: 200px;
-    }
-
-    .campo-flex-3 {
-        flex: 1 1 calc(100% - 12px); /* 4 columnas en pantallas grandes */
-        //min-width: 200px;
-    }
-
-    .campo-flex-4 {
-        flex: 1 1 calc(100% - 12px); /* 4 columnas en pantallas grandes */
-        //min-width: 200px;
-    }
 
     .flex-item {
       flex: 1 1 100% !important; /* Cada item ocupará 100% cuando sea pequeño */

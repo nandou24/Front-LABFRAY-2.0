@@ -7,46 +7,108 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
 
 // Customize the entire app. Change :root to your selector if you want to scope the styles.
 :root {
-    @include mat.datepicker-overrides((
-      calendar-date-selected-state-text-color: orange,
-      calendar-date-selected-state-background-color: rgb(3, 58, 160),
-    ));
+  @include mat.datepicker-overrides((
+    calendar-date-selected-state-text-color: orange,
+    calendar-date-selected-state-background-color: rgb(3, 58, 160),
+  ));
 
-    @include mat.form-field-overrides((
-        container-height: 40px,
-        container-vertical-padding: 8px,
-        container-text-size: 15px,
-        outlined-label-text-size: 13px,
-        outlined-label-text-populated-size: 13px,
-    ));
+  @include mat.form-field-overrides((
+      container-height: 40px,
+      container-vertical-padding: 8px,
+      container-text-size: 15px,
+      outlined-label-text-size: 13px,
+      outlined-label-text-populated-size: 13px,
+  ));
 
-    @include mat.table-overrides((
-        header-container-height: 35px,
-        row-item-container-height: 35px,
-        header-headline-size: 13px,
-        row-item-label-text-color: #333333,
-        row-item-outline-color: #e0e0e0,
-        row-item-outline-width: 1px,
-    ));
+  @include mat.table-overrides((
+      header-container-height: 35px,
+      row-item-container-height: 35px,
+      header-headline-size: 13px,
+      row-item-label-text-color: #333333,
+      row-item-outline-color: #e0e0e0,
+      row-item-outline-width: 1px,
+  ));
 
-    @include mat.card-overrides((
-      elevated-container-color: rgb(255, 255, 255),
-      title-text-size: 1rem,
-    ));
+  @include mat.card-overrides((
+    elevated-container-color: rgb(255, 255, 255),
+    title-text-size: 1rem,
+  ));
 
-    @include mat.select-overrides((
-      panel-background-color: rgb(255, 255, 255),
-      trigger-text-size: 15px
-    ));
+  @include mat.select-overrides((
+    panel-background-color: rgb(255, 255, 255),
+    trigger-text-size: 15px
+  ));
 
-    @include mat.checkbox-overrides((
-      label-text-size: 13px,
+  @include mat.checkbox-overrides((
+    label-text-size: 13px,
+    state-layer-size: 25px,
+  ));
+
+}
+
+app-gest-coti-persona {
+  //@include mat.button-density(-3);
+  @include mat.form-field-overrides((
+    outlined-input-text-color: rgb(3, 58, 160),
+    outlined-disabled-input-text-color: rgb(3, 58, 160),
+    container-text-size: 13px,
+  ));
+
+  @include mat.select-overrides((
+    trigger-text-size: 13px,
+    enabled-trigger-text-color: rgb(3, 58, 160),
+    disabled-trigger-text-color: rgb(3, 58, 160),
+  ));
+
+  @include mat.table-overrides((
+      row-item-container-height: 30px,
+      row-item-label-text-size: 12.5px,
+      row-item-label-text-line-height: 1.2,
+  ));
+
+  @include mat.icon-button-overrides((
+      icon-color: rgb(9, 92, 9),
       state-layer-size: 25px,
-    ));
+      touch-target-display: none,
+  ));
 
-    // @include mat.tabs-overrides((
-    //   active-indicator-color: rgb(23, 83, 75),
-    //   divider-color: rgb(3, 58, 160),
-    // ));
+  @include mat.button-overrides((
+    filled-container-color: orange,
+    filled-label-text-color: rgb(0, 0, 0),
+    filled-container-height: 25px,
+    filled-label-text-size: 12px,
+  ));
 
-  }
+  @include mat.slide-toggle-overrides((
+    track-height: 20px, //altura del toggle
+    track-width: 40px, //ancho del toggle
+    with-icon-handle-size: 12px, //tamaño del círculo del toggle
+    selected-icon-size: 9px, //tamaño del icono cuando se selecciona
+    unselected-icon-size: 9px, //tamaño del icono cuando no se selecciona
+    pressed-handle-size: 15px, //tamaño del toggle cuando se presiona
+    state-layer-size: 40px, //halo cuando se selecciona el toggle
+  ));
+
+}
+
+app-dialog-pdf-coti-persona {
+  @include mat.dialog-overrides((
+    subhead-color: rgb(3, 58, 160),
+  ));
+}
+
+app-gest-pago-coti-persona{
+  
+  @include mat.form-field-overrides((
+    outlined-input-text-color: rgb(3, 58, 160),
+    outlined-disabled-input-text-color: rgb(3, 58, 160),
+    container-text-size: 13px,
+  ));
+
+  @include mat.table-overrides((
+      row-item-container-height: 30px,
+      row-item-label-text-size: 12.5px,
+      row-item-label-text-line-height: 1.2,
+  ));
+
+}

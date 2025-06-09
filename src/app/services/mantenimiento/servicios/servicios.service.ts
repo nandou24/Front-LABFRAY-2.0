@@ -43,6 +43,16 @@ export class ServiciosService {
       }));        
   }
 
+  getAllFavoritesServicios(): Observable<IServicio[]> {
+    return this._http
+      .get<IGetLastServicio>(
+        `${environment.baseUrl}/api/servicio/latestFavorites`
+      )
+      .pipe(map((data) => {
+        return data.servicios;
+      }));        
+  }
+
   getAllServicios(): Observable<IServicio[]> {
     return this._http
       .get<IGetLastServicio>(

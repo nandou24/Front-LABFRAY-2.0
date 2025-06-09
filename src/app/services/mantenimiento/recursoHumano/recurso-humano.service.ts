@@ -2,9 +2,8 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { IGetLastRecHumano, IRecHumano, IRecHumanoPostDTO } from '../../../models/recursoHumano.models';
-import { catchError, map, Observable, of } from 'rxjs';
+import { map, Observable } from 'rxjs';
 import { environment } from '../../../../environments/enviroment';
-import Swal from 'sweetalert2';
 
 @Injectable({
   providedIn: 'root'
@@ -66,7 +65,6 @@ export class RecursoHumanoService {
       )
       .pipe(map((data) => data.recHumanos));
   }
-
   
   public actualizarRecHumano(codRecHumano: string, body: IRecHumano){
     
@@ -74,24 +72,6 @@ export class RecursoHumanoService {
       .put<IRecHumanoPostDTO>(
         `${environment.baseUrl}/api/recursoHumano/${codRecHumano}/updateRecHumano`,body
       )
-      .pipe(
-        map((data) => {
-          if (data.ok) {
-            return data.ok;
-          } else {
-            throw new Error('ERROR');
-          }
-        }),
-        catchError((err) => {
-          console.log(err.error.msg);
-          Swal.fire({
-            title: 'ERROR!',
-            text: err.error.msg,
-            icon: 'error',
-            confirmButtonText: 'Ok',
-          });
-          return of('ERROR');
-        })
-      );
+
   }
 }

@@ -1,0 +1,407 @@
+<form [formGroup]="myFormRefMedico">
+  <div class="row-flex mt-2" style="align-items: center;">
+    <div [style.flex]="setFlex(30,'%')" class="flex-item">
+      <h5> Código: {{myFormRefMedico.get('codRefMedico')?.value}} </h5>
+    </div>
+    <div [style.flex]="setFlex(65,'%')" class="flex-item">
+      <h5 class="text-center" style="font-weight: 500;">REFERENCIA MÉDICO</h5>
+    </div>
+  </div>
+  <div class="contenedor-flex">
+    <div class="contenedor-formulario">
+      <mat-tab-group mat-stretch-tabs="false" mat-align-tabs="start">
+        <mat-tab label="Personales">
+          <div class="row-flex mt-4">
+            <div [style.flex]="setFlex(47.5,'%')" class="flex-item">
+              <mat-form-field appearance="outline">
+                <mat-label>Tipo Doc</mat-label>
+                <mat-select formControlName="tipoDoc">
+                  <mat-option value="DNI">DNI</mat-option>
+                  <mat-option value="CE">CE</mat-option>
+                  <mat-option value="PASAPORTE">Pasaporte</mat-option>
+                </mat-select>
+                <mat-error *ngIf="myFormRefMedico.get('tipoDoc')?.hasError('required')">
+                  Obligatorio
+                </mat-error>
+              </mat-form-field>
+            </div>
+            <div [style.flex]="setFlex(47.5,'%')" class="flex-item">
+              <mat-form-field appearance="outline">
+                <mat-label >Nro. Documento</mat-label>
+                <input matInput formControlName="nroDoc">
+                <mat-error *ngIf="myFormRefMedico.get('nroDoc')?.hasError('required')">
+                  Obligatorio
+                </mat-error>
+
+                <mat-error *ngIf="myFormRefMedico.get('nroDoc')?.hasError('invalidDNI')">
+                    DNI debe tener 8 números
+                </mat-error>
+            
+                <mat-error *ngIf="myFormRefMedico.get('nroDoc')?.hasError('invalidCE')">
+                    CE tiene hasta 13 caracteres
+                </mat-error>
+            
+                <mat-error *ngIf="myFormRefMedico.get('nroDoc')?.hasError('invalidPasaporte')">
+                    Pasaporte tiene hasta 16 caracteres
+                </mat-error>
+              </mat-form-field>
+            </div>
+          </div>
+          <div class="row-flex">
+            <div [style.flex]="setFlex(47.5,'%')" class="flex-item">
+              <mat-form-field appearance="outline">
+                <mat-label>Fecha Nac - mm/dd/yyyy</mat-label>
+                <input matInput [matDatepicker]="picker" readonly="true" formControlName="fechaNacimiento" (dateChange)="actualizarEdad()">
+                <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+                <mat-datepicker #picker disabled="false"></mat-datepicker>
+                <mat-error *ngIf="myFormRefMedico.get('fechaNacimiento')?.hasError('required')">
+                  Obligatorio
+                </mat-error>
+              </mat-form-field>
+            </div>
+            <div [style.flex]="setFlex(47.5,'%')" class="flex-item mt-2">
+              {{myFormRefMedico.get('edad')?.value}}
+            </div>
+          </div>
+          <div class="row-flex">
+            <div [style.flex]="setFlex(47.5,'%')" class="flex-item">
+              <mat-form-field appearance="outline">
+                <mat-label>Apellido Paterno</mat-label>
+                <input matInput formControlName="apePatRefMedico">
+                <mat-error *ngIf="myFormRefMedico.get('apePatRefMedico')?.hasError('required')">
+                  Obligatorio
+                </mat-error>
+              </mat-form-field>
+            </div>
+            <div [style.flex]="setFlex(47.5,'%')" class="flex-item">
+              <mat-form-field appearance="outline">
+                <mat-label>Apellido Materno</mat-label>
+                <input matInput formControlName="apeMatRefMedico">
+              </mat-form-field>
+            </div>
+          </div>
+          <div class="row-flex">
+            <div [style.flex]="setFlex(47.5,'%')" class="flex-item">
+              <mat-form-field appearance="outline">
+                <mat-label>Nombres</mat-label>
+                <input matInput formControlName="nombreRefMedico">
+                <mat-error *ngIf="myFormRefMedico.get('nombreRefMedico')?.hasError('required')">
+                  Obligatorio
+                </mat-error>
+              </mat-form-field>
+            </div>
+            <div [style.flex]="setFlex(47.5,'%')" class="flex-item">
+              <mat-form-field appearance="outline">
+                <mat-label>Sexo</mat-label>
+                <mat-select formControlName="sexoRefMedico">
+                  <mat-option value="Masculino">Masculino</mat-option>
+                  <mat-option value="Femenino">Femenino</mat-option>
+                </mat-select>
+                <mat-error *ngIf="myFormRefMedico.get('sexoRefMedico')?.hasError('required')">
+                  Obligatorio
+                </mat-error>
+              </mat-form-field>
+            </div>
+          </div>
+        </mat-tab>
+        <mat-tab label="Contacto">
+          <div class="row-flex mt-4">
+            <div [style.flex]="setFlex(31,'%')" class="flex-item">
+              <mat-form-field appearance="outline">
+                <mat-label>Departamento</mat-label>
+                <mat-select formControlName="departamentoRefMedico">
+                  <mat-option *ngFor="let depart of departamentos" [value]="depart.id">{{ depart.nombre }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+            <div [style.flex]="setFlex(31,'%')" class="flex-item">
+              <mat-form-field appearance="outline">
+                <mat-label>Provincia</mat-label>
+                <mat-select formControlName="provinciaRefMedico">
+                  <mat-option *ngFor="let provin of provincias" [value]="provin.id_Prov">{{ provin.nombre }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+            <div [style.flex]="setFlex(33,'%')" class="flex-item">
+              <mat-form-field appearance="outline">
+                <mat-label>Distrito</mat-label>
+                <mat-select formControlName="distritoRefMedico">
+                  <mat-option *ngFor="let distri of distritos" [value]="distri.id_Ditrito">{{ distri.nombre }}</mat-option>
+                </mat-select>
+                <mat-error *ngIf="myFormRefMedico.get('distritoRefMedico')?.invalid">
+                  Obligatorio
+                </mat-error>
+              </mat-form-field>
+            </div>
+          </div>
+          <div class="row-flex">
+            <div [style.flex]="setFlex(48,'%')" class="flex-item">
+              <mat-form-field appearance="outline">
+                <mat-label>Dirección</mat-label>
+                <input matInput formControlName="direcRefMedico">
+              </mat-form-field>
+            </div>
+            <div [style.flex]="setFlex(48, '%')" class="flex-item">
+              <mat-form-field appearance="outline">
+                <mat-label>e-mail</mat-label>
+                <input matInput formControlName="mailRefMedico">
+                <mat-error *ngIf="myFormRefMedico.get('mailRefMedico')?.hasError('email')">
+                  Ingrese correo válido
+                </mat-error>
+              </mat-form-field>
+            </div>
+          </div>
+          <fieldset class="campo-fieldset mt-2 mb-3">
+            <legend>TELÉFONOS</legend>
+            <div class="row mt-1">
+              <div class="col-lg-3 text-center">
+                <button mat-flat-button color="primary" class="btn-telefono" type="button" (click)="agregarTelefono()">
+                  <mat-icon class="me-1">add</mat-icon>
+                  Agregar Teléfono
+                </button>
+              </div>
+              <div class="col-lg-9">
+                <div formArrayName="phones" *ngFor="let telGroup of phones.controls; let i = index">
+                  <div [formGroupName]="i" class="row-flex align-items-center">
+                    <div [style.flex]="setFlex(30, '%')" class="flex-item">
+                      <mat-form-field appearance="outline">
+                        <mat-label>Teléfono</mat-label>
+                        <input matInput formControlName="phoneNumber">
+                        <mat-error *ngIf="telGroup.get('phoneNumber')?.hasError('required')">
+                          Número requerido
+                        </mat-error>
+                        <mat-error *ngIf="telGroup.get('phoneNumber')?.hasError('pattern')">
+                          Solo números de 9 a 11 dígitos
+                        </mat-error>
+                      </mat-form-field>
+                    </div>
+                    <div [style.flex]="setFlex(60, '%')" class="flex-item">
+                      <mat-form-field appearance="outline">
+                        <mat-label>Descripción</mat-label>
+                        <input matInput formControlName="descriptionPhone">
+                        <mat-error *ngIf="telGroup.get('descriptionPhone')?.hasError('required')">
+                          Requerido
+                        </mat-error>
+                        <mat-error *ngIf="telGroup.get('descriptionPhone')?.hasError('maxlength')">
+                          Máximo 30 caracteres
+                        </mat-error>
+                      </mat-form-field>
+                    </div>
+                    <div [style.flex]="setFlex(5, '%')" class="flex-item mb-2">
+                      <button mat-icon-button class="mb-3" color="warn" type="button" (click)="eliminarTelefono(i)">
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div *ngIf="!validarArrayTelefono() && formSubmitted" class="text-danger mt-2" style="font-size: 14px; text-align: center;">
+              Debe agregar al menos un número de teléfono
+            </div>
+          </fieldset>
+        </mat-tab>
+        <mat-tab label="Profesionales">
+          <fieldset class="campo-fieldset mt-2 mb-3">
+            <legend>PROFESIONES</legend>
+            <div formArrayName="profesionesRefMedico" *ngFor="let profesionesGroup of profesionesRefMedico.controls; let i = index">
+              <div [formGroupName]="i" class="flex-row-container">
+                <div class="row-flex mt-2">
+                  <div [style.flex]="setFlex(25, '%')" class="flex-item">
+                    <mat-form-field appearance="outline">
+                      <mat-label>Nivel de Profesión</mat-label>
+                      <mat-select formControlName="nivelProfesion">
+                        <mat-option value="Técnica">Técnica</mat-option>
+                        <mat-option value="Universitaria">Universitaria</mat-option>
+                      </mat-select>
+                      <mat-error *ngIf="profesionesGroup.get('nivelProfesion')?.hasError('required')">
+                        Obligatorio
+                      </mat-error>
+                    </mat-form-field>
+                  </div>
+                  <div [style.flex]="setFlex(25, '%')" class="flex-item">
+                    <mat-form-field appearance="outline">
+                      <mat-label>Profesión</mat-label>
+                      <mat-select formControlName="profesion">
+                        <mat-option value="Enfermero">Enfermero</mat-option>
+                        <mat-option value="Médico">Médico</mat-option>
+                        <mat-option value="Nutricionista">Nutricionista</mat-option>
+                        <mat-option value="Odontólogo">Odontólogo</mat-option>
+                        <mat-option value="Psicólogo">Psicólogo</mat-option>
+                        <mat-option value="Tecnólogo Médico">Tecnólogo Médico</mat-option>
+                        <mat-option value="Trabajador Social">Trabajador Social</mat-option>
+                        <mat-option value="Ingeniero de Sistemas">Ingeniero de Sistemas</mat-option>
+                      </mat-select>
+                      <mat-error *ngIf="profesionesGroup.get('profesion')?.hasError('required')">
+                        Obligatorio
+                      </mat-error>
+                    </mat-form-field>
+                  </div>
+                  <div [style.flex]="setFlex(45, '%')" class="flex-item">
+                    <mat-form-field appearance="outline">
+                      <mat-label>Centro de Estudios</mat-label>
+                      <input matInput formControlName="centroEstudiosProfesion">
+                    </mat-form-field>
+                  </div>
+                </div>
+                <div class="row-flex">
+                  <div [style.flex]="setFlex(15, '%')" class="flex-item mb-2 text-center">
+                    <mat-slide-toggle formControlName="titulo">Título</mat-slide-toggle>
+                  </div>
+                  <div [style.flex]="setFlex(25, '%')" class="flex-item">
+                    <mat-form-field appearance="outline">
+                      <mat-label>Colegiatura</mat-label>
+                      <input matInput formControlName="nroColegiatura">
+                    </mat-form-field>
+                  </div>
+                  <div [style.flex]="setFlex(25, '%')" class="flex-item">
+                    <mat-form-field appearance="outline">
+                      <mat-label>Año de Egreso</mat-label>
+                      <input matInput formControlName="anioEgresoProfesion">
+                    </mat-form-field>
+                  </div>
+                  <div [style.flex]="setFlex(15, '%')" class="flex-item mb-2 text-center">
+                    <mat-slide-toggle color="primary"
+                      [checked]="profesionesGroup.get('profesionSolicitante')?.value"
+                      (change)="seleccionarProfesionSolicitante(i)">
+                      Solicitante
+                    </mat-slide-toggle>
+                  </div>
+                  <div [style.flex]="setFlex(15, '%')" class="flex-item mb-2 text-center">
+                    <button mat-icon-button class="mb-3" color="warn" type="button" (click)="eliminarProfesion(i)">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="text-center mt-2">
+              <button mat-flat-button color="primary" class="btn-telefono" type="button" (click)="agregarProfesion()">
+                <mat-icon class="me-1">add</mat-icon>
+                Agregar Profesión
+              </button>
+            </div>
+          </fieldset>
+          <fieldset class="campo-fieldset mt-2 mb-3">
+            <legend>ESPECIALIDADES</legend>
+            <div formArrayName="especialidadesRefMedico" *ngFor="let especialidadesGroup of especialidadesRefMedico.controls; let i = index">
+              <div [formGroupName]="i" class="flex-row-container">
+                <div class="row-flex mt-2">
+                  <div [style.flex]="setFlex(30, '%')" class="flex-item">
+                    <mat-form-field appearance="outline">
+                      <mat-label>Especialidad</mat-label>
+                      <mat-select formControlName="especialidad">
+                        <mat-option value="Pediatría">Pediatría</mat-option>
+                        <mat-option value="Radiólogía">Radiólogía</mat-option>
+                        <mat-option value="Ginecología y Obstetricia">Ginecología y Obstetricia</mat-option>
+                      </mat-select>
+                      <mat-error *ngIf="especialidadesGroup.get('especialidad')?.hasError('required')">
+                        Obligatorio
+                      </mat-error>
+                    </mat-form-field>
+                  </div>
+                  <div [style.flex]="setFlex(30, '%')" class="flex-item">
+                    <mat-form-field appearance="outline">
+                      <mat-label>Centro de Estudios</mat-label>
+                      <input matInput formControlName="centroEstudiosEspecialidad">
+                    </mat-form-field>
+                  </div>
+                  <div [style.flex]="setFlex(15, '%')" class="flex-item">
+                    <mat-form-field appearance="outline">
+                      <mat-label>RNE</mat-label>
+                      <input matInput formControlName="rne">
+                      <mat-error *ngIf="especialidadesGroup.get('rne')?.hasError('required')">
+                        Obligatorio
+                      </mat-error>
+                    </mat-form-field>
+                  </div>
+                  <div [style.flex]="setFlex(15, '%')" class="flex-item">
+                    <mat-form-field appearance="outline">
+                      <mat-label>Año de Egreso</mat-label>
+                      <input matInput formControlName="anioEgresoEspecialidad">
+                    </mat-form-field>
+                  </div>
+                  <div [style.flex]="setFlex(5, '%')" class="flex-item align-items-center">
+                    <button mat-icon-button class="mb-3" color="warn" type="button" (click)="eliminarEspecialidad(i)">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="text-center mt-2">
+              <button mat-flat-button color="primary" class="btn-telefono" type="button" (click)="agregarEspecialidad()">
+                <mat-icon class="me-1">add</mat-icon>
+                Agregar Especialidad
+              </button>
+            </div>
+          </fieldset>
+        </mat-tab>
+        <mat-tab label="Laborales">Datos Laborales</mat-tab>
+      </mat-tab-group>
+      <div class="row-flex mt-4">
+        <div [style.flex]="setFlex(32,'%')" class="flex-item">
+          <button mat-raised-button class="btn-nuevo"  type="button" (click)="nuevoRefMedico()">
+            Nuevo Referente
+          </button>
+        </div>
+        <div [style.flex]="setFlex(32,'%')" class="flex-item">
+          <button mat-raised-button class="btn-registrar" *ngIf="!refMedicoSeleccionado" type="button" (click)="registrarRefMedico()">
+            Registrar Referente
+          </button>
+        </div>
+        <div [style.flex]="setFlex(32,'%')" class="flex-item">
+          <button mat-raised-button class="btn-actualizar" type="button" (click)="actualizarRefMedico()">
+            Actualizar Referente
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="contenedor-tablaDerecha">
+      <mat-card class="tabla-recHumano-card">
+
+        <mat-card-title>
+          Referentes Registrados
+        </mat-card-title>
+
+        <mat-card-content>
+
+          <mat-form-field appearance="outline" class="mt-2">
+            <mat-label>Buscar Referente</mat-label>
+            <input matInput [formControl]="terminoBusquedaRefMedicoControl"
+              (keyup)="filtrarRefMedico()"
+              (focus)="seleccionarTexto($event)">
+          </mat-form-field>
+
+          <table mat-table [dataSource]="dataSourceRefMedico" class="tabla-pacientes mt-1">
+            <!-- Columnas similares a recurso humano -->
+            <ng-container matColumnDef="nro">
+              <th mat-header-cell *matHeaderCellDef> N° </th>
+              <td mat-cell *matCellDef="let refMedico ; let i = index"> {{ i + 1 }} </td>
+            </ng-container>
+            <ng-container matColumnDef="codigo" >
+              <th mat-header-cell *matHeaderCellDef> Código </th>
+              <td mat-cell *matCellDef="let refMedico"> {{ refMedico.codRefMedico }} </td>
+            </ng-container>
+            <ng-container matColumnDef="nombreCompleto">
+              <th mat-header-cell *matHeaderCellDef> Apellidos y Nombres </th>
+              <td mat-cell *matCellDef="let refMedico">
+                {{ refMedico.apePatRefMedico }} {{ refMedico.apeMatRefMedico }} {{ refMedico.nombreRefMedico }}
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="nroDoc">
+              <th mat-header-cell *matHeaderCellDef> Nro. Doc </th>
+              <td mat-cell *matCellDef="let refMedico"> {{ refMedico.tipoDoc }} - {{ refMedico.nroDoc }} </td>
+            </ng-container>
+            <tr mat-header-row *matHeaderRowDef="columnasTablaRefMedico"></tr>
+            <tr mat-row *matRowDef="let row; columns: columnasTablaRefMedico;" (click)="cargarRefMedico(row)"></tr>
+          </table>
+
+          <div>
+            <mat-paginator #MatPaginatorRefMedico [pageSizeOptions]="[5, 10, 25]" showFirstLastButtons></mat-paginator>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+</form>

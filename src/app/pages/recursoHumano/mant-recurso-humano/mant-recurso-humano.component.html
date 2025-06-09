@@ -1,7 +1,15 @@
 <form [formGroup]="myFormRecHumano">
 
-    <div class="row mt-2" style="align-items: center;">
-        <h5 class="text-center" style="font-weight: 500;">RECURSOS HUMANOS</h5>
+    <div class="row-flex mt-2" style="align-items: center;">
+        
+        <div [style.flex]="setFlex(30,'%')" class="flex-item">
+                <h5> Código: {{myFormRecHumano.get('codRecHumano')?.value}} </h5>
+        </div>
+
+        <div [style.flex]="setFlex(65,'%')" class="flex-item">
+                <h5 class="text-center" style="font-weight: 500;">RECURSOS HUMANOS</h5>
+        </div>
+        
     </div>
 
     <div class="contenedor-flex">
@@ -12,9 +20,9 @@
 
                 <mat-tab label="Personales">
 
-                    <div class="formulario-flex mt-4">
+                    <div class="row-flex mt-4">
                 
-                        <div class="campo-flex">
+                        <div [style.flex]="setFlex(47.5,'%')" class="flex-item">
                             <mat-form-field appearance="outline">
                                 <mat-label>Tipo Doc</mat-label>
                                     <mat-select formControlName="tipoDoc">
@@ -28,7 +36,7 @@
                             </mat-form-field>
                         </div>                          
                                 
-                        <div class="campo-flex">
+                        <div [style.flex]="setFlex(47.5,'%')" class="flex-item">
                             <mat-form-field appearance="outline">
                                 <mat-label >Nro. Documento</mat-label>
                                 <input matInput formControlName="nroDoc">
@@ -49,8 +57,12 @@
                                 </mat-error>
                             </mat-form-field>
                         </div>
+                    
+                    </div>
 
-                        <div class="campo-flex">
+                    <div class="row-flex">
+
+                        <div [style.flex]="setFlex(47.5,'%')" class="flex-item">
                             <mat-form-field appearance="outline">
                                 <mat-label>Fecha Nac - mm/dd/yyyy</mat-label>
                                     <input matInput [matDatepicker]="picker" readonly="true" formControlName="fechaNacimiento" (dateChange)="actualizarEdad()">
@@ -65,11 +77,15 @@
                             </mat-form-field>
                         </div>
 
-                        <div class="campo-flex mt-2 text-center">
+                        <div [style.flex]="setFlex(47.5,'%')" class="flex-item mt-2">
                             {{myFormRecHumano.get('edad')?.value}}
                         </div>
+                    
+                    </div>
 
-                        <div class="campo-flex">
+                    <div class="row-flex">
+
+                        <div [style.flex]="setFlex(47.5,'%')" class="flex-item">
                             <mat-form-field appearance="outline">
                                 <mat-label>Apellido Paterno</mat-label>
                                 <input matInput formControlName="apePatRecHumano">
@@ -82,7 +98,7 @@
                             </mat-form-field>
                         </div>
 
-                        <div class="campo-flex">
+                        <div [style.flex]="setFlex(47.5,'%')" class="flex-item">
                             <mat-form-field appearance="outline">
                                 <mat-label>Apellido Materno</mat-label>
                                 <input matInput formControlName="apeMatRecHumano">
@@ -91,8 +107,12 @@
                                 </mat-error>
                             </mat-form-field>
                         </div>
+                    
+                    </div>
 
-                        <div class="campo-flex">
+                    <div class="row-flex">
+
+                        <div [style.flex]="setFlex(47.5,'%')" class="flex-item">
                             <mat-form-field appearance="outline">
                                 <mat-label>Nombres</mat-label>
                                 <input matInput formControlName="nombreRecHumano">
@@ -105,7 +125,7 @@
                             </mat-form-field>
                         </div>
 
-                        <div class="campo-flex">
+                        <div [style.flex]="setFlex(47.5,'%')" class="flex-item">
                             <mat-form-field appearance="outline">
                                 <mat-label>Sexo</mat-label>
                                 <mat-select formControlName="sexoRecHumano">
@@ -126,7 +146,7 @@
             
                     <div class="row-flex mt-4">
 
-                        <div class="campo-flex-3">
+                        <div [style.flex]="setFlex(31,'%')" class="flex-item">
                             <mat-form-field appearance="outline">
                                 <mat-label>Departamento</mat-label>
                                     <mat-select formControlName="departamentoRecHumano">
@@ -135,7 +155,7 @@
                             </mat-form-field>
                         </div>
 
-                        <div class="campo-flex-3">
+                        <div [style.flex]="setFlex(31,'%')" class="flex-item">
                             <mat-form-field appearance="outline">
                                 <mat-label>Provincia</mat-label>
                                     <mat-select formControlName="provinciaRecHumano">
@@ -144,7 +164,7 @@
                             </mat-form-field>
                         </div>
 
-                        <div class="campo-flex-3">
+                        <div [style.flex]="setFlex(33,'%')" class="flex-item">
                             <mat-form-field appearance="outline">
                                 <mat-label>Distrito</mat-label>
                                     <mat-select formControlName="distritoRecHumano">
@@ -160,14 +180,14 @@
 
                     <div class="row-flex">
 
-                        <div class="campo-flex-2">
+                        <div [style.flex]="setFlex(48,'%')" class="flex-item">
                             <mat-form-field appearance="outline">
                                 <mat-label>Dirección</mat-label>
                                 <input matInput formControlName="direcRecHumano">
                             </mat-form-field>
                         </div>
 
-                        <div class="campo-flex-2">
+                        <div [style.flex]="setFlex(48, '%')" class="flex-item">
                             <mat-form-field appearance="outline">
                                 <mat-label>e-mail</mat-label>
                                 <input matInput formControlName="mailRecHumano">
@@ -195,39 +215,39 @@
         
                                 <div formArrayName="phones" *ngFor="let telGroup of phones.controls; let i = index">
         
-                                    <div [formGroupName]="i" class="row align-items-center">
+                                    <div [formGroupName]="i" class="row-flex align-items-center">
             
-                                    <div class="col-lg-4">
-                                        <mat-form-field appearance="outline">
-                                        <mat-label>Teléfono</mat-label>
-                                        <input matInput formControlName="phoneNumber">
-                                        <mat-error *ngIf="telGroup.get('phoneNumber')?.hasError('required')">
-                                            Número requerido
-                                        </mat-error>
-                                        <mat-error *ngIf="telGroup.get('phoneNumber')?.hasError('pattern')">
-                                            Solo números de 9 a 11 dígitos
-                                        </mat-error>
-                                        </mat-form-field>
-                                    </div>
-                                
-                                    <div class="col-lg-7">
-                                        <mat-form-field appearance="outline">
-                                        <mat-label>Descripción</mat-label>
-                                        <input matInput formControlName="descriptionPhone">
-                                        <mat-error *ngIf="telGroup.get('descriptionPhone')?.hasError('required')">
-                                            Requerido
-                                        </mat-error>
-                                        <mat-error *ngIf="telGroup.get('descriptionPhone')?.hasError('maxlength')">
-                                            Máximo 30 caracteres
-                                        </mat-error>
-                                        </mat-form-field>
-                                    </div>
-                                
-                                    <div class="col-lg-1">
-                                        <button mat-icon-button class="mb-3" color="warn" type="button" (click)="eliminarTelefono(i)">
-                                        <mat-icon>delete</mat-icon>
-                                        </button>
-                                    </div>
+                                        <div [style.flex]="setFlex(30, '%')" class="flex-item">
+                                            <mat-form-field appearance="outline">
+                                                <mat-label>Teléfono</mat-label>
+                                                <input matInput formControlName="phoneNumber">
+                                                <mat-error *ngIf="telGroup.get('phoneNumber')?.hasError('required')">
+                                                    Número requerido
+                                                </mat-error>
+                                                <mat-error *ngIf="telGroup.get('phoneNumber')?.hasError('pattern')">
+                                                    Solo números de 9 a 11 dígitos
+                                                </mat-error>
+                                            </mat-form-field>
+                                        </div>
+                                    
+                                        <div [style.flex]="setFlex(60, '%')" class="flex-item">
+                                            <mat-form-field appearance="outline">
+                                            <mat-label>Descripción</mat-label>
+                                            <input matInput formControlName="descriptionPhone">
+                                            <mat-error *ngIf="telGroup.get('descriptionPhone')?.hasError('required')">
+                                                Requerido
+                                            </mat-error>
+                                            <mat-error *ngIf="telGroup.get('descriptionPhone')?.hasError('maxlength')">
+                                                Máximo 30 caracteres
+                                            </mat-error>
+                                            </mat-form-field>
+                                        </div>
+                                    
+                                        <div [style.flex]="setFlex(5, '%')" class="flex-item mb-2">
+                                            <button mat-icon-button class="mb-3" color="warn" type="button" (click)="eliminarTelefono(i)">
+                                            <mat-icon>delete</mat-icon>
+                                            </button>
+                                        </div>
             
                                     </div>
             
@@ -247,9 +267,9 @@
 
                 <mat-tab label="Profesionales">
                     
-                    <div class="row-flex mt-4">
+                    <div class="row-flex mt-3 mb-3">
 
-                        <div class="campo-flex-3">
+                        <div [style.flex]="setFlex(25, '%')" class="flex-item">
                             <mat-form-field appearance="outline">
                                 <mat-label>Grado de Instrucción</mat-label>
                                 <mat-select formControlName="gradoInstruccion">
@@ -270,28 +290,26 @@
                     <fieldset class="campo-fieldset mt-2 mb-3">
                         <legend>PROFESIONES</legend>
 
-                        <div class="row">
-                
-                            <div formArrayName="profesionesRecurso" *ngFor="let recHumanoGroup of profesionesRecurso.controls; let i = index">
+                            <div formArrayName="profesionesRecurso" *ngFor="let profesionesGroup of profesionesRecurso.controls; let i = index">
     
                                 <div [formGroupName]="i" class="flex-row-container">
         
                                     <div class="row-flex mt-2">
 
-                                        <div class="campo-flex-3">
+                                        <div [style.flex]="setFlex(25, '%')" class="flex-item">
                                             <mat-form-field appearance="outline">
                                                 <mat-label>Nivel de Profesión</mat-label>
                                                 <mat-select formControlName="nivelProfesion">
                                                     <mat-option value="Técnica">Técnica</mat-option>
                                                     <mat-option value="Universitaria">Universitaria</mat-option>
                                                 </mat-select>
-                                                <mat-error *ngIf="myFormRecHumano.get('nivelProfesion')?.hasError('required')">
+                                                <mat-error *ngIf="profesionesGroup.get('nivelProfesion')?.hasError('required')">
                                                     Obligatorio
                                                 </mat-error>
                                             </mat-form-field>
                                         </div>
                                     
-                                        <div class="campo-flex-3">
+                                        <div [style.flex]="setFlex(25, '%')" class="flex-item">
                                             <mat-form-field appearance="outline">
                                                 <mat-label>Profesión</mat-label>
                                                 <mat-select formControlName="profesion">
@@ -304,19 +322,16 @@
                                                     <mat-option value="Trabajador Social">Trabajador Social</mat-option>
                                                     <mat-option value="Ingeniero de Sistemas">Ingeniero de Sistemas</mat-option>
                                                 </mat-select>
-                                                <mat-error *ngIf="myFormRecHumano.get('profesion')?.hasError('required')">
+                                                <mat-error *ngIf="profesionesGroup.get('profesion')?.hasError('required')">
                                                     Obligatorio
                                                 </mat-error>
                                             </mat-form-field>
                                         </div>
 
-                                        <div class="campo-flex-3">
+                                        <div [style.flex]="setFlex(45, '%')" class="flex-item">
                                             <mat-form-field appearance="outline">
                                                 <mat-label>Centro de Estudios</mat-label>
                                                 <input matInput formControlName="centroEstudiosProfesion">
-                                                <mat-error *ngIf="myFormRecHumano.get('centroEstudiosProfesion')?.hasError('pattern')">
-                                                    Solo letras
-                                                </mat-error>
                                             </mat-form-field>
                                         </div>
 
@@ -324,39 +339,33 @@
 
                                     <div class="row-flex">
 
-                                        <div class="campo-flex-4 mb-3 text-center">
+                                        <div [style.flex]="setFlex(15, '%')" class="flex-item mb-2 text-center">
                                             <mat-slide-toggle formControlName="titulo">Título</mat-slide-toggle>
                                         </div>
 
-                                        <div class="campo-flex-4">
+                                        <div [style.flex]="setFlex(25, '%')" class="flex-item">
                                             <mat-form-field appearance="outline">
                                                 <mat-label>Colegiatura</mat-label>
                                                 <input matInput formControlName="nroColegiatura">
-                                                <mat-error *ngIf="myFormRecHumano.get('nroColegiatura')?.hasError('pattern')">
-                                                    Solo letras
-                                                </mat-error>
                                             </mat-form-field>
                                         </div>
 
-                                        <div class="campo-flex-4">
+                                        <div [style.flex]="setFlex(25, '%')" class="flex-item">
                                             <mat-form-field appearance="outline">
                                                 <mat-label>Año de Egreso</mat-label>
                                                 <input matInput formControlName="anioEgresoProfesion">
-                                                <mat-error *ngIf="myFormRecHumano.get('anioEgresoProfesion')?.hasError('pattern')">
-                                                    Solo números
-                                                </mat-error>
                                             </mat-form-field>
                                         </div>
 
-                                        <div class="campo-flex-4 mb-3 text-center">
+                                        <div [style.flex]="setFlex(15, '%')" class="flex-item mb-2 text-center">
                                             <mat-slide-toggle color="primary"
-                                                [checked]="recHumanoGroup.get('profesionSolicitante')?.value"
+                                                [checked]="profesionesGroup.get('profesionSolicitante')?.value"
                                                 (change)="seleccionarProfesionSolicitante(i)">
                                                 Solicitante
                                             </mat-slide-toggle>
                                         </div>
 
-                                        <div class="campo-flex-4 mb-2 text-center">
+                                        <div [style.flex]="setFlex(15, '%')" class="flex-item mb-2 text-center">
                                             <button mat-icon-button class="mb-3" color="warn" type="button" (click)="eliminarProfesion(i)">
                                             <mat-icon>delete</mat-icon>
                                             </button>
@@ -376,20 +385,12 @@
                                 </button>
                             </div>
 
-                        </div>
-
-                        <div *ngIf="!validarArrayTelefono() && formSubmitted" class="text-danger mt-2" style="font-size: 14px; text-align: center;">
-                            Debe agregar al menos un número de teléfono
-                        </div>
-
                     </fieldset>
 
                     <fieldset class="campo-fieldset mt-2 mb-3">
                         <legend>ESPECIALIDADES</legend>
-
-                        <div class="row">
                 
-                            <div formArrayName="especialidadesRecurso" *ngFor="let recHumanoGroup of especialidadesRecurso.controls; let i = index">
+                            <div formArrayName="especialidadesRecurso" *ngFor="let especialidadesGroup of especialidadesRecurso.controls; let i = index">
     
                                 <div [formGroupName]="i" class="flex-row-container">
         
@@ -403,7 +404,7 @@
                                                     <mat-option value="Radiólogía">Radiólogía</mat-option>
                                                     <mat-option value="Ginecología y Obstetricia">Ginecología y Obstetricia</mat-option>
                                                 </mat-select>
-                                                <mat-error *ngIf="myFormRecHumano.get('profesion')?.hasError('required')">
+                                                <mat-error *ngIf="especialidadesGroup.get('especialidad')?.hasError('required')">
                                                     Obligatorio
                                                 </mat-error>
                                             </mat-form-field>
@@ -413,9 +414,6 @@
                                             <mat-form-field appearance="outline">
                                                 <mat-label>Centro de Estudios</mat-label>
                                                 <input matInput formControlName="centroEstudiosEspecialidad">
-                                                <mat-error *ngIf="myFormRecHumano.get('centroEstudiosEspecialidad')?.hasError('pattern')">
-                                                    Solo letras
-                                                </mat-error>
                                             </mat-form-field>
                                         </div>
 
@@ -423,8 +421,8 @@
                                             <mat-form-field appearance="outline">
                                                 <mat-label>RNE</mat-label>
                                                 <input matInput formControlName="rne">
-                                                <mat-error *ngIf="myFormRecHumano.get('rne')?.hasError('pattern')">
-                                                    Solo letras
+                                                <mat-error *ngIf="especialidadesGroup.get('rne')?.hasError('required')">
+                                                    Obligatorio
                                                 </mat-error>
                                             </mat-form-field>
                                         </div>
@@ -433,9 +431,6 @@
                                             <mat-form-field appearance="outline">
                                                 <mat-label>Año de Egreso</mat-label>
                                                 <input matInput formControlName="anioEgresoEspecialidad">
-                                                <mat-error *ngIf="myFormRecHumano.get('anioEgresoEspecialidad')?.hasError('pattern')">
-                                                    Solo números
-                                                </mat-error>
                                             </mat-form-field>
                                         </div>
 
@@ -459,12 +454,6 @@
                                 </button>
                             </div>
 
-                        </div>
-
-                        <div *ngIf="!validarArrayTelefono() && formSubmitted" class="text-danger mt-2" style="font-size: 14px; text-align: center;">
-                            Debe agregar al menos un número de teléfono
-                        </div>
-
                     </fieldset>
 
                 </mat-tab>
@@ -473,22 +462,22 @@
 
             </mat-tab-group>
 
-            <div class="row mt-4">
+            <div class="row-flex mt-4">
 
-                <div class="col col-4 text-center">
+                <div [style.flex]="setFlex(32,'%')" class="flex-item">
                     <button mat-raised-button class="btn-nuevo"  type="button" (click)="nuevoRecHumano()">
                       Nuevo Recurso Humano
                     </button>
                 </div>
         
         
-                <div class="col col-4 text-center">
+                <div [style.flex]="setFlex(32,'%')" class="flex-item">
                     <button mat-raised-button class="btn-registrar" *ngIf="!recHumanoSeleccionado" type="button" (click)="registraRecHumano()">
                       Registrar Recurso Humano
                     </button>
                 </div>
         
-                <div class="col col-4 text-center">
+                <div [style.flex]="setFlex(32,'%')" class="flex-item">
                     <button mat-raised-button class="btn-actualizar" type="button" (click)="actualizarRecHumano()">
                       Actualizar Recurso Humano
                     </button>
@@ -520,7 +509,7 @@
                         <!-- N° -->
                         <ng-container matColumnDef="nro">
                             <th mat-header-cell *matHeaderCellDef> N° </th>
-                            <td mat-cell *matCellDef="let recHumano ; let i = index"> {{ i + 1 }} </td>
+                            <td mat-cell *matCellDef="let i = index"> {{ i + 1 }} </td>
                         </ng-container>
                         
                         <!-- HC -->

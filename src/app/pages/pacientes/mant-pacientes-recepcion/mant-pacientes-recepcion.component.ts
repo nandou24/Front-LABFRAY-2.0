@@ -269,14 +269,14 @@ export class MantPacientesRecepcionComponent implements OnInit {
 
   registraPaciente(){
 
+    this.formSubmitted = true;
+
     if(this.pacienteForm.invalid){
 
       this.pacienteForm.markAllAsTouched();
       return
     }
-
-    this.formSubmitted = true;
-  
+ 
     if(this.pacienteForm.valid && this.validarArrayTelefono()){
 
       Swal.fire({
@@ -337,13 +337,13 @@ export class MantPacientesRecepcionComponent implements OnInit {
   //actualizar cliente
   actualizarPaciente(): void {
 
+    this.formSubmitted = true;
+
     if(this.pacienteForm.invalid){
 
       this.pacienteForm.markAllAsTouched();
       return
-    }
-
-    this.formSubmitted = true;
+    }   
   
     if(this.pacienteForm.valid && this.validarArrayTelefono()){
 
