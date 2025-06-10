@@ -14,6 +14,7 @@ import { CotizacionPersonalService } from '../../../../services/gestion/cotizaci
 import { ICotizacion, IHistorialCotizacion } from '../../../../models/cotizacionPersona.models';
 import { IPago } from '../../../../models/pagos.models';
 import { PagosCotizacionPersonalService } from '../../../../services/gestion/pagos/pagos-cotizacion-personal.service';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-gest-pago-coti-persona',
@@ -100,15 +101,33 @@ export class GestPagoCotiPersonaComponent implements OnInit {
       fechaPago: [new Date(), [Validators.required]],
       nroOperacion: [''],
       bancoDestino: [''],
-    });
+    });   
 
     this.detallePagos.push(pagoItem);
-  }
 
-  
+  }
 
   removerPago(index: number){
     this.detallePagos.removeAt(index);
+  }
+
+  //necesito que el control faltaPagar se actualice cada vez que se agregue o elimine un pago
+
+  actualizarFaltaPagar() {
+
+    const totalPagado = this.detallePagos.controls.reduce((total, pago) => {
+      return total + (pago.get('monto')?.value || 0);
+    }, 0);
+
+    const totalCotizacion = this.myFormPagoPersona.get('total')?.value || 0;
+
+    this.myFormPagoPersona.patchValue({
+      faltaPagar: totalCotizacion - totalPagado,
+      subTotalFacturar: totalCotizacion - totalPagado,
+      igvFacturar: (totalCotizacion - totalPagado) * 0.18, // Asumiendo un IGV del 18%
+      totalFacturar: (totalCotizacion - totalPagado) * 1.18 // Total con IGV
+    });
+
   }
 
   // COTIZACIONES
@@ -222,6 +241,13 @@ export class GestPagoCotiPersonaComponent implements OnInit {
   }
 
   cargarPagos(pago: IPago){
+
+  }
+
+  registrarPagos() {
+  }
+
+  cancelarOperacion(){
 
   }
 

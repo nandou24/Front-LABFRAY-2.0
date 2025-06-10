@@ -23,7 +23,7 @@
 
                 <legend>Detalle de Cotización</legend>
 
-                <div class="row-flex">
+                <div class="row-flex mt-2">
 
                     <div [style.flex]="setFlex(25,'%')" class="flex-item">
                         <mat-form-field appearance="outline" >
@@ -219,6 +219,9 @@
 
                 <div class="mt-2">
                 
+                    <!-- Actualiza faltaPagar automáticamente al agregar o modificar pagos -->
+                    <ng-container *ngIf="actualizarFaltaPagar()"></ng-container>
+
                     <div formArrayName="detallePagos" *ngFor="let pagosGroup of detallePagos.controls; let i = index" >                       
 
                         <div [formGroupName]="i" class="row-flex" >
@@ -288,6 +291,18 @@
 
                         <div [style.flex]="setFlex(20,'%')" class="flex-item">
                             <h3 class="quicksand-totales" style="font-weight: 600;">Falta pagar: {{myFormPagoPersona.get('faltaPagar')?.value}}</h3>
+                        </div>
+
+                        <div [style.flex]="setFlex(20,'%')" class="flex-item">
+                            <button mat-raised-button color="primary" class="mb-2" type="button" (click)="registrarPagos()">
+                                <mat-icon>save</mat-icon> Guardar Pagos
+                            </button>
+                        </div>
+
+                        <div [style.flex]="setFlex(20,'%')" class="flex-item">
+                            <button mat-raised-button color="warn" class="mb-2" type="button" (click)="cancelarOperacion()">
+                                <mat-icon>cancel</mat-icon> Cancelar
+                            </button>
                         </div>
 
                     </div>
