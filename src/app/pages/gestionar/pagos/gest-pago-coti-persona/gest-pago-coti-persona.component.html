@@ -247,14 +247,22 @@
                                         <mat-option value="Tarjeta Crédito">Tarjeta Crédito</mat-option>
                                         <mat-option value="Tarjeta Débito">Tarjeta Débito</mat-option>
                                     </mat-select>
+                                     <mat-error *ngIf="pagosGroup.get('metodoPago')?.hasError('required')">
+                                        Obligatorio
+                                    </mat-error>
                                 </mat-form-field>
+                               
                             </div>
 
                             <div [style.flex]="setFlex(10,'%')" class="flex-item">
                                 <mat-form-field appearance="outline">
                                     <mat-label>Monto</mat-label>
                                     <input matInput formControlName="monto" type="number" min="0" step="0.01">
+                                    <mat-error *ngIf="pagosGroup.get('monto')?.hasError('required')">
+                                        Obligatorio
+                                    </mat-error>
                                 </mat-form-field>
+                                
                             </div>
 
                             <div [style.flex]="setFlex(18,'%')" class="flex-item">
@@ -267,7 +275,10 @@
                             <div [style.flex]="setFlex(18,'%')" class="flex-item">
                                 <mat-form-field appearance="outline">
                                     <mat-label>Banco destino</mat-label>
-                                    <input matInput formControlName="bancoDestino">
+                                    <mat-select formControlName="bancoDestino">
+                                        <mat-option value="BBVA">BBVA</mat-option>
+                                        <mat-option value="BCP">BCP</mat-option>
+                                    </mat-select>
                                 </mat-form-field>
                             </div>
 
@@ -281,7 +292,7 @@
 
                     </div>
 
-                    <div class="row-flex">
+                    <div class="row-flex mt-3">
 
                         <div [style.flex]="setFlex(20,'%')" class="flex-item">
                             <button mat-raised-button class="mb-2" type="button" (click)="agregarPago()">

@@ -97,7 +97,7 @@ export class GestPagoCotiPersonaComponent implements OnInit {
 
     const pagoItem = this._fb.group({
       metodoPago: ['', [Validators.required]],
-      monto: ['', [Validators.required, Validators.min(0.01)]],
+      monto: [null, [Validators.required, Validators.min(0.01)]],
       fechaPago: [new Date(), [Validators.required]],
       nroOperacion: [''],
       bancoDestino: [''],
@@ -223,7 +223,7 @@ export class GestPagoCotiPersonaComponent implements OnInit {
       nombreServicio: [servicio.nombreServicio, Validators.required],
       cantidad: [servicio.cantidad, [Validators.required, Validators.min(1)]],
       precioLista: [servicio.precioLista, [Validators.required, Validators.min(0)]],
-      diferencia: [servicio.diferencia, [Validators.min(0)]],
+      diferencia: [servicio.diferencia],
       precioVenta: [servicio.precioVenta, [Validators.required, Validators.min(0)]],
       descuentoPorcentaje: [servicio.descuentoPorcentaje, [Validators.min(0), Validators.max(100)]],
       totalUnitario: [servicio.totalUnitario, [Validators.required, Validators.min(0)]]
@@ -244,7 +244,74 @@ export class GestPagoCotiPersonaComponent implements OnInit {
 
   }
 
+  //necesito que al momento de agregar pagos, la suma de estos no supere el total de la cotización
+  //necesito que el retorno de esta función sea un booleano, si es true, se puede registrar el pago, si es false, no se puede registrar el pago
+  validarArrayPagos(): boolean {
+
+    if (this.detallePagos.length === 0) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Debe agregar al menos un pago.',
+      });
+      return false;
+    }else{
+      return true
+    }
+  
+  }
+
+  validarMontoMayor(): boolean {
+
+    const totalPagado = this.detallePagos.controls.reduce((total, pago) => {
+      return total + (pago.get('monto')?.value || 0);
+    }, 0);
+
+    console.log('Total Pagado:', totalPagado);
+
+    const totalCotizacion = this.myFormPagoPersona.get('total')?.value || 0;
+
+    if (totalPagado > totalCotizacion) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'El total de los pagos no puede superar el total de la cotización.',
+      });
+      return false;
+    }else{
+      return true;
+    }
+
+  }
+
   registrarPagos() {
+
+    
+    if(this.seSeleccionoCotizacion === false){
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Debe seleccionar una cotización antes de registrar un pago.',
+      });
+      return;
+    }
+
+    if (!this.validarArrayPagos()) {
+      return;
+    }
+
+    if (!this.validarMontoMayor()) {
+      return;
+    }
+
+    if (this.myFormPagoPersona.invalid) {
+      this.myFormPagoPersona.markAllAsTouched();
+      console.log('Formulario inválido');
+      return;
+    }
+
+    console.log('Formulario válido, registrando pagos...');
+
   }
 
   cancelarOperacion(){
