@@ -13,7 +13,6 @@ export class PacienteService {
 
   constructor(
     private readonly _http: HttpClient,
-    private _router: Router
   ) { }
 
   private readonly apiUrl = `${environment.baseUrl}/api/paciente`;

@@ -21,7 +21,16 @@ export interface IRecHumano {
     } | null,
     especialidadesRecurso: Array<any>[],
     especialidadesTexto: string,
-    esSolicitante: boolean
+    esSolicitante: boolean,
+    usuarioSistema: boolean,
+    datosLogueo:{
+        nombreUsuario: string,  // solo si accede al sistema
+        correoLogin: string,    // para login
+        passwordHash: string,       // bcrypt
+        rol: string,            // ADMIN | ASISTENTE | TECNICO | etc.
+        sedeAsignada: string,    // código de sede
+        estado: string          // activo o no para el sistema
+    }
 }
 
 export interface IRecHumanoPostDTO {

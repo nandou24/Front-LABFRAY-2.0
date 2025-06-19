@@ -93,7 +93,16 @@ export class MantRecursoHumanoComponent implements OnInit, AfterViewInit {
     profesionesRecurso: this._fb.array([]),
     profesionSolicitante: new FormControl(null),
     especialidadesRecurso: this._fb.array([]),
-    esSolicitante: false
+    esSolicitante: false,
+    usuarioSistema: false,
+    datosLogueo: this._fb.group({
+      nombreUsuario: [''],
+      correoLogin: ['', [Validators.email]],
+      passwordHash: [''],
+      rol: ['', [Validators.required]],
+      sedeAsignada: [''],
+      estado: ['Activo'] // puede ser ACTIVO / INACTIVO
+    })
   });
 
   get phones(): FormArray {
@@ -107,6 +116,8 @@ export class MantRecursoHumanoComponent implements OnInit, AfterViewInit {
   get especialidadesRecurso(): FormArray {
     return this.myFormRecHumano.get('especialidadesRecurso') as FormArray;
   }
+
+  hidePassword = true;
 
   seleccionarTexto(event: FocusEvent): void {
     const input = event.target as HTMLInputElement;

@@ -74,11 +74,11 @@ export class ServiciosService {
 
   public actualizarServicio(codServicio: string, body: IServicio){
       
-      return this._http
-        .put<IServicioPostDTO>(
-          `${environment.baseUrl}/api/servicio/${codServicio}/updateServicio`,body
-        )
+    return this._http
+      .put<IServicioPostDTO>(
+        `${environment.baseUrl}/api/servicio/${codServicio}/updateServicio`,body
+      )
 
-    }
+  }
 
 }

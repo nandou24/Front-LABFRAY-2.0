@@ -809,7 +809,7 @@ export class GestCotiPersonaComponent implements OnInit {
 
     if (cotizacion.estadoCotizacion === 'PAGO PARCIAL' || cotizacion.estadoCotizacion === 'PAGO TOTAL') {
       this.tienePagos = true;
-    } else if(cotizacion.estadoCotizacion === 'GENERADA' || cotizacion.estadoCotizacion === 'MODIFICADA') {
+    } else if(cotizacion.estadoCotizacion === 'GENERADA' || cotizacion.estadoCotizacion === 'MODIFICADA' || cotizacion.estadoCotizacion === 'PAGO ANULADO') {
       this.tienePagos = false;
     }
 

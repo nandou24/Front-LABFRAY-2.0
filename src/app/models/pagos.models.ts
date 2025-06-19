@@ -27,17 +27,17 @@ export interface IPago {
     igvFacturar: number,
     totalFacturar: number,
     estadoPago: string,
-    tienePagosAnteriores: string
+    tienePagosAnteriores: boolean
     
 }
 
 export interface IDetallePago {
+    fechaPago: Date,
     medioPago: string,
     monto: number,
-    montoConRecargo: number,
-    numOperacion: string,
-    fechaPago: Date,
-    banco: string,
+    recargo: number,
+    numOperacion: string,    
+    bancoDestino: string,
     esAntiguo: boolean
 }
 

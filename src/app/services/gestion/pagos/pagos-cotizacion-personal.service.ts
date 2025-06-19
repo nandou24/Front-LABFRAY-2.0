@@ -46,4 +46,14 @@ export class PagosCotizacionPersonalService {
     );      
   }
 
+  anularPago(codPago:string, motivo:string, observacion:string|null): Observable<IPagoPostDTO> {
+
+    const body = { motivo, observacion };
+
+    return this._http
+      .put<IPagoPostDTO>(
+        `${environment.baseUrl}/api/pagos/anularPago/${codPago}`,body
+      )
+  }
+
 }

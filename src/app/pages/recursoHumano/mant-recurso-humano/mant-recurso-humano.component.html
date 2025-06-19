@@ -458,7 +458,66 @@
 
                 </mat-tab>
 
-                <mat-tab label="Laborales">Datos Laborales</mat-tab>
+                <mat-tab label="Permisos">
+
+                    <div class="row-flex mt-3">
+
+                        <div [style.flex]="setFlex(20,'%')" class="flex-item mb-3">
+                            <mat-slide-toggle formControlName="usuarioSistema" color="primary">
+                            Acceso al sistema
+                            </mat-slide-toggle>
+                        </div>
+                    
+                    </div>
+
+                    <div [formGroupName]="'datosLogueo'">
+
+                        <div class="row-flex">                      
+
+                            <div [style.flex]="setFlex(30,'%')" class="flex-item">
+                                <mat-form-field appearance="outline">
+                                    <mat-label>Nombre Usuario</mat-label>
+                                    <input matInput formControlName="nombreUsuario">
+                                    <mat-error *ngIf="myFormRecHumano.get('nombreUsuario')?.hasError('required')">
+                                        Obligatorio
+                                    </mat-error>
+                                </mat-form-field>
+                            </div>
+
+                            <div [style.flex]="setFlex(30,'%')" class="flex-item">
+                                <mat-form-field appearance="outline">
+                                    <mat-label>Contraseña</mat-label>
+                                    <input matInput [type]="hidePassword ? 'password' : 'text'" formControlName="passwordHash">
+                                    <button type="button" mat-icon-button matSuffix (click)="hidePassword = !hidePassword">
+                                        <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+                                    </button>
+                                    <mat-error *ngIf="myFormRecHumano.get('passwordHash')?.hasError('required')">
+                                        Obligatorio
+                                    </mat-error>
+                                </mat-form-field>
+                            </div>
+                            
+                            <div [style.flex]="setFlex(30,'%')" class="flex-item">
+                                <mat-form-field appearance="outline">
+                                    <mat-label>Rol</mat-label>
+                                    <mat-select formControlName="rol">
+                                        <mat-option value="Administrador">Administrador</mat-option>
+                                        <mat-option value="Recepción">Recepción</mat-option>
+                                        <mat-option value="Ventas">Ventas</mat-option>
+                                        <mat-option value="Médico">Médico</mat-option>
+                                        <mat-option value="Tópico">Tópico</mat-option>
+                                    </mat-select>
+                                    <mat-error *ngIf="myFormRecHumano.get('rol')?.hasError('required')">
+                                        Obligatorio
+                                    </mat-error>
+                                </mat-form-field>
+                            </div>
+
+                        </div>  
+
+                    </div>
+
+                </mat-tab>
 
             </mat-tab-group>
 
