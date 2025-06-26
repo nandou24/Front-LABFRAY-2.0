@@ -1,43 +1,26 @@
-<mat-nav-list>
-    <a mat-list-item routerLink="/auth/loginPoliclinico">
-        <mat-icon>home</mat-icon>
-        <span>Inicio</span>
-    </a>
-    <a mat-list-item routerLink="/pages/pacientes">
-        <mat-icon>people</mat-icon>
-        <span>Pacientes</span>
-    </a>
-    <a mat-list-item routerLink="/pages/pruebaLab">
-        <mat-icon>science</mat-icon>
-        <span>Pruebas Lab</span>
-    </a>
-    <a mat-list-item routerLink="/pages/itemLab">
-        <mat-icon>science</mat-icon>
-        <span>Mantenimiento Items</span>
-    </a>
-    <a mat-list-item routerLink="/pages/servicios">
-        <mat-icon>science</mat-icon>
-        <span>Mantenimiento Servicios</span>
-    </a>
-    <a mat-list-item routerLink="/pages/recursoHumano">
-        <mat-icon>science</mat-icon>
-        <span>Recursos Humanos</span>
-    </a>
-    <a mat-list-item routerLink="/pages/referencia-medico">
-        <mat-icon>science</mat-icon>
-        <span>Referencia Medicos</span>
-    </a>
-    <a mat-list-item routerLink="/pages/cotiPersona">
-        <mat-icon>science</mat-icon>
-        <span>Cotización Persona</span>
-    </a>
-    <a mat-list-item routerLink="/pages/pagoCotiPersona">
-        <mat-icon>science</mat-icon>
-        <span>Pago Personas</span>
-    </a>
-    <a mat-list-item routerLink="/pages/rutas">
-        <mat-icon>science</mat-icon>
-        <span>Mantenimiento Rutas</span>
-    </a>
+<div class="sidenav-content">
+  <div class="sidenav-header">
+    <mat-icon>account_circle</mat-icon>
+    <span class="username">
+      {{ nombreUsuario || "Usuario" }} - {{ rol || "" }}
+    </span>
+  </div>
 
-</mat-nav-list>
+  <mat-list class="menu-list">
+    <ng-container *ngFor="let ruta of rutasPermitidas">
+      <mat-list-item class="menu-item" [routerLink]="ruta.urlRuta">
+        <span matListItemIcon class="material-symbols-outlined">
+          {{ ruta.iconoRuta }}
+        </span>
+        <div matListItemTitle>{{ ruta.nombreRuta }}</div>
+      </mat-list-item>
+    </ng-container>
+  </mat-list>
+
+  <div class="logout-container">
+    <button mat-button color="warn" (click)="cerrarSesion()">
+      <mat-icon>logout</mat-icon>
+      Cerrar sesión
+    </button>
+  </div>
+</div>

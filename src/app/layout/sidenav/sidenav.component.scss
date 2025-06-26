@@ -1,7 +1,46 @@
-.sidenav-container {
-    height: 100vh;
+.sidenav-content {
+  display: flex;
+  flex-direction: column;
+  height: 100vh; // Asegura que ocupe toda la pantalla
+  background-color: #f4f6f8;
 }
 
-.main-content {
-    padding: 16px;
+.sidenav-header {
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  background-color: #104a85;
+  color: white;
+  font-weight: normal;
+  gap: 0.5rem;
+}
+
+.username {
+  font-size: 1.2rem;
+}
+
+.menu-list {
+  flex-grow: 1; // Esto hace que la lista crezca ocupando el espacio disponible
+  padding: 0 0.5rem;
+  overflow-y: auto; // Por si hay muchas rutas
+}
+
+.logout-container {
+  padding: 1rem;
+  border-top: 1px solid #ccc;
+  background-color: #fafafa;
+  text-align: center;
+
+  button {
+    width: 100%;
+  }
+}
+
+.menu-item {
+  cursor: pointer !important;
+  transition: background-color 0.3s ease;
+}
+
+.menu-item:hover {
+  background-color: #dfe9f3;
 }

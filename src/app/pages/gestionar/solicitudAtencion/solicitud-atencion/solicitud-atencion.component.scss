@@ -1,0 +1,174 @@
+mat-form-field {
+  width: 100%;
+  height: 50%;
+}
+
+//Inicio CARD-----------
+mat-card-title {
+  background-color: #0f3369;
+  color: white;
+  padding-left: 1.5rem;
+  padding-top: 0.1rem;
+  padding-bottom: 0.1rem;
+  font-weight: lighter;
+  border-top-left-radius: 4px;
+  border-top-right-radius: 4px;
+}
+
+mat-card-content {
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  padding-top: 0.5rem;
+  font-size: 14px;
+}
+
+.mat-mdc-card-content:last-child {
+  padding-bottom: 0.5rem;
+}
+
+.mdc-data-table__cell,
+.mdc-data-table__header-cell {
+  padding: 0 4px;
+}
+
+//Fin CARD--------------
+
+/* Eliminar las flechas en navegadores WebKit (Chrome, Safari, Edge) */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.input-centrado {
+  text-align: center;
+}
+
+.mat-mdc-row:hover .mat-mdc-cell {
+  background-color: #dfe9f3;
+  cursor: pointer;
+}
+
+mat-option {
+  font-size: 13px;
+}
+
+::ng-deep .mat-mdc-tab-body-content {
+  overflow-x: hidden !important;
+}
+
+.mat-mdc-icon-button .mat-mdc-button-touch-target {
+  width: 18px !important; /* Aumenta el tamaño del área de toque */
+  height: 18px !important; /* Aumenta el tamaño del área de toque */
+}
+
+.flex-item {
+  justify-content: center;
+  min-width: 0;
+  text-align: center;
+}
+
+.campo-fieldset {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 0.7rem 0.5rem 0rem 0.5rem;
+  position: relative;
+}
+
+.campo-fieldset legend {
+  font-size: 0.9rem;
+  font-weight: 500;
+  width: auto;
+  color: #0f3369;
+  background-color: #f9f9f9;
+  padding: 0 0.5rem;
+  margin-left: 1rem;
+  position: absolute;
+  top: -0.6rem;
+}
+
+.contenedor-flex {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  align-items: flex-start;
+  margin-left: 1rem;
+}
+
+.contenedor-formulario {
+  flex: 0 0 98%;
+}
+
+.contenedor-tablaDerecha {
+  flex: 0 0 41%;
+}
+
+.row-flex {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 0px;
+}
+
+.flex-row-container {
+  transition:
+    background-color 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+.flex-row-container:hover {
+  background-color: #dfe9f3;
+  border-radius: 8px;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+@media (max-width: 1430px) {
+  .contenedor-formulario,
+  .contenedor-tablaDerecha {
+    flex: 0 0 100%;
+  }
+}
+
+/* Tablets (2 columnas) */
+@media (max-width: 991px) {
+  .flex-item {
+    flex: 1 1 48% !important; /* Cada item ocupará 100% cuando sea pequeño */
+  }
+}
+
+/* Celulares (1 columna) */
+@media (max-width: 767px) {
+  .flex-item {
+    flex: 1 1 100% !important; /* Cada item ocupará 100% cuando sea pequeño */
+  }
+}
+
+.quicksand-totales {
+  font-family: "Quicksand", serif;
+  font-optical-sizing: auto;
+  font-weight: 800;
+  font-style: normal;
+  font-size: 1.3rem;
+  color: #0128a7;
+}
+
+.quicksand-subtotal {
+  font-family: "Quicksand", serif;
+  font-optical-sizing: auto;
+  font-weight: 500;
+  font-style: normal;
+}
+
+.texto-rojo {
+  color: red;
+}
+
+.texto-verde {
+  color: green;
+}
+
+.btn-confirmar-anulacion {
+  background-color: #d32f2f !important; // rojo fuerte
+  color: white !important;
+}

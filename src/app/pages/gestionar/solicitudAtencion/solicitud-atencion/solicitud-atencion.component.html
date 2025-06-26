@@ -1,0 +1,150 @@
+<div class="contenedor-flex">
+  <div class="contenedor-formulario">
+    <h4>Solicitudes de Atención</h4>
+
+    <div [formGroup]="myGroupBusqueda">
+      <div class="row-flex">
+        <div [style.flex]="setFlex(50, '%')" class="flex-item">
+          <mat-form-field appearance="outline">
+            <mat-label>Buscar por nombre o código</mat-label>
+            <input
+              matInput
+              (keyup)="filtrar($event)"
+              placeholder="Ej. Juan, SOL24060001"
+              formControlName="terminoBusqueda"
+            />
+            <mat-icon matSuffix>search</mat-icon>
+          </mat-form-field>
+        </div>
+
+        <div [style.flex]="setFlex(20, '%')" class="flex-item">
+          <mat-form-field appearance="outline">
+            <mat-label>Fecha Inicio - mm/dd/yyyy</mat-label>
+            <input
+              matInput
+              [matDatepicker]="pickerInicio"
+              readonly="true"
+              formControlName="fechaInicio"
+            />
+            <mat-datepicker-toggle
+              matSuffix
+              [for]="pickerInicio"
+            ></mat-datepicker-toggle>
+            <mat-datepicker #pickerInicio disabled="false"></mat-datepicker>
+          </mat-form-field>
+        </div>
+
+        <div [style.flex]="setFlex(20, '%')" class="flex-item">
+          <mat-form-field appearance="outline">
+            <mat-label>Fecha Fin - mm/dd/yyyy</mat-label>
+            <input
+              matInput
+              [matDatepicker]="pickerFin"
+              readonly="true"
+              formControlName="fechaFin"
+            />
+            <mat-datepicker-toggle
+              matSuffix
+              [for]="pickerFin"
+            ></mat-datepicker-toggle>
+            <mat-datepicker #pickerFin disabled="false"></mat-datepicker>
+          </mat-form-field>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabla de solicitudes -->
+    <div class="table-container">
+      <table
+        mat-table
+        [dataSource]="dataSourceSolicitud"
+        matSort
+        class="mat-elevation-z2 w-100"
+      >
+        <!-- Código Solicitud -->
+        <ng-container matColumnDef="codigoSolicitud">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Código</th>
+          <td mat-cell *matCellDef="let row">{{ row.codigoSolicitud }}</td>
+        </ng-container>
+
+        <!-- Código Solicitud -->
+        <ng-container matColumnDef="codigoCotizacion">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Cotización</th>
+          <td mat-cell *matCellDef="let row">{{ row.cotizacionId }}</td>
+        </ng-container>
+
+        <!-- Código Solicitud -->
+        <ng-container matColumnDef="codigoPago">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Cod. pago</th>
+          <td mat-cell *matCellDef="let row">{{ row.codigoPago }}</td>
+        </ng-container>
+
+        <!-- Fecha Emisión -->
+        <ng-container matColumnDef="fechaEmision">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Fecha</th>
+          <td mat-cell *matCellDef="let row">
+            {{ row.fechaEmision | date: "dd/MM/yyyy HH:mm" }}
+          </td>
+        </ng-container>
+
+        <!-- Nombre del paciente -->
+        <ng-container matColumnDef="pacienteNombre">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Paciente</th>
+          <td mat-cell *matCellDef="let row">{{ row.pacienteNombre }}</td>
+        </ng-container>
+
+        <!-- Tipo de atención -->
+        <ng-container matColumnDef="tipo">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Tipo</th>
+          <td mat-cell *matCellDef="let row">{{ row.tipo }}</td>
+        </ng-container>
+
+        <!-- Estado -->
+        <ng-container matColumnDef="estado">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Estado</th>
+          <td mat-cell *matCellDef="let row">
+            <mat-chip color="primary" [disabled]="true">{{
+              row.estado
+            }}</mat-chip>
+          </td>
+        </ng-container>
+
+        <!-- Acciones -->
+        <ng-container matColumnDef="acciones">
+          <th mat-header-cell *matHeaderCellDef>Acciones</th>
+          <td mat-cell *matCellDef="let row">
+            <button
+              mat-icon-button
+              color="accent"
+              matTooltip="Actualizar estado"
+              (click)="actualizarEstadoSolicitud(row)"
+            >
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button
+              mat-icon-button
+              color="primary"
+              matTooltip="Imprimir"
+              (click)="imprimirSolicitud(row)"
+            >
+              <mat-icon>print</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+
+        <!-- Header y Row Definitions -->
+        <tr mat-header-row *matHeaderRowDef="columnasTablaSolicitud"></tr>
+        <tr
+          mat-row
+          *matRowDef="let row; columns: columnasTablaSolicitud"
+          class="row-hover"
+        ></tr>
+      </table>
+
+      <!-- Paginador -->
+      <mat-paginator [pageSizeOptions]="[25, 50, 100]" [pageSize]="25">
+        showFirstLastButtons ></mat-paginator
+      >
+    </div>
+  </div>
+</div>

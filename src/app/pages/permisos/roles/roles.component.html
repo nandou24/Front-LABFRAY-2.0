@@ -1,0 +1,230 @@
+<form [formGroup]="formRol">
+  <div class="contenedor-flex">
+    <!-- Formulario a la izquierda -->
+    <div class="contenedor-formulario">
+      <div class="row-flex" style="align-items: center">
+        <div
+          [style.flex]="setFlex(45, '%')"
+          class="flex-item quicksand-totales"
+        >
+          <h5 class="text-center mb-3" style="font-weight: 700">
+            MANTENIMIENTO DE ROLES
+          </h5>
+        </div>
+      </div>
+      <mat-card>
+        <mat-card-title>
+          <div class="row-flex align-items-center">CONFIGURACIÓN</div>
+        </mat-card-title>
+        <mat-card-content>
+          <div class="row-flex mt-2">
+            <div [style.flex]="setFlex(35, '%')" class="flex-item">
+              <mat-form-field appearance="outline">
+                <mat-label>Nombre del Rol</mat-label>
+                <input matInput formControlName="nombreRol" maxlength="50" />
+                <mat-error
+                  *ngIf="formRol.get('nombreRol')?.hasError('required')"
+                >
+                  Obligatorio
+                </mat-error>
+                <mat-error
+                  *ngIf="formRol.get('nombreRol')?.hasError('minlength')"
+                >
+                  Mínimo 3 caracteres
+                </mat-error>
+                <mat-error
+                  *ngIf="formRol.get('nombreRol')?.hasError('maxlength')"
+                >
+                  Máximo 50 caracteres
+                </mat-error>
+              </mat-form-field>
+            </div>
+            <div [style.flex]="setFlex(50, '%')" class="flex-item">
+              <mat-form-field appearance="outline">
+                <mat-label>Descripción</mat-label>
+                <input
+                  matInput
+                  formControlName="descripcionRol"
+                  maxlength="100"
+                />
+              </mat-form-field>
+            </div>
+            <div [style.flex]="setFlex(10, '%')" class="flex-item mb-3">
+              <mat-slide-toggle formControlName="estado"
+                >Activo</mat-slide-toggle
+              >
+            </div>
+          </div>
+          <!-- Nuevo listado de rutas con checkboxes -->
+          <div class="row-flex mt-3">
+            <div
+              formArrayName="rutasPermitidas"
+              *ngFor="let rutaCtrl of rutasPermitidas.controls; let i = index"
+              style="width: 100%"
+            >
+              <div [formGroupName]="i" class="row-flex">
+                <mat-form-field appearance="outline" style="width: 40%">
+                  <mat-label>Ruta</mat-label>
+                  <mat-select
+                    formControlName="codRuta"
+                    (selectionChange)="onRutaSeleccionada(i)"
+                  >
+                    <mat-option
+                      *ngFor="let ruta of rutasDisponibles"
+                      [value]="ruta.codRuta"
+                    >
+                      {{ ruta.codRuta }} - {{ ruta.nombreRuta }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" style="width: 40%">
+                  <mat-label>URL Ruta</mat-label>
+                  <input matInput formControlName="urlRuta" readonly />
+                </mat-form-field>
+
+                <button
+                  mat-icon-button
+                  color="warn"
+                  type="button"
+                  (click)="eliminarRuta(i)"
+                  class="mb-3"
+                >
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </div>
+
+            <!-- Botón para agregar una nueva fila -->
+            <div class="text-end mt-2">
+              <button
+                mat-raised-button
+                color="primary"
+                type="button"
+                (click)="agregarRuta()"
+              >
+                <mat-icon>add</mat-icon> Agregar Ruta
+              </button>
+            </div>
+          </div>
+
+          <div class="row-flex mt-2">
+            <div
+              [style.flex]="setFlex(25, '%')"
+              class="flex-item text-end"
+              *ngIf="!modoEdicion"
+            >
+              <button
+                mat-raised-button
+                class="mb-2"
+                type="button"
+                (click)="guardarRol()"
+              >
+                <mat-icon>save</mat-icon> Crear Rol
+              </button>
+            </div>
+            <div
+              [style.flex]="setFlex(25, '%')"
+              class="flex-item text-end"
+              *ngIf="modoEdicion"
+            >
+              <button
+                mat-raised-button
+                class="mb-2"
+                type="button"
+                (click)="actualizarRol()"
+              >
+                <mat-icon>save</mat-icon> Actualizar Rol
+              </button>
+            </div>
+            <div [style.flex]="setFlex(25, '%')" class="flex-item text-end">
+              <button
+                mat-raised-button
+                color="accent"
+                type="button"
+                class="ml-2"
+                (click)="cancelarEdicion()"
+              >
+                Nuevo
+              </button>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+    <!-- Tabla y búsqueda a la derecha -->
+    <div class="contenedor-tablaDerecha">
+      <mat-card>
+        <mat-card-title>Roles Registrados</mat-card-title>
+        <mat-card-content>
+          <mat-form-field appearance="outline" class="mt-2">
+            <mat-label>Buscar Rol</mat-label>
+            <input
+              matInput
+              [formControl]="terminoBusqueda"
+              (keyup)="filtrar()"
+            />
+          </mat-form-field>
+
+          <table
+            mat-table
+            [dataSource]="dataSourceRol"
+            class="mat-elevation-z8 mt-2"
+          >
+            <ng-container matColumnDef="codigo">
+              <th mat-header-cell *matHeaderCellDef>Código</th>
+              <td mat-cell *matCellDef="let rol">{{ rol.codRol }}</td>
+            </ng-container>
+            <ng-container matColumnDef="nombre">
+              <th mat-header-cell *matHeaderCellDef>Nombre</th>
+              <td mat-cell *matCellDef="let rol">{{ rol.nombreRol }}</td>
+            </ng-container>
+            <ng-container matColumnDef="estado">
+              <th mat-header-cell *matHeaderCellDef>Estado</th>
+              <td mat-cell *matCellDef="let rol">
+                {{ rol.estado ? "Activo" : "Inactivo" }}
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="accion">
+              <th mat-header-cell *matHeaderCellDef>Acción</th>
+              <td mat-cell *matCellDef="let rol">
+                <button
+                  mat-icon-button
+                  color="primary"
+                  type="button"
+                  (click)="editarRol(rol)"
+                >
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button
+                  mat-icon-button
+                  color="warn"
+                  type="button"
+                  (click)="eliminarRol(rol)"
+                >
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </td>
+            </ng-container>
+
+            <!-- Filas -->
+            <tr mat-header-row *matHeaderRowDef="columnasTablaRol"></tr>
+            <tr mat-row *matRowDef="let row; columns: columnasTablaRol"></tr>
+
+            <!-- <tr
+              mat-header-row
+              *matHeaderRowDef="['codigo', 'nombre', 'estado', 'accion']"
+            ></tr>
+            <tr
+              mat-row
+              *matRowDef="
+                let row;
+                columns: ['codigo', 'nombre', 'estado', 'accion']
+              "
+            ></tr> -->
+          </table>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+</form>
