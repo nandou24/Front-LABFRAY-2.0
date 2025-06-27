@@ -23,6 +23,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatInputModule } from '@angular/material/input';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
+import { DateAdapter, MAT_DATE_LOCALE } from '@angular/material/core';
 
 @Component({
   selector: 'app-solicitud-atencion',
@@ -40,6 +41,7 @@ import { MatNativeDateModule } from '@angular/material/core';
     MatDatepickerModule,
     MatNativeDateModule,
   ],
+  providers: [{ provide: MAT_DATE_LOCALE, useValue: 'es-PE' }],
   templateUrl: './solicitud-atencion.component.html',
   styleUrl: './solicitud-atencion.component.scss',
 })
@@ -48,9 +50,14 @@ export class SolicitudAtencionComponent implements OnInit {
   private _solicitudService = inject(SolicitudAtencionService);
   private dialog = inject(MatDialog);
   private snackBar = inject(MatSnackBar);
+  private readonly _adapter =
+    inject<DateAdapter<unknown, unknown>>(DateAdapter);
 
   ngOnInit(): void {
-    this.cargarSolicitudes();
+    this.buscarSolicitudes();
+    this.dataSourceSolicitud.paginator = this.paginator;
+    this.dataSourceSolicitud.sort = this.sort;
+    this._adapter.setLocale('es-PE'); // Establecer el locale para el adaptador de fecha
   }
 
   solicitudForm: FormGroup = this._fb.group({
@@ -73,6 +80,7 @@ export class SolicitudAtencionComponent implements OnInit {
     terminoBusqueda: new FormControl(),
     fechaInicio: new FormControl(new Date()),
     fechaFin: new FormControl(new Date()),
+    filtroBusqueda: new FormControl(),
   });
 
   terminoBusqueda = new FormControl('');
@@ -87,7 +95,7 @@ export class SolicitudAtencionComponent implements OnInit {
   //Tabla roles
   columnasTablaSolicitud: string[] = [
     'codigoSolicitud',
-    'codigoCotizacion',
+    'cotizacionId',
     'codigoPago',
     'fechaEmision',
     'pacienteNombre',
@@ -95,29 +103,18 @@ export class SolicitudAtencionComponent implements OnInit {
     'estado',
     'acciones',
   ];
+  columnasTablaSolicitudWithExpand = [...this.columnasTablaSolicitud, 'expand'];
   dataSourceSolicitud = new MatTableDataSource<ISolicitudAtencion>();
+  expandedSolicitud: ISolicitudAtencion | null = null;
 
-  cargarSolicitudes(fechaInicio?: string, fechaFin?: string) {
-    const hoy = new Date();
+  /** Checks whether an element is expanded. */
+  isExpandedSolicitud(element: ISolicitudAtencion) {
+    return this.expandedSolicitud === element;
+  }
 
-    if (!fechaInicio || !fechaFin) {
-      fechaInicio = new Date(hoy.setHours(0, 0, 0, 0)).toISOString();
-      fechaFin = new Date(hoy.setHours(23, 59, 59, 999)).toISOString();
-    }
-    this._solicitudService.getAllByDateRange(fechaInicio, fechaFin).subscribe({
-      next: (solicitudes) => {
-        console.log('Solicitudes cargadas:', solicitudes);
-        this.dataSourceSolicitud.data = solicitudes;
-        this.dataSourceSolicitud.paginator = this.paginator;
-        this.dataSourceSolicitud.sort = this.sort;
-      },
-      error: (err) => {
-        console.error('Error al cargar solicitudes:', err);
-        this.snackBar.open('Error al cargar solicitudes', 'Cerrar', {
-          duration: 3000,
-        });
-      },
-    });
+  /** Toggles the expanded state of an element. */
+  toggleSolicitud(element: ISolicitudAtencion) {
+    this.expandedSolicitud = this.isExpandedSolicitud(element) ? null : element;
   }
 
   filtrar(event: Event) {
@@ -125,7 +122,48 @@ export class SolicitudAtencionComponent implements OnInit {
     this.dataSourceSolicitud.filter = termino.trim().toLowerCase();
   }
 
-  actualizarEstadoSolicitud(any: any) {}
-
   imprimirSolicitud(any: any) {}
+
+  buscarSolicitudes() {
+    console.log('Buscando solicitudes con los siguientes parámetros:');
+
+    const termino = this.myGroupBusqueda.get('terminoBusqueda')?.value || '';
+    const fechaInicioControl =
+      this.myGroupBusqueda.get('fechaInicio')?.value || new Date();
+    const fechaFinControl =
+      this.myGroupBusqueda.get('fechaFin')?.value || new Date();
+
+    console.log('Fecha Inicio:', fechaInicioControl);
+    console.log('Fecha Fin:', fechaFinControl);
+
+    const inicio = new Date(fechaInicioControl);
+    inicio.setHours(0, 0, 0, 0);
+
+    const fin = new Date(fechaFinControl);
+    fin.setHours(23, 59, 59, 999);
+
+    console.log('Inicio:', inicio);
+    console.log('Fin:', fin);
+
+    console.log('Término despues:', fechaInicioControl, fechaFinControl);
+
+    this._solicitudService
+      .getAllByDateRange(inicio.toISOString(), fin.toISOString(), termino)
+      .subscribe({
+        next: (solicitudes) => {
+          this.dataSourceSolicitud.data = solicitudes;
+          this.snackBar.open(
+            `Se encontraron ${solicitudes.length} solicitudes`,
+            'Cerrar',
+            { duration: 3000 },
+          );
+        },
+        error: (err) => {
+          console.error('Error al buscar solicitudes:', err);
+          this.snackBar.open('Error al buscar solicitudes', 'Cerrar', {
+            duration: 3000,
+          });
+        },
+      });
+  }
 }

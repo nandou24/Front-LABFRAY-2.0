@@ -15,9 +15,8 @@ export interface ISolicitudAtencion {
 }
 
 export interface IServicioSolicitud {
-  servicioId: string;
-  nombreServicio: string;
   codigoServicio: string;
+  nombreServicio: string;
   estado: string;
 }
 
@@ -33,9 +32,9 @@ export interface ISolicitudAtencionPostDTO {
 }
 
 export interface IServicioSolicitudPostDTO {
-  servicioId: string;
-  nombreServicio: string;
   codigoServicio: string;
+  nombreServicio: string;
+  estado: string;
 }
 
 export interface IGetLastSolicitudesAtencion {

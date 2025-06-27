@@ -4,12 +4,11 @@
 
     <div [formGroup]="myGroupBusqueda">
       <div class="row-flex">
-        <div [style.flex]="setFlex(50, '%')" class="flex-item">
+        <div [style.flex]="setFlex(40, '%')" class="flex-item">
           <mat-form-field appearance="outline">
-            <mat-label>Buscar por nombre o código</mat-label>
+            <mat-label>Buscar por nombre o documento</mat-label>
             <input
               matInput
-              (keyup)="filtrar($event)"
               placeholder="Ej. Juan, SOL24060001"
               formControlName="terminoBusqueda"
             />
@@ -17,9 +16,9 @@
           </mat-form-field>
         </div>
 
-        <div [style.flex]="setFlex(20, '%')" class="flex-item">
+        <div [style.flex]="setFlex(15, '%')" class="flex-item">
           <mat-form-field appearance="outline">
-            <mat-label>Fecha Inicio - mm/dd/yyyy</mat-label>
+            <mat-label>Fecha Inicio</mat-label>
             <input
               matInput
               [matDatepicker]="pickerInicio"
@@ -34,9 +33,9 @@
           </mat-form-field>
         </div>
 
-        <div [style.flex]="setFlex(20, '%')" class="flex-item">
+        <div [style.flex]="setFlex(15, '%')" class="flex-item">
           <mat-form-field appearance="outline">
-            <mat-label>Fecha Fin - mm/dd/yyyy</mat-label>
+            <mat-label>Fecha Fin</mat-label>
             <input
               matInput
               [matDatepicker]="pickerFin"
@@ -50,6 +49,30 @@
             <mat-datepicker #pickerFin disabled="false"></mat-datepicker>
           </mat-form-field>
         </div>
+
+        <div [style.flex]="setFlex(10, '%')" class="flex-item">
+          <button
+            mat-flat-button
+            type="button"
+            (click)="buscarSolicitudes()"
+            class="mb-3"
+          >
+            Buscar
+          </button>
+        </div>
+
+        <div [style.flex]="setFlex(15, '%')" class="flex-item">
+          <mat-form-field appearance="outline">
+            <mat-label>Filtrar resultados</mat-label>
+            <input
+              matInput
+              (keyup)="filtrar($event)"
+              placeholder="Ej. Juan, SOL24060001"
+              formControlName="filtroBusqueda"
+            />
+            <mat-icon matSuffix>search</mat-icon>
+          </mat-form-field>
+        </div>
       </div>
     </div>
 
@@ -58,24 +81,35 @@
       <table
         mat-table
         [dataSource]="dataSourceSolicitud"
-        matSort
-        class="mat-elevation-z2 w-100"
+        multiTemplateDataRows
+        class="mat-elevation-z8"
       >
+        <!-- @for (column of columnasTablaSolicitud; track column) {
+        <ng-container matColumnDef="{{ column }}">
+          <th mat-header-cell *matHeaderCellDef>{{ column }}</th>
+          <td mat-cell *matCellDef="let element">{{ element[column] }}</td>
+        </ng-container>
+      } -->
+
         <!-- Código Solicitud -->
         <ng-container matColumnDef="codigoSolicitud">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Código</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>
+            Cod. Solicitud
+          </th>
           <td mat-cell *matCellDef="let row">{{ row.codigoSolicitud }}</td>
         </ng-container>
 
         <!-- Código Solicitud -->
-        <ng-container matColumnDef="codigoCotizacion">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Cotización</th>
+        <ng-container matColumnDef="cotizacionId">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>
+            Cod. Cotización
+          </th>
           <td mat-cell *matCellDef="let row">{{ row.cotizacionId }}</td>
         </ng-container>
 
         <!-- Código Solicitud -->
         <ng-container matColumnDef="codigoPago">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Cod. pago</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Cod. Pago</th>
           <td mat-cell *matCellDef="let row">{{ row.codigoPago }}</td>
         </ng-container>
 
@@ -113,14 +147,14 @@
         <ng-container matColumnDef="acciones">
           <th mat-header-cell *matHeaderCellDef>Acciones</th>
           <td mat-cell *matCellDef="let row">
-            <button
+            <!-- <button
               mat-icon-button
               color="accent"
               matTooltip="Actualizar estado"
               (click)="actualizarEstadoSolicitud(row)"
             >
               <mat-icon>edit</mat-icon>
-            </button>
+            </button> -->
             <button
               mat-icon-button
               color="primary"
@@ -132,15 +166,108 @@
           </td>
         </ng-container>
 
-        <!-- Header y Row Definitions -->
-        <tr mat-header-row *matHeaderRowDef="columnasTablaSolicitud"></tr>
+        <ng-container matColumnDef="expand">
+          <th mat-header-cell *matHeaderCellDef aria-label="row actions">
+            &nbsp;
+          </th>
+          <td mat-cell *matCellDef="let element">
+            <button
+              mat-icon-button
+              aria-label="expand row"
+              (click)="toggleSolicitud(element); $event.stopPropagation()"
+              class="example-toggle-button"
+              [class.example-toggle-button-expanded]="
+                isExpandedSolicitud(element)
+              "
+            >
+              <mat-icon>keyboard_arrow_down</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+
+        <!-- Expanded Content Column - The detail row is made up of this one column that spans across all columns -->
+        <ng-container matColumnDef="expandedDetail">
+          <td
+            mat-cell
+            *matCellDef="let element"
+            [attr.colspan]="columnasTablaSolicitudWithExpand.length"
+          >
+            <div
+              class="example-element-detail-wrapper"
+              [class.example-element-detail-wrapper-expanded]="
+                isExpandedSolicitud(element)
+              "
+            >
+              <div class="example-element-detail">
+                <div
+                  class="example-element-description"
+                  *ngIf="element.servicios && element.servicios.length"
+                >
+                  <!-- <table class="servicios-table">
+                    <thead>
+                      <tr>
+                        <th>Código Servicio</th>
+                        <th>Nombre</th>
+                        <th>Estado</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let servicio of element.servicios">
+                        <td>{{ servicio.codigoServicio }}</td>
+                        <td>{{ servicio.nombreServicio }}</td>
+                        <td>{{ servicio.estado }}</td>
+                      </tr>
+                    </tbody>
+                  </table> -->
+
+                  <table class="tabla-servicios-estilizada">
+                    <thead>
+                      <tr>
+                        <th>Código Servicio</th>
+                        <th>Nombre</th>
+                        <th>Estado</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let servicio of element.servicios">
+                        <td>{{ servicio.codigoServicio }}</td>
+                        <td>{{ servicio.nombreServicio }}</td>
+                        <td>
+                          <mat-chip
+                            [color]="
+                              servicio.estado === 'PENDIENTE'
+                                ? 'warn'
+                                : 'primary'
+                            "
+                            selected
+                          >
+                            {{ servicio.estado }}
+                          </mat-chip>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </td>
+        </ng-container>
+
+        <tr
+          mat-header-row
+          *matHeaderRowDef="columnasTablaSolicitudWithExpand"
+        ></tr>
         <tr
           mat-row
-          *matRowDef="let row; columns: columnasTablaSolicitud"
-          class="row-hover"
+          *matRowDef="let element; columns: columnasTablaSolicitudWithExpand"
+          class="example-element-row"
+        ></tr>
+        <tr
+          mat-row
+          *matRowDef="let row; columns: ['expandedDetail']"
+          class="example-detail-row"
         ></tr>
       </table>
-
       <!-- Paginador -->
       <mat-paginator [pageSizeOptions]="[25, 50, 100]" [pageSize]="25">
         showFirstLastButtons ></mat-paginator

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import {
   ISolicitudAtencion,
@@ -42,10 +42,16 @@ export class SolicitudAtencionService {
   getAllByDateRange(
     start: string,
     end: string,
+    termino: string,
   ): Observable<ISolicitudAtencion[]> {
-    return this.http.get<ISolicitudAtencion[]>(
-      `${this.apiUrl}/findTerm?fechaInicio=${start}&fechaFin=${end}`,
-    );
+    const params = new HttpParams()
+      .set('fechaInicio', start)
+      .set('fechaFin', end)
+      .set('terminoBusqueda', termino);
+
+    return this.http.get<ISolicitudAtencion[]>(`${this.apiUrl}/findTerm`, {
+      params,
+    });
   }
 
   buscarPorTermino(termino: string): Observable<ISolicitudAtencion[]> {
