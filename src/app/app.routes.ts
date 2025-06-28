@@ -82,7 +82,7 @@ export const routes: Routes = [
         path: 'solicitudAtencion',
         loadComponent: () =>
           import(
-            './pages/gestionar/solicitudAtencion/solicitud-atencion/solicitud-atencion.component'
+            './pages/gestionar/solicitudAtencion/solicitud-atencion.component'
           ).then((m) => m.SolicitudAtencionComponent),
       },
     ],

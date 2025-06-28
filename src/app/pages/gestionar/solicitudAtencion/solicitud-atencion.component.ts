@@ -7,10 +7,10 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { SolicitudAtencionService } from '../../../../services/gestion/solicitudAtencion/solicitud-atencion.service';
+import { SolicitudAtencionService } from '../../../services/gestion/solicitudAtencion/solicitud-atencion.service';
 import { MatDialog } from '@angular/material/dialog';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
-import { ISolicitudAtencion } from '../../../../models/solicitudAtencion.models';
+import { ISolicitudAtencion } from '../../../models/solicitudAtencion.models';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -24,6 +24,8 @@ import { MatInputModule } from '@angular/material/input';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { DateAdapter, MAT_DATE_LOCALE } from '@angular/material/core';
+import { HcPdfService } from '../../../services/utilitarios/pdf/historiaClinica/hc-pdf.service';
+import { DialogPdfSolicitudAtencionComponent } from './dialogs/dialog-pdf-solicitud-atencion/dialog-pdf-solicitud-atencion.component';
 
 @Component({
   selector: 'app-solicitud-atencion',
@@ -50,8 +52,8 @@ export class SolicitudAtencionComponent implements OnInit {
   private _solicitudService = inject(SolicitudAtencionService);
   private dialog = inject(MatDialog);
   private snackBar = inject(MatSnackBar);
-  private readonly _adapter =
-    inject<DateAdapter<unknown, unknown>>(DateAdapter);
+  private readonly _adapter = inject<DateAdapter<unknown, unknown>>(DateAdapter);
+  private _pdfHCService = inject(HcPdfService);
 
   ngOnInit(): void {
     this.buscarSolicitudes();
@@ -94,9 +96,9 @@ export class SolicitudAtencionComponent implements OnInit {
 
   //Tabla roles
   columnasTablaSolicitud: string[] = [
-    'codigoSolicitud',
     'cotizacionId',
     'codigoPago',
+    'codigoSolicitud',
     'fechaEmision',
     'pacienteNombre',
     'tipo',
@@ -122,7 +124,23 @@ export class SolicitudAtencionComponent implements OnInit {
     this.dataSourceSolicitud.filter = termino.trim().toLowerCase();
   }
 
-  imprimirSolicitud(any: any) {}
+  imprimirSolicitud(solicitud: any) {
+
+      // Implementar generación de PDF
+      const pdfSrc = this._pdfHCService.generarHistoriaClinicaPDF(solicitud);
+  
+        this.dialog.open(DialogPdfSolicitudAtencionComponent, {
+          data: { pdfSrc, solicitudData: solicitud},
+          width: '70vw',
+          height: '95vh',
+          maxWidth: '95vw',
+          panelClass: 'custom-dialog-container',
+          
+        });
+
+  }
+
+
 
   buscarSolicitudes() {
     console.log('Buscando solicitudes con los siguientes parámetros:');

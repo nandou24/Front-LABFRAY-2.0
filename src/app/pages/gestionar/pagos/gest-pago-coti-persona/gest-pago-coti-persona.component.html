@@ -674,14 +674,15 @@
           </mat-form-field>
 
           <table mat-table [dataSource]="pagos">
-            <ng-container matColumnDef="codPago">
-              <th mat-header-cell *matHeaderCellDef>Cod Pago</th>
-              <td mat-cell *matCellDef="let pago">{{ pago.codPago }}</td>
-            </ng-container>
 
             <ng-container matColumnDef="codCoti">
               <th mat-header-cell *matHeaderCellDef>Cod Coti</th>
               <td mat-cell *matCellDef="let pago">{{ pago.codCotizacion }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="codPago">
+              <th mat-header-cell *matHeaderCellDef>Cod Pago</th>
+              <td mat-cell *matCellDef="let pago">{{ pago.codPago }}</td>
             </ng-container>
 
             <ng-container matColumnDef="paciente">
@@ -704,8 +705,8 @@
             <tr
               mat-header-row
               *matHeaderRowDef="[
-                'codPago',
                 'codCoti',
+                'codPago',
                 'paciente',
                 'documento',
                 'estado',
@@ -716,8 +717,8 @@
               *matRowDef="
                 let row;
                 columns: [
+                  'codCoti',  
                   'codPago',
-                  'codCoti',
                   'paciente',
                   'documento',
                   'estado',
