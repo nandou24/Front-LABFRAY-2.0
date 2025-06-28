@@ -6,19 +6,12 @@ import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-dialog-pdf-solicitud-atencion',
-  imports: [
-    MatDialogModule,
-    MatButtonModule,
-    CommonModule
-  ],
+  imports: [MatDialogModule, MatButtonModule, CommonModule],
   templateUrl: './dialog-pdf-solicitud-atencion.component.html',
-  styleUrl: './dialog-pdf-solicitud-atencion.component.scss'
+  styleUrl: './dialog-pdf-solicitud-atencion.component.scss',
 })
 export class DialogPdfSolicitudAtencionComponent {
-
   constructor(
-    @Inject(MAT_DIALOG_DATA) public data: { pdfSrc: any, solicitudData: any },
-    private _pdfHCService: HcPdfService
+    @Inject(MAT_DIALOG_DATA) public data: { pdfSrc: any; solicitudData: any },
   ) {}
-
 }

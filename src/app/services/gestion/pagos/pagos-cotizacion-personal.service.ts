@@ -4,7 +4,7 @@ import {
   IGetDetallePago,
   IGetLastPagos,
   IPago,
-  IPagoPostDTO,
+  IPagoPostDTOResponse,
 } from '../../../models/pagos.models';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../../../environments/enviroment';
@@ -19,7 +19,7 @@ export class PagosCotizacionPersonalService {
   registrarPago(body: IPago) {
     console.log('Enviando valores desde servicio');
 
-    return this._http.post<IPagoPostDTO>(
+    return this._http.post<IPagoPostDTOResponse>(
       `${environment.baseUrl}/api/pagos/newPagoPersona`,
       body,
     );
@@ -53,10 +53,10 @@ export class PagosCotizacionPersonalService {
     codPago: string,
     motivo: string,
     observacion: string | null,
-  ): Observable<IPagoPostDTO> {
+  ): Observable<IPagoPostDTOResponse> {
     const body = { motivo, observacion };
 
-    return this._http.put<IPagoPostDTO>(
+    return this._http.put<IPagoPostDTOResponse>(
       `${environment.baseUrl}/api/pagos/anularPago/${codPago}`,
       body,
     );

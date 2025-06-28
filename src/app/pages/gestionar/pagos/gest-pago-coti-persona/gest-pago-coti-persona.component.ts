@@ -309,6 +309,7 @@ export class GestPagoCotiPersonaComponent implements OnInit {
       fechaCotizacion: ultimaVersion.fechaModificacion,
       codCliente: ultimaVersion.codCliente,
       nomCliente: ultimaVersion.nomCliente,
+      hc: ultimaVersion.hc,
       tipoDoc: ultimaVersion.tipoDoc,
       nroDoc: ultimaVersion.nroDoc,
       codSolicitante: ultimaVersion.codSolicitante,
@@ -563,17 +564,41 @@ export class GestPagoCotiPersonaComponent implements OnInit {
         this.cancelarAnulacion();
       },
       error: (err) => {
+        console.error('Error al registrar el pago:', err);
+
         const mensaje =
           err?.error?.msg ||
           err.message ||
           'No se pudo registrar el pago. Intenta nuevamente.';
 
-        Swal.fire({
-          title: 'Error',
-          text: mensaje,
-          icon: 'error',
-          confirmButtonText: 'Ok',
-        });
+        const hc22: boolean = err?.error?.errors?.faltaHC;
+
+        if (hc22 === true) {
+          Swal.fire({
+            title: 'Error',
+            text: mensaje,
+            icon: 'error',
+            showCancelButton: true,
+            confirmButtonText: 'Registrar paciente',
+            cancelButtonText: 'Cancelar',
+          }).then((result) => {
+            // if (result.isConfirmed) {
+            //   // Abrir el diálogo de registro de paciente
+            //   this.dialog.open(DialogRegistroPacienteComponent, {
+            //     width: '700px',
+            //     data: { paciente: this.pacienteSeleccionado }
+            //   });
+            // }
+          });
+        } else {
+          // Error genérico
+          Swal.fire({
+            title: 'Error',
+            text: mensaje,
+            icon: 'error',
+            confirmButtonText: 'Ok',
+          });
+        }
       },
     });
   }

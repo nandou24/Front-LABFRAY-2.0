@@ -52,7 +52,8 @@ export class SolicitudAtencionComponent implements OnInit {
   private _solicitudService = inject(SolicitudAtencionService);
   private dialog = inject(MatDialog);
   private snackBar = inject(MatSnackBar);
-  private readonly _adapter = inject<DateAdapter<unknown, unknown>>(DateAdapter);
+  private readonly _adapter =
+    inject<DateAdapter<unknown, unknown>>(DateAdapter);
   private _pdfHCService = inject(HcPdfService);
 
   ngOnInit(): void {
@@ -125,22 +126,17 @@ export class SolicitudAtencionComponent implements OnInit {
   }
 
   imprimirSolicitud(solicitud: any) {
+    // Implementar generación de PDF
+    const pdfSrc = this._pdfHCService.generarHistoriaClinicaPDF(solicitud);
 
-      // Implementar generación de PDF
-      const pdfSrc = this._pdfHCService.generarHistoriaClinicaPDF(solicitud);
-  
-        this.dialog.open(DialogPdfSolicitudAtencionComponent, {
-          data: { pdfSrc, solicitudData: solicitud},
-          width: '70vw',
-          height: '95vh',
-          maxWidth: '95vw',
-          panelClass: 'custom-dialog-container',
-          
-        });
-
+    this.dialog.open(DialogPdfSolicitudAtencionComponent, {
+      data: { pdfSrc, solicitudData: solicitud },
+      width: '70vw',
+      height: '95vh',
+      maxWidth: '95vw',
+      panelClass: 'custom-dialog-container',
+    });
   }
-
-
 
   buscarSolicitudes() {
     console.log('Buscando solicitudes con los siguientes parámetros:');
