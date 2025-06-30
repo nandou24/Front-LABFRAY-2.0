@@ -70,7 +70,7 @@ export class SolicitudAtencionComponent implements OnInit {
     hc: ['', Validators.required],
     tipoDocumento: ['', Validators.required],
     nroDocumento: ['', [Validators.required, Validators.minLength(6)]],
-    pacienteNombre: ['', Validators.required],
+    nombreCompleto: ['', Validators.required],
     codUsuarioEmisor: ['', Validators.required],
     usuarioEmisor: ['', Validators.required],
   });
@@ -101,7 +101,7 @@ export class SolicitudAtencionComponent implements OnInit {
     'codigoPago',
     'codigoSolicitud',
     'fechaEmision',
-    'pacienteNombre',
+    'nombreCompleto',
     'tipo',
     'estado',
     'acciones',

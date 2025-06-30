@@ -8,7 +8,7 @@ export interface ISolicitudAtencion {
   hc: string;
   tipoDocumento: string;
   nroDocumento: string;
-  pacienteNombre: string;
+  nombreCompleto: string;
   fechaEmision: Date | string;
   estado: string;
   usuarioEmisor: string;
@@ -27,7 +27,7 @@ export interface ISolicitudAtencionPostDTO {
   hc: string;
   tipoDocumento: string;
   nroDocumento: string;
-  pacienteNombre: string;
+  nombreCompleto: string;
   usuarioEmisor: string;
 }
 

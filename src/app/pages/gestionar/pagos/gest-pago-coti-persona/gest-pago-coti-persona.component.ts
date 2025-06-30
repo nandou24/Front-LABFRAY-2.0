@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+import { CommonModule, formatDate } from '@angular/common';
 import { Component, inject, OnInit } from '@angular/core';
 import {
   FormArray,
@@ -26,6 +26,9 @@ import {
 import { IDetallePago, IPago } from '../../../../models/pagos.models';
 import { PagosCotizacionPersonalService } from '../../../../services/gestion/pagos/pagos-cotizacion-personal.service';
 import Swal from 'sweetalert2';
+import { DialogRegistroPacienteComponent } from './dialogs/dialog-registro-paciente/dialog-registro-paciente.component';
+import { MatDialog } from '@angular/material/dialog';
+import { DateAdapter, MAT_DATE_LOCALE } from '@angular/material/core';
 
 @Component({
   selector: 'app-gest-pago-coti-persona',
@@ -44,6 +47,7 @@ import Swal from 'sweetalert2';
     MatDatepickerModule,
     MatNativeDateModule,
   ],
+  providers: [{ provide: MAT_DATE_LOCALE, useValue: 'es-PE' }],
   templateUrl: './gest-pago-coti-persona.component.html',
   styleUrl: './gest-pago-coti-persona.component.scss',
 })
@@ -51,11 +55,15 @@ export class GestPagoCotiPersonaComponent implements OnInit {
   private _cotizacionService = inject(CotizacionPersonalService);
   private _pagoService = inject(PagosCotizacionPersonalService);
   private _fb = inject(FormBuilder);
+  private dialog = inject(MatDialog);
+  private readonly _adapter =
+    inject<DateAdapter<unknown, unknown>>(DateAdapter);
 
   ngOnInit(): void {
-    this.ultimasCotizaciones(10);
-    this.ultimosPagos(10);
+    this.ultimasCotizaciones(20);
+    this.ultimosPagos(20);
     this.escucharCambioMotivoAnulacion();
+    this._adapter.setLocale('es-PE'); // Establecer el locale para el adaptador de fecha
   }
 
   public myFormPagoPersona: FormGroup = this._fb.group({
@@ -63,10 +71,10 @@ export class GestPagoCotiPersonaComponent implements OnInit {
     fechaPago: [{ value: '', disabled: true }],
     codCotizacion: [{ value: '', disabled: true }],
     version: [{ value: 0, disabled: true }],
-    fechaCotizacion: [{ value: '', disabled: true }],
+    fechaModificacion: [{ value: '', disabled: true }],
     estadoCotizacion: [{ value: '', disabled: true }],
-    codCliente: [{ value: '', disabled: true }],
-    nomCliente: [{ value: '', disabled: true }],
+    hc: [{ value: '', disabled: true }],
+    nombreCompleto: [{ value: '', disabled: true }],
     tipoDoc: [{ value: '', disabled: true }],
     nroDoc: [{ value: '', disabled: true }],
     codSolicitante: [{ value: '', disabled: true }],
@@ -301,15 +309,20 @@ export class GestPagoCotiPersonaComponent implements OnInit {
     const historial = cotizacion.historial;
     ultimaVersion = historial[historial.length - 1];
 
+    const fechaFormateada = formatDate(
+      ultimaVersion.fechaModificacion ?? '',
+      'dd/MM/yyyy HH:mm',
+      'es-PE',
+    );
+
     // 📌 Cargar datos del paciente
     this.myFormPagoPersona.patchValue({
       codCotizacion: cotizacion.codCotizacion,
       estadoCotizacion: cotizacion.estadoCotizacion,
       version: ultimaVersion.version,
-      fechaCotizacion: ultimaVersion.fechaModificacion,
-      codCliente: ultimaVersion.codCliente,
-      nomCliente: ultimaVersion.nomCliente,
+      fechaModificacion: fechaFormateada,
       hc: ultimaVersion.hc,
+      nombreCompleto: ultimaVersion.nombreCompleto,
       tipoDoc: ultimaVersion.tipoDoc,
       nroDoc: ultimaVersion.nroDoc,
       codSolicitante: ultimaVersion.codSolicitante,
@@ -392,10 +405,11 @@ export class GestPagoCotiPersonaComponent implements OnInit {
     this.myFormPagoPersona.patchValue({
       codPago: pago.codPago,
       codCotizacion: pago.codCotizacion,
+      fechaModificacion: pago.fechaCotizacion,
       version: pago.version,
       estadoCotizacion: pago.estadoCotizacion,
-      codCliente: pago.codCliente,
-      nomCliente: pago.nomCliente,
+      hc: pago.hc,
+      nombreCompleto: pago.nombreCompleto,
       tipoDoc: pago.tipoDoc,
       nroDoc: pago.nroDoc,
       codSolicitante: pago.codSolicitante,
@@ -552,54 +566,102 @@ export class GestPagoCotiPersonaComponent implements OnInit {
   }
 
   registrarPagos(pago: IPago) {
-    this._pagoService.registrarPago(pago).subscribe({
-      next: (data) => {
-        Swal.fire({
-          title: 'Confirmado',
-          text: data.msg,
-          icon: 'success',
-          confirmButtonText: 'Ok',
-        });
-        this.nuevoPago();
-        this.cancelarAnulacion();
-      },
-      error: (err) => {
-        console.error('Error al registrar el pago:', err);
+    const codCotizacion = this.myFormPagoPersona.get('codCotizacion')?.value;
 
-        const mensaje =
-          err?.error?.msg ||
-          err.message ||
-          'No se pudo registrar el pago. Intenta nuevamente.';
-
-        const hc22: boolean = err?.error?.errors?.faltaHC;
-
-        if (hc22 === true) {
+    this._cotizacionService.verificarHcRegistrada(codCotizacion).subscribe({
+      next: (hcRegistrada: boolean) => {
+        if (!hcRegistrada) {
           Swal.fire({
             title: 'Error',
-            text: mensaje,
+            text: 'El paciente no está registrado en el sistema.',
             icon: 'error',
             showCancelButton: true,
             confirmButtonText: 'Registrar paciente',
             cancelButtonText: 'Cancelar',
           }).then((result) => {
-            // if (result.isConfirmed) {
-            //   // Abrir el diálogo de registro de paciente
-            //   this.dialog.open(DialogRegistroPacienteComponent, {
-            //     width: '700px',
-            //     data: { paciente: this.pacienteSeleccionado }
-            //   });
-            // }
+            if (result.isConfirmed) {
+              const dialogRef = this.dialog.open(
+                DialogRegistroPacienteComponent,
+                {
+                  width: '700px',
+                  height: '850px',
+                  minWidth: '500px',
+                  maxWidth: '1000px',
+
+                  data: {
+                    codCotizacion:
+                      this.myFormPagoPersona.get('codCotizacion')?.value,
+                    paciente: {
+                      nombreCompleto:
+                        this.myFormPagoPersona.get('nombreCompleto')?.value,
+                      tipoDoc: this.myFormPagoPersona.get('tipoDoc')?.value,
+                      nroDoc: this.myFormPagoPersona.get('nroDoc')?.value,
+                    },
+                  },
+                },
+              );
+
+              dialogRef.afterClosed().subscribe((pacienteSeleccionado) => {
+                if (pacienteSeleccionado) {
+                  this.setPacienteRegistrado(pacienteSeleccionado);
+                  this.ultimasCotizaciones(20); // Actualizar lista de cotizaciones
+                }
+              });
+            }
           });
         } else {
-          // Error genérico
-          Swal.fire({
-            title: 'Error',
-            text: mensaje,
-            icon: 'error',
-            confirmButtonText: 'Ok',
+          this._pagoService.registrarPago(pago).subscribe({
+            next: (data) => {
+              Swal.fire({
+                title: 'Confirmado',
+                text: data.msg,
+                icon: 'success',
+                confirmButtonText: 'Ok',
+              });
+              this.nuevoPago();
+              this.cancelarAnulacion();
+            },
+            error: (err) => {
+              console.error('Error al registrar el pago:', err);
+
+              const mensaje =
+                err?.error?.msg ||
+                err.message ||
+                'No se pudo registrar el pago. Intenta nuevamente.';
+
+              const hc22: boolean = err?.error?.errors?.faltaHC;
+
+              // Error genérico
+              Swal.fire({
+                title: 'Error',
+                text: mensaje,
+                icon: 'error',
+                confirmButtonText: 'Ok',
+              });
+            },
           });
         }
       },
+      error: (err) => {
+        console.error('Error al verificar HC:', err);
+        Swal.fire(
+          'Error',
+          'No se pudo verificar la historia clínica.',
+          'error',
+        );
+      },
+    });
+  }
+
+  setPacienteRegistrado(data: any) {
+    const paterno = data.paciente.apePatCliente?.trim();
+    const materno = data.paciente.apeMatCliente?.trim();
+    const nombres = data.paciente.nombreCliente?.trim();
+    const nomnbreCompleto = `${paterno} ${materno} ${nombres}`?.trim();
+
+    this.myFormPagoPersona.patchValue({
+      nombreCompleto: nomnbreCompleto,
+      hc: data.nuevoHC,
     });
   }
 

@@ -12,19 +12,17 @@ import {
   Validators,
   FormControl,
 } from '@angular/forms';
-import { RecursoHumanoService } from '../../../../services/mantenimiento/recursoHumano/recurso-humano.service';
 import { ServiciosService } from '../../../../services/mantenimiento/servicios/servicios.service';
 import { CotizacionPersonalService } from '../../../../services/gestion/cotizaciones/cotizacion-personal.service';
-import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { IServicio } from '../../../../models/servicios.models';
 import Swal from 'sweetalert2';
-import { CommonModule } from '@angular/common';
+import { CommonModule, formatDate } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatCardModule } from '@angular/material/card';
 import { MatSelectModule } from '@angular/material/select';
-import { MatOptionModule } from '@angular/material/core';
+import { MAT_DATE_LOCALE, MatOptionModule } from '@angular/material/core';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
@@ -60,6 +58,7 @@ import { DialogPdfCotiPersonaComponent } from './dialogs/dialog-pdf/dialog-pdf-c
     MatDialogModule,
     MatButtonToggleModule,
   ],
+  providers: [{ provide: MAT_DATE_LOCALE, useValue: 'es-PE' }],
   templateUrl: './gest-coti-persona.component.html',
   styleUrl: './gest-coti-persona.component.scss',
 })
@@ -76,19 +75,17 @@ export class GestCotiPersonaComponent implements OnInit {
     this.ultimosServicios(10);
     this.listarServiciosFrecuentes();
     this.ultimasCotizaciones(10);
-    this.myFormCotizacion.get('codCotizacion')?.disable();
-    this.myFormCotizacion.get('version')?.disable();
     this.terminoBusquedaCotizacion.valueChanges.subscribe(() =>
       this.buscarCotizaciones(),
     );
   }
 
   public myFormCotizacion: FormGroup = this._fb.group({
-    codCotizacion: '',
-    version: '',
+    codCotizacion: [{ value: '', disabled: true }],
+    fechaModificacion: [{ value: '', disabled: true }],
+    version: [{ value: '', disabled: true }],
     estadoRegistroPaciente: true,
-    codCliente: [{ value: '', disabled: true }],
-    nomCliente: [''],
+    nombreCompleto: [''],
     hc: [''],
     tipoDoc: [''],
     nroDoc: [''],
@@ -138,10 +135,10 @@ export class GestCotiPersonaComponent implements OnInit {
 
     if (estado) {
       // this.myFormCotizacion.get('codCliente')?.reset();
-      this.myFormCotizacion.get('nomCliente')?.reset();
+      this.myFormCotizacion.get('nombreCompleto')?.reset();
       this.myFormCotizacion.get('tipoDoc')?.reset();
       this.myFormCotizacion.get('nroDoc')?.reset();
-      this.myFormCotizacion.get('nomCliente')?.disable();
+      this.myFormCotizacion.get('nombreCompleto')?.disable();
       this.myFormCotizacion.get('tipoDoc')?.disable();
       this.myFormCotizacion.get('nroDoc')?.disable();
       document
@@ -149,10 +146,10 @@ export class GestCotiPersonaComponent implements OnInit {
         ?.removeAttribute('disabled');
     } else {
       // this.myFormCotizacion.get('codCliente')?.reset();
-      this.myFormCotizacion.get('nomCliente')?.reset();
+      this.myFormCotizacion.get('nombreCompleto')?.reset();
       this.myFormCotizacion.get('tipoDoc')?.reset();
       this.myFormCotizacion.get('nroDoc')?.reset();
-      this.myFormCotizacion.get('nomCliente')?.enable();
+      this.myFormCotizacion.get('nombreCompleto')?.enable();
       this.myFormCotizacion.get('tipoDoc')?.enable();
       this.myFormCotizacion.get('nroDoc')?.enable();
       document
@@ -219,12 +216,11 @@ export class GestCotiPersonaComponent implements OnInit {
   setPacienteSeleccionado(paciente: any) {
     // Asigna los datos del paciente seleccionado al formulario
     this.myFormCotizacion.patchValue({
-      nomCliente:
+      nombreCompleto:
         `${paciente.apePatCliente} ${paciente.apeMatCliente} ${paciente.nombreCliente}`.trim(),
       hc: paciente.hc,
       tipoDoc: paciente.tipoDoc,
       nroDoc: paciente.nroDoc,
-      codCliente: paciente.hc,
     });
   }
 
@@ -609,6 +605,7 @@ export class GestCotiPersonaComponent implements OnInit {
     this.myFormCotizacion.get('aplicarDescuentoPorcentGlobal')?.enable();
     this.myFormCotizacion.get('estadoRegistroPaciente')?.enable();
     this.myFormCotizacion.get('estadoRegistroSolicitante')?.enable();
+
     document
       .getElementById('buscarPacienteModalBtn')
       ?.removeAttribute('disabled');
@@ -625,6 +622,9 @@ export class GestCotiPersonaComponent implements OnInit {
       igv: 0,
       total: 0,
     });
+
+    this.camnbioEstadoRegistroPaciente();
+    this.camnbioEstadoRegistroSolicitante();
 
     this.formSubmitted = false; // Reiniciar el estado del formulario
     this.dataSourceServiciosCotizados.data = this.serviciosCotizacion
@@ -669,8 +669,7 @@ export class GestCotiPersonaComponent implements OnInit {
               version: 1,
               fechaModificacion: new Date(),
               estadoRegistroPaciente: !!formValue.estadoRegistroPaciente,
-              codCliente: formValue.codCliente,
-              nomCliente: formValue.nomCliente,
+              nombreCompleto: formValue.nombreCompleto,
               hc: formValue.hc,
               tipoDoc: formValue.tipoDoc,
               nroDoc: formValue.nroDoc,
@@ -770,8 +769,7 @@ export class GestCotiPersonaComponent implements OnInit {
           version: ultimaVersion + 1,
           fechaModificacion: new Date(),
           estadoRegistroPaciente: !!formValue.estadoRegistroPaciente,
-          codCliente: formValue.codCliente,
-          nomCliente: formValue.nomCliente,
+          nombreCompleto: formValue.nombreCompleto,
           hc: formValue.hc,
           tipoDoc: formValue.tipoDoc,
           nroDoc: formValue.nroDoc,
@@ -824,7 +822,7 @@ export class GestCotiPersonaComponent implements OnInit {
   }
 
   validarformulario(): boolean {
-    const nomClienteControl = this.myFormCotizacion.get('nomCliente');
+    const nomClienteControl = this.myFormCotizacion.get('nombreCompleto');
     const nomClienteValor = nomClienteControl
       ? nomClienteControl.getRawValue()
       : '';
@@ -908,12 +906,29 @@ export class GestCotiPersonaComponent implements OnInit {
       historial: [historialVersion], // Sobrescribimos solo con la versión activa
     };
 
+    const fechaFormateada = formatDate(
+      historialVersion.fechaModificacion,
+      'dd/MM/yyyy HH:mm',
+      'es-PE',
+    );
+
+    const nombre = historialVersion.nombreCompleto;
+    let nombreGrabar = '';
+
+    if (nombre) {
+      nombreGrabar = historialVersion.nombreCompleto;
+    } else {
+      nombreGrabar =
+        `${historialVersion.apePatCliente} ${historialVersion.apeMatCliente} ${historialVersion.nombreCliente}`.trim();
+    }
+
     this.myFormCotizacion.patchValue({
       estadoRegistroPaciente: historialVersion.estadoRegistroPaciente,
-      //codCliente: historialVersion.codCliente || '',
-      nomCliente: historialVersion.nomCliente || '',
-      tipoDoc: historialVersion.tipoDoc || '',
-      nroDoc: historialVersion.nroDoc || '',
+      fechaModificacion: fechaFormateada,
+      nombreCompleto: nombreGrabar,
+      hc: historialVersion.hc,
+      tipoDoc: historialVersion.tipoDoc,
+      nroDoc: historialVersion.nroDoc,
       estadoRegistroSolicitante: historialVersion.estadoRegistroSolicitante,
       //codSolicitante: historialVersion.codSolicitante || '',
       nomSolicitante: historialVersion.nomSolicitante || '',
@@ -979,6 +994,18 @@ export class GestCotiPersonaComponent implements OnInit {
       this.dataSourceServiciosCotizados.data = this.serviciosCotizacion
         .controls as FormGroup[];
     } else {
+      if (
+        this.myFormCotizacion.get('estadoRegistroPaciente')?.value === false
+      ) {
+        this.myFormCotizacion.get('nombreCompleto')?.enable();
+        this.myFormCotizacion.get('tipoDoc')?.enable();
+        this.myFormCotizacion.get('nroDoc')?.enable();
+      } else {
+        this.myFormCotizacion.get('nombreCompleto')?.disable();
+        this.myFormCotizacion.get('tipoDoc')?.disable();
+        this.myFormCotizacion.get('nroDoc')?.disable();
+      }
+
       this.myFormCotizacion.get('aplicarPrecioGlobal')?.enable();
       this.myFormCotizacion.get('aplicarDescuentoPorcentGlobal')?.enable();
       this.myFormCotizacion.get('estadoRegistroPaciente')?.enable();

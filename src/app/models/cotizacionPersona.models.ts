@@ -9,8 +9,7 @@ export interface IHistorialCotizacion {
   version: number;
   fechaModificacion: Date | null;
   estadoRegistroPaciente: boolean;
-  codCliente?: string;
-  nomCliente: string;
+  nombreCompleto: string;
   hc: string;
   tipoDoc: string;
   nroDoc: string;

@@ -41,6 +41,9 @@ import { customPaginatorIntl } from '../../../services/utilitarios/mat-paginator
 import Swal from 'sweetalert2';
 import { IRol } from '../../../models/permisos/roles.models';
 import { RolesService } from '../../../services/permisos/roles/roles.service';
+import { FechaValidatorService } from '../../../services/utilitarios/validators/fechasValidator/fecha-validator.service';
+import { DocValidatorService } from '../../../services/utilitarios/validators/docValidator/doc-validator.service';
+import { DateAdapter, MAT_DATE_LOCALE } from '@angular/material/core';
 
 @Component({
   selector: 'app-mant-recurso-humano',
@@ -61,7 +64,10 @@ import { RolesService } from '../../../services/permisos/roles/roles.service';
     MatNativeDateModule,
     CommonModule,
   ],
-  providers: [{ provide: MatPaginatorIntl, useFactory: customPaginatorIntl }],
+  providers: [
+    { provide: MatPaginatorIntl, useFactory: customPaginatorIntl },
+    { provide: MAT_DATE_LOCALE, useValue: 'es-PE' },
+  ],
   templateUrl: './mant-recurso-humano.component.html',
   styleUrl: './mant-recurso-humano.component.scss',
 })
@@ -69,6 +75,8 @@ export class MantRecursoHumanoComponent implements OnInit, AfterViewInit {
   private _rolesService = inject(RolesService);
   private _recHumanoService = inject(RecursoHumanoService);
   private _ubigeoService = inject(UbigeoService);
+  private readonly _adapter =
+    inject<DateAdapter<unknown, unknown>>(DateAdapter);
 
   constructor() {}
 
@@ -81,14 +89,23 @@ export class MantRecursoHumanoComponent implements OnInit, AfterViewInit {
     this.onProvinciaChange();
     this.ultimosRecHumano();
     this.listarRolesDisponibles();
+    this._adapter.setLocale('es-PE'); // Establecer el locale para el adaptador de fecha
   }
 
   private _fb = inject(FormBuilder);
+  private _fechaService = inject(FechaValidatorService);
+  private _documentValidator = inject(DocValidatorService);
 
   public myFormRecHumano: FormGroup = this._fb.group({
     codRecHumano: '',
     tipoDoc: ['', [Validators.required]],
-    nroDoc: ['', [Validators.required, documentValidator('tipoDoc')]],
+    nroDoc: [
+      '',
+      [
+        Validators.required,
+        this._documentValidator.documentValidator('tipoDoc'),
+      ],
+    ],
     nombreRecHumano: [
       '',
       [Validators.required, Validators.pattern(/^[a-zA-ZÀ-ÿ\u00f1\u00d1\s]+$/)],
@@ -98,7 +115,10 @@ export class MantRecursoHumanoComponent implements OnInit, AfterViewInit {
       [Validators.required, Validators.pattern(/^[a-zA-ZÀ-ÿ\u00f1\u00d1\s]+$/)],
     ],
     apeMatRecHumano: ['', [Validators.pattern(/^[a-zA-ZÀ-ÿ\u00f1\u00d1\s]+$/)]],
-    fechaNacimiento: ['', [Validators.required, this.fechaNoFuturaValidator()]],
+    fechaNacimiento: [
+      '',
+      [Validators.required, this._fechaService.fechaNoFuturaValidator()],
+    ],
     edad: [{ value: '', disabled: true }],
     sexoRecHumano: ['', [Validators.required]],
     departamentoRecHumano: ['15'],
@@ -396,40 +416,8 @@ export class MantRecursoHumanoComponent implements OnInit, AfterViewInit {
 
   actualizarEdad() {
     const fecha = this.myFormRecHumano.get('fechaNacimiento')?.value;
-    const edadCalculada = this.calcularEdad(fecha);
+    const edadCalculada = this._fechaService.calcularEdad(fecha);
     this.myFormRecHumano.get('edad')?.setValue(edadCalculada);
-  }
-
-  calcularEdad(fechaNacimiento: Date | string): string {
-    if (!fechaNacimiento) return '';
-
-    const birthDate =
-      typeof fechaNacimiento === 'string'
-        ? new Date(fechaNacimiento)
-        : fechaNacimiento;
-    if (isNaN(birthDate.getTime())) return '';
-
-    const today = new Date();
-
-    let years = today.getFullYear() - birthDate.getFullYear();
-
-    // Calcular la diferencia en meses
-    let months = today.getMonth() - birthDate.getMonth();
-    if (months < 0) {
-      months += 12;
-      years--; // Si el mes del cumpleaños aún no ha pasado, restamos un año
-    }
-
-    // Calcular la diferencia en días
-    let days = today.getDate() - birthDate.getDate();
-    if (days < 0) {
-      months--; // Si el día del cumpleaños aún no ha pasado, restamos un mes
-      const lastMonth = new Date(today.getFullYear(), today.getMonth(), 0); // Obtener el último día del mes anterior
-      days += lastMonth.getDate(); // Sumamos los días del mes anterior
-    }
-
-    // Devolver el resultado en años, meses y días
-    return `${years} años, ${months} meses, y ${days} días`;
   }
 
   terminoBusquedaRecHumanoControl = new FormControl('');

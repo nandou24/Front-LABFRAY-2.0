@@ -1,6 +1,20 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, inject, OnInit, ViewChild } from '@angular/core';
-import { AbstractControl, FormArray, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
+import {
+  AfterViewInit,
+  Component,
+  inject,
+  OnInit,
+  ViewChild,
+} from '@angular/core';
+import {
+  FormArray,
+  FormBuilder,
+  FormControl,
+  FormGroup,
+  FormsModule,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatNativeDateModule } from '@angular/material/core';
@@ -11,12 +25,19 @@ import { MatInputModule } from '@angular/material/input';
 import { MatPaginator, MatPaginatorIntl } from '@angular/material/paginator';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
-import { MatTable, MatTableDataSource, MatTableModule } from '@angular/material/table';
+import {
+  MatTable,
+  MatTableDataSource,
+  MatTableModule,
+} from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { UbigeoService } from '../../../services/utilitarios/ubigeo.service';
 import { IRefMedico } from '../../../models/referenciaMedico.models';
 import { ReferenciaMedicoService } from '../../../services/mantenimiento/referencias/referencia-medico.service';
 import Swal from 'sweetalert2';
+import { DateAdapter, MAT_DATE_LOCALE } from '@angular/material/core';
+import { DocValidatorService } from '../../../services/utilitarios/validators/docValidator/doc-validator.service';
+import { FechaValidatorService } from '../../../services/utilitarios/validators/fechasValidator/fecha-validator.service';
 
 @Component({
   selector: 'app-referencia-medico',
@@ -35,38 +56,51 @@ import Swal from 'sweetalert2';
     MatTabsModule,
     MatDatepickerModule,
     MatNativeDateModule,
-    CommonModule
+    CommonModule,
   ],
+  providers: [{ provide: MAT_DATE_LOCALE, useValue: 'es-PE' }],
   templateUrl: './referencia-medico.component.html',
-  styleUrl: './referencia-medico.component.scss'
+  styleUrl: './referencia-medico.component.scss',
 })
 export class ReferenciaMedicoComponent implements OnInit, AfterViewInit {
   constructor(
     private _refMedicoService: ReferenciaMedicoService,
-    private _ubigeoService: UbigeoService
-  ){}
+    private _ubigeoService: UbigeoService,
+  ) {}
 
   ngOnInit(): void {
     this.departamentos = this._ubigeoService.getDepartamento();
     this.provincias = this._ubigeoService.getProvincia('15');
-    this.distritos = this._ubigeoService.getDistrito('15','01');
+    this.distritos = this._ubigeoService.getDistrito('15', '01');
     this.onDepartamentoChange();
     this.onProvinciaChange();
     this.ultimosRefMedico();
+    this._adapter.setLocale('es-PE'); // Establecer el locale para el adaptador de fecha
   }
 
   private _fb = inject(FormBuilder);
+  private readonly _adapter =
+    inject<DateAdapter<unknown, unknown>>(DateAdapter);
+  private _fechaService = inject(FechaValidatorService);
+  private _documentValidator = inject(DocValidatorService);
 
   public myFormRefMedico: FormGroup = this._fb.group({
     codRefMedico: '',
     tipoDoc: ['', [Validators.required]],
-    nroDoc: ['', [Validators.required,
-                      documentValidator('tipoDoc')
-                    ]],
+    nroDoc: [
+      '',
+      [
+        Validators.required,
+        this._documentValidator.documentValidator('tipoDoc'),
+      ],
+    ],
     nombreRefMedico: ['', [Validators.required]],
     apePatRefMedico: ['', [Validators.required]],
     apeMatRefMedico: [''],
-    fechaNacimiento: ['', [Validators.required]],
+    fechaNacimiento: [
+      '',
+      [Validators.required, this._fechaService.fechaNoFuturaValidator()],
+    ],
     edad: [{ value: '', disabled: true }],
     sexoRefMedico: ['', [Validators.required]],
     departamentoRefMedico: ['15'],
@@ -100,18 +134,27 @@ export class ReferenciaMedicoComponent implements OnInit, AfterViewInit {
   distritos: any[] = [];
 
   onDepartamentoChange(): void {
-    this.myFormRefMedico.get('departamentoRefMedico')?.valueChanges.subscribe(departamentoId => {
-      this.provincias = this._ubigeoService.getProvincia(departamentoId);
-      this.distritos = this._ubigeoService.getDistrito(departamentoId,'01');
-      this.myFormRefMedico.get('provinciaRefMedico')?.setValue('01');
-    });
+    this.myFormRefMedico
+      .get('departamentoRefMedico')
+      ?.valueChanges.subscribe((departamentoId) => {
+        this.provincias = this._ubigeoService.getProvincia(departamentoId);
+        this.distritos = this._ubigeoService.getDistrito(departamentoId, '01');
+        this.myFormRefMedico.get('provinciaRefMedico')?.setValue('01');
+      });
   }
   onProvinciaChange(): void {
-    this.myFormRefMedico.get('provinciaRefMedico')?.valueChanges.subscribe(provinciaId => {
-      const departamentoId = this.myFormRefMedico.get('departamentoRefMedico')?.value;
-      this.distritos = this._ubigeoService.getDistrito(departamentoId, provinciaId);
-      this.myFormRefMedico.get('distritoRefMedico')?.setValue('01');
-    });
+    this.myFormRefMedico
+      .get('provinciaRefMedico')
+      ?.valueChanges.subscribe((provinciaId) => {
+        const departamentoId = this.myFormRefMedico.get(
+          'departamentoRefMedico',
+        )?.value;
+        this.distritos = this._ubigeoService.getDistrito(
+          departamentoId,
+          provinciaId,
+        );
+        this.myFormRefMedico.get('distritoRefMedico')?.setValue('01');
+      });
   }
 
   setFlex(valor: number, unidad: 'px' | '%' = 'px'): string {
@@ -120,8 +163,11 @@ export class ReferenciaMedicoComponent implements OnInit, AfterViewInit {
 
   agregarTelefono() {
     const telefonoForm = this._fb.group({
-      phoneNumber: ['', [Validators.required, Validators.pattern(/^[0-9]{9,11}$/)]],
-      descriptionPhone: ['', [Validators.required, Validators.maxLength(30)]]
+      phoneNumber: [
+        '',
+        [Validators.required, Validators.pattern(/^[0-9]{9,11}$/)],
+      ],
+      descriptionPhone: ['', [Validators.required, Validators.maxLength(30)]],
     });
     this.phones.push(telefonoForm);
   }
@@ -136,7 +182,7 @@ export class ReferenciaMedicoComponent implements OnInit, AfterViewInit {
       nroColegiatura: [''],
       centroEstudiosProfesion: [''],
       anioEgresoProfesion: [''],
-      profesionSolicitante: [false]
+      profesionSolicitante: [false],
     });
     this.profesionesRefMedico.push(profesionForm);
   }
@@ -148,7 +194,7 @@ export class ReferenciaMedicoComponent implements OnInit, AfterViewInit {
       especialidad: ['', [Validators.required]],
       centroEstudiosEspecialidad: [''],
       rne: ['', [Validators.required]],
-      anioEgresoEspecialidad: ['']
+      anioEgresoEspecialidad: [''],
     });
     this.especialidadesRefMedico.push(especialidadForm);
   }
@@ -169,13 +215,17 @@ export class ReferenciaMedicoComponent implements OnInit, AfterViewInit {
     this.dataSourceRefMedico.paginator = this.paginatorRefMedico;
   }
 
-  columnasTablaRefMedico: string[] = ['nro', 'codigo', 'nombreCompleto', 'nroDoc'];
+  columnasTablaRefMedico: string[] = [
+    'nro',
+    'codigo',
+    'nombreCompleto',
+    'nroDoc',
+  ];
   dataSourceRefMedico = new MatTableDataSource<IRefMedico>();
 
   cargarRefMedico(refMedico: IRefMedico): void {
-
     this.refMedicoSeleccionado = true;
-    
+
     this.myFormRefMedico.patchValue({
       codRefMedico: refMedico.codRefMedico,
       tipoDoc: refMedico.tipoDoc,
@@ -189,7 +239,7 @@ export class ReferenciaMedicoComponent implements OnInit, AfterViewInit {
       provinciaRefMedico: refMedico.provinciaRefMedico,
       distritoRefMedico: refMedico.distritoRefMedico,
       direcRefMedico: refMedico.direcRefMedico,
-      mailRefMedico: refMedico.mailRefMedico
+      mailRefMedico: refMedico.mailRefMedico,
     });
     this.phones.clear();
     refMedico.phones.forEach((phone: any) => {
@@ -199,24 +249,32 @@ export class ReferenciaMedicoComponent implements OnInit, AfterViewInit {
     this.profesionesRefMedico.clear();
     if (refMedico.profesionesRefMedico) {
       refMedico.profesionesRefMedico.forEach((profesion: any) => {
-        const esSolicitante = refMedico.profesionSolicitante?.profesion === profesion.profesion;
-        this.profesionesRefMedico.push(this.crearProfesionGroup(profesion, esSolicitante));
+        const esSolicitante =
+          refMedico.profesionSolicitante?.profesion === profesion.profesion;
+        this.profesionesRefMedico.push(
+          this.crearProfesionGroup(profesion, esSolicitante),
+        );
       });
     }
     this.especialidadesRefMedico.clear();
     if (refMedico.especialidadesRefMedico) {
       refMedico.especialidadesRefMedico.forEach((especialidad: any) => {
-        this.especialidadesRefMedico.push(this.crearEspecialidadGroup(especialidad));
+        this.especialidadesRefMedico.push(
+          this.crearEspecialidadGroup(especialidad),
+        );
       });
     }
   }
   private crearTelefonoGroup(phone: any): FormGroup {
     return this._fb.group({
       phoneNumber: [phone.phoneNumber],
-      descriptionPhone: [phone.descriptionPhone]
+      descriptionPhone: [phone.descriptionPhone],
     });
   }
-  private crearProfesionGroup(profesion: any, esSolicitante: boolean): FormGroup {
+  private crearProfesionGroup(
+    profesion: any,
+    esSolicitante: boolean,
+  ): FormGroup {
     return this._fb.group({
       nivelProfesion: [profesion.nivelProfesion],
       titulo: [profesion.titulo],
@@ -224,7 +282,7 @@ export class ReferenciaMedicoComponent implements OnInit, AfterViewInit {
       nroColegiatura: [profesion.nroColegiatura],
       centroEstudiosProfesion: [profesion.centroEstudiosProfesion],
       anioEgresoProfesion: [profesion.anioEgresoProfesion],
-      profesionSolicitante: [esSolicitante]
+      profesionSolicitante: [esSolicitante],
     });
   }
   private crearEspecialidadGroup(especialidad: any): FormGroup {
@@ -232,39 +290,21 @@ export class ReferenciaMedicoComponent implements OnInit, AfterViewInit {
       especialidad: [especialidad.especialidad],
       rne: [especialidad.rne],
       centroEstudiosEspecialidad: [especialidad.centroEstudiosEspecialidad],
-      anioEgresoEspecialidad: [especialidad.anioEgresoEspecialidad]
+      anioEgresoEspecialidad: [especialidad.anioEgresoEspecialidad],
     });
   }
   ultimosRefMedico(): void {
-    console.log("Cargando últimos referentes médicos");
-    this._refMedicoService.getLastRefMedicos(0).subscribe(refMedico => {
+    console.log('Cargando últimos referentes médicos');
+    this._refMedicoService.getLastRefMedicos(0).subscribe((refMedico) => {
       this.dataSourceRefMedico.data = refMedico;
     });
   }
   actualizarEdad() {
     const fecha = this.myFormRefMedico.get('fechaNacimiento')?.value;
-    const edadCalculada = this.calcularEdad(fecha);
+    const edadCalculada = this._fechaService.calcularEdad(fecha);
     this.myFormRefMedico.get('edad')?.setValue(edadCalculada);
   }
-  calcularEdad(fechaNacimiento: Date | string): string {
-    if (!fechaNacimiento) return '';
-    const birthDate = typeof fechaNacimiento === 'string' ? new Date(fechaNacimiento) : fechaNacimiento;
-    if (isNaN(birthDate.getTime())) return '';
-    const today = new Date();
-    let years = today.getFullYear() - birthDate.getFullYear();
-    let months = today.getMonth() - birthDate.getMonth();
-    if (months < 0) {
-      months += 12;
-      years--;
-    }
-    let days = today.getDate() - birthDate.getDate();
-    if (days < 0) {
-      months--;
-      const lastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
-      days += lastMonth.getDate();
-    }
-    return `${years} años, ${months} meses, y ${days} días`;
-  }
+
   terminoBusquedaRefMedicoControl = new FormControl('');
   filtrarRefMedico() {
     const termino = this.terminoBusquedaRefMedicoControl.value || '';
@@ -281,7 +321,9 @@ export class ReferenciaMedicoComponent implements OnInit, AfterViewInit {
         group.get('profesionSolicitante')?.setValue(i === index);
       });
       const { profesion, nroColegiatura } = grupo.value;
-      this.myFormRefMedico.get('profesionSolicitante')?.setValue({ profesion, nroColegiatura });
+      this.myFormRefMedico
+        .get('profesionSolicitante')
+        ?.setValue({ profesion, nroColegiatura });
     }
   }
   refMedicoSeleccionado = false;
@@ -316,9 +358,10 @@ export class ReferenciaMedicoComponent implements OnInit, AfterViewInit {
             }
           },
           error: (error) => {
-            const mensaje = error?.error?.msg || 'Error inesperado al registrar.';
+            const mensaje =
+              error?.error?.msg || 'Error inesperado al registrar.';
             this.mostrarAlertaError(mensaje);
-          }
+          },
         });
       }
     });
@@ -328,7 +371,7 @@ export class ReferenciaMedicoComponent implements OnInit, AfterViewInit {
       title: 'Confirmado',
       text: 'Referente ' + tipo + ' correctamente',
       icon: 'success',
-      confirmButtonText: 'Ok'
+      confirmButtonText: 'Ok',
     });
   }
   private mostrarAlertaError(mensaje: string): void {
@@ -358,22 +401,25 @@ export class ReferenciaMedicoComponent implements OnInit, AfterViewInit {
     }).then((result) => {
       if (result.isConfirmed) {
         const formValue = this.myFormRefMedico.value;
-        this._refMedicoService.actualizarRefMedico(formValue.codRefMedico, formValue).subscribe({
-          next: (res) => {
-            if (res.ok) {
-              this.mostrarAlertaExito('actualizado');
-              this.ultimosRefMedico();
-              this.nuevoRefMedico();
-            } else {
-              const mensaje = res.msg || 'Ocurrió un error inesperado.';
+        this._refMedicoService
+          .actualizarRefMedico(formValue.codRefMedico, formValue)
+          .subscribe({
+            next: (res) => {
+              if (res.ok) {
+                this.mostrarAlertaExito('actualizado');
+                this.ultimosRefMedico();
+                this.nuevoRefMedico();
+              } else {
+                const mensaje = res.msg || 'Ocurrió un error inesperado.';
+                this.mostrarAlertaError(mensaje);
+              }
+            },
+            error: (error) => {
+              const mensaje =
+                error?.error?.msg || 'Error inesperado al registrar.';
               this.mostrarAlertaError(mensaje);
-            }
-          },
-          error: (error) => {
-            const mensaje = error?.error?.msg || 'Error inesperado al registrar.';
-            this.mostrarAlertaError(mensaje);
-          }
-        });
+            },
+          });
       }
     });
   }
@@ -387,37 +433,8 @@ export class ReferenciaMedicoComponent implements OnInit, AfterViewInit {
       departamentoRefMedico: '15',
       provinciaRefMedico: '01',
       distritoRefMedico: '',
-      profesionSolicitante: { profesion: '', nroColegiatura: '' }
+      profesionSolicitante: { profesion: '', nroColegiatura: '' },
     });
     this.refMedicoSeleccionado = false;
   }
-}
-
-export function documentValidator(tipoDocControlName: string): ValidatorFn {
-  return (control: AbstractControl) => {
-    const parent = control.parent; // Accede al formulario completo
-    if (!parent) return null; // Verifica si existe un formulario padre
-
-    const tipoDoc = parent.get(tipoDocControlName)?.value; // Obtén el valor de tipoDoc
-    const nroDoc = control.value; // Obtén el valor del número de documento
-
-    if (tipoDoc === 'DNI') {
-      // DNI: exactamente 8 dígitos numéricos
-      if (!/^\d{8}$/.test(nroDoc)) {
-        return { invalidDNI: true };
-      }
-    } else if (tipoDoc === 'CE') {
-      // CE: máximo 13 caracteres alfanuméricos
-      if (!/^[a-zA-Z0-9]{1,13}$/.test(nroDoc)) {
-        return { invalidCE: true };
-      }
-    } else if (tipoDoc === 'PASAPORTE') {
-      // Pasaporte: máximo 16 caracteres alfanuméricos
-      if (!/^[a-zA-Z0-9]{1,16}$/.test(nroDoc)) {
-        return { invalidPasaporte: true };
-      }
-    }
-
-    return null; // Es válido
-  };
 }

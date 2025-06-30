@@ -6,9 +6,10 @@ export interface IPago {
   codPago: string;
   codCotizacion: string;
   estadoCotizacion: string;
+  fechaCotizacion: Date;
   version: string;
-  codCliente: string;
-  nomCliente: string;
+  hc: string;
+  nombreCompleto: string;
   tipoDoc: string;
   nroDoc: string;
   codSolicitante: string;

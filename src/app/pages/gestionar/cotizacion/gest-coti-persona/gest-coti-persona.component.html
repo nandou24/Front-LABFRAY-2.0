@@ -4,7 +4,7 @@
     <div class="contenedor-formulario">
       <div class="row-flex" style="align-items: center">
         <div
-          [style.flex]="setFlex(45, '%')"
+          [style.flex]="setFlex(39, '%')"
           class="flex-item quicksand-totales"
         >
           <h5 class="text-center mb-3" style="font-weight: 700">
@@ -12,21 +12,28 @@
           </h5>
         </div>
 
-        <div [style.flex]="setFlex(18, '%')" class="flex-item">
+        <div [style.flex]="setFlex(13, '%')" class="flex-item">
           <mat-form-field appearance="outline">
             <mat-label>N° Cotización</mat-label>
             <input matInput formControlName="codCotizacion" readonly />
           </mat-form-field>
         </div>
 
-        <div [style.flex]="setFlex(10, '%')" class="flex-item">
+        <div [style.flex]="setFlex(17, '%')" class="flex-item">
+          <mat-form-field appearance="outline">
+            <mat-label>Fecha</mat-label>
+            <input matInput formControlName="fechaModificacion" readonly />
+          </mat-form-field>
+        </div>
+
+        <div [style.flex]="setFlex(8, '%')" class="flex-item">
           <mat-form-field appearance="outline">
             <mat-label>Versión</mat-label>
             <input matInput formControlName="version" readonly />
           </mat-form-field>
         </div>
 
-        <div [style.flex]="setFlex(20, '%')" class="flex-item">
+        <div [style.flex]="setFlex(17, '%')" class="flex-item">
           <button
             mat-icon-button
             (click)="cambiarVersion(-1)"
@@ -80,7 +87,7 @@
           <div [style.flex]="setFlex(43, '%')" class="flex-item">
             <mat-form-field appearance="outline">
               <mat-label>Nombre de Cliente</mat-label>
-              <input matInput formControlName="nomCliente" />
+              <input matInput formControlName="nombreCompleto" />
             </mat-form-field>
           </div>
           <div [style.flex]="setFlex(16, '%')" class="flex-item">
@@ -494,7 +501,7 @@
               <td mat-cell *matCellDef="let cotizacion">
                 {{
                   cotizacion.historial[cotizacion.historial.length - 1]
-                    .nomCliente
+                    .nombreCompleto
                 }}
               </td>
             </ng-container>
