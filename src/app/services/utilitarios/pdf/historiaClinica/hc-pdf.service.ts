@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import jsPDF from 'jspdf';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { ISolicitudAtencion } from '../../../../models/solicitudAtencion.models';
+import { ISolicitudAtencion } from '../../../../models/Gestion/solicitudAtencion.models';
 
 @Injectable({
   providedIn: 'root',

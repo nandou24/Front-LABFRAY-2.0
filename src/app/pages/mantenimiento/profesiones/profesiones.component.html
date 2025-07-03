@@ -1,0 +1,242 @@
+<div class="contenedor-flex">
+  <div class="contenedor-formulario">
+    <h4 style="text-align: center" class="mb-3">
+      MANTENIMIENTO DE PROFESIONES
+    </h4>
+
+    <mat-card class="mb-3">
+      <mat-card-title> PROFESIONES</mat-card-title>
+
+      <mat-card-content>
+        <div [formGroup]="profesionesForm">
+          <div class="row-flex">
+            <div [style.flex]="setFlex(35, '%')" class="flex-item">
+              <mat-form-field appearance="outline">
+                <mat-label>Nombre Profesión</mat-label>
+                <input matInput formControlName="nombreProfesion" />
+              </mat-form-field>
+            </div>
+
+            <div [style.flex]="setFlex(20, '%')" class="flex-item mb-3">
+              <mat-slide-toggle formControlName="estadoProfesion">
+                <div>Estado</div>
+              </mat-slide-toggle>
+            </div>
+          </div>
+
+          <div class="row-flex mt-4">
+            <div [style.flex]="setFlex(20, '%')" class="flex-item mb-3">
+              <button mat-raised-button (click)="limpiarProfesion()">
+                NUEVO
+              </button>
+            </div>
+            <div
+              [style.flex]="setFlex(20, '%')"
+              class="flex-item mb-3"
+              *ngIf="!modoEdicion"
+            >
+              <button
+                mat-raised-button
+                *ngIf="!seSeleccionoCotizacion"
+                (click)="crearProfesion()"
+              >
+                CREAR PROFESIÓN
+              </button>
+            </div>
+
+            <div
+              [style.flex]="setFlex(20, '%')"
+              class="flex-item mb-3"
+              *ngIf="modoEdicion"
+            >
+              <button mat-raised-button (click)="actualizarProfesion()">
+                ACTUALIZAR PROFESIÓN
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <mat-table
+          [dataSource]="dataSourceProfesiones"
+          class="mat-elevation-z8"
+        >
+          <ng-container matColumnDef="codigoProfesion">
+            <mat-header-cell *matHeaderCellDef> Codigo </mat-header-cell>
+            <mat-cell *matCellDef="let profesion">
+              {{ profesion.codProfesion }}
+            </mat-cell>
+          </ng-container>
+
+          <ng-container matColumnDef="nombreProfesion">
+            <mat-header-cell *matHeaderCellDef>
+              Nombre Profesión
+            </mat-header-cell>
+            <mat-cell *matCellDef="let profesion">
+              {{ profesion.nombreProfesion }}
+            </mat-cell>
+          </ng-container>
+
+          <ng-container matColumnDef="activo">
+            <mat-header-cell *matHeaderCellDef> Estado </mat-header-cell>
+            <mat-cell *matCellDef="let profesion">
+              {{ profesion.estadoProfesion ? "Activo" : "Inactivo" }}
+            </mat-cell>
+          </ng-container>
+
+          <ng-container matColumnDef="fechaCreacion">
+            <mat-header-cell *matHeaderCellDef>
+              Fecha de creación
+            </mat-header-cell>
+            <mat-cell *matCellDef="let profesion">
+              {{ profesion.estadoProfesion ? "Activo" : "Inactivo" }}
+            </mat-cell>
+          </ng-container>
+
+          <ng-container matColumnDef="acciones">
+            <mat-header-cell *matHeaderCellDef> Acciones </mat-header-cell>
+            <mat-cell *matCellDef="let profesion">
+              <button
+                mat-icon-button
+                (click)="editarProfesion(profesion)"
+                aria-label="Editar"
+              >
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                (click)="eliminarProfesion(profesion)"
+                aria-label="Eliminar"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+            </mat-cell>
+          </ng-container>
+
+          <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+          <mat-row *matRowDef="let row; columns: displayedColumns"></mat-row>
+        </mat-table>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <div class="contenedor-tablaDerecha">
+    <h4 style="text-align: center" class="mb-3">
+      MANTENIMIENTO DE ESPECIALIDADES
+    </h4>
+
+    <mat-card class="mb-3">
+      <mat-card-title> ESPECIALIDADES</mat-card-title>
+
+      <mat-card-content>
+        <div [formGroup]="especialidadesForm">
+          <div class="row-flex">
+            <div [style.flex]="setFlex(35, '%')" class="flex-item">
+              <mat-form-field appearance="outline">
+                <mat-label>Profesión</mat-label>
+                <mat-select formControlName="codProfEspecialidad">
+                  <mat-option
+                    *ngFor="let profesion of profesionesDisponibles"
+                    [value]="profesion.codProfesion"
+                  >
+                    {{ profesion.codProfesion }} -
+                    {{ profesion.nombreProfesion }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+
+            <div [style.flex]="setFlex(40, '%')" class="flex-item">
+              <mat-form-field appearance="outline">
+                <mat-label>Nombre Especialidad</mat-label>
+                <input matInput formControlName="nombreEspecialidad" />
+              </mat-form-field>
+            </div>
+
+            <div [style.flex]="setFlex(20, '%')" class="flex-item mb-3">
+              <mat-slide-toggle formControlName="estadoEspecialidad">
+                <div>Estado</div>
+              </mat-slide-toggle>
+            </div>
+          </div>
+
+          <div class="row-flex mt-4">
+            <button mat-raised-button (click)="limpiarEspecialidad()">
+              NUEVO
+            </button>
+            <button
+              mat-raised-button
+              *ngIf="!seSeleccionoCotizacion"
+              (click)="crearEspecialidad()"
+            >
+              CREAR ESPECIALIDAD
+            </button>
+            <button mat-raised-button (click)="actualizarEspecialidad()">
+              ACTUALIZAR ESPECIALIDAD
+            </button>
+          </div>
+        </div>
+
+        <mat-table [dataSource]="dataSourceEspecialidades">
+          <ng-container matColumnDef="codigoEspecialidad">
+            <mat-header-cell *matHeaderCellDef> Código </mat-header-cell>
+            <mat-cell *matCellDef="let profesion">
+              {{ profesion.nombreProfesion }}
+            </mat-cell>
+          </ng-container>
+
+          <ng-container matColumnDef="nombreEspecialidad">
+            <mat-header-cell *matHeaderCellDef>
+              Nombre Especialidad
+            </mat-header-cell>
+            <mat-cell *matCellDef="let profesion">
+              {{ profesion.nombreProfesion }}
+            </mat-cell>
+          </ng-container>
+
+          <ng-container matColumnDef="activo">
+            <mat-header-cell *matHeaderCellDef> Estado </mat-header-cell>
+            <mat-cell *matCellDef="let profesion">
+              {{ profesion.estadoProfesion ? "Activo" : "Inactivo" }}
+            </mat-cell>
+          </ng-container>
+
+          <ng-container matColumnDef="fechaCreacion">
+            <mat-header-cell *matHeaderCellDef>
+              Fecha de creación
+            </mat-header-cell>
+            <mat-cell *matCellDef="let profesion">
+              {{ profesion.estadoProfesion ? "Activo" : "Inactivo" }}
+            </mat-cell>
+          </ng-container>
+
+          <ng-container matColumnDef="acciones">
+            <mat-header-cell *matHeaderCellDef> Acciones </mat-header-cell>
+            <mat-cell *matCellDef="let profesion">
+              <button
+                mat-icon-button
+                (click)="editarProfesion(profesion)"
+                aria-label="Editar"
+              >
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                (click)="eliminarProfesion(profesion)"
+                aria-label="Eliminar"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+            </mat-cell>
+          </ng-container>
+
+          <mat-header-row
+            *matHeaderRowDef="displayedColumnsEspecialidades"
+          ></mat-header-row>
+          <mat-row
+            *matRowDef="let row; columns: displayedColumnsEspecialidades"
+          ></mat-row>
+        </mat-table>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

@@ -369,21 +369,44 @@
                 </mat-error>
               </mat-form-field>
             </div>
+
+            <div [style.flex]="setFlex(30, '%')" class="flex-item mb-3">
+              <mat-slide-toggle
+                formControlName="atiendeConsultas"
+                color="primary"
+              >
+                Antiende Consultas
+              </mat-slide-toggle>
+            </div>
+
+            <div [style.flex]="setFlex(25, '%')" class="flex-item">
+              <button
+                mat-flat-button
+                color="primary"
+                class="btn-telefono"
+                type="button"
+                (click)="agregarProfesion()"
+              >
+                <mat-icon class="me-1">add</mat-icon>
+                Agregar Profesión
+              </button>
+            </div>
           </div>
 
           <fieldset class="campo-fieldset mt-2 mb-3">
             <legend>PROFESIONES</legend>
 
-            <div
-              formArrayName="profesionesRecurso"
-              *ngFor="
-                let profesionesGroup of profesionesRecurso.controls;
-                let i = index
-              "
-            >
-              <div [formGroupName]="i" class="flex-row-container">
+            <div formArrayName="profesionesRecurso">
+              <div
+                *ngFor="
+                  let profesion of profesionesRecurso.controls;
+                  let i = index
+                "
+                [formGroupName]="i"
+                class="flex-row-container"
+              >
                 <div class="row-flex mt-2">
-                  <div [style.flex]="setFlex(25, '%')" class="flex-item">
+                  <div [style.flex]="setFlex(20, '%')" class="flex-item">
                     <mat-form-field appearance="outline">
                       <mat-label>Nivel de Profesión</mat-label>
                       <mat-select formControlName="nivelProfesion">
@@ -394,9 +417,7 @@
                       </mat-select>
                       <mat-error
                         *ngIf="
-                          profesionesGroup
-                            .get('nivelProfesion')
-                            ?.hasError('required')
+                          profesion.get('nivelProfesion')?.hasError('required')
                         "
                       >
                         Obligatorio
@@ -404,7 +425,7 @@
                     </mat-form-field>
                   </div>
 
-                  <div [style.flex]="setFlex(25, '%')" class="flex-item">
+                  <div [style.flex]="setFlex(20, '%')" class="flex-item">
                     <mat-form-field appearance="outline">
                       <mat-label>Profesión</mat-label>
                       <mat-select formControlName="profesion">
@@ -426,18 +447,14 @@
                         >
                       </mat-select>
                       <mat-error
-                        *ngIf="
-                          profesionesGroup
-                            .get('profesion')
-                            ?.hasError('required')
-                        "
+                        *ngIf="profesion.get('profesion')?.hasError('required')"
                       >
                         Obligatorio
                       </mat-error>
                     </mat-form-field>
                   </div>
 
-                  <div [style.flex]="setFlex(45, '%')" class="flex-item">
+                  <div [style.flex]="setFlex(35, '%')" class="flex-item">
                     <mat-form-field appearance="outline">
                       <mat-label>Centro de Estudios</mat-label>
                       <input
@@ -446,49 +463,50 @@
                       />
                     </mat-form-field>
                   </div>
+
+                  <div [style.flex]="setFlex(15, '%')" class="flex-item">
+                    <mat-form-field appearance="outline">
+                      <mat-label>Año de Egreso</mat-label>
+                      <input matInput formControlName="anioEgresoProfesion" />
+                    </mat-form-field>
+                  </div>
                 </div>
 
                 <div class="row-flex">
                   <div
-                    [style.flex]="setFlex(15, '%')"
-                    class="flex-item mb-2 text-center"
+                    [style.flex]="setFlex(20, '%')"
+                    class="flex-item mb-2 text-center mb-3"
                   >
                     <mat-slide-toggle formControlName="titulo"
                       >Título</mat-slide-toggle
                     >
                   </div>
 
-                  <div [style.flex]="setFlex(25, '%')" class="flex-item">
+                  <div [style.flex]="setFlex(20, '%')" class="flex-item">
                     <mat-form-field appearance="outline">
                       <mat-label>Colegiatura</mat-label>
                       <input matInput formControlName="nroColegiatura" />
                     </mat-form-field>
                   </div>
 
-                  <div [style.flex]="setFlex(25, '%')" class="flex-item">
-                    <mat-form-field appearance="outline">
-                      <mat-label>Año de Egreso</mat-label>
-                      <input matInput formControlName="anioEgresoProfesion" />
-                    </mat-form-field>
-                  </div>
-
                   <div
-                    [style.flex]="setFlex(15, '%')"
-                    class="flex-item mb-2 text-center"
+                    [style.flex]="setFlex(20, '%')"
+                    class="flex-item mb-2 text-center mb-3"
                   >
-                    <mat-slide-toggle
+                    <button
+                      mat-flat-button
                       color="primary"
-                      [checked]="
-                        profesionesGroup.get('profesionSolicitante')?.value
-                      "
-                      (change)="seleccionarProfesionSolicitante(i)"
+                      class="btn-telefono"
+                      type="button"
+                      (click)="agregarEspecialidad(i)"
                     >
-                      Solicitante
-                    </mat-slide-toggle>
+                      <mat-icon class="me-1">add</mat-icon>
+                      Agregar Especialidad
+                    </button>
                   </div>
 
                   <div
-                    [style.flex]="setFlex(15, '%')"
+                    [style.flex]="setFlex(10, '%')"
                     class="flex-item mb-2 text-center"
                   >
                     <button
@@ -502,120 +520,99 @@
                     </button>
                   </div>
                 </div>
-              </div>
-            </div>
 
-            <div class="text-center mt-2">
-              <button
-                mat-flat-button
-                color="primary"
-                class="btn-telefono"
-                type="button"
-                (click)="agregarProfesion()"
-              >
-                <mat-icon class="me-1">add</mat-icon>
-                Agregar Profesión
-              </button>
-            </div>
-          </fieldset>
-
-          <fieldset class="campo-fieldset mt-2 mb-3">
-            <legend>ESPECIALIDADES</legend>
-
-            <div
-              formArrayName="especialidadesRecurso"
-              *ngFor="
-                let especialidadesGroup of especialidadesRecurso.controls;
-                let i = index
-              "
-            >
-              <div [formGroupName]="i" class="flex-row-container">
-                <div class="row-flex mt-2">
-                  <div [style.flex]="setFlex(30, '%')" class="flex-item">
-                    <mat-form-field appearance="outline">
-                      <mat-label>Especialdiad</mat-label>
-                      <mat-select formControlName="especialidad">
-                        <mat-option value="Pediatría">Pediatría</mat-option>
-                        <mat-option value="Radiólogía">Radiólogía</mat-option>
-                        <mat-option value="Ginecología y Obstetricia"
-                          >Ginecología y Obstetricia</mat-option
-                        >
-                      </mat-select>
-                      <mat-error
-                        *ngIf="
-                          especialidadesGroup
-                            .get('especialidad')
-                            ?.hasError('required')
-                        "
-                      >
-                        Obligatorio
-                      </mat-error>
-                    </mat-form-field>
-                  </div>
-
-                  <div [style.flex]="setFlex(30, '%')" class="flex-item">
-                    <mat-form-field appearance="outline">
-                      <mat-label>Centro de Estudios</mat-label>
-                      <input
-                        matInput
-                        formControlName="centroEstudiosEspecialidad"
-                      />
-                    </mat-form-field>
-                  </div>
-
-                  <div [style.flex]="setFlex(15, '%')" class="flex-item">
-                    <mat-form-field appearance="outline">
-                      <mat-label>RNE</mat-label>
-                      <input matInput formControlName="rne" />
-                      <mat-error
-                        *ngIf="
-                          especialidadesGroup.get('rne')?.hasError('required')
-                        "
-                      >
-                        Obligatorio
-                      </mat-error>
-                    </mat-form-field>
-                  </div>
-
-                  <div [style.flex]="setFlex(15, '%')" class="flex-item">
-                    <mat-form-field appearance="outline">
-                      <mat-label>Año de Egreso</mat-label>
-                      <input
-                        matInput
-                        formControlName="anioEgresoEspecialidad"
-                      />
-                    </mat-form-field>
-                  </div>
-
+                <div formArrayName="especialidades">
                   <div
-                    [style.flex]="setFlex(5, '%')"
-                    class="flex-item align-items-center"
+                    *ngFor="
+                      let especialidad of especialidades(i).controls;
+                      let j = index
+                    "
+                    [formGroupName]="j"
+                    class="flex-row-container"
                   >
-                    <button
-                      mat-icon-button
-                      class="mb-3"
-                      color="warn"
-                      type="button"
-                      (click)="eliminarEspecialidad(i)"
-                    >
-                      <mat-icon>delete</mat-icon>
-                    </button>
+                    <fieldset class="campo-fieldset mt-2 mb-3">
+                      <legend>ESPECIALIDADES</legend>
+
+                      <div class="row-flex mt-2">
+                        <div [style.flex]="setFlex(30, '%')" class="flex-item">
+                          <mat-form-field appearance="outline">
+                            <mat-label>Especialdiad</mat-label>
+                            <mat-select formControlName="nombreEspecialidad">
+                              <mat-option value="Pediatría"
+                                >Pediatría</mat-option
+                              >
+                              <mat-option value="Radiólogía"
+                                >Radiólogía</mat-option
+                              >
+                              <mat-option value="Ginecología y Obstetricia"
+                                >Ginecología y Obstetricia</mat-option
+                              >
+                            </mat-select>
+                            <mat-error
+                              *ngIf="
+                                especialidad
+                                  .get('especialidad')
+                                  ?.hasError('required')
+                              "
+                            >
+                              Obligatorio
+                            </mat-error>
+                          </mat-form-field>
+                        </div>
+
+                        <div [style.flex]="setFlex(15, '%')" class="flex-item">
+                          <mat-form-field appearance="outline">
+                            <mat-label>RNE</mat-label>
+                            <input matInput formControlName="rne" />
+                            <mat-error
+                              *ngIf="
+                                especialidad.get('rne')?.hasError('required')
+                              "
+                            >
+                              Obligatorio
+                            </mat-error>
+                          </mat-form-field>
+                        </div>
+
+                        <div [style.flex]="setFlex(30, '%')" class="flex-item">
+                          <mat-form-field appearance="outline">
+                            <mat-label>Centro de Estudios</mat-label>
+                            <input
+                              matInput
+                              formControlName="centroEstudiosEspecialidad"
+                            />
+                          </mat-form-field>
+                        </div>
+
+                        <div [style.flex]="setFlex(15, '%')" class="flex-item">
+                          <mat-form-field appearance="outline">
+                            <mat-label>Año de Egreso</mat-label>
+                            <input
+                              matInput
+                              formControlName="anioEgresoEspecialidad"
+                            />
+                          </mat-form-field>
+                        </div>
+
+                        <div
+                          [style.flex]="setFlex(5, '%')"
+                          class="flex-item align-items-center"
+                        >
+                          <button
+                            mat-icon-button
+                            class="mb-3"
+                            color="warn"
+                            type="button"
+                            (click)="eliminarEspecialidad(i, j)"
+                          >
+                            <mat-icon>delete</mat-icon>
+                          </button>
+                        </div>
+                      </div>
+                    </fieldset>
                   </div>
                 </div>
               </div>
-            </div>
-
-            <div class="text-center mt-2">
-              <button
-                mat-flat-button
-                color="primary"
-                class="btn-telefono"
-                type="button"
-                (click)="agregarEspecialidad()"
-              >
-                <mat-icon class="me-1">add</mat-icon>
-                Agregar Especialidad
-              </button>
             </div>
           </fieldset>
         </mat-tab>

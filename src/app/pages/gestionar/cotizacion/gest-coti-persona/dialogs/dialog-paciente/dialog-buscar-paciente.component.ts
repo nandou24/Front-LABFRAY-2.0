@@ -14,7 +14,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { FormsModule, ReactiveFormsModule, FormControl } from '@angular/forms';
-import { IPaciente } from '../../../../../../models/paciente.models';
+import { IPaciente } from '../../../../../../models/Mantenimiento/paciente.models';
 
 @Component({
   selector: 'app-dialog-buscar-paciente',

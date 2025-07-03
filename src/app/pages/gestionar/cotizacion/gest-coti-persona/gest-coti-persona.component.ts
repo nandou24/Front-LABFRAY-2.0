@@ -14,7 +14,7 @@ import {
 } from '@angular/forms';
 import { ServiciosService } from '../../../../services/mantenimiento/servicios/servicios.service';
 import { CotizacionPersonalService } from '../../../../services/gestion/cotizaciones/cotizacion-personal.service';
-import { IServicio } from '../../../../models/servicios.models';
+import { IServicio } from '../../../../models/Mantenimiento/servicios.models';
 import Swal from 'sweetalert2';
 import { CommonModule, formatDate } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -35,9 +35,11 @@ import { DialogBuscarSolicitanteComponent } from './dialogs/dialog-solicitante/d
 import {
   ICotizacion,
   IHistorialCotizacion,
-} from '../../../../models/cotizacionPersona.models';
+} from '../../../../models/Gestion/cotizacionPersona.models';
 import { CotiPersonaPdfServiceService } from '../../../../services/utilitarios/pdf/cotizacion/coti-persona-pdf.service.service';
 import { DialogPdfCotiPersonaComponent } from './dialogs/dialog-pdf/dialog-pdf-coti-persona/dialog-pdf-coti-persona.component';
+import { IPersonalSaludParaConsultas } from '../../../../models/Mantenimiento/recursoHumano.models';
+import { DialogMedicoComponent } from './dialogs/dialog-medico/dialog-medico.component';
 
 @Component({
   selector: 'app-gest-coti-persona',
@@ -116,11 +118,14 @@ export class GestCotiPersonaComponent implements OnInit {
     return `0 0 ${valor}${unidad}`;
   }
 
+  asignarDatosMedico(index: number): void {}
+
   columnasTablaServiciosCotizados: string[] = [
     'accion',
     'codigo',
     'tipo',
     'nombre',
+    'medicoAtiende',
     'cantidad',
     'precioLista',
     'diferencia',
@@ -366,6 +371,7 @@ export class GestCotiPersonaComponent implements OnInit {
       codServicio: [servicio.codServicio, Validators.required],
       tipoServicio: [servicio.tipoServicio, Validators.required],
       nombreServicio: [servicio.nombreServicio, Validators.required],
+      medicoAtiende: [''],
       cantidad: [1, [Validators.required, Validators.min(1)]],
       precioLista: [
         servicio.precioServicio,
@@ -952,6 +958,15 @@ export class GestCotiPersonaComponent implements OnInit {
       this.myFormCotizacion.get('aplicarDescuentoPorcentGlobal')?.disable();
       this.myFormCotizacion.get('estadoRegistroPaciente')?.disable();
       this.myFormCotizacion.get('estadoRegistroSolicitante')?.disable();
+      this.myFormCotizacion.get('nombreCompleto')?.disable();
+      this.myFormCotizacion.get('tipoDoc')?.disable();
+      this.myFormCotizacion.get('nroDoc')?.disable();
+      this.myFormCotizacion.get('codSolicitante')?.disable();
+      this.myFormCotizacion.get('nomSolicitante')?.disable();
+      this.myFormCotizacion.get('profesionSolicitante')?.disable();
+      this.myFormCotizacion.get('colegiatura')?.disable();
+      this.myFormCotizacion.get('especialidadSolicitante')?.disable();
+
       document
         .getElementById('buscarPacienteModalBtn')
         ?.setAttribute('disabled', 'true');
@@ -994,30 +1009,60 @@ export class GestCotiPersonaComponent implements OnInit {
       this.dataSourceServiciosCotizados.data = this.serviciosCotizacion
         .controls as FormGroup[];
     } else {
-      if (
-        this.myFormCotizacion.get('estadoRegistroPaciente')?.value === false
-      ) {
-        this.myFormCotizacion.get('nombreCompleto')?.enable();
-        this.myFormCotizacion.get('tipoDoc')?.enable();
-        this.myFormCotizacion.get('nroDoc')?.enable();
-      } else {
+      this.myFormCotizacion.get('estadoRegistroPaciente')?.enable();
+      this.myFormCotizacion.get('estadoRegistroSolicitante')?.enable();
+      //campos cliente
+      if (this.myFormCotizacion.get('estadoRegistroPaciente')?.value === true) {
+        document
+          .getElementById('buscarPacienteModalBtn')
+          ?.removeAttribute('disabled');
         this.myFormCotizacion.get('nombreCompleto')?.disable();
         this.myFormCotizacion.get('tipoDoc')?.disable();
         this.myFormCotizacion.get('nroDoc')?.disable();
+      } else {
+        document
+          .getElementById('buscarPacienteModalBtn')
+          ?.setAttribute('disabled', 'true');
+        this.myFormCotizacion.get('nombreCompleto')?.enable();
+        this.myFormCotizacion.get('tipoDoc')?.enable();
+        this.myFormCotizacion.get('nroDoc')?.enable();
+      }
+
+      //campos solicitante
+      if (
+        this.myFormCotizacion.get('estadoRegistroSolicitante')?.value === true
+      ) {
+        document
+          .getElementById('buscarSolicitanteModalBtn')
+          ?.removeAttribute('disabled');
+        this.myFormCotizacion.get('codSolicitante')?.disable();
+        this.myFormCotizacion.get('nomSolicitante')?.disable();
+        this.myFormCotizacion.get('profesionSolicitante')?.disable();
+        this.myFormCotizacion.get('colegiatura')?.disable();
+        this.myFormCotizacion.get('especialidadSolicitante')?.disable();
+      } else {
+        document
+          .getElementById('buscarSolicitanteModalBtn')
+          ?.setAttribute('disabled', 'true');
+        this.myFormCotizacion.get('codSolicitante')?.enable();
+        this.myFormCotizacion.get('nomSolicitante')?.enable();
+        this.myFormCotizacion.get('profesionSolicitante')?.enable();
+        this.myFormCotizacion.get('colegiatura')?.enable();
+        this.myFormCotizacion.get('especialidadSolicitante')?.enable();
       }
 
       this.myFormCotizacion.get('aplicarPrecioGlobal')?.enable();
       this.myFormCotizacion.get('aplicarDescuentoPorcentGlobal')?.enable();
-      this.myFormCotizacion.get('estadoRegistroPaciente')?.enable();
-      this.myFormCotizacion.get('estadoRegistroSolicitante')?.enable();
+      // this.myFormCotizacion.get('estadoRegistroPaciente')?.enable();
+      // this.myFormCotizacion.get('estadoRegistroSolicitante')?.enable();
 
       // Habilitar los botones de búsqueda
-      document
-        .getElementById('buscarPacienteModalBtn')
-        ?.removeAttribute('disabled');
-      document
-        .getElementById('buscarSolicitanteModalBtn')
-        ?.removeAttribute('disabled');
+      // document
+      //   .getElementById('buscarPacienteModalBtn')
+      //   ?.removeAttribute('disabled');
+      // document
+      //   .getElementById('buscarSolicitanteModalBtn')
+      //   ?.removeAttribute('disabled');
 
       // 📌 Cargar servicios
       this.serviciosCotizacion.clear(); // Limpiar antes de cargar
@@ -1103,5 +1148,33 @@ export class GestCotiPersonaComponent implements OnInit {
         panelClass: 'custom-dialog-container',
       });
     }
+  }
+
+  listaMedicos: IPersonalSaludParaConsultas[] = [];
+
+  abrirDialogoMedico(index: any): void {
+    const servicio = this.serviciosCotizacion.at(index);
+    const medicoActual = servicio.get('medicoId')?.value || null;
+
+    const dialogRef = this.dialog.open(DialogMedicoComponent, {
+      width: '400px',
+      data: {
+        medicos: this.listaMedicos,
+        medicoActual: medicoActual,
+      },
+    });
+
+    dialogRef
+      .afterClosed()
+      .subscribe((medico: IPersonalSaludParaConsultas | undefined) => {
+        if (medico) {
+          servicio.get('medicoId')?.setValue(medico._id);
+          servicio.get('medicoAtiende')?.setValue({
+            codRecHumano: medico.codRecHumano,
+            _id: medico._id,
+            nombreCompletoPersonal: medico.nombreCompletoPersonal,
+          });
+        }
+      });
   }
 }

@@ -5,7 +5,7 @@ import {
   ISolicitudAtencion,
   ISolicitudAtencionPostDTO,
   ISolicitudAtencionPostResponse,
-} from '../../../models/solicitudAtencion.models';
+} from '../../../models/Gestion/solicitudAtencion.models';
 import { environment } from '../../../../environments/enviroment';
 
 @Injectable({

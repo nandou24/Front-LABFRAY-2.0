@@ -22,8 +22,8 @@ import { CotizacionPersonalService } from '../../../../services/gestion/cotizaci
 import {
   ICotizacion,
   IHistorialCotizacion,
-} from '../../../../models/cotizacionPersona.models';
-import { IDetallePago, IPago } from '../../../../models/pagos.models';
+} from '../../../../models/Gestion/cotizacionPersona.models';
+import { IDetallePago, IPago } from '../../../../models/Gestion/pagos.models';
 import { PagosCotizacionPersonalService } from '../../../../services/gestion/pagos/pagos-cotizacion-personal.service';
 import Swal from 'sweetalert2';
 import { DialogRegistroPacienteComponent } from './dialogs/dialog-registro-paciente/dialog-registro-paciente.component';

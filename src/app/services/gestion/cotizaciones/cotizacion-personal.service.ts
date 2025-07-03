@@ -6,7 +6,7 @@ import {
   ICotizacion,
   ICotizacionPostDTO,
   IGetLastCotizacion,
-} from '../../../models/cotizacionPersona.models';
+} from '../../../models/Gestion/cotizacionPersona.models';
 
 @Injectable({
   providedIn: 'root',

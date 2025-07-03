@@ -1,5 +1,20 @@
-import { Component, inject, ViewChild, AfterViewInit, OnInit } from '@angular/core';
-import { AbstractControl, FormArray, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  Component,
+  inject,
+  ViewChild,
+  AfterViewInit,
+  OnInit,
+} from '@angular/core';
+import {
+  AbstractControl,
+  FormArray,
+  FormBuilder,
+  FormControl,
+  FormGroup,
+  FormsModule,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { ServiciosService } from '../../../services/mantenimiento/servicios/servicios.service';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -8,62 +23,57 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatIconModule } from '@angular/material/icon';
-import { MatTable, MatTableDataSource, MatTableModule } from '@angular/material/table';
+import {
+  MatTable,
+  MatTableDataSource,
+  MatTableModule,
+} from '@angular/material/table';
 import { CommonModule } from '@angular/common';
-import { IServicio } from '../../../models/servicios.models';
+import { IServicio } from '../../../models/Mantenimiento/servicios.models';
 import { catchError, distinctUntilChanged, of } from 'rxjs';
 import { MatPaginator, MatPaginatorIntl } from '@angular/material/paginator';
-import { customPaginatorIntl } from '../../../services/utilitarios/mat-paginator-intl' // actualiza la ruta
+import { customPaginatorIntl } from '../../../services/utilitarios/mat-paginator-intl'; // actualiza la ruta
 import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-mant-servicio',
   imports: [
-            MatFormFieldModule,
-            MatInputModule,
-            FormsModule,
-            MatCardModule,
-            MatSelectModule,
-            ReactiveFormsModule,
-            MatButtonModule,
-            MatSlideToggleModule,
-            MatIconModule,
-            MatTableModule,
-            MatPaginator,
-            CommonModule
-          ],
-  providers: [
-            { provide: MatPaginatorIntl,
-              useFactory: customPaginatorIntl }
-          ],
+    MatFormFieldModule,
+    MatInputModule,
+    FormsModule,
+    MatCardModule,
+    MatSelectModule,
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatSlideToggleModule,
+    MatIconModule,
+    MatTableModule,
+    MatPaginator,
+    CommonModule,
+  ],
+  providers: [{ provide: MatPaginatorIntl, useFactory: customPaginatorIntl }],
   templateUrl: './mant-servicio.component.html',
-  styleUrl: './mant-servicio.component.scss'
+  styleUrl: './mant-servicio.component.scss',
 })
 export class MantServicioComponent implements OnInit, AfterViewInit {
-
-  constructor(
-    private _servicioService: ServiciosService
-  ) { }
+  constructor(private _servicioService: ServiciosService) {}
 
   ngOnInit(): void {
-    this.escucharCambioTipo(),
-    this.inicializarBusquedaServicios();
-    this.traerServicios()
+    this.escucharCambioTipo(), this.inicializarBusquedaServicios();
+    this.traerServicios();
   }
 
   private _fb = inject(FormBuilder);
 
-  public myFormServicio:FormGroup  = this._fb.group({
-
-    codServicio:'',
-    tipoServicio:['',[Validators.required]],
-    nombreServicio: ['',[Validators.required]],
+  public myFormServicio: FormGroup = this._fb.group({
+    codServicio: '',
+    tipoServicio: ['', [Validators.required]],
+    nombreServicio: ['', [Validators.required]],
     descripcionServicio: [''],
-    precioServicio: ['',[Validators.required]],
+    precioServicio: ['', [Validators.required]],
     estadoServicio: [true],
     favoritoServicio: [false],
-    examenesServicio: this._fb.array([])
-
+    examenesServicio: this._fb.array([]),
   });
 
   get examenesServicio(): FormArray {
@@ -81,7 +91,7 @@ export class MantServicioComponent implements OnInit, AfterViewInit {
 
   setFlex(valor: number, unidad: 'px' | '%' = 'px'): string {
     return `0 0 ${valor}${unidad}`;
-  }  
+  }
 
   //Tabla items disponibles
   columnasDisponibles: string[] = ['codigo', 'nombre', 'accion'];
@@ -98,8 +108,8 @@ export class MantServicioComponent implements OnInit, AfterViewInit {
   tipoServicioTabla = new FormControl('');
   todosLosExamenes: any[] = [];
 
-  escucharCambioTipo(){
-    this.tipoServicioTabla.valueChanges.subscribe(tipo => {
+  escucharCambioTipo() {
+    this.tipoServicioTabla.valueChanges.subscribe((tipo) => {
       if (tipo) {
         this.obtenerExamenesPorTipo(tipo);
       } else {
@@ -114,21 +124,30 @@ export class MantServicioComponent implements OnInit, AfterViewInit {
   }
 
   obtenerExamenesPorTipo(tipo: string) {
-
-    this._servicioService.getExamenesPorTipo(tipo).pipe(
-      catchError((error) => {
-        this.dataSourceExamenesDisponibles.data = [];
-        console.error('Error al obtener exámenes por tipo:', error);
-        return of({ ok: false, examenes: [] }); // devuelve array vacío para que igual entre en next
-      })
-    ).subscribe((res: any) => {
-      const examenes = res.examenes.map((examen: any) => ({
-        codExamen: examen.codPruebaLab || examen.codEcografia || examen.codConsulta || examen.codProcedimiento,
-        nombreExamen: examen.nombrePruebaLab || examen.nombreEcografia || examen.nombreConsulta || examen.nombreProcedimiento,
-      }));
-      this.dataSourceExamenesDisponibles.data = examenes;
-    });
-
+    this._servicioService
+      .getExamenesPorTipo(tipo)
+      .pipe(
+        catchError((error) => {
+          this.dataSourceExamenesDisponibles.data = [];
+          console.error('Error al obtener exámenes por tipo:', error);
+          return of({ ok: false, examenes: [] }); // devuelve array vacío para que igual entre en next
+        }),
+      )
+      .subscribe((res: any) => {
+        const examenes = res.examenes.map((examen: any) => ({
+          codExamen:
+            examen.codPruebaLab ||
+            examen.codEcografia ||
+            examen.codConsulta ||
+            examen.codProcedimiento,
+          nombreExamen:
+            examen.nombrePruebaLab ||
+            examen.nombreEcografia ||
+            examen.nombreConsulta ||
+            examen.nombreProcedimiento,
+        }));
+        this.dataSourceExamenesDisponibles.data = examenes;
+      });
   }
 
   terminoBusquedaExamenesControl = new FormControl('');
@@ -136,7 +155,6 @@ export class MantServicioComponent implements OnInit, AfterViewInit {
   filtrarExamenes() {
     const termino = this.terminoBusquedaExamenesControl.value || '';
     this.dataSourceExamenesDisponibles.filter = termino.trim().toLowerCase();
-
   }
 
   terminoBusquedaExamenes: any;
@@ -145,30 +163,29 @@ export class MantServicioComponent implements OnInit, AfterViewInit {
     this.terminoBusquedaExamenesControl.valueChanges
       .pipe(
         //debounceTime(300), // ⏱️ Espera 300 ms después del último cambio
-        distinctUntilChanged() // 🔄 Solo si el valor cambió
+        distinctUntilChanged(), // 🔄 Solo si el valor cambió
       )
       .subscribe((valor: string | null) => {
         this.terminoBusquedaExamenes = valor;
-        this.filtrarExamenes()
+        this.filtrarExamenes();
       });
   }
 
-  agregarExamen(examen: any){
-
+  agregarExamen(examen: any) {
     const existe = this.examenesServicio.controls.some(
-      (control) => control.value.codExamen === examen.codExamen
+      (control) => control.value.codExamen === examen.codExamen,
     );
 
     if (existe) {
-      console.log('Servicio ya está agregado')
+      console.log('Servicio ya está agregado');
       return;
     }
 
     this.examenesServicio.push(this.crearExamenFormGroup(examen));
-    this.dataSourceExamenesSeleccionados.data = this.examenesServicio.controls.map(
-      (control: AbstractControl) => control.value
-    );
-
+    this.dataSourceExamenesSeleccionados.data =
+      this.examenesServicio.controls.map(
+        (control: AbstractControl) => control.value,
+      );
   }
 
   private crearExamenFormGroup(examen: any): FormGroup {
@@ -179,10 +196,10 @@ export class MantServicioComponent implements OnInit, AfterViewInit {
     });
   }
 
-  removerExamen(examen: any){
+  removerExamen(examen: any) {
     // Buscar el índice del item en el FormArray
     const index = this.examenesServicio.controls.findIndex(
-      (control) => control.value.codItemLab === examen.codItemLab
+      (control) => control.value.codItemLab === examen.codItemLab,
     );
 
     // Si se encuentra el índice, eliminarlo
@@ -190,36 +207,34 @@ export class MantServicioComponent implements OnInit, AfterViewInit {
       this.examenesServicio.removeAt(index);
 
       // Actualizar el dataSource con los nuevos valores
-      this.dataSourceExamenesSeleccionados.data = this.examenesServicio.controls.map(
-        (control: AbstractControl) => control.value
-      );
+      this.dataSourceExamenesSeleccionados.data =
+        this.examenesServicio.controls.map(
+          (control: AbstractControl) => control.value,
+        );
     }
-  
   }
 
-  nuevoServicio(){
+  nuevoServicio() {
     this.myFormServicio.reset(); // Reinicia todos los campos del formulario
     this.formSubmitted = false; // Restablece el estado de validación del formulario
-    this.terminoBusquedaServicioControl.reset()
-    this.terminoBusquedaExamenesControl.reset()
-    this.tipoServicioTabla.reset()
-    this.dataSourceServicios.filter = ''; 
+    this.terminoBusquedaServicioControl.reset();
+    this.terminoBusquedaExamenesControl.reset();
+    this.tipoServicioTabla.reset();
+    this.dataSourceServicios.filter = '';
     this.examenesServicio.clear();
     this.dataSourceExamenesSeleccionados.data = [];
     this.dataSourceExamenesDisponibles.data = [];
     this.myFormServicio.get('tipoServicio')?.enable();
-    this.pruebaSeleccionada = false
+    this.pruebaSeleccionada = false;
   }
 
   formSubmitted = false;
   isLoading = false;
 
-  registraServicio(){
-
-    if(this.myFormServicio.invalid){
-
+  registraServicio() {
+    if (this.myFormServicio.invalid) {
       this.myFormServicio.markAllAsTouched();
-      return
+      return;
     }
 
     this.formSubmitted = true;
@@ -232,20 +247,18 @@ export class MantServicioComponent implements OnInit, AfterViewInit {
       confirmButtonText: 'Sí, confirmar',
       cancelButtonText: 'Cancelar',
     }).then((result) => {
-        
       if (result.isConfirmed) {
-
-        console.log('Procede registro')
-        const formValue  = this.myFormServicio.value;
+        console.log('Procede registro');
+        const formValue = this.myFormServicio.value;
 
         const servicio: IServicio = {
-          ...formValue
-        }
-                            
+          ...formValue,
+        };
+
         this._servicioService.registrarServicio(servicio).subscribe({
           next: (res) => {
             if (res.ok) {
-              this.mostrarAlertaExito("registrado");
+              this.mostrarAlertaExito('registrado');
               this.traerServicios();
               this.nuevoServicio();
             } else {
@@ -254,25 +267,24 @@ export class MantServicioComponent implements OnInit, AfterViewInit {
             }
           },
           error: (error) => {
-            const mensaje = error?.error?.msg || 'Error inesperado al registrar.';
+            const mensaje =
+              error?.error?.msg || 'Error inesperado al registrar.';
             this.mostrarAlertaError(mensaje);
-          }
-
+          },
         });
       }
-    })
-
+    });
   }
 
   private mostrarAlertaExito(tipo: string): void {
     Swal.fire({
       title: 'Confirmado',
-      text: 'Servicio '+tipo+' correctamente',
+      text: 'Servicio ' + tipo + ' correctamente',
       icon: 'success',
-      confirmButtonText: 'Ok'
+      confirmButtonText: 'Ok',
     });
   }
-  
+
   private mostrarAlertaError(mensaje: string): void {
     Swal.fire({
       title: 'ERROR!',
@@ -282,12 +294,10 @@ export class MantServicioComponent implements OnInit, AfterViewInit {
     });
   }
 
-  actualizarServicio(){
-
-    if(this.myFormServicio.invalid){
-
+  actualizarServicio() {
+    if (this.myFormServicio.invalid) {
       this.myFormServicio.markAllAsTouched();
-      return
+      return;
     }
 
     this.formSubmitted = true;
@@ -300,35 +310,34 @@ export class MantServicioComponent implements OnInit, AfterViewInit {
       confirmButtonText: 'Sí, confirmar',
       cancelButtonText: 'Cancelar',
     }).then((result) => {
-    
-    if (result.isConfirmed) {
-    
-      console.log('Procede actualización')
-      const formValue  = this.myFormServicio.value;
+      if (result.isConfirmed) {
+        console.log('Procede actualización');
+        const formValue = this.myFormServicio.value;
 
-      this._servicioService.actualizarServicio(formValue.codServicio,formValue).subscribe({
-        next: (res) => {
-          if (res.ok) {
-            this.mostrarAlertaExito("actualizado");
-            this.traerServicios();
-            this.nuevoServicio();
-          } else {
-            const mensaje = res.msg || 'Ocurrió un error inesperado.';
-            this.mostrarAlertaError(mensaje);
-          }
-        },
-        error: (error) => {
-          const mensaje = error?.error?.msg || 'Error inesperado al registrar.';
-          this.mostrarAlertaError(mensaje);
-        }
-      });
-
-    }})
-
+        this._servicioService
+          .actualizarServicio(formValue.codServicio, formValue)
+          .subscribe({
+            next: (res) => {
+              if (res.ok) {
+                this.mostrarAlertaExito('actualizado');
+                this.traerServicios();
+                this.nuevoServicio();
+              } else {
+                const mensaje = res.msg || 'Ocurrió un error inesperado.';
+                this.mostrarAlertaError(mensaje);
+              }
+            },
+            error: (error) => {
+              const mensaje =
+                error?.error?.msg || 'Error inesperado al registrar.';
+              this.mostrarAlertaError(mensaje);
+            },
+          });
+      }
+    });
   }
 
-  traerServicios(){
-
+  traerServicios() {
     this._servicioService.getAllServicios().subscribe({
       next: (res: IServicio[]) => {
         this.dataSourceServicios.data = res;
@@ -337,7 +346,6 @@ export class MantServicioComponent implements OnInit, AfterViewInit {
         console.error('Error al obtener los servicios:', err);
       },
     });
-
   }
 
   terminoBusquedaServicioControl = new FormControl('');
@@ -346,8 +354,8 @@ export class MantServicioComponent implements OnInit, AfterViewInit {
   // buscarServicio(){
 
   //   const termino = this.terminoBusquedaServicio?.trim() ?? '';
-    
-  //   if (termino.length >= 3) { 
+
+  //   if (termino.length >= 3) {
   //     this._servicioService.getServicio(this.terminoBusquedaServicio).subscribe((res: IServicio[]) => {
   //       this.dataSourceServicios.data = res;
   //     });
@@ -366,10 +374,9 @@ export class MantServicioComponent implements OnInit, AfterViewInit {
 
   pruebaSeleccionada = false;
 
-  cargarServicio(servicio: IServicio){
+  cargarServicio(servicio: IServicio) {
+    this.pruebaSeleccionada = true;
 
-    this.pruebaSeleccionada = true
-  
     this.myFormServicio.get('tipoServicio')?.disable();
 
     this.myFormServicio.patchValue({
@@ -379,9 +386,9 @@ export class MantServicioComponent implements OnInit, AfterViewInit {
       descripcionServicio: servicio.descripcionServicio,
       precioServicio: servicio.precioServicio,
       estadoServicio: servicio.estadoServicio,
-      favoritoServicio: servicio.favoritoServicio
+      favoritoServicio: servicio.favoritoServicio,
     });
-  
+
     this.examenesServicio.clear();
 
     // Agregar cada teléfono al FormArray
@@ -389,10 +396,9 @@ export class MantServicioComponent implements OnInit, AfterViewInit {
       this.examenesServicio.push(this.crearExamenFormGroup(servicio));
     });
 
-    this.dataSourceExamenesSeleccionados.data = this.examenesServicio.controls.map(
-      (control: AbstractControl) => control.value
-    );
-
+    this.dataSourceExamenesSeleccionados.data =
+      this.examenesServicio.controls.map(
+        (control: AbstractControl) => control.value,
+      );
   }
-
 }

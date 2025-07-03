@@ -3,24 +3,26 @@ import { Injectable } from '@angular/core';
 
 import { catchError, map, Observable, of } from 'rxjs';
 import Swal from 'sweetalert2';
-import { IGetLastPruebasLab, IPruebaLab, IPruebaLabPostDTO } from '../../../models/pruebaLab.models';
+import {
+  IGetLastPruebasLab,
+  IPruebaLab,
+  IPruebaLabPostDTO,
+} from '../../../models/Mantenimiento/pruebaLab.models';
 import { environment } from '../../../../environments/enviroment';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class PruebaLabService {
+  constructor(private _http: HttpClient) {}
 
-  constructor(
-    private _http: HttpClient
-  ) { }
+  public registrarPruebaLab(body: IPruebaLab) {
+    console.log('Enviando valores desde servicio');
 
-  public registrarPruebaLab(body: IPruebaLab){
-    console.log("Enviando valores desde servicio")
-    
     return this._http
       .post<IPruebaLabPostDTO>(
-        `${environment.baseUrl}/api/pruebaLab/newPruebaLab`,body
+        `${environment.baseUrl}/api/pruebaLab/newPruebaLab`,
+        body,
       )
       .pipe(
         map((data) => {
@@ -39,36 +41,36 @@ export class PruebaLabService {
             confirmButtonText: 'Ok',
           });
           return of('ERROR');
-        })
+        }),
       );
   }
 
   getLastPruebasLab(): Observable<IPruebaLab[]> {
-      return this._http
-        .get<IGetLastPruebasLab>(
-          `${environment.baseUrl}/api/pruebaLab/last30`
-        )
-        .pipe(map((data) => {
+    return this._http
+      .get<IGetLastPruebasLab>(`${environment.baseUrl}/api/pruebaLab/last30`)
+      .pipe(
+        map((data) => {
           return data.pruebasLab;
-        }));        
+        }),
+      );
   }
 
-  getPruebaLab(terminoBusqueda : any): Observable<IPruebaLab[]> {
-    const params = new HttpParams().set('search',terminoBusqueda)
+  getPruebaLab(terminoBusqueda: any): Observable<IPruebaLab[]> {
+    const params = new HttpParams().set('search', terminoBusqueda);
     return this._http
       .get<IGetLastPruebasLab>(
-        `${environment.baseUrl}/api/pruebaLab/findTerm`,{params}
+        `${environment.baseUrl}/api/pruebaLab/findTerm`,
+        { params },
       )
       .pipe(map((data) => data.pruebasLab));
   }
-  
-    
-  public actualizarPruebaLab(codPruebaLab: string, body: IPruebaLab){
-    
-    console.log(body)
+
+  public actualizarPruebaLab(codPruebaLab: string, body: IPruebaLab) {
+    console.log(body);
     return this._http
       .put<IPruebaLabPostDTO>(
-        `${environment.baseUrl}/api/pruebaLab/${codPruebaLab}/updatePrueba`,body
+        `${environment.baseUrl}/api/pruebaLab/${codPruebaLab}/updatePrueba`,
+        body,
       )
       .pipe(
         map((data) => {
@@ -87,8 +89,7 @@ export class PruebaLabService {
             confirmButtonText: 'Ok',
           });
           return of('ERROR');
-        })
+        }),
       );
   }
-
 }

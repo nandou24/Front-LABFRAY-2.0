@@ -1,4 +1,21 @@
-import { IRol } from './permisos/roles.models';
+import { IRol } from '../permisos/roles.models';
+
+interface IEspecialidad {
+  nombreEspecialidad: string;
+  rne: string;
+  centroEstudiosEspecialidad?: string;
+  anioEgresoEspecialidad?: string;
+}
+
+interface IProfesion {
+  profesion: string;
+  nivelProfesion?: string;
+  titulo?: string;
+  nroColegiatura?: string;
+  centroEstudiosProfesion?: string;
+  anioEgresoProfesion?: string;
+  especialidades: IEspecialidad[];
+}
 
 export interface IRecHumano {
   codRecHumano: string;
@@ -16,13 +33,8 @@ export interface IRecHumano {
   mailRecHumano: string;
   phones: Array<any>[];
   gradoInstruccion: string;
-  profesionesRecurso: Array<any>[];
-  profesionSolicitante: {
-    profesion: string;
-    nroColegiatura: string;
-  } | null;
-  especialidadesRecurso: Array<any>[];
-  especialidadesTexto: string;
+  profesionesRecurso: IProfesion[];
+  atiendeConsultas: boolean; // si atiende consultas
   usuarioSistema: boolean;
   datosLogueo: {
     nombreUsuario: string; // solo si accede al sistema
@@ -34,7 +46,7 @@ export interface IRecHumano {
   };
 }
 
-export interface IRecHumanoPostDTO {
+export interface IRecHumanoPostResponseDTO {
   ok: boolean;
   msg?: string;
   errors?: string;
@@ -43,5 +55,16 @@ export interface IRecHumanoPostDTO {
 export interface IGetLastRecHumano {
   ok: boolean;
   search: String;
+  recHumanos: IRecHumano[];
+}
+
+export interface IPersonalSaludParaConsultas {
+  _id: string;
+  codRecHumano: string;
+  nombreCompletoPersonal: string;
+}
+
+export interface IGetPersonalSaludParaConsultas {
+  ok: boolean;
   recHumanos: IRecHumano[];
 }

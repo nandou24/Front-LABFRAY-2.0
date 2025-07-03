@@ -85,6 +85,13 @@ export const routes: Routes = [
             './pages/gestionar/solicitudAtencion/solicitud-atencion.component'
           ).then((m) => m.SolicitudAtencionComponent),
       },
+      {
+        path: 'profesiones',
+        loadComponent: () =>
+          import(
+            './pages/mantenimiento/profesiones/profesiones.component'
+          ).then((m) => m.ProfesionesComponent),
+      },
     ],
   },
   {

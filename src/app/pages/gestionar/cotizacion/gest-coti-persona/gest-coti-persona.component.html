@@ -241,6 +241,42 @@
               </td>
             </ng-container>
 
+            <ng-container matColumnDef="medicoAtiende">
+              <th mat-header-cell *matHeaderCellDef class="text-center">
+                Médico
+              </th>
+              <td
+                mat-cell
+                *matCellDef="let row; let i = index"
+                class="text-center"
+              >
+                <ng-container [formGroup]="row">
+                  <ng-container
+                    *ngIf="row.get('tipoServicio')?.value === 'Consulta Médica'"
+                  >
+                    <div>
+                      <span *ngIf="row.get('medicoAtiende')?.value">
+                        {{
+                          row.get("medicoAtiende")?.value?.nombreCompletoMedico
+                        }}
+                      </span>
+                      <button
+                        mat-button
+                        color="primary"
+                        (click)="abrirDialogoMedico(i)"
+                      >
+                        {{
+                          row.get("medicoAtiende")?.value
+                            ? "Modificar"
+                            : "Seleccionar médico"
+                        }}
+                      </button>
+                    </div>
+                  </ng-container>
+                </ng-container>
+              </td>
+            </ng-container>
+
             <ng-container matColumnDef="cantidad">
               <th mat-header-cell *matHeaderCellDef class="text-center">
                 Cantidad

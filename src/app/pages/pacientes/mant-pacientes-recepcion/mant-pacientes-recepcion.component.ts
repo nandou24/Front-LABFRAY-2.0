@@ -24,7 +24,7 @@ import { MatTableDataSource } from '@angular/material/table';
 import { ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
-import { IPaciente } from '../../../models/paciente.models';
+import { IPaciente } from '../../../models/Mantenimiento/paciente.models';
 import { PacienteService } from '../../../services/mantenimiento/paciente/paciente.service';
 import { UbigeoService } from '../../../services/utilitarios/ubigeo.service';
 import Swal from 'sweetalert2';

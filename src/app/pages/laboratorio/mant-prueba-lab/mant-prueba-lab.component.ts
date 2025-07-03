@@ -1,6 +1,15 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject, OnInit, ViewChild } from '@angular/core';
-import { AbstractControl, FormArray, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  FormArray,
+  FormBuilder,
+  FormControl,
+  FormGroup,
+  FormsModule,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckbox } from '@angular/material/checkbox';
 import { MatOptionModule } from '@angular/material/core';
@@ -8,56 +17,58 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { MatTable, MatTableDataSource, MatTableModule } from '@angular/material/table';
-import { IPruebaLab } from '../../../models/pruebaLab.models';
-import { IItemLab } from '../../../models/items.models';
+import {
+  MatTable,
+  MatTableDataSource,
+  MatTableModule,
+} from '@angular/material/table';
+import { IPruebaLab } from '../../../models/Mantenimiento/pruebaLab.models';
+import { IItemLab } from '../../../models/Mantenimiento/items.models';
 import { MatButtonModule } from '@angular/material/button';
 import { PruebaLabService } from '../../../services/mantenimiento/pruebaLab/prueba-lab.service';
 import { ItemLabService } from '../../../services/mantenimiento/itemLab/item-lab.service';
 import Swal from 'sweetalert2';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 
-
 @Component({
   selector: 'app-mant-prueba-lab',
   imports: [
-            MatFormFieldModule,
-            MatInputModule,
-            FormsModule,
-            MatCardModule,
-            CommonModule,
-            ReactiveFormsModule,
-            MatSelectModule,
-            MatOptionModule,
-            MatCheckbox,
-            MatTableModule,
-            MatIconModule,
-            MatButtonModule
-            ],
+    MatFormFieldModule,
+    MatInputModule,
+    FormsModule,
+    MatCardModule,
+    CommonModule,
+    ReactiveFormsModule,
+    MatSelectModule,
+    MatOptionModule,
+    MatCheckbox,
+    MatTableModule,
+    MatIconModule,
+    MatButtonModule,
+  ],
   templateUrl: './mant-prueba-lab.component.html',
-  styleUrl: './mant-prueba-lab.component.scss'
+  styleUrl: './mant-prueba-lab.component.scss',
 })
 export class MantPruebaLabComponent implements OnInit {
-
   constructor(
     private _pruebaLabService: PruebaLabService,
-    private _itemLabService: ItemLabService
-  ) { }
+    private _itemLabService: ItemLabService,
+  ) {}
 
   ngOnInit(): void {
     this.ultimasPruebas();
-    this.ultimosItems(5)
+    this.ultimosItems(5);
     this.inicializarBusquedaItems();
   }
 
   private _fb = inject(FormBuilder);
 
-  public myFormPruebaLab:FormGroup = this._fb.group({
-    codPruebaLab:'',
-    areaLab:['',[Validators.required]],
-    nombrePruebaLab: ['',[Validators.required]],
-    condPreAnalitPaciente: ['',[Validators.required]],
-    condPreAnalitRefer: ['',[Validators.required]],
+  public myFormPruebaLab: FormGroup = this._fb.group({
+    codPruebaLab: '',
+    areaLab: ['', [Validators.required]],
+    nombrePruebaLab: ['', [Validators.required]],
+    condPreAnalitPaciente: ['', [Validators.required]],
+    condPreAnalitRefer: ['', [Validators.required]],
     tipoMuestra: this._fb.group({
       suero: [false],
       sangreTotal: [false],
@@ -71,7 +82,7 @@ export class MantPruebaLabComponent implements OnInit {
       hisopado: [false],
       secrecion: [false],
       cintaAdhesiva: [false],
-      otro: [false]
+      otro: [false],
     }),
     tipoTuboEnvase: this._fb.group({
       TuboLila: [false],
@@ -85,12 +96,15 @@ export class MantPruebaLabComponent implements OnInit {
       FrasconEspatula: [false],
       Hemocultivo: [false],
       MedioTransporte: [false],
-      Lamina: [false]
+      Lamina: [false],
     }),
-    tiempoEntrega:['', [Validators.required, Validators.pattern('^[1-9][0-9]*$')]],
+    tiempoEntrega: [
+      '',
+      [Validators.required, Validators.pattern('^[1-9][0-9]*$')],
+    ],
     observPruebas: [''],
     estadoPrueba: ['', [Validators.required]],
-    itemsComponentes: this._fb.array([])
+    itemsComponentes: this._fb.array([]),
   });
 
   get itemsComponentes(): FormArray {
@@ -103,31 +117,32 @@ export class MantPruebaLabComponent implements OnInit {
   dataSourceItemsDisponibles = new MatTableDataSource<IItemLab>();
 
   //Tabla items seleccionados
-  columnasSeleccionados: string[] = ['codigo', 'nombre', 'perteneceA', 'accion'];
+  columnasSeleccionados: string[] = [
+    'codigo',
+    'nombre',
+    'perteneceA',
+    'accion',
+  ];
   dataSourceItemsSeleccionados = new MatTableDataSource<IItemLab>();
 
   //Tabla pruebas de laboratorio
   columnasPruebas: string[] = ['codigo', 'nombre', 'areaLab'];
   dataSourcePruebas = new MatTableDataSource<IPruebaLab>();
 
-  
-
-  agregarItem(item: IItemLab){
-
+  agregarItem(item: IItemLab) {
     const existe = this.itemsComponentes.controls.some(
-      (control) => control.value.codItemLab === item.codItemLab
+      (control) => control.value.codItemLab === item.codItemLab,
     );
 
     if (existe) {
-      console.log('Item ya está agregado')
+      console.log('Item ya está agregado');
       return;
     }
 
     this.itemsComponentes.push(this.crearItemFormGroup(item));
     this.dataSourceItemsSeleccionados.data = this.itemsComponentes.controls.map(
-      (control: AbstractControl) => control.value
+      (control: AbstractControl) => control.value,
     );
-
   }
 
   private crearItemFormGroup(item: IItemLab): FormGroup {
@@ -138,10 +153,10 @@ export class MantPruebaLabComponent implements OnInit {
     });
   }
 
-  removerItem(item: IItemLab){
+  removerItem(item: IItemLab) {
     // Buscar el índice del item en el FormArray
     const index = this.itemsComponentes.controls.findIndex(
-      (control) => control.value.codItemLab === item.codItemLab
+      (control) => control.value.codItemLab === item.codItemLab,
     );
 
     // Si se encuentra el índice, eliminarlo
@@ -149,21 +164,21 @@ export class MantPruebaLabComponent implements OnInit {
       this.itemsComponentes.removeAt(index);
 
       // Actualizar el dataSource con los nuevos valores
-      this.dataSourceItemsSeleccionados.data = this.itemsComponentes.controls.map(
-        (control: AbstractControl) => control.value
-      );
+      this.dataSourceItemsSeleccionados.data =
+        this.itemsComponentes.controls.map(
+          (control: AbstractControl) => control.value,
+        );
     }
-
   }
 
-  ultimasPruebas(): void  {
-    this._pruebaLabService.getLastPruebasLab().subscribe(pruebas => {
+  ultimasPruebas(): void {
+    this._pruebaLabService.getLastPruebasLab().subscribe((pruebas) => {
       this.dataSourcePruebas.data = pruebas;
     });
   }
 
   // Método últimos 20* pacientes
-  ultimosItems(cantidad:number): void {
+  ultimosItems(cantidad: number): void {
     this._itemLabService.getLastItemsLab(cantidad).subscribe({
       next: (res: IItemLab[]) => {
         this.dataSourceItemsDisponibles.data = res;
@@ -176,21 +191,22 @@ export class MantPruebaLabComponent implements OnInit {
 
   terminoBusqueda: any;
 
-  buscarPrueba(){
-
+  buscarPrueba() {
     const termino = this.terminoBusqueda?.trim() ?? '';
 
-    if (termino.length >= 3) { 
-      this._pruebaLabService.getPruebaLab(this.terminoBusqueda).subscribe((res: IPruebaLab[]) => {
-        this.dataSourcePruebas.data = res;
-      });
-    }if (termino.length > 0) {
+    if (termino.length >= 3) {
+      this._pruebaLabService
+        .getPruebaLab(this.terminoBusqueda)
+        .subscribe((res: IPruebaLab[]) => {
+          this.dataSourcePruebas.data = res;
+        });
+    }
+    if (termino.length > 0) {
       this.dataSourcePruebas.data = [];
-    }else{
+    } else {
       this.ultimasPruebas();
     }
   }
-
 
   terminoBusquedaItemsControl = new FormControl('');
   terminoBusquedaItems: any;
@@ -199,7 +215,7 @@ export class MantPruebaLabComponent implements OnInit {
     this.terminoBusquedaItemsControl.valueChanges
       .pipe(
         debounceTime(300), // ⏱️ Espera 300 ms después del último cambio
-        distinctUntilChanged() // 🔄 Solo si el valor cambió
+        distinctUntilChanged(), // 🔄 Solo si el valor cambió
       )
       .subscribe((valor: string | null) => {
         this.terminoBusquedaItems = valor;
@@ -207,66 +223,66 @@ export class MantPruebaLabComponent implements OnInit {
       });
   }
 
-  buscarItems(): void{
-
+  buscarItems(): void {
     const termino = this.terminoBusquedaItems?.trim() ?? '';
-    
-    if (termino.length >= 3) { 
-      this._itemLabService.getItem(this.terminoBusquedaItems).subscribe((res: IItemLab[]) => {
-        this.dataSourceItemsDisponibles.data = res;
-      });
-    }if (termino.length > 0) {
+
+    if (termino.length >= 3) {
+      this._itemLabService
+        .getItem(this.terminoBusquedaItems)
+        .subscribe((res: IItemLab[]) => {
+          this.dataSourceItemsDisponibles.data = res;
+        });
+    }
+    if (termino.length > 0) {
       this.dataSourceItemsDisponibles.data = [];
-    }else{
+    } else {
       this.ultimosItems(5);
     }
   }
 
-  validarArrayItems(): boolean{
+  validarArrayItems(): boolean {
+    const valoresArray = this.myFormPruebaLab.get(
+      'itemsComponentes',
+    ) as FormArray;
 
-    const valoresArray = this.myFormPruebaLab.get('itemsComponentes') as FormArray;
+    if (valoresArray.length === 0) {
+      return false;
+    }
 
-      if((valoresArray.length === 0)){
-        return false
-      }
-
-    return true
-
+    return true;
   }
 
-  validarTipoMuestra(): boolean{
+  validarTipoMuestra(): boolean {
+    const formValue = this.myFormPruebaLab.value;
 
-    const formValue  = this.myFormPruebaLab.value;
-                
     // Filtrar solo los checkboxes seleccionados de tipo muestra
     const tipoMuestraSeleccionado = Object.keys(formValue.tipoMuestra)
-    .filter((key) => formValue.tipoMuestra[key])
-    .map((key) => key); // Devuelve un array con las claves marcadas
+      .filter((key) => formValue.tipoMuestra[key])
+      .map((key) => key); // Devuelve un array con las claves marcadas
 
-    if(tipoMuestraSeleccionado.length > 0){
-      return true
+    if (tipoMuestraSeleccionado.length > 0) {
+      return true;
     }
 
-    return false
+    return false;
   }
 
-  validarTipoEnvase(): boolean{
+  validarTipoEnvase(): boolean {
+    const formValue = this.myFormPruebaLab.value;
 
-    const formValue  = this.myFormPruebaLab.value;
-                
     // Filtrar solo los checkboxes seleccionados de tipo muestra
     const tipoEnvaseSeleccionado = Object.keys(formValue.tipoTuboEnvase)
-    .filter((key) => formValue.tipoTuboEnvase[key])
-    .map((key) => key); // Devuelve un array con las claves marcadas
+      .filter((key) => formValue.tipoTuboEnvase[key])
+      .map((key) => key); // Devuelve un array con las claves marcadas
 
-    if(tipoEnvaseSeleccionado.length > 0){
-      return true
+    if (tipoEnvaseSeleccionado.length > 0) {
+      return true;
     }
 
-    return false
+    return false;
   }
 
-  nuevaPrueba(){
+  nuevaPrueba() {
     this.myFormPruebaLab.reset(); // Reinicia todos los campos del formulario
     this.formSubmitted = false; // Restablece el estado de validación del formulario
     this.itemsComponentes.clear();
@@ -274,23 +290,25 @@ export class MantPruebaLabComponent implements OnInit {
     this.myFormPruebaLab.get('nombrePruebaLab')?.enable();
     this.myFormPruebaLab.get('areaLab')?.enable();
     //this.filaSeleccionadaPruebas = null;
-    this.pruebaSeleccionada = false
+    this.pruebaSeleccionada = false;
   }
 
   formSubmitted = false;
 
-  registraPrueba(){
-
-    if(this.myFormPruebaLab.invalid){
-
+  registraPrueba() {
+    if (this.myFormPruebaLab.invalid) {
       this.myFormPruebaLab.markAllAsTouched();
-      return
+      return;
     }
 
     this.formSubmitted = true;
-        
-    if(this.myFormPruebaLab.valid && this.validarArrayItems() && this.validarTipoMuestra() && this.validarTipoEnvase()){
 
+    if (
+      this.myFormPruebaLab.valid &&
+      this.validarArrayItems() &&
+      this.validarTipoMuestra() &&
+      this.validarTipoEnvase()
+    ) {
       Swal.fire({
         title: '¿Estás seguro?',
         text: '¿Deseas confirmar la creación de esta prueba?',
@@ -299,28 +317,28 @@ export class MantPruebaLabComponent implements OnInit {
         confirmButtonText: 'Sí, confirmar',
         cancelButtonText: 'Cancelar',
       }).then((result) => {
-        
         if (result.isConfirmed) {
+          console.log('Procede registro');
+          const formValue = this.myFormPruebaLab.value;
 
-          console.log('Procede registro')
-          const formValue  = this.myFormPruebaLab.value;
-          
           // Filtrar solo los checkboxes seleccionados de tipo muestra
           const tipoMuestraSeleccionado = Object.keys(formValue.tipoMuestra)
-          .filter((key) => formValue.tipoMuestra[key])
-          .map((key) => key); // Devuelve un array con las claves marcadas
+            .filter((key) => formValue.tipoMuestra[key])
+            .map((key) => key); // Devuelve un array con las claves marcadas
 
           // Filtrar solo los checkboxes seleccionados de tipo tubo
-          const tipoTuboEnvaseSeleccionado = Object.keys(formValue.tipoTuboEnvase)
-          .filter((key) => formValue.tipoTuboEnvase[key])
-          .map((key) => key); // Devuelve un array con las claves marcadas
+          const tipoTuboEnvaseSeleccionado = Object.keys(
+            formValue.tipoTuboEnvase,
+          )
+            .filter((key) => formValue.tipoTuboEnvase[key])
+            .map((key) => key); // Devuelve un array con las claves marcadas
 
           const body: IPruebaLab = {
             ...formValue,
             tipoMuestra: tipoMuestraSeleccionado, //solo los seleccionados
-            tipoTuboEnvase: tipoTuboEnvaseSeleccionado //solo los seleccionados
-          }
-                          
+            tipoTuboEnvase: tipoTuboEnvaseSeleccionado, //solo los seleccionados
+          };
+
           this._pruebaLabService.registrarPruebaLab(body).subscribe((res) => {
             if (res !== 'ERROR') {
               Swal.fire({
@@ -332,30 +350,31 @@ export class MantPruebaLabComponent implements OnInit {
               this.ultimasPruebas();
               this.nuevaPrueba();
               //this._router.navigateByUrl('/auth/login');
-            }else{
-              console.log("No procede");
+            } else {
+              console.log('No procede');
             }
           });
         }
-      })
-    }else{
-      console.log('No Procede')
+      });
+    } else {
+      console.log('No Procede');
     }
-    
   }
 
-  actualizarPrueba(){
-
-    if(this.myFormPruebaLab.invalid){
-
+  actualizarPrueba() {
+    if (this.myFormPruebaLab.invalid) {
       this.myFormPruebaLab.markAllAsTouched();
-      return
+      return;
     }
 
     this.formSubmitted = true;
-      
-    if(this.myFormPruebaLab.valid && this.validarArrayItems() && this.validarTipoMuestra() && this.validarTipoEnvase()){
 
+    if (
+      this.myFormPruebaLab.valid &&
+      this.validarArrayItems() &&
+      this.validarTipoMuestra() &&
+      this.validarTipoEnvase()
+    ) {
       Swal.fire({
         title: '¿Estás seguro?',
         text: '¿Deseas confirmar la actualización de esta prueba?',
@@ -364,57 +383,55 @@ export class MantPruebaLabComponent implements OnInit {
         confirmButtonText: 'Sí, confirmar',
         cancelButtonText: 'Cancelar',
       }).then((result) => {
-      
-      if (result.isConfirmed) {
-      
-        console.log('Procede actualización')
-        const formValue  = this.myFormPruebaLab.value;
-        
-        // Filtrar solo los checkboxes seleccionados de tipo muestra
-        const tipoMuestraSeleccionado = Object.keys(formValue.tipoMuestra)
-        .filter((key) => formValue.tipoMuestra[key])
-        .map((key) => key); // Devuelve un array con las claves marcadas
+        if (result.isConfirmed) {
+          console.log('Procede actualización');
+          const formValue = this.myFormPruebaLab.value;
 
-        // Filtrar solo los checkboxes seleccionados de tipo tubo
-        const tipoTuboEnvaseSeleccionado = Object.keys(formValue.tipoTuboEnvase)
-        .filter((key) => formValue.tipoTuboEnvase[key])
-        .map((key) => key); // Devuelve un array con las claves marcadas
+          // Filtrar solo los checkboxes seleccionados de tipo muestra
+          const tipoMuestraSeleccionado = Object.keys(formValue.tipoMuestra)
+            .filter((key) => formValue.tipoMuestra[key])
+            .map((key) => key); // Devuelve un array con las claves marcadas
 
-        const body: IPruebaLab = {
-          ...formValue,
-          tipoMuestra: tipoMuestraSeleccionado, //solo los seleccionados
-          tipoTuboEnvase: tipoTuboEnvaseSeleccionado //solo los seleccionados
-        }
+          // Filtrar solo los checkboxes seleccionados de tipo tubo
+          const tipoTuboEnvaseSeleccionado = Object.keys(
+            formValue.tipoTuboEnvase,
+          )
+            .filter((key) => formValue.tipoTuboEnvase[key])
+            .map((key) => key); // Devuelve un array con las claves marcadas
 
-        this._pruebaLabService.actualizarPruebaLab(body.codPruebaLab,body).subscribe((res) => {
-          if (res !== 'ERROR') {
-            Swal.fire({
-              title: 'Confirmado',
-              text: 'Prueba Actualizado',
-              icon: 'success',
-              confirmButtonText: 'Ok',
+          const body: IPruebaLab = {
+            ...formValue,
+            tipoMuestra: tipoMuestraSeleccionado, //solo los seleccionados
+            tipoTuboEnvase: tipoTuboEnvaseSeleccionado, //solo los seleccionados
+          };
+
+          this._pruebaLabService
+            .actualizarPruebaLab(body.codPruebaLab, body)
+            .subscribe((res) => {
+              if (res !== 'ERROR') {
+                Swal.fire({
+                  title: 'Confirmado',
+                  text: 'Prueba Actualizado',
+                  icon: 'success',
+                  confirmButtonText: 'Ok',
+                });
+                this.ultimasPruebas();
+                this.nuevaPrueba();
+              } else {
+                console.log('Error de servidor');
+              }
             });
-            this.ultimasPruebas();
-            this.nuevaPrueba();
-          }else{
-            console.log("Error de servidor")
-          }
-        });
-
-      }})
-
+        }
+      });
+    } else {
+      console.log('No Procede Actualización');
     }
-    else{
-      console.log('No Procede Actualización')
-    }
-
   }
 
   pruebaSeleccionada = false;
 
-  cargarPruebas(prueba: IPruebaLab){
-
-    this.pruebaSeleccionada = true
+  cargarPruebas(prueba: IPruebaLab) {
+    this.pruebaSeleccionada = true;
 
     this.myFormPruebaLab.get('nombrePruebaLab')?.disable();
     this.myFormPruebaLab.get('areaLab')?.disable();
@@ -427,19 +444,25 @@ export class MantPruebaLabComponent implements OnInit {
       condPreAnalitRefer: prueba.condPreAnalitRefer,
       tiempoEntrega: prueba.tiempoEntrega,
       observPruebas: prueba.observPruebas,
-      estadoPrueba: prueba.estadoPrueba
+      estadoPrueba: prueba.estadoPrueba,
     });
 
     // Actualizar los checkboxes de tipoTuboEnvase
-    const tipoMuestraFormGroup = this.myFormPruebaLab.get('tipoMuestra') as FormGroup;
+    const tipoMuestraFormGroup = this.myFormPruebaLab.get(
+      'tipoMuestra',
+    ) as FormGroup;
     Object.keys(tipoMuestraFormGroup.controls).forEach((key) => {
       tipoMuestraFormGroup.get(key)?.setValue(prueba.tipoMuestra.includes(key));
     });
 
     // Actualizar los checkboxes de tipoTuboEnvase
-    const tipoTuboEnvaseFormGroup = this.myFormPruebaLab.get('tipoTuboEnvase') as FormGroup;
+    const tipoTuboEnvaseFormGroup = this.myFormPruebaLab.get(
+      'tipoTuboEnvase',
+    ) as FormGroup;
     Object.keys(tipoTuboEnvaseFormGroup.controls).forEach((key) => {
-      tipoTuboEnvaseFormGroup.get(key)?.setValue(prueba.tipoTuboEnvase.includes(key));
+      tipoTuboEnvaseFormGroup
+        .get(key)
+        ?.setValue(prueba.tipoTuboEnvase.includes(key));
     });
 
     this.itemsComponentes.clear();
@@ -450,9 +473,7 @@ export class MantPruebaLabComponent implements OnInit {
     });
 
     this.dataSourceItemsSeleccionados.data = this.itemsComponentes.controls.map(
-      (control: AbstractControl) => control.value
+      (control: AbstractControl) => control.value,
     );
-
   }
-
 }

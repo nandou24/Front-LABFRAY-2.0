@@ -10,7 +10,7 @@ import {
 import { SolicitudAtencionService } from '../../../services/gestion/solicitudAtencion/solicitud-atencion.service';
 import { MatDialog } from '@angular/material/dialog';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
-import { ISolicitudAtencion } from '../../../models/solicitudAtencion.models';
+import { ISolicitudAtencion } from '../../../models/Gestion/solicitudAtencion.models';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
 import { MatSnackBar } from '@angular/material/snack-bar';

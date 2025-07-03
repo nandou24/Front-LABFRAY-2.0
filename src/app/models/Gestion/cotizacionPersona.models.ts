@@ -41,6 +41,14 @@ export interface IServicioCotizacion {
   precioVenta: number;
   descuentoPorcentaje: number;
   totalUnitario: number;
+  medicoAtiende?: {
+    medicoId: string;
+    nombreCompletoMedico: string;
+    nroColegiatura: string;
+    colegiatura: string;
+    rne: string;
+    especialidad: string;
+  };
 }
 
 export interface ICotizacionPostDTO {

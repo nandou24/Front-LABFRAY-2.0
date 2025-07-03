@@ -9,7 +9,7 @@ import {
   IPaciente,
   IPacientePostDTO,
   IPacientePostReturnDTO,
-} from '../../../models/paciente.models';
+} from '../../../models/Mantenimiento/paciente.models';
 
 @Injectable({
   providedIn: 'root',

@@ -35,7 +35,7 @@ import {
 } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { UbigeoService } from '../../../services/utilitarios/ubigeo.service';
-import { IRecHumano } from '../../../models/recursoHumano.models';
+import { IRecHumano } from '../../../models/Mantenimiento/recursoHumano.models';
 import { RecursoHumanoService } from '../../../services/mantenimiento/recursoHumano/recurso-humano.service';
 import { customPaginatorIntl } from '../../../services/utilitarios/mat-paginator-intl';
 import Swal from 'sweetalert2';
@@ -130,8 +130,7 @@ export class MantRecursoHumanoComponent implements OnInit, AfterViewInit {
     gradoInstruccion: ['', [Validators.required]],
     profesionesRecurso: this._fb.array([]),
     profesionSolicitante: new FormControl(null),
-    especialidadesRecurso: this._fb.array([]),
-    esSolicitante: false,
+    atiendeConsultas: [false, Validators.required],
     usuarioSistema: false,
     datosLogueo: this._fb.group({
       nombreUsuario: [{ value: '', disabled: true }, [Validators.required]],
@@ -143,6 +142,27 @@ export class MantRecursoHumanoComponent implements OnInit, AfterViewInit {
     }),
   });
 
+  crearProfesion(): FormGroup {
+    return this._fb.group({
+      profesion: ['', Validators.required],
+      nivelProfesion: ['', Validators.required],
+      titulo: [''],
+      nroColegiatura: [''],
+      centroEstudiosProfesion: [''],
+      anioEgresoProfesion: [''],
+      especialidades: this._fb.array([]),
+    });
+  }
+
+  crearEspecialidad(): FormGroup {
+    return this._fb.group({
+      nombreEspecialidad: ['', Validators.required],
+      rne: ['', Validators.required],
+      centroEstudiosEspecialidad: [''],
+      anioEgresoEspecialidad: [''],
+    });
+  }
+
   get phones(): FormArray {
     return this.myFormRecHumano.get('phones') as FormArray;
   }
@@ -151,8 +171,8 @@ export class MantRecursoHumanoComponent implements OnInit, AfterViewInit {
     return this.myFormRecHumano.get('profesionesRecurso') as FormArray;
   }
 
-  get especialidadesRecurso(): FormArray {
-    return this.myFormRecHumano.get('especialidadesRecurso') as FormArray;
+  especialidades(i: number): FormArray {
+    return this.profesionesRecurso.at(i).get('especialidades') as FormArray;
   }
 
   get datosLogueo(): FormGroup {
@@ -210,20 +230,6 @@ export class MantRecursoHumanoComponent implements OnInit, AfterViewInit {
       });
   }
 
-  fechaNoFuturaValidator(): ValidatorFn {
-    return (control: AbstractControl): ValidationErrors | null => {
-      const fecha = control.value;
-      if (!fecha) return null;
-
-      const fechaActual = new Date();
-      if (new Date(fecha) > fechaActual) {
-        return { fechaFutura: true };
-      }
-
-      return null;
-    };
-  }
-
   //setear los anchos
   setFlex(valor: number, unidad: 'px' | '%' = 'px'): string {
     return `0 0 ${valor}${unidad}`;
@@ -246,35 +252,38 @@ export class MantRecursoHumanoComponent implements OnInit, AfterViewInit {
   }
 
   agregarProfesion() {
-    const profesionForm = this._fb.group({
-      nivelProfesion: ['', [Validators.required]],
-      titulo: [''],
-      profesion: ['', [Validators.required]],
-      nroColegiatura: [''],
-      centroEstudiosProfesion: [''],
-      anioEgresoProfesion: [''],
-    });
+    // const profesionForm = this._fb.group({
+    //   nivelProfesion: ['', [Validators.required]],
+    //   titulo: [''],
+    //   profesion: ['', [Validators.required]],
+    //   nroColegiatura: [''],
+    //   centroEstudiosProfesion: [''],
+    //   anioEgresoProfesion: [''],
+    // });
 
-    this.profesionesRecurso.push(profesionForm);
+    // this.profesionesRecurso.push(profesionForm);
+    this.profesionesRecurso.push(this.crearProfesion());
   }
 
   eliminarProfesion(index: number) {
     this.profesionesRecurso.removeAt(index);
   }
 
-  agregarEspecialidad() {
-    const especialidadForm = this._fb.group({
-      especialidad: ['', [Validators.required]],
-      centroEstudiosEspecialidad: [''],
-      rne: ['', [Validators.required]],
-      anioEgresoEspecialidad: [''],
-    });
+  agregarEspecialidad(i: number) {
+    // const especialidadForm = this._fb.group({
+    //   especialidad: ['', [Validators.required]],
+    //   centroEstudiosEspecialidad: [''],
+    //   rne: ['', [Validators.required]],
+    //   anioEgresoEspecialidad: [''],
+    // });
 
-    this.especialidadesRecurso.push(especialidadForm);
+    // this.especialidadesRecurso.push(especialidadForm);
+
+    this.especialidades(i).push(this.crearEspecialidad());
   }
 
-  eliminarEspecialidad(index: number) {
-    this.especialidadesRecurso.removeAt(index);
+  eliminarEspecialidad(i: number, j: number) {
+    this.especialidades(i).removeAt(j);
   }
 
   public formSubmitted: boolean = false;
@@ -360,19 +369,7 @@ export class MantRecursoHumanoComponent implements OnInit, AfterViewInit {
     this.profesionesRecurso.clear();
     // Agregar cada profesión al FormArray
     recursoHumano.profesionesRecurso.forEach((profesion: any) => {
-      const esSolicitante =
-        recursoHumano.profesionSolicitante?.profesion === profesion.profesion;
-      this.profesionesRecurso.push(
-        this.crearProfesionGroup(profesion, esSolicitante),
-      );
-    });
-
-    this.especialidadesRecurso.clear();
-    // Agregar cada especialidad al FormArray
-    recursoHumano.especialidadesRecurso.forEach((especialidad: any) => {
-      this.especialidadesRecurso.push(
-        this.crearEspecialidadGroup(especialidad),
-      );
+      this.profesionesRecurso.push(this.crearProfesionGroup(profesion));
     });
   }
 
@@ -383,10 +380,15 @@ export class MantRecursoHumanoComponent implements OnInit, AfterViewInit {
     });
   }
 
-  private crearProfesionGroup(
-    profesion: any,
-    esSolicitante: boolean,
-  ): FormGroup {
+  private crearProfesionGroup(profesion: any): FormGroup {
+    const especialidadesArray = this._fb.array([]) as FormArray;
+
+    if (profesion.especialidades && profesion.especialidades.length > 0) {
+      profesion.especialidades.forEach((esp: any) => {
+        especialidadesArray.push(this.crearEspecialidadGroup(esp));
+      });
+    }
+
     return this._fb.group({
       nivelProfesion: [profesion.nivelProfesion],
       titulo: [profesion.titulo],
@@ -394,13 +396,13 @@ export class MantRecursoHumanoComponent implements OnInit, AfterViewInit {
       nroColegiatura: [profesion.nroColegiatura],
       centroEstudiosProfesion: [profesion.centroEstudiosProfesion],
       anioEgresoProfesion: [profesion.anioEgresoProfesion],
-      profesionSolicitante: [esSolicitante],
+      especialidades: especialidadesArray,
     });
   }
 
   private crearEspecialidadGroup(especialidad: any): FormGroup {
     return this._fb.group({
-      especialidad: [especialidad.especialidad],
+      nombreEspecialidad: [especialidad.nombreEspecialidad],
       rne: [especialidad.rne],
       centroEstudiosEspecialidad: [especialidad.centroEstudiosEspecialidad],
       anioEgresoEspecialidad: [especialidad.anioEgresoEspecialidad],
@@ -427,26 +429,26 @@ export class MantRecursoHumanoComponent implements OnInit, AfterViewInit {
     this.dataSourceRecursoHumano.filter = termino.trim().toLowerCase();
   }
 
-  seleccionarProfesionSolicitante(index: number) {
-    const grupo = this.profesionesRecurso.at(index);
-    const estabaActivo = grupo.get('profesionSolicitante')?.value;
+  // seleccionarProfesionSolicitante(index: number) {
+  //   const grupo = this.profesionesRecurso.at(index);
+  //   const estabaActivo = grupo.get('profesionSolicitante')?.value;
 
-    if (estabaActivo) {
-      // Si estaba activo, lo apago y limpio el principal
-      grupo.get('profesionSolicitante')?.setValue(false);
-      this.myFormRecHumano.get('profesionSolicitante')?.reset();
-    } else {
-      // Si estaba apagado, activo este y apago los demás
-      this.profesionesRecurso.controls.forEach((group, i) => {
-        group.get('profesionSolicitante')?.setValue(i === index);
-      });
+  //   if (estabaActivo) {
+  //     // Si estaba activo, lo apago y limpio el principal
+  //     grupo.get('profesionSolicitante')?.setValue(false);
+  //     this.myFormRecHumano.get('profesionSolicitante')?.reset();
+  //   } else {
+  //     // Si estaba apagado, activo este y apago los demás
+  //     this.profesionesRecurso.controls.forEach((group, i) => {
+  //       group.get('profesionSolicitante')?.setValue(i === index);
+  //     });
 
-      const { profesion, nroColegiatura } = grupo.value;
-      this.myFormRecHumano
-        .get('profesionSolicitante')
-        ?.setValue({ profesion, nroColegiatura });
-    }
-  }
+  //     const { profesion, nroColegiatura } = grupo.value;
+  //     this.myFormRecHumano
+  //       .get('profesionSolicitante')
+  //       ?.setValue({ profesion, nroColegiatura });
+  //   }
+  // }
 
   recHumanoSeleccionado = false;
 
@@ -566,12 +568,10 @@ export class MantRecursoHumanoComponent implements OnInit, AfterViewInit {
     this.formSubmitted = false; // Restablece el estado de validación del formulario
     this.phones.clear(); // Limpia el FormArray de teléfonos, si es necesario
     this.profesionesRecurso.clear();
-    this.especialidadesRecurso.clear();
     this.myFormRecHumano.patchValue({
       departamentoRecHumano: '15',
       provinciaRecHumano: '01',
       distritoRecHumano: '',
-      profesionSolicitante: { profesion: '', nroColegiatura: '' },
     });
     this.recHumanoSeleccionado = false;
   }
@@ -625,33 +625,4 @@ export class MantRecursoHumanoComponent implements OnInit, AfterViewInit {
         grupoLogin.get('sedeAsignada')?.updateValueAndValidity();
       });
   }
-}
-
-export function documentValidator(tipoDocControlName: string): ValidatorFn {
-  return (control: AbstractControl) => {
-    const parent = control.parent; // Accede al formulario completo
-    if (!parent) return null; // Verifica si existe un formulario padre
-
-    const tipoDoc = parent.get(tipoDocControlName)?.value; // Obtén el valor de tipoDoc
-    const nroDoc = control.value; // Obtén el valor del número de documento
-
-    if (tipoDoc === 'DNI') {
-      // DNI: exactamente 8 dígitos numéricos
-      if (!/^\d{8}$/.test(nroDoc)) {
-        return { invalidDNI: true };
-      }
-    } else if (tipoDoc === 'CE') {
-      // CE: máximo 13 caracteres alfanuméricos
-      if (!/^[a-zA-Z0-9]{1,13}$/.test(nroDoc)) {
-        return { invalidCE: true };
-      }
-    } else if (tipoDoc === 'PASAPORTE') {
-      // Pasaporte: máximo 16 caracteres alfanuméricos
-      if (!/^[a-zA-Z0-9]{1,16}$/.test(nroDoc)) {
-        return { invalidPasaporte: true };
-      }
-    }
-
-    return null; // Es válido
-  };
 }

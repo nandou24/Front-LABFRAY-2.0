@@ -32,7 +32,7 @@ import {
 } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { UbigeoService } from '../../../services/utilitarios/ubigeo.service';
-import { IRefMedico } from '../../../models/referenciaMedico.models';
+import { IRefMedico } from '../../../models/Mantenimiento/referenciaMedico.models';
 import { ReferenciaMedicoService } from '../../../services/mantenimiento/referencias/referencia-medico.service';
 import Swal from 'sweetalert2';
 import { DateAdapter, MAT_DATE_LOCALE } from '@angular/material/core';
