@@ -17,7 +17,7 @@ export class ProfesionService {
   private readonly apiUrl = `${environment.baseUrl}/api/profesion`;
 
   public registrarProfesion(body: IProfesion) {
-    console.log('Enviando valores desde registro recurso humano');
+    console.log('Enviando valores desde registro profesion');
 
     return this._http.post<IProfesionPostResponseDTO>(
       `${this.apiUrl}/newProfesion`,

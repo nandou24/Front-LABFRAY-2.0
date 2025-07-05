@@ -18,9 +18,11 @@ import { IProfesion } from '../../../models/Mantenimiento/profesion.models';
 import Swal from 'sweetalert2';
 import { ProfesionService } from '../../../services/mantenimiento/profesion/profesion.service';
 import { MatCardModule } from '@angular/material/card';
+import { EspecialidadService } from '../../../services/mantenimiento/especialidad/especialidad.service';
+import { IEspecialidad } from '../../../models/Mantenimiento/especialidad.models';
 
 @Component({
-  selector: 'app-profesiones',
+  selector: 'app-especialidades',
   imports: [
     CommonModule,
     FormsModule,
@@ -43,6 +45,7 @@ export class ProfesionesComponent implements OnInit {
   }
   private _fb = inject(FormBuilder);
   private _profesionService = inject(ProfesionService);
+  private _especialidadesService = inject(EspecialidadService);
 
   profesionesForm: FormGroup = this._fb.group({
     nombreProfesion: ['', Validators.required],
@@ -206,9 +209,9 @@ export class ProfesionesComponent implements OnInit {
 
   listarProfesiones() {
     this._profesionService.getAllProfesions().subscribe({
-      next: (profesiones) => {
-        this.dataSourceProfesiones.data = profesiones;
-        this.profesionesDisponibles = profesiones;
+      next: (especialidades) => {
+        this.dataSourceProfesiones.data = especialidades;
+        this.profesionesDisponibles = especialidades;
       },
       error: () => {
         this.dataSourceProfesiones.data = [];
@@ -217,7 +220,7 @@ export class ProfesionesComponent implements OnInit {
   }
 
   //Especialidad
-  dataSourceEspecialidades = new MatTableDataSource<FormGroup>([]);
+  dataSourceEspecialidades = new MatTableDataSource<IEspecialidad>([]);
   displayedColumnsEspecialidades: string[] = [
     'codigoEspecialidad',
     'nombreEspecialidad',
@@ -229,6 +232,17 @@ export class ProfesionesComponent implements OnInit {
   limpiarEspecialidad() {
     this.especialidadesForm.reset();
     this.especialidadesForm.get('estadoEspecialidad')?.setValue(true);
+  }
+
+  listarEspecialidades() {
+    this._especialidadesService.getAllEspecialidad().subscribe({
+      next: (especialidades) => {
+        this.dataSourceEspecialidades.data = especialidades;
+      },
+      error: () => {
+        this.dataSourceEspecialidades.data = [];
+      },
+    });
   }
 
   crearEspecialidad() {}
