@@ -384,7 +384,7 @@ export class ProfesionesComponent implements OnInit {
   }
 
   listarEspecialidades() {
-    this._especialidadService.getAllEspecialidades().subscribe({
+    this._especialidadService.getAllEspecialidad().subscribe({
       next: (especialidades) => {
         this.dataSourceEspecialidades.data = especialidades;
         console.log('Especialidades obtenidas:', especialidades);
