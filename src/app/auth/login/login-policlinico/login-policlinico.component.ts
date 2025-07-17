@@ -56,7 +56,12 @@ export class LoginPoliclinicoComponent {
       next: (resp) => {
         if (resp.ok && resp.token) {
           this._authService.guardarToken(resp.token);
-          Swal.fire('Bienvenido', resp.user?.nombreUsuario || '', 'success');
+          Swal.fire({
+            icon: 'success',
+            title: 'Bienvenido ' + resp.user?.nombreUsuario || '',
+            timer: 1500,
+            showConfirmButton: false,
+          });
           this.router.navigateByUrl('/pages/cotiPersona');
         } else {
           Swal.fire('Error', resp.msg || 'Credenciales incorrectas', 'error');

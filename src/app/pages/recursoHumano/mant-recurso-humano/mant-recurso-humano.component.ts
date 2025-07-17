@@ -7,15 +7,12 @@ import {
   ViewChild,
 } from '@angular/core';
 import {
-  AbstractControl,
   FormArray,
   FormBuilder,
   FormControl,
   FormGroup,
   FormsModule,
   ReactiveFormsModule,
-  ValidationErrors,
-  ValidatorFn,
   Validators,
 } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -44,6 +41,8 @@ import { RolesService } from '../../../services/permisos/roles/roles.service';
 import { FechaValidatorService } from '../../../services/utilitarios/validators/fechasValidator/fecha-validator.service';
 import { DocValidatorService } from '../../../services/utilitarios/validators/docValidator/doc-validator.service';
 import { DateAdapter, MAT_DATE_LOCALE } from '@angular/material/core';
+import { ProfesionService } from '../../../services/mantenimiento/profesion/profesion.service';
+import { EspecialidadService } from '../../../services/mantenimiento/especialidad/especialidad.service';
 
 @Component({
   selector: 'app-mant-recurso-humano',
@@ -75,6 +74,8 @@ export class MantRecursoHumanoComponent implements OnInit, AfterViewInit {
   private _rolesService = inject(RolesService);
   private _recHumanoService = inject(RecursoHumanoService);
   private _ubigeoService = inject(UbigeoService);
+  private _profesionService = inject(ProfesionService);
+  private _especialidadService = inject(EspecialidadService);
   private readonly _adapter =
     inject<DateAdapter<unknown, unknown>>(DateAdapter);
 
@@ -89,6 +90,7 @@ export class MantRecursoHumanoComponent implements OnInit, AfterViewInit {
     this.onProvinciaChange();
     this.ultimosRecHumano();
     this.listarRolesDisponibles();
+    this.listarProfesiones();
     this._adapter.setLocale('es-PE'); // Establecer el locale para el adaptador de fecha
   }
 
@@ -144,7 +146,8 @@ export class MantRecursoHumanoComponent implements OnInit, AfterViewInit {
 
   crearProfesion(): FormGroup {
     return this._fb.group({
-      profesion: ['', Validators.required],
+      profesionRef: [''],
+      //codProfesion: ['', Validators.required],
       nivelProfesion: ['', Validators.required],
       titulo: [''],
       nroColegiatura: [''],
@@ -156,7 +159,8 @@ export class MantRecursoHumanoComponent implements OnInit, AfterViewInit {
 
   crearEspecialidad(): FormGroup {
     return this._fb.group({
-      nombreEspecialidad: ['', Validators.required],
+      especialidadRef: [''],
+      //codEspecialidad: ['', Validators.required],
       rne: ['', Validators.required],
       centroEstudiosEspecialidad: [''],
       anioEgresoEspecialidad: [''],
@@ -252,16 +256,6 @@ export class MantRecursoHumanoComponent implements OnInit, AfterViewInit {
   }
 
   agregarProfesion() {
-    // const profesionForm = this._fb.group({
-    //   nivelProfesion: ['', [Validators.required]],
-    //   titulo: [''],
-    //   profesion: ['', [Validators.required]],
-    //   nroColegiatura: [''],
-    //   centroEstudiosProfesion: [''],
-    //   anioEgresoProfesion: [''],
-    // });
-
-    // this.profesionesRecurso.push(profesionForm);
     this.profesionesRecurso.push(this.crearProfesion());
   }
 
@@ -270,15 +264,6 @@ export class MantRecursoHumanoComponent implements OnInit, AfterViewInit {
   }
 
   agregarEspecialidad(i: number) {
-    // const especialidadForm = this._fb.group({
-    //   especialidad: ['', [Validators.required]],
-    //   centroEstudiosEspecialidad: [''],
-    //   rne: ['', [Validators.required]],
-    //   anioEgresoEspecialidad: [''],
-    // });
-
-    // this.especialidadesRecurso.push(especialidadForm);
-
     this.especialidades(i).push(this.crearEspecialidad());
   }
 
@@ -342,6 +327,8 @@ export class MantRecursoHumanoComponent implements OnInit, AfterViewInit {
       direcRecHumano: recursoHumano.direcRecHumano,
       mailRecHumano: recursoHumano.mailRecHumano,
       gradoInstruccion: recursoHumano.gradoInstruccion,
+      atiendeConsultas: recursoHumano.atiendeConsultas,
+      usuarioSistema: recursoHumano.usuarioSistema,
     });
 
     // Cargar valores del grupo datosLogueo si existen
@@ -368,9 +355,14 @@ export class MantRecursoHumanoComponent implements OnInit, AfterViewInit {
 
     this.profesionesRecurso.clear();
     // Agregar cada profesión al FormArray
-    recursoHumano.profesionesRecurso.forEach((profesion: any) => {
-      this.profesionesRecurso.push(this.crearProfesionGroup(profesion));
-    });
+    recursoHumano.profesionesRecurso.forEach(
+      (profesion: any, index: number) => {
+        this.profesionesRecurso.push(this.crearProfesionGroup(profesion));
+        const profesionId =
+          profesion.profesionRef._id || profesion.profesionRef;
+        this.onProfesionSeleccionada(profesionId, index);
+      },
+    );
   }
 
   private crearTelefonoGroup(phone: any): FormGroup {
@@ -390,9 +382,10 @@ export class MantRecursoHumanoComponent implements OnInit, AfterViewInit {
     }
 
     return this._fb.group({
+      profesionRef: [profesion.profesionRef],
       nivelProfesion: [profesion.nivelProfesion],
       titulo: [profesion.titulo],
-      profesion: [profesion.profesion],
+      codProfesion: [profesion.codProfesion],
       nroColegiatura: [profesion.nroColegiatura],
       centroEstudiosProfesion: [profesion.centroEstudiosProfesion],
       anioEgresoProfesion: [profesion.anioEgresoProfesion],
@@ -402,11 +395,40 @@ export class MantRecursoHumanoComponent implements OnInit, AfterViewInit {
 
   private crearEspecialidadGroup(especialidad: any): FormGroup {
     return this._fb.group({
-      nombreEspecialidad: [especialidad.nombreEspecialidad],
+      especialidadRef: [especialidad.especialidadRef],
+      codEspecialidad: [especialidad.codEspecialidad],
       rne: [especialidad.rne],
       centroEstudiosEspecialidad: [especialidad.centroEstudiosEspecialidad],
       anioEgresoEspecialidad: [especialidad.anioEgresoEspecialidad],
     });
+  }
+
+  profesiones: any[] = [];
+  especialidadesPorProfesion: any[][] = [];
+  listarProfesiones() {
+    this._profesionService.getAllProfesions().subscribe({
+      next: (profesiones) => {
+        this.profesiones = profesiones;
+      },
+      error: () => {
+        this.profesiones = [];
+      },
+    });
+  }
+
+  onProfesionSeleccionada(idProfesion: string, index: number): void {
+    this._especialidadService
+      .getEspecialidadesPorProfesion(idProfesion)
+      .subscribe({
+        next: (especialidades) => {
+          this.especialidadesPorProfesion[index] = especialidades;
+          console.log('Especialidades cargadas:', especialidades);
+        },
+        error: (err) => {
+          console.error('Error al cargar especialidades', err);
+          this.especialidadesPorProfesion[index] = [];
+        },
+      });
   }
 
   ultimosRecHumano(): void {
@@ -429,38 +451,22 @@ export class MantRecursoHumanoComponent implements OnInit, AfterViewInit {
     this.dataSourceRecursoHumano.filter = termino.trim().toLowerCase();
   }
 
-  // seleccionarProfesionSolicitante(index: number) {
-  //   const grupo = this.profesionesRecurso.at(index);
-  //   const estabaActivo = grupo.get('profesionSolicitante')?.value;
-
-  //   if (estabaActivo) {
-  //     // Si estaba activo, lo apago y limpio el principal
-  //     grupo.get('profesionSolicitante')?.setValue(false);
-  //     this.myFormRecHumano.get('profesionSolicitante')?.reset();
-  //   } else {
-  //     // Si estaba apagado, activo este y apago los demás
-  //     this.profesionesRecurso.controls.forEach((group, i) => {
-  //       group.get('profesionSolicitante')?.setValue(i === index);
-  //     });
-
-  //     const { profesion, nroColegiatura } = grupo.value;
-  //     this.myFormRecHumano
-  //       .get('profesionSolicitante')
-  //       ?.setValue({ profesion, nroColegiatura });
-  //   }
-  // }
-
   recHumanoSeleccionado = false;
 
   registraRecHumano() {
+    console.log('Registro de recurso humano iniciado');
     this.formSubmitted = true;
 
     if (this.myFormRecHumano.invalid) {
+      console.log(
+        'Formulario inválido, marcando todos los campos como tocados',
+      );
       this.myFormRecHumano.markAllAsTouched();
       return;
     }
 
     if (!this.validarArrayTelefono()) {
+      console.log('No hay teléfonos registrados, mostrando alerta');
       return;
     }
 

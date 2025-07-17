@@ -9,7 +9,7 @@
 
       <mat-card-content>
         <div [formGroup]="profesionesForm">
-          <div class="row-flex">
+          <div class="row-flex mt-2">
             <div [style.flex]="setFlex(35, '%')" class="flex-item">
               <mat-form-field appearance="outline">
                 <mat-label>Nombre Profesión</mat-label>
@@ -35,11 +35,7 @@
               class="flex-item mb-3"
               *ngIf="!modoEdicion"
             >
-              <button
-                mat-raised-button
-                *ngIf="!seSeleccionoCotizacion"
-                (click)="crearProfesion()"
-              >
+              <button mat-raised-button (click)="crearProfesion()">
                 CREAR PROFESIÓN
               </button>
             </div>
@@ -62,8 +58,8 @@
         >
           <ng-container matColumnDef="codigoProfesion">
             <mat-header-cell *matHeaderCellDef> Codigo </mat-header-cell>
-            <mat-cell *matCellDef="let profesion">
-              {{ profesion.codProfesion }}
+            <mat-cell *matCellDef="let especialidad">
+              {{ especialidad.codProfesion }}
             </mat-cell>
           </ng-container>
 
@@ -71,15 +67,15 @@
             <mat-header-cell *matHeaderCellDef>
               Nombre Profesión
             </mat-header-cell>
-            <mat-cell *matCellDef="let profesion">
-              {{ profesion.nombreProfesion }}
+            <mat-cell *matCellDef="let especialidad">
+              {{ especialidad.nombreProfesion }}
             </mat-cell>
           </ng-container>
 
           <ng-container matColumnDef="activo">
             <mat-header-cell *matHeaderCellDef> Estado </mat-header-cell>
-            <mat-cell *matCellDef="let profesion">
-              {{ profesion.estadoProfesion ? "Activo" : "Inactivo" }}
+            <mat-cell *matCellDef="let especialidad">
+              {{ especialidad.estadoProfesion ? "Activo" : "Inactivo" }}
             </mat-cell>
           </ng-container>
 
@@ -87,24 +83,24 @@
             <mat-header-cell *matHeaderCellDef>
               Fecha de creación
             </mat-header-cell>
-            <mat-cell *matCellDef="let profesion">
-              {{ profesion.estadoProfesion ? "Activo" : "Inactivo" }}
+            <mat-cell *matCellDef="let especialidad">
+              {{ especialidad.createdAt | date: "dd/MM/yyyy" }}
             </mat-cell>
           </ng-container>
 
           <ng-container matColumnDef="acciones">
             <mat-header-cell *matHeaderCellDef> Acciones </mat-header-cell>
-            <mat-cell *matCellDef="let profesion">
+            <mat-cell *matCellDef="let especialidad">
               <button
                 mat-icon-button
-                (click)="editarProfesion(profesion)"
+                (click)="editarProfesion(especialidad)"
                 aria-label="Editar"
               >
                 <mat-icon>edit</mat-icon>
               </button>
               <button
                 mat-icon-button
-                (click)="eliminarProfesion(profesion)"
+                (click)="eliminarProfesion(especialidad)"
                 aria-label="Eliminar"
               >
                 <mat-icon>delete</mat-icon>
@@ -129,17 +125,17 @@
 
       <mat-card-content>
         <div [formGroup]="especialidadesForm">
-          <div class="row-flex">
+          <div class="row-flex mt-2">
             <div [style.flex]="setFlex(35, '%')" class="flex-item">
               <mat-form-field appearance="outline">
                 <mat-label>Profesión</mat-label>
-                <mat-select formControlName="codProfEspecialidad">
+                <mat-select formControlName="codProfesion">
                   <mat-option
-                    *ngFor="let profesion of profesionesDisponibles"
-                    [value]="profesion.codProfesion"
+                    *ngFor="let especialidad of profesionesDisponibles"
+                    [value]="especialidad.codProfesion"
                   >
-                    {{ profesion.codProfesion }} -
-                    {{ profesion.nombreProfesion }}
+                    {{ especialidad.codProfesion }} -
+                    {{ especialidad.nombreProfesion }}
                   </mat-option>
                 </mat-select>
               </mat-form-field>
@@ -160,27 +156,38 @@
           </div>
 
           <div class="row-flex mt-4">
-            <button mat-raised-button (click)="limpiarEspecialidad()">
-              NUEVO
-            </button>
-            <button
-              mat-raised-button
-              *ngIf="!seSeleccionoCotizacion"
-              (click)="crearEspecialidad()"
+            <div [style.flex]="setFlex(20, '%')" class="flex-item mb-3">
+              <button mat-raised-button (click)="limpiarEspecialidad()">
+                NUEVO
+              </button>
+            </div>
+            <div
+              [style.flex]="setFlex(20, '%')"
+              class="flex-item mb-3"
+              *ngIf="!modoEdicionEspecialidad"
             >
-              CREAR ESPECIALIDAD
-            </button>
-            <button mat-raised-button (click)="actualizarEspecialidad()">
-              ACTUALIZAR ESPECIALIDAD
-            </button>
+              <button mat-raised-button (click)="crearEspecialidad()">
+                CREAR ESPECIALIDAD
+              </button>
+            </div>
+
+            <div
+              [style.flex]="setFlex(20, '%')"
+              class="flex-item mb-3"
+              *ngIf="modoEdicionEspecialidad"
+            >
+              <button mat-raised-button (click)="actualizarEspecialidad()">
+                ACTUALIZAR ESPECIALIDAD
+              </button>
+            </div>
           </div>
         </div>
 
         <mat-table [dataSource]="dataSourceEspecialidades">
           <ng-container matColumnDef="codigoEspecialidad">
             <mat-header-cell *matHeaderCellDef> Código </mat-header-cell>
-            <mat-cell *matCellDef="let profesion">
-              {{ profesion.nombreProfesion }}
+            <mat-cell *matCellDef="let especialidad">
+              {{ especialidad.codEspecialidad }}
             </mat-cell>
           </ng-container>
 
@@ -188,15 +195,25 @@
             <mat-header-cell *matHeaderCellDef>
               Nombre Especialidad
             </mat-header-cell>
-            <mat-cell *matCellDef="let profesion">
-              {{ profesion.nombreProfesion }}
+            <mat-cell *matCellDef="let especialidad">
+              {{ especialidad.nombreEspecialidad }}
+            </mat-cell>
+          </ng-container>
+
+          <ng-container matColumnDef="nombreProfeEspecialidad">
+            <mat-header-cell *matHeaderCellDef> Profesión </mat-header-cell>
+            <mat-cell *matCellDef="let especialidad">
+              {{ especialidad.profesionRef?.nombreProfesion }}
+              <span *ngIf="especialidad.referenciaRota" class="text-danger">
+                (Referencia inválida)
+              </span>
             </mat-cell>
           </ng-container>
 
           <ng-container matColumnDef="activo">
             <mat-header-cell *matHeaderCellDef> Estado </mat-header-cell>
-            <mat-cell *matCellDef="let profesion">
-              {{ profesion.estadoProfesion ? "Activo" : "Inactivo" }}
+            <mat-cell *matCellDef="let especialidad">
+              {{ especialidad.estadoEspecialidad ? "Activo" : "Inactivo" }}
             </mat-cell>
           </ng-container>
 
@@ -204,24 +221,24 @@
             <mat-header-cell *matHeaderCellDef>
               Fecha de creación
             </mat-header-cell>
-            <mat-cell *matCellDef="let profesion">
-              {{ profesion.estadoProfesion ? "Activo" : "Inactivo" }}
+            <mat-cell *matCellDef="let especialidad">
+              {{ especialidad.createdAt | date: "dd/MM/yyyy" }}
             </mat-cell>
           </ng-container>
 
           <ng-container matColumnDef="acciones">
             <mat-header-cell *matHeaderCellDef> Acciones </mat-header-cell>
-            <mat-cell *matCellDef="let profesion">
+            <mat-cell *matCellDef="let especialidad">
               <button
                 mat-icon-button
-                (click)="editarProfesion(profesion)"
+                (click)="editarEspecialidad(especialidad)"
                 aria-label="Editar"
               >
                 <mat-icon>edit</mat-icon>
               </button>
               <button
                 mat-icon-button
-                (click)="eliminarProfesion(profesion)"
+                (click)="eliminarEspecialidad(especialidad)"
                 aria-label="Eliminar"
               >
                 <mat-icon>delete</mat-icon>

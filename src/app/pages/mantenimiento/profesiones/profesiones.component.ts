@@ -18,6 +18,8 @@ import { IProfesion } from '../../../models/Mantenimiento/profesion.models';
 import Swal from 'sweetalert2';
 import { ProfesionService } from '../../../services/mantenimiento/profesion/profesion.service';
 import { MatCardModule } from '@angular/material/card';
+import { IEspecialidad } from '../../../models/Mantenimiento/especialidad.models';
+import { EspecialidadService } from '../../../services/mantenimiento/especialidad/especialidad.service';
 
 @Component({
   selector: 'app-profesiones',
@@ -40,9 +42,11 @@ import { MatCardModule } from '@angular/material/card';
 export class ProfesionesComponent implements OnInit {
   ngOnInit(): void {
     this.listarProfesiones();
+    this.listarEspecialidades();
   }
   private _fb = inject(FormBuilder);
   private _profesionService = inject(ProfesionService);
+  private _especialidadService = inject(EspecialidadService);
 
   profesionesForm: FormGroup = this._fb.group({
     nombreProfesion: ['', Validators.required],
@@ -50,7 +54,7 @@ export class ProfesionesComponent implements OnInit {
   });
 
   especialidadesForm: FormGroup = this._fb.group({
-    codProfEspecialidad: [null, Validators.required],
+    codProfesion: [null, Validators.required],
     nombreEspecialidad: ['', Validators.required],
     estadoEspecialidad: [true, Validators.required],
   });
@@ -72,8 +76,6 @@ export class ProfesionesComponent implements OnInit {
     return `0 0 ${valor}${unidad}`;
   }
 
-  seSeleccionoCotizacion: boolean = false;
-
   limpiarProfesion() {
     this.modoEdicion = false;
     this.profesionSeleccionada = null;
@@ -87,8 +89,8 @@ export class ProfesionesComponent implements OnInit {
       return;
     }
     Swal.fire({
-      title: '¿Registrar rol?',
-      text: '¿Está seguro de registrar este rol?',
+      title: '¿Registrar profesión?',
+      text: '¿Está seguro de registrar esta profesión?',
       icon: 'question',
       showCancelButton: true,
       confirmButtonText: 'Sí, registrar',
@@ -100,7 +102,11 @@ export class ProfesionesComponent implements OnInit {
         };
         this._profesionService.registrarProfesion(profesion).subscribe({
           next: () => {
-            Swal.fire('Registrado', 'Rol registrado correctamente', 'success');
+            Swal.fire(
+              'Registrado',
+              'Profesión registrada correctamente',
+              'success',
+            );
             this.profesionesForm.reset({ estado: true });
             this.listarProfesiones();
             this.limpiarProfesion();
@@ -134,8 +140,8 @@ export class ProfesionesComponent implements OnInit {
       return;
     }
     Swal.fire({
-      title: '¿Actualizar ruta?',
-      text: '¿Está seguro de actualizar esta ruta?',
+      title: '¿Actualizar profesión?',
+      text: '¿Está seguro de actualizar esta profesión?',
       icon: 'question',
       showCancelButton: true,
       confirmButtonText: 'Sí, actualizar',
@@ -162,7 +168,7 @@ export class ProfesionesComponent implements OnInit {
               const mensaje =
                 err?.error?.msg ||
                 err.message ||
-                'No se pudo registrar la profesión. Intenta nuevamente.';
+                'No se pudo actualizar la profesión. Intenta nuevamente.';
 
               Swal.fire({
                 title: 'Error',
@@ -181,8 +187,10 @@ export class ProfesionesComponent implements OnInit {
       title: '¿Eliminar profesión?',
       text: `¿Está seguro de eliminar la profesión ${profesion.nombreProfesion}?`,
       icon: 'warning',
+      iconColor: '#dd1313ff',
       showCancelButton: true,
       confirmButtonText: 'Sí, eliminar',
+      confirmButtonColor: '#dd1313ff',
       cancelButtonText: 'Cancelar',
     }).then((result) => {
       if (result.isConfirmed) {
@@ -196,6 +204,7 @@ export class ProfesionesComponent implements OnInit {
                 'success',
               );
               this.listarProfesiones();
+              this.limpiarProfesion();
             },
             error: () =>
               Swal.fire('Error', 'No se pudo eliminar la profesión', 'error'),
@@ -217,21 +226,172 @@ export class ProfesionesComponent implements OnInit {
   }
 
   //Especialidad
-  dataSourceEspecialidades = new MatTableDataSource<FormGroup>([]);
+  dataSourceEspecialidades = new MatTableDataSource<IEspecialidad>([]);
   displayedColumnsEspecialidades: string[] = [
     'codigoEspecialidad',
     'nombreEspecialidad',
+    'nombreProfeEspecialidad',
     'activo',
     'fechaCreacion',
     'acciones',
   ];
+
+  public modoEdicionEspecialidad: boolean = false;
+  public especialidadSeleccionada: IEspecialidad | null = null;
 
   limpiarEspecialidad() {
     this.especialidadesForm.reset();
     this.especialidadesForm.get('estadoEspecialidad')?.setValue(true);
   }
 
-  crearEspecialidad() {}
+  crearEspecialidad() {
+    if (this.especialidadesForm.invalid) {
+      this.especialidadesForm.markAllAsTouched();
+      return;
+    }
+    Swal.fire({
+      title: '¿Registrar especialidad?',
+      text: '¿Está seguro de registrar esta especialidad?',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, registrar',
+      cancelButtonText: 'Cancelar',
+    }).then((result) => {
+      if (result.isConfirmed) {
+        const especialidad: IEspecialidad = {
+          ...this.especialidadesForm.value,
+        };
+        this._especialidadService
+          .registrarEspecialidad(especialidad)
+          .subscribe({
+            next: () => {
+              Swal.fire(
+                'Registrado',
+                'Especialidad registrada correctamente',
+                'success',
+              );
+              this.especialidadesForm.reset({ estado: true });
+              this.listarEspecialidades();
+              this.limpiarEspecialidad();
+            },
+            error: (err) => {
+              const mensaje =
+                err?.error?.msg ||
+                err.message ||
+                'No se pudo registrar la especialidad. Intenta nuevamente.';
+              Swal.fire({
+                title: 'Error',
+                text: mensaje,
+                icon: 'error',
+                confirmButtonText: 'Ok',
+              });
+            },
+          });
+      }
+    });
+  }
 
-  actualizarEspecialidad() {}
+  actualizarEspecialidad() {
+    if (this.especialidadesForm.invalid || !this.especialidadSeleccionada) {
+      this.especialidadesForm.markAllAsTouched();
+      return;
+    }
+    Swal.fire({
+      title: '¿Actualizar Especialidad?',
+      text: '¿Está seguro de actualizar esta especialidad?',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, actualizar',
+      cancelButtonText: 'Cancelar',
+    }).then((result) => {
+      if (result.isConfirmed) {
+        const especialidad: IEspecialidad = this.especialidadesForm.value;
+        this._especialidadService
+          .actualizarEspecialidad(
+            this.especialidadSeleccionada!.codEspecialidad,
+            especialidad,
+          )
+          .subscribe({
+            next: () => {
+              Swal.fire(
+                'Actualizado',
+                'Especialidad actualizada correctamente',
+                'success',
+              );
+              this.listarEspecialidades();
+              this.limpiarEspecialidad();
+            },
+            error: (err) => {
+              const mensaje =
+                err?.error?.msg ||
+                err.message ||
+                'No se pudo actualizar la especialidad. Intenta nuevamente.';
+
+              Swal.fire({
+                title: 'Error',
+                text: mensaje,
+                icon: 'error',
+                confirmButtonText: 'Ok',
+              });
+            },
+          });
+      }
+    });
+  }
+
+  editarEspecialidad(especialidad: IEspecialidad) {
+    this.modoEdicionEspecialidad = true;
+    this.especialidadSeleccionada = especialidad;
+    this.especialidadesForm.patchValue(especialidad);
+    this.especialidadesForm
+      .get('codProfesion')
+      ?.setValue(especialidad.profesionRef.codProfesion);
+  }
+
+  eliminarEspecialidad(especialidad: IEspecialidad) {
+    Swal.fire({
+      title: '¿Eliminar especialidad?',
+      text: `¿Está seguro de eliminar la especialidad ${especialidad.nombreEspecialidad}?`,
+      icon: 'warning',
+      iconColor: '#dd1313ff',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, eliminar',
+      confirmButtonColor: '#dd1313ff',
+      cancelButtonText: 'Cancelar',
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this._especialidadService
+          .eliminarEspecialidad(especialidad.codEspecialidad)
+          .subscribe({
+            next: () => {
+              Swal.fire(
+                'Eliminado',
+                'Especialidad eliminada correctamente',
+                'success',
+              );
+              this.listarEspecialidades();
+              this.limpiarEspecialidad();
+            },
+            error: () =>
+              Swal.fire(
+                'Error',
+                'No se pudo eliminar la especialidad',
+                'error',
+              ),
+          });
+      }
+    });
+  }
+
+  listarEspecialidades() {
+    this._especialidadService.getAllEspecialidades().subscribe({
+      next: (especialidades) => {
+        this.dataSourceEspecialidades.data = especialidades;
+        console.log('Especialidades obtenidas:', especialidades);
+      },
+      error: () => {
+        this.dataSourceProfesiones.data = [];
+      },
+    });
+  }
 }

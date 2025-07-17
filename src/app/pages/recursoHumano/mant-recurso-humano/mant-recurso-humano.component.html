@@ -425,36 +425,33 @@
                     </mat-form-field>
                   </div>
 
-                  <div [style.flex]="setFlex(20, '%')" class="flex-item">
+                  <div [style.flex]="setFlex(35, '%')" class="flex-item">
                     <mat-form-field appearance="outline">
                       <mat-label>Profesión</mat-label>
-                      <mat-select formControlName="profesion">
-                        <mat-option value="Enfermero">Enfermero</mat-option>
-                        <mat-option value="Médico">Médico</mat-option>
-                        <mat-option value="Nutricionista"
-                          >Nutricionista</mat-option
+                      <mat-select
+                        formControlName="profesionRef"
+                        (selectionChange)="
+                          onProfesionSeleccionada($event.value, i)
+                        "
+                      >
+                        <mat-option
+                          *ngFor="let profesion of profesiones"
+                          [value]="profesion._id"
                         >
-                        <mat-option value="Odontólogo">Odontólogo</mat-option>
-                        <mat-option value="Psicólogo">Psicólogo</mat-option>
-                        <mat-option value="Tecnólogo Médico"
-                          >Tecnólogo Médico</mat-option
-                        >
-                        <mat-option value="Trabajador Social"
-                          >Trabajador Social</mat-option
-                        >
-                        <mat-option value="Ingeniero de Sistemas"
-                          >Ingeniero de Sistemas</mat-option
-                        >
+                          {{ profesion.codProfesion }} -
+                          {{ profesion.nombreProfesion }}
+                        </mat-option>
                       </mat-select>
+
                       <mat-error
-                        *ngIf="profesion.get('profesion')?.hasError('required')"
+                        *ngIf="profesion.get('_id')?.hasError('required')"
                       >
                         Obligatorio
                       </mat-error>
                     </mat-form-field>
                   </div>
 
-                  <div [style.flex]="setFlex(35, '%')" class="flex-item">
+                  <div [style.flex]="setFlex(40, '%')" class="flex-item">
                     <mat-form-field appearance="outline">
                       <mat-label>Centro de Estudios</mat-label>
                       <input
@@ -463,16 +460,16 @@
                       />
                     </mat-form-field>
                   </div>
+                </div>
 
+                <div class="row-flex">
                   <div [style.flex]="setFlex(15, '%')" class="flex-item">
                     <mat-form-field appearance="outline">
                       <mat-label>Año de Egreso</mat-label>
                       <input matInput formControlName="anioEgresoProfesion" />
                     </mat-form-field>
                   </div>
-                </div>
 
-                <div class="row-flex">
                   <div
                     [style.flex]="setFlex(20, '%')"
                     class="flex-item mb-2 text-center mb-3"
@@ -521,38 +518,38 @@
                   </div>
                 </div>
 
-                <div formArrayName="especialidades">
-                  <div
-                    *ngFor="
-                      let especialidad of especialidades(i).controls;
-                      let j = index
-                    "
-                    [formGroupName]="j"
-                    class="flex-row-container"
-                  >
-                    <fieldset class="campo-fieldset mt-2 mb-3">
-                      <legend>ESPECIALIDADES</legend>
+                <fieldset class="campo-fieldset mt-2 mb-3">
+                  <legend>ESPECIALIDADES</legend>
 
+                  <div formArrayName="especialidades">
+                    <div
+                      *ngFor="
+                        let especialidad of especialidades(i).controls;
+                        let j = index
+                      "
+                      [formGroupName]="j"
+                      class="flex-row-container"
+                    >
                       <div class="row-flex mt-2">
                         <div [style.flex]="setFlex(30, '%')" class="flex-item">
                           <mat-form-field appearance="outline">
                             <mat-label>Especialdiad</mat-label>
-                            <mat-select formControlName="nombreEspecialidad">
-                              <mat-option value="Pediatría"
-                                >Pediatría</mat-option
+
+                            <mat-select formControlName="especialidadRef">
+                              <mat-option
+                                *ngFor="
+                                  let esp of especialidadesPorProfesion[i]
+                                "
+                                [value]="esp._id"
                               >
-                              <mat-option value="Radiólogía"
-                                >Radiólogía</mat-option
-                              >
-                              <mat-option value="Ginecología y Obstetricia"
-                                >Ginecología y Obstetricia</mat-option
-                              >
+                                {{ esp.codEspecialidad }} -
+                                {{ esp.nombreEspecialidad }}
+                              </mat-option>
                             </mat-select>
+
                             <mat-error
                               *ngIf="
-                                especialidad
-                                  .get('especialidad')
-                                  ?.hasError('required')
+                                especialidad.get('_id')?.hasError('required')
                               "
                             >
                               Obligatorio
@@ -609,9 +606,9 @@
                           </button>
                         </div>
                       </div>
-                    </fieldset>
+                    </div>
                   </div>
-                </div>
+                </fieldset>
               </div>
             </div>
           </fieldset>

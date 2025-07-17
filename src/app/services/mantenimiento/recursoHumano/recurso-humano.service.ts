@@ -21,7 +21,7 @@ export class RecursoHumanoService {
   ) {}
 
   public registrarRecHumano(body: IRecHumano) {
-    console.log('Enviando valores desde registro recurso humano');
+    console.log('Enviando valores desde registro recurso humano', body);
 
     return this._http.post<IRecHumanoPostResponseDTO>(
       `${environment.baseUrl}/api/recursoHumano/newRecHumano`,

@@ -1,16 +1,18 @@
 import { IRol } from '../permisos/roles.models';
 
 interface IEspecialidad {
-  nombreEspecialidad: string;
+  _id?: string;
+  //codEspecialidad: string;
   rne: string;
   centroEstudiosEspecialidad?: string;
   anioEgresoEspecialidad?: string;
 }
 
 interface IProfesion {
-  profesion: string;
+  _id?: string;
+  //codProfesion: string;
   nivelProfesion?: string;
-  titulo?: string;
+  titulo: boolean;
   nroColegiatura?: string;
   centroEstudiosProfesion?: string;
   anioEgresoProfesion?: string;
@@ -18,6 +20,7 @@ interface IProfesion {
 }
 
 export interface IRecHumano {
+  _id?: string;
   codRecHumano: string;
   tipoDoc: string;
   nroDoc: string;

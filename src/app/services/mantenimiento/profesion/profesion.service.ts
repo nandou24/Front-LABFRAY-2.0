@@ -17,8 +17,6 @@ export class ProfesionService {
   private readonly apiUrl = `${environment.baseUrl}/api/profesion`;
 
   public registrarProfesion(body: IProfesion) {
-    console.log('Enviando valores desde registro recurso humano');
-
     return this._http.post<IProfesionPostResponseDTO>(
       `${this.apiUrl}/newProfesion`,
       body,
@@ -42,7 +40,6 @@ export class ProfesionService {
   }
 
   getAllProfesions(): Observable<IProfesion[]> {
-    console.log('Obteniendo todas las profesiones en service');
     return this._http.get<IGetLastProfesiones>(`${this.apiUrl}/latest`).pipe(
       map((data) => {
         return data.profesiones;

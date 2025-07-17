@@ -1,4 +1,5 @@
 export interface IProfesion {
+  _id?: string;
   codProfesion: string;
   nombreProfesion: string;
   estadoProfesion: string;
