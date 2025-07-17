@@ -41,8 +41,8 @@ export class EspecialidadService {
     );
   }
 
-  getAllEspecialidades(): Observable<IEspecialidad[]> {
-    console.log('Obteniendo todas las Especialidades en service');
+  getAllEspecialidad(): Observable<IEspecialidad[]> {
+    console.log('Obteniendo todas las especialidades en service');
     return this._http.get<IGetLastEspecialidades>(`${this.apiUrl}/latest`).pipe(
       map((data) => {
         return data.especialidades;

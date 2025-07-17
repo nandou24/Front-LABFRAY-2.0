@@ -20,6 +20,6 @@ export interface IEspecialidadPostResponseDTO {
 
 export interface IGetLastEspecialidades {
   ok: boolean;
-  search: string;
+  search: String;
   especialidades: IEspecialidad[];
 }

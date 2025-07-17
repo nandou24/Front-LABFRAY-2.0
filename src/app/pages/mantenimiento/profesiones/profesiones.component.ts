@@ -22,7 +22,7 @@ import { IEspecialidad } from '../../../models/Mantenimiento/especialidad.models
 import { EspecialidadService } from '../../../services/mantenimiento/especialidad/especialidad.service';
 
 @Component({
-  selector: 'app-profesiones',
+  selector: 'app-especialidades',
   imports: [
     CommonModule,
     FormsModule,
@@ -215,9 +215,9 @@ export class ProfesionesComponent implements OnInit {
 
   listarProfesiones() {
     this._profesionService.getAllProfesions().subscribe({
-      next: (profesiones) => {
-        this.dataSourceProfesiones.data = profesiones;
-        this.profesionesDisponibles = profesiones;
+      next: (especialidades) => {
+        this.dataSourceProfesiones.data = especialidades;
+        this.profesionesDisponibles = especialidades;
       },
       error: () => {
         this.dataSourceProfesiones.data = [];
