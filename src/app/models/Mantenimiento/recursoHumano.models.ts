@@ -1,6 +1,6 @@
 import { IRol } from '../permisos/roles.models';
 
-interface IEspecialidad {
+interface IEspecialidadRRHH {
   _id?: string;
   //codEspecialidad: string;
   rne: string;
@@ -8,7 +8,7 @@ interface IEspecialidad {
   anioEgresoEspecialidad?: string;
 }
 
-interface IProfesion {
+interface IProfesionRRHH {
   _id?: string;
   //codProfesion: string;
   nivelProfesion?: string;
@@ -16,7 +16,7 @@ interface IProfesion {
   nroColegiatura?: string;
   centroEstudiosProfesion?: string;
   anioEgresoProfesion?: string;
-  especialidades: IEspecialidad[];
+  especialidades: IEspecialidadRRHH[];
 }
 
 export interface IRecHumano {
@@ -36,7 +36,7 @@ export interface IRecHumano {
   mailRecHumano: string;
   phones: Array<any>[];
   gradoInstruccion: string;
-  profesionesRecurso: IProfesion[];
+  profesionesRecurso: IProfesionRRHH[];
   atiendeConsultas: boolean; // si atiende consultas
   usuarioSistema: boolean;
   datosLogueo: {

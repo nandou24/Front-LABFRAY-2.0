@@ -34,6 +34,8 @@ import { catchError, distinctUntilChanged, of } from 'rxjs';
 import { MatPaginator, MatPaginatorIntl } from '@angular/material/paginator';
 import { customPaginatorIntl } from '../../../services/utilitarios/mat-paginator-intl'; // actualiza la ruta
 import Swal from 'sweetalert2';
+import { ProfesionService } from '../../../services/mantenimiento/profesion/profesion.service';
+import { EspecialidadService } from '../../../services/mantenimiento/especialidad/especialidad.service';
 
 @Component({
   selector: 'app-mant-servicio',
@@ -61,9 +63,12 @@ export class MantServicioComponent implements OnInit, AfterViewInit {
   ngOnInit(): void {
     this.escucharCambioTipo(), this.inicializarBusquedaServicios();
     this.traerServicios();
+    this.listarProfesiones();
   }
 
   private _fb = inject(FormBuilder);
+  private _profesionService = inject(ProfesionService);
+  private _especialidadService = inject(EspecialidadService);
 
   public myFormServicio: FormGroup = this._fb.group({
     codServicio: '',
@@ -74,10 +79,19 @@ export class MantServicioComponent implements OnInit, AfterViewInit {
     estadoServicio: [true],
     favoritoServicio: [false],
     examenesServicio: this._fb.array([]),
+    //profesionServicio: [null, [Validators.required]],
+    //especialidadServicio: [null, [Validators.required]],
+    profesionesEspecialidadesServicio: this._fb.array([]),
   });
 
   get examenesServicio(): FormArray {
     return this.myFormServicio.get('examenesServicio') as FormArray;
+  }
+
+  get profesionesEspecialidadesServicio(): FormArray {
+    return this.myFormServicio.get(
+      'profesionesEspecialidadesServicio',
+    ) as FormArray;
   }
 
   @ViewChild(MatTable) table!: MatTable<any>;
@@ -400,5 +414,85 @@ export class MantServicioComponent implements OnInit, AfterViewInit {
       this.examenesServicio.controls.map(
         (control: AbstractControl) => control.value,
       );
+  }
+
+  profesiones: any[] = [];
+  especialidadesPorProfesion: any[] = [];
+
+  profesionSeleccionada: any;
+  especialidadSeleccionada: any;
+
+  dataSourceProfEsp = new MatTableDataSource<any>();
+  columnasProfEsp: string[] = ['profesion', 'especialidad', 'accion'];
+
+  listarProfesiones() {
+    this._profesionService.getAllProfesions().subscribe({
+      next: (profesiones) => {
+        this.profesiones = profesiones;
+        console.log('Profesiones cargadas:', this.profesiones);
+      },
+      error: () => {
+        this.profesiones = [];
+      },
+    });
+  }
+
+  onProfesionChange(profesionId: any) {
+    if (!profesionId) {
+      this.especialidadesPorProfesion = [];
+      this.myFormServicio.get('especialidadServicio')?.setValue(null);
+      return;
+    }
+    this._especialidadService
+      .getEspecialidadesPorProfesion(profesionId)
+      .subscribe({
+        next: (especialidades) => {
+          this.especialidadesPorProfesion = especialidades;
+          this.myFormServicio.get('especialidadServicio')?.setValue(null);
+        },
+        error: () => {
+          this.especialidadesPorProfesion = [];
+          this.myFormServicio.get('especialidadServicio')?.setValue(null);
+        },
+      });
+  }
+
+  agregarProfesionEspecialidad() {
+    // Captura los valores seleccionados directamente de las variables locales
+    const profesionId = this.profesionSeleccionada;
+    const especialidadId = this.especialidadSeleccionada;
+
+    if (!profesionId || !especialidadId) {
+      Swal.fire({
+        title: 'Error',
+        text: 'Debe seleccionar una profesión y una especialidad.',
+        icon: 'error',
+      });
+      return;
+    }
+
+    const nuevaProfesionEspecialidad = {
+      profesionId,
+      especialidadId,
+    };
+
+    this.profesionesEspecialidadesServicio.push(
+      this._fb.control(nuevaProfesionEspecialidad),
+    );
+
+    console.log(
+      'Profesiones y especialidades asociadas:',
+      this.profesionesEspecialidadesServicio.value,
+    );
+
+    this.dataSourceProfEsp.data =
+      this.profesionesEspecialidadesServicio.controls;
+
+    this.profesionSeleccionada = null;
+    this.especialidadSeleccionada = null;
+  }
+
+  quitarProfesionEspecialidad(index: number) {
+    this.profesionesEspecialidadesServicio.removeAt(index);
   }
 }

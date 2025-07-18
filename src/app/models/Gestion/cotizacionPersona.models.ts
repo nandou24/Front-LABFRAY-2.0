@@ -45,7 +45,6 @@ export interface IServicioCotizacion {
     medicoId: string;
     nombreCompletoMedico: string;
     nroColegiatura: string;
-    colegiatura: string;
     rne: string;
     especialidad: string;
   };

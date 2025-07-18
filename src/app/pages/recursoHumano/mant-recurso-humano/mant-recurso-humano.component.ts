@@ -131,7 +131,6 @@ export class MantRecursoHumanoComponent implements OnInit, AfterViewInit {
     phones: this._fb.array([], Validators.required),
     gradoInstruccion: ['', [Validators.required]],
     profesionesRecurso: this._fb.array([]),
-    profesionSolicitante: new FormControl(null),
     atiendeConsultas: [false, Validators.required],
     usuarioSistema: false,
     datosLogueo: this._fb.group({

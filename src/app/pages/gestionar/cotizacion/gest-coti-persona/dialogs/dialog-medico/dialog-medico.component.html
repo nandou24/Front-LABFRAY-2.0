@@ -1,15 +1,6 @@
 <h2 mat-dialog-title>Seleccionar Profesional</h2>
 
 <mat-dialog-content>
-  <!-- <mat-form-field appearance="outline" class="w-100">
-    <mat-label>Médico</mat-label>
-    <mat-select [(value)]="medicoSeleccionado">
-      <mat-option *ngFor="let medico of data.medicos" [value]="medico._id">
-        {{ medico.nombreCompletoPersonal }}
-      </mat-option>
-    </mat-select>
-  </mat-form-field> -->
-
   <mat-form-field appearance="outline" class="w-100 mt-1">
     <mat-label>Ingrese nombre o documento...</mat-label>
     <input matInput [formControl]="terminoBusquedaPersonal" />
@@ -30,7 +21,7 @@
       <td mat-cell *matCellDef="let personal; let i = index">{{ i + 1 }}</td>
     </ng-container>
     <ng-container matColumnDef="colegiatura">
-      <th mat-header-cell *matHeaderCellDef>Documento</th>
+      <th mat-header-cell *matHeaderCellDef>Colegiatura</th>
       <td mat-cell *matCellDef="let personal">{{ personal.nroDoc }}</td>
     </ng-container>
     <ng-container matColumnDef="nombreCompleto">
@@ -51,13 +42,13 @@
 
     <tr
       mat-header-row
-      *matHeaderRowDef="['nro', 'documento', 'nombreCompleto', 'acciones']"
+      *matHeaderRowDef="['nro', 'colegiatura', 'nombreCompleto', 'acciones']"
     ></tr>
     <tr
       mat-row
       *matRowDef="
         let row;
-        columns: ['nro', 'documento', 'nombreCompleto', 'acciones']
+        columns: ['nro', 'colegiatura', 'nombreCompleto', 'acciones']
       "
     ></tr>
   </table>

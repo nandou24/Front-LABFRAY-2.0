@@ -1,4 +1,4 @@
-import { Component, inject, ViewChild } from '@angular/core';
+import { Component, inject, OnInit, ViewChild } from '@angular/core';
 import {
   MAT_DIALOG_DATA,
   MatDialogModule,
@@ -39,11 +39,15 @@ import { RecursoHumanoService } from '../../../../../../services/mantenimiento/r
   templateUrl: './dialog-medico.component.html',
   styleUrl: './dialog-medico.component.scss',
 })
-export class DialogMedicoComponent {
+export class DialogMedicoComponent implements OnInit {
   cargando = false;
   terminoBusquedaPersonal = new FormControl('');
 
   medicoSeleccionado: string = '';
+
+  ngOnInit(): void {
+    this.cargarMedicos();
+  }
 
   dialogRef = inject(MatDialogRef<DialogMedicoComponent>);
   _recursoHumanoService = inject(RecursoHumanoService);
