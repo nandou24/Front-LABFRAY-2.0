@@ -46,14 +46,16 @@ export class DialogMedicoComponent implements OnInit {
   medicoSeleccionado: string = '';
 
   ngOnInit(): void {
-    this.cargarMedicos();
+    this.obtenerYFiltrarMedicos();
   }
 
   dialogRef = inject(MatDialogRef<DialogMedicoComponent>);
   _recursoHumanoService = inject(RecursoHumanoService);
   data = inject<{
-    especialidad?: string;
-    profesion?: string;
+    profesionesAsociadas: {
+      profesionId: string;
+      especialidadId?: string;
+    }[];
   }>(MAT_DIALOG_DATA);
 
   @ViewChild(MatTable) table!: MatTable<any>;
@@ -67,24 +69,43 @@ export class DialogMedicoComponent implements OnInit {
   ];
   dataSourcePersonal = new MatTableDataSource<IRecHumano>();
 
-  cargarMedicos(): void {
+  obtenerYFiltrarMedicos(): void {
     this.cargando = true;
 
-    const { especialidad, profesion } = this.data;
+    let medicosObtenidos: IRecHumano[] = [];
+    this._recursoHumanoService.getTodosPersonalSalud().subscribe({
+      next: (medicos: IRecHumano[]) => {
+        medicosObtenidos = medicos;
+        console.log('Recursos humanos obtenidos:', medicosObtenidos);
 
-    this._recursoHumanoService
-      .getPersonalSaludParaConsultas({ especialidad, profesion })
-      .subscribe({
-        next: (res) => {
-          this.dataSourcePersonal.data = res;
-          this.cargando = false;
-        },
-        error: (err) => {
-          console.error('Error al cargar médicos:', err);
-          this.dataSourcePersonal.data = [];
-          this.cargando = false;
-        },
-      });
+        // Filtrar los médicos según las profesiones asociadas
+        if (this.data.profesionesAsociadas.length > 0) {
+          medicosObtenidos = medicosObtenidos.filter((medico) => {
+            return this.data.profesionesAsociadas.some((profesion) => {
+              return (
+                medico.profesionesRecurso.some(
+                  (p) => p._id === profesion.profesionId,
+                ) &&
+                (!profesion.especialidadId ||
+                  medico.profesionesRecurso.some((p) =>
+                    p.especialidades.some(
+                      (e) => e._id === profesion.especialidadId,
+                    ),
+                  ))
+              );
+            });
+          });
+        }
+
+        this.dataSourcePersonal.data = medicosObtenidos;
+        this.cargando = false;
+      },
+      error: (err) => {
+        console.error('Error al cargar médicos:', err);
+        this.dataSourcePersonal.data = [];
+        this.cargando = false;
+      },
+    });
   }
 
   cancelar(): void {

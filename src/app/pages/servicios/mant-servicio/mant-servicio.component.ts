@@ -64,6 +64,7 @@ export class MantServicioComponent implements OnInit, AfterViewInit {
     this.escucharCambioTipo(), this.inicializarBusquedaServicios();
     this.traerServicios();
     this.listarProfesiones();
+    this.listarEspecialidades();
   }
 
   private _fb = inject(FormBuilder);
@@ -79,19 +80,15 @@ export class MantServicioComponent implements OnInit, AfterViewInit {
     estadoServicio: [true],
     favoritoServicio: [false],
     examenesServicio: this._fb.array([]),
-    //profesionServicio: [null, [Validators.required]],
-    //especialidadServicio: [null, [Validators.required]],
-    profesionesEspecialidadesServicio: this._fb.array([]),
+    profesionesAsociadas: this._fb.array([]),
   });
 
   get examenesServicio(): FormArray {
     return this.myFormServicio.get('examenesServicio') as FormArray;
   }
 
-  get profesionesEspecialidadesServicio(): FormArray {
-    return this.myFormServicio.get(
-      'profesionesEspecialidadesServicio',
-    ) as FormArray;
+  get profesionesAsociadas(): FormArray {
+    return this.myFormServicio.get('profesionesAsociadas') as FormArray;
   }
 
   @ViewChild(MatTable) table!: MatTable<any>;
@@ -236,6 +233,8 @@ export class MantServicioComponent implements OnInit, AfterViewInit {
     this.tipoServicioTabla.reset();
     this.dataSourceServicios.filter = '';
     this.examenesServicio.clear();
+    this.profesionesAsociadas.clear();
+    this.especialidadesPorProfesion = {}; // Limpiar especialidades filtradas
     this.dataSourceExamenesSeleccionados.data = [];
     this.dataSourceExamenesDisponibles.data = [];
     this.myFormServicio.get('tipoServicio')?.enable();
@@ -410,6 +409,20 @@ export class MantServicioComponent implements OnInit, AfterViewInit {
       this.examenesServicio.push(this.crearExamenFormGroup(servicio));
     });
 
+    this.profesionesAsociadas.clear();
+    servicio.profesionesAsociadas.forEach((profesion: any, index: number) => {
+      const profesionFormGroup = this.crearProfesionAsociada();
+      this.profesionesAsociadas.push(profesionFormGroup);
+
+      // Primero filtrar las especialidades para esta profesión (sin limpiar la especialidad)
+      if (profesion.profesionId) {
+        this.onProfesionChange(profesion.profesionId, index);
+      }
+
+      // Luego cargar los valores (incluyendo la especialidad)
+      profesionFormGroup.patchValue(profesion);
+    });
+
     this.dataSourceExamenesSeleccionados.data =
       this.examenesServicio.controls.map(
         (control: AbstractControl) => control.value,
@@ -417,19 +430,13 @@ export class MantServicioComponent implements OnInit, AfterViewInit {
   }
 
   profesiones: any[] = [];
-  especialidadesPorProfesion: any[] = [];
-
-  profesionSeleccionada: any;
-  especialidadSeleccionada: any;
-
-  dataSourceProfEsp = new MatTableDataSource<any>();
-  columnasProfEsp: string[] = ['profesion', 'especialidad', 'accion'];
+  especialidades: any[] = [];
+  especialidadesPorProfesion: { [key: number]: any[] } = {}; // Objeto para almacenar especialidades por índice
 
   listarProfesiones() {
     this._profesionService.getAllProfesions().subscribe({
       next: (profesiones) => {
         this.profesiones = profesiones;
-        console.log('Profesiones cargadas:', this.profesiones);
       },
       error: () => {
         this.profesiones = [];
@@ -437,62 +444,51 @@ export class MantServicioComponent implements OnInit, AfterViewInit {
     });
   }
 
-  onProfesionChange(profesionId: any) {
-    if (!profesionId) {
-      this.especialidadesPorProfesion = [];
-      this.myFormServicio.get('especialidadServicio')?.setValue(null);
-      return;
-    }
-    this._especialidadService
-      .getEspecialidadesPorProfesion(profesionId)
-      .subscribe({
-        next: (especialidades) => {
-          this.especialidadesPorProfesion = especialidades;
-          this.myFormServicio.get('especialidadServicio')?.setValue(null);
-        },
-        error: () => {
-          this.especialidadesPorProfesion = [];
-          this.myFormServicio.get('especialidadServicio')?.setValue(null);
-        },
-      });
+  listarEspecialidades() {
+    this._especialidadService.getAllEspecialidad().subscribe({
+      next: (especialidades) => {
+        this.especialidades = especialidades;
+      },
+      error: () => {
+        this.profesiones = [];
+      },
+    });
   }
 
-  agregarProfesionEspecialidad() {
-    // Captura los valores seleccionados directamente de las variables locales
-    const profesionId = this.profesionSeleccionada;
-    const especialidadId = this.especialidadSeleccionada;
-
-    if (!profesionId || !especialidadId) {
-      Swal.fire({
-        title: 'Error',
-        text: 'Debe seleccionar una profesión y una especialidad.',
-        icon: 'error',
-      });
-      return;
-    }
-
-    const nuevaProfesionEspecialidad = {
-      profesionId,
-      especialidadId,
-    };
-
-    this.profesionesEspecialidadesServicio.push(
-      this._fb.control(nuevaProfesionEspecialidad),
+  onProfesionChange(profesionId: any, index: number): void {
+    // Filtrar especialidades por profesión seleccionada para el índice específico
+    this.especialidadesPorProfesion[index] = this.especialidades.filter(
+      (especialidad) => especialidad.profesionRef._id === profesionId,
     );
-
-    console.log(
-      'Profesiones y especialidades asociadas:',
-      this.profesionesEspecialidadesServicio.value,
-    );
-
-    this.dataSourceProfEsp.data =
-      this.profesionesEspecialidadesServicio.controls;
-
-    this.profesionSeleccionada = null;
-    this.especialidadSeleccionada = null;
   }
 
-  quitarProfesionEspecialidad(index: number) {
-    this.profesionesEspecialidadesServicio.removeAt(index);
+  // Método para obtener las especialidades filtradas por índice
+  getEspecialidadesPorIndex(index: number): any[] {
+    return this.especialidadesPorProfesion[index] || [];
+  }
+
+  agregarProfesionAsociada() {
+    this.profesionesAsociadas.push(this.crearProfesionAsociada());
+  }
+
+  eliminarProfesionAsociada(index: number) {
+    this.profesionesAsociadas.removeAt(index);
+  }
+
+  crearProfesionAsociada(): FormGroup {
+    return this._fb.group({
+      profesionId: [],
+      especialidadId: [],
+    });
+  }
+
+  validaarrayProfesion(): boolean {
+    const profesion = this.myFormServicio.get(
+      'profesionesAsociadas',
+    ) as FormArray;
+    if (profesion.length > 0) {
+      return true;
+    }
+    return false;
   }
 }

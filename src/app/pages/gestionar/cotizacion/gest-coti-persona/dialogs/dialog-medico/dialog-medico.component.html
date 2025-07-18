@@ -22,13 +22,15 @@
     </ng-container>
     <ng-container matColumnDef="colegiatura">
       <th mat-header-cell *matHeaderCellDef>Colegiatura</th>
-      <td mat-cell *matCellDef="let personal">{{ personal.nroDoc }}</td>
+      <td mat-cell *matCellDef="let personal">
+        {{ personal.profesionesRecurso.nroColegiatura }}
+      </td>
     </ng-container>
     <ng-container matColumnDef="nombreCompleto">
       <th mat-header-cell *matHeaderCellDef>Nombre</th>
       <td mat-cell *matCellDef="let personal">
-        {{ personal.apePatCliente }} {{ personal.apeMatCliente }}
-        {{ personal.nombreCliente }}
+        {{ personal.apePatRecHumano }} {{ personal.apeMatRecHumano }}
+        {{ personal.nombreRecHumano }}
       </td>
     </ng-container>
     <ng-container matColumnDef="acciones">

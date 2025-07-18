@@ -89,157 +89,109 @@
           </div>
 
           <div class="row-flex mt-2">
-            <div [style.flex]="setFlex(95, '%')" class="flex-item">
+            <div [style.flex]="setFlex(70, '%')" class="flex-item">
               <mat-form-field appearance="outline">
                 <mat-label>Descripción</mat-label>
                 <input matInput formControlName="descripcionServicio" />
               </mat-form-field>
             </div>
+
+            <div [style.flex]="setFlex(25, '%')" class="flex-item">
+              <button
+                mat-flat-button
+                color="primary"
+                class="btn-telefono"
+                type="button"
+                (click)="agregarProfesionAsociada()"
+              >
+                <mat-icon class="me-1">add</mat-icon>
+                Agregar Profesión
+              </button>
+            </div>
           </div>
 
-          <!-- <div class="row-flex mt-2">
-            <div [style.flex]="setFlex(30, '%')" class="flex-item">
-              <mat-form-field appearance="outline">
-                <mat-label>Profesión</mat-label>
-                <mat-select
-                  formControlName="profesionServicio"
-                  (selectionChange)="onProfesionChange($event.value)"
-                >
-                  <mat-option
-                    *ngFor="let profesion of profesiones"
-                    [value]="profesion._id"
-                  >
-                    {{ profesion.codProfesion }} -
-                    {{ profesion.nombreProfesion }}
-                  </mat-option>
-                </mat-select>
-                <mat-error
-                  *ngIf="
-                    myFormServicio
-                      .get('profesionServicio')
-                      ?.hasError('required')
-                  "
-                >
-                  Requerido
-                </mat-error>
-              </mat-form-field>
-            </div>
-            <div [style.flex]="setFlex(30, '%')" class="flex-item">
-              <mat-form-field appearance="outline">
-                <mat-label>Especialidad</mat-label>
-                <mat-select formControlName="especialidadServicio">
-                  <mat-option
-                    *ngFor="let especialidad of especialidadesPorProfesion"
-                    [value]="especialidad._id"
-                    >{{ especialidad.codEspecialidad }} -
-                    {{ especialidad.nombreEspecialidad }}
-                  </mat-option>
-                </mat-select>
-                <mat-error
-                  *ngIf="
-                    myFormServicio
-                      .get('especialidadServicio')
-                      ?.hasError('required')
-                  "
-                >
-                  Requerido
-                </mat-error>
-              </mat-form-field>
-            </div>
-          </div> -->
+          <fieldset class="campo-fieldset mt-2 mb-3">
+            <legend>Profesiones asociadas</legend>
 
-          <div class="row-flex mt-2">
-            <div class="flex-item" style="flex: 100%">
-              <mat-card>
-                <mat-card-title>Profesiones asociadas</mat-card-title>
-                <mat-card-content>
-                  <div class="row-flex mt-3">
-                    <div class="flex-item" style="flex: 40%">
-                      <mat-form-field appearance="outline" style="width: 100%">
-                        <mat-label>Profesión</mat-label>
-                        <mat-select
-                          [(value)]="profesionSeleccionada"
-                          (selectionChange)="
-                            onProfesionChange(profesionSeleccionada)
-                          "
-                        >
-                          <mat-option
-                            *ngFor="let prof of profesiones"
-                            [value]="prof._id"
-                          >
-                            {{ prof.codProfesion }} -
-                            {{ prof.nombreProfesion }}
-                          </mat-option>
-                        </mat-select>
-                      </mat-form-field>
-                    </div>
-
-                    <div class="flex-item" style="flex: 40%">
-                      <mat-form-field appearance="outline" style="width: 100%">
-                        <mat-label>Especialidad (opcional)</mat-label>
-                        <mat-select [(value)]="especialidadSeleccionada">
-                          <mat-option
-                            *ngFor="let esp of especialidadesPorProfesion"
-                            [value]="esp"
-                          >
-                            {{ esp.nombreEspecialidad }}
-                          </mat-option>
-                        </mat-select>
-                      </mat-form-field>
-                    </div>
-
-                    <div class="flex-item" style="flex: 15%">
-                      <button
-                        mat-raised-button
-                        color="primary"
-                        type="button"
-                        (click)="agregarProfesionEspecialidad()"
+            <div formArrayName="profesionesAsociadas">
+              <div
+                *ngFor="
+                  let profesion of profesionesAsociadas.controls;
+                  let i = index
+                "
+                [formGroupName]="i"
+                class="flex-row-container"
+              >
+                <div class="row-flex mt-2">
+                  <div [style.flex]="setFlex(30, '%')" class="flex-item">
+                    <mat-form-field appearance="outline">
+                      <mat-label>Profesión</mat-label>
+                      <mat-select
+                        formControlName="profesionId"
+                        (selectionChange)="onProfesionChange($event.value, i)"
                       >
-                        Agregar
-                      </button>
-                    </div>
+                        <mat-option
+                          *ngFor="let profesion of profesiones"
+                          [value]="profesion._id"
+                        >
+                          {{ profesion.codProfesion }} -
+                          {{ profesion.nombreProfesion }}
+                        </mat-option>
+                      </mat-select>
+                      <mat-error
+                        *ngIf="
+                          myFormServicio
+                            .get('profesionServicio')
+                            ?.hasError('required')
+                        "
+                      >
+                        Requerido
+                      </mat-error>
+                    </mat-form-field>
                   </div>
 
-                  <table
-                    mat-table
-                    [dataSource]="dataSourceProfEsp"
-                    class="mat-elevation-z2 mt-2"
-                  >
-                    <ng-container matColumnDef="profesion">
-                      <th mat-header-cell *matHeaderCellDef>Profesión</th>
-                      <td mat-cell *matCellDef="let elem">
-                        {{ elem.profesionId }}
-                      </td>
-                    </ng-container>
-                    <ng-container matColumnDef="especialidad">
-                      <th mat-header-cell *matHeaderCellDef>Especialidad</th>
-                      <td mat-cell *matCellDef="let elem">
-                        {{ elem.especialidadId.nombreEspecialidad || "-" }}
-                      </td>
-                    </ng-container>
-                    <ng-container matColumnDef="accion">
-                      <th mat-header-cell *matHeaderCellDef>Acción</th>
-                      <td mat-cell *matCellDef="let elem">
-                        <button
-                          mat-icon-button
-                          color="warn"
-                          (click)="quitarProfesionEspecialidad(elem)"
-                        >
-                          <mat-icon>delete</mat-icon>
-                        </button>
-                      </td>
-                    </ng-container>
+                  <div [style.flex]="setFlex(30, '%')" class="flex-item">
+                    <mat-form-field appearance="outline">
+                      <mat-label>Especialidad</mat-label>
+                      <mat-select formControlName="especialidadId">
+                        <mat-option
+                          *ngFor="
+                            let especialidad of getEspecialidadesPorIndex(i)
+                          "
+                          [value]="especialidad._id"
+                          >{{ especialidad.codEspecialidad }} -
+                          {{ especialidad.nombreEspecialidad }}
+                        </mat-option>
+                      </mat-select>
+                    </mat-form-field>
+                  </div>
 
-                    <tr mat-header-row *matHeaderRowDef="columnasProfEsp"></tr>
-                    <tr
-                      mat-row
-                      *matRowDef="let row; columns: columnasProfEsp"
-                    ></tr>
-                  </table>
-                </mat-card-content>
-              </mat-card>
+                  <div
+                    [style.flex]="setFlex(10, '%')"
+                    class="flex-item mb-2 text-center"
+                  >
+                    <button
+                      mat-icon-button
+                      class="mb-3"
+                      color="warn"
+                      type="button"
+                      (click)="eliminarProfesionAsociada(i)"
+                    >
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
+
+            <div
+              *ngIf="!validaarrayProfesion() && formSubmitted"
+              class="text-danger mt-2"
+              style="font-size: 14px; text-align: center"
+            >
+              Debe agregar al menos una profesión
+            </div>
+          </fieldset>
         </mat-card-content>
       </mat-card>
 

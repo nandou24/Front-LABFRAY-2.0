@@ -118,8 +118,6 @@ export class GestCotiPersonaComponent implements OnInit {
     return `0 0 ${valor}${unidad}`;
   }
 
-  asignarDatosMedico(index: number): void {}
-
   columnasTablaServiciosCotizados: string[] = [
     'accion',
     'codigo',
@@ -391,6 +389,7 @@ export class GestCotiPersonaComponent implements OnInit {
         servicio.precioServicio,
         [Validators.required, Validators.min(0)],
       ],
+      profesionesAsociadas: [servicio.profesionesAsociadas || []],
     });
 
     this.serviciosCotizacion.push(servicioForm);
@@ -1154,13 +1153,15 @@ export class GestCotiPersonaComponent implements OnInit {
 
   abrirDialogoMedico(index: any): void {
     const servicio = this.serviciosCotizacion.at(index);
-    const medicoActual = servicio.get('medicoId')?.value || null;
+    console.log('abrir dialogo medico', servicio);
+    //const medicoActual = servicio.get('medicoId')?.value || null;
+
+    const profesionesAsociadas = servicio.value.profesionesAsociadas || [];
 
     const dialogRef = this.dialog.open(DialogMedicoComponent, {
-      width: '400px',
+      width: '500px',
       data: {
-        medicos: this.listaMedicos,
-        medicoActual: medicoActual,
+        profesionesAsociadas,
       },
     });
 

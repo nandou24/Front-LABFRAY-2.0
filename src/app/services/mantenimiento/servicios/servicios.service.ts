@@ -24,8 +24,7 @@ export class ServiciosService {
   }
 
   public registrarServicio(body: IServicio) {
-    console.log('Enviando solicitud de registro de servicio...');
-
+    console.log('Datos del servicio:', body);
     return this._http.post<IServicioPostDTO>(
       `${environment.baseUrl}/api/servicio/newServicio`,
       body,
@@ -77,6 +76,7 @@ export class ServiciosService {
   }
 
   public actualizarServicio(codServicio: string, body: IServicio) {
+    console.log('Datos del servicio a actualizar:', body);
     return this._http.put<IServicioPostDTO>(
       `${environment.baseUrl}/api/servicio/${codServicio}/updateServicio`,
       body,

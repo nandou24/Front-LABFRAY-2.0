@@ -3,6 +3,7 @@ import { IRol } from '../permisos/roles.models';
 interface IEspecialidadRRHH {
   _id?: string;
   //codEspecialidad: string;
+  especialidadRef: string;
   rne: string;
   centroEstudiosEspecialidad?: string;
   anioEgresoEspecialidad?: string;
@@ -11,6 +12,7 @@ interface IEspecialidadRRHH {
 interface IProfesionRRHH {
   _id?: string;
   //codProfesion: string;
+  profesionRef: string;
   nivelProfesion?: string;
   titulo: boolean;
   nroColegiatura?: string;

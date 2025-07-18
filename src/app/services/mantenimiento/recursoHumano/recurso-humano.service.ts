@@ -84,23 +84,16 @@ export class RecursoHumanoService {
     );
   }
 
-  getPersonalSaludParaConsultas(params: {
-    especialidad?: string;
-    profesion?: string;
-  }): Observable<IRecHumano[]> {
-    let httpParams = new HttpParams();
-
-    if (params.especialidad) {
-      httpParams = httpParams.set('especialidad', params.especialidad);
-    } else if (params.profesion) {
-      httpParams = httpParams.set('profesion', params.profesion);
-    }
-
+  getTodosPersonalSalud(): Observable<IRecHumano[]> {
     return this._http
-      .get<IGetPersonalSaludParaConsultas>(
-        `${environment.baseUrl}/api/recursoHumano/findPersonalSaludParaConsultas`,
-        { params: httpParams },
+      .get<IGetLastRecHumano>(
+        `${environment.baseUrl}/api/recursoHumano/traerProfesionalesQueAtiendenConsultas`,
       )
-      .pipe(map((data) => data.recHumanos));
+      .pipe(
+        map((data) => {
+          console.log('Recursos humanos obtenidos service:', data);
+          return data.recHumanos;
+        }),
+      );
   }
 }
