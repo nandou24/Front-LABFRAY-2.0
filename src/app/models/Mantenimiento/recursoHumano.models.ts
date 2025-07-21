@@ -66,7 +66,11 @@ export interface IGetLastRecHumano {
 export interface IPersonalSaludParaConsultas {
   _id: string;
   codRecHumano: string;
-  nombreCompletoPersonal: string;
+  nombreRecHumano: string;
+  apePatRecHumano: string;
+  apeMatRecHumano: string;
+  nroColegiatura?: string;
+  rne?: string;
 }
 
 export interface IGetPersonalSaludParaConsultas {

@@ -20,16 +20,11 @@
       <th mat-header-cell *matHeaderCellDef>N°</th>
       <td mat-cell *matCellDef="let personal; let i = index">{{ i + 1 }}</td>
     </ng-container>
-    <ng-container matColumnDef="colegiatura">
-      <th mat-header-cell *matHeaderCellDef>Colegiatura</th>
-      <td mat-cell *matCellDef="let personal">
-        {{ personal.profesionesRecurso.nroColegiatura }}
-      </td>
-    </ng-container>
+
     <ng-container matColumnDef="nombreCompleto">
       <th mat-header-cell *matHeaderCellDef>Nombre</th>
       <td mat-cell *matCellDef="let personal">
-        {{ personal.apePatRecHumano }} {{ personal.apeMatRecHumano }}
+        Dr. {{ personal.apePatRecHumano }} {{ personal.apeMatRecHumano }}
         {{ personal.nombreRecHumano }}
       </td>
     </ng-container>
@@ -44,14 +39,11 @@
 
     <tr
       mat-header-row
-      *matHeaderRowDef="['nro', 'colegiatura', 'nombreCompleto', 'acciones']"
+      *matHeaderRowDef="['nro', 'nombreCompleto', 'acciones']"
     ></tr>
     <tr
       mat-row
-      *matRowDef="
-        let row;
-        columns: ['nro', 'colegiatura', 'nombreCompleto', 'acciones']
-      "
+      *matRowDef="let row; columns: ['nro', 'nombreCompleto', 'acciones']"
     ></tr>
   </table>
 
@@ -59,7 +51,7 @@
     *ngIf="!cargando && dataSourcePersonal.data.length === 0"
     class="text-center mt-2"
   >
-    No se encontraron clientes.
+    No se encontraron profesionales.
   </div>
 </mat-dialog-content>
 

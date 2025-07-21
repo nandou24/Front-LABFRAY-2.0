@@ -48,7 +48,7 @@ export class DialogBuscarSolicitanteComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.ultimosRefMedicos(10);
+    this.ultimosRefMedicos();
   }
 
   @ViewChild(MatTable) table!: MatTable<any>;
@@ -81,15 +81,14 @@ export class DialogBuscarSolicitanteComponent implements OnInit {
         this.dataSourceRefMedicos.data = [];
         this.cargando = false;
       } else {
-        this.ultimosRefMedicos(10);
+        this.ultimosRefMedicos();
         this.cargando = false;
       }
     }, 200);
   }
 
-  ultimosRefMedicos(cantidad: number): void {
-    console.log('Cargando últimos solicitantes de dialog');
-    this._refMedicoService.getLastRefMedicos(cantidad).subscribe({
+  ultimosRefMedicos(): void {
+    this._refMedicoService.getLastRefMedicosCotizacion().subscribe({
       next: (res: IRefMedico[]) => {
         this.dataSourceRefMedicos.data = res;
         console.log('Últimos solicitantes cargados:', res);

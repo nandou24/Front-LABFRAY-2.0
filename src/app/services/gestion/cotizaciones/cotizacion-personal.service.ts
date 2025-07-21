@@ -16,7 +16,7 @@ export class CotizacionPersonalService {
 
   public generarCotizacion(body: ICotizacion) {
     console.log('Enviando valores desde cotizacion.service');
-
+    console.log('Valores enviados:', body);
     return this._http.post<ICotizacionPostDTO>(
       `${environment.baseUrl}/api/cotizacion/newCotizacionPersona`,
       body,
@@ -32,12 +32,9 @@ export class CotizacionPersonalService {
     );
   }
 
-  getLastCotizacion(cantidad: number): Observable<ICotizacion[]> {
-    const params = new HttpParams().set('cant', cantidad);
+  getLastCotizacion(): Observable<ICotizacion[]> {
     return this._http
-      .get<IGetLastCotizacion>(`${environment.baseUrl}/api/cotizacion/latest`, {
-        params,
-      })
+      .get<IGetLastCotizacion>(`${environment.baseUrl}/api/cotizacion/latest`)
       .pipe(
         map((data) => {
           return data.cotizaciones;

@@ -1,3 +1,5 @@
+import { IProfesionEspecialidad } from '../Mantenimiento/servicios.models';
+
 export interface ICotizacion {
   codCotizacion: string;
   historial: IHistorialCotizacion[];
@@ -9,13 +11,19 @@ export interface IHistorialCotizacion {
   version: number;
   fechaModificacion: Date | null;
   estadoRegistroPaciente: boolean;
-  nombreCompleto: string;
+  clienteId: string;
+  nombreCliente: string;
+  apePatCliente: string;
+  apeMatCliente: string;
   hc: string;
   tipoDoc: string;
   nroDoc: string;
   estadoRegistroSolicitante: boolean;
   codSolicitante?: string;
-  nomSolicitante?: string;
+  solicitanteId?: string;
+  nombreRefMedico?: string;
+  apePatRefMedico?: string;
+  apeMatRefMedico?: string;
   profesionSolicitante?: string;
   colegiatura?: string;
   especialidadSolicitante?: string;
@@ -41,12 +49,15 @@ export interface IServicioCotizacion {
   precioVenta: number;
   descuentoPorcentaje: number;
   totalUnitario: number;
+  profesionesAsociadas: IProfesionEspecialidad[];
   medicoAtiende?: {
     medicoId: string;
-    nombreCompletoMedico: string;
+    codRecHumano: string;
+    apePatRecHumano: string;
+    apeMatRecHumano: string;
+    nomRecHumano: string;
     nroColegiatura: string;
     rne: string;
-    especialidad: string;
   };
 }
 

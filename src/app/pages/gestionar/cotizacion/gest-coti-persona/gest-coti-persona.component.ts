@@ -25,7 +25,11 @@ import { MatSelectModule } from '@angular/material/select';
 import { MAT_DATE_LOCALE, MatOptionModule } from '@angular/material/core';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatIconModule } from '@angular/material/icon';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import {
+  MatTable,
+  MatTableDataSource,
+  MatTableModule,
+} from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatDialog } from '@angular/material/dialog';
@@ -40,6 +44,8 @@ import { CotiPersonaPdfServiceService } from '../../../../services/utilitarios/p
 import { DialogPdfCotiPersonaComponent } from './dialogs/dialog-pdf/dialog-pdf-coti-persona/dialog-pdf-coti-persona.component';
 import { IPersonalSaludParaConsultas } from '../../../../models/Mantenimiento/recursoHumano.models';
 import { DialogMedicoComponent } from './dialogs/dialog-medico/dialog-medico.component';
+import { MatPaginator } from '@angular/material/paginator';
+import { debounceTime, distinctUntilChanged, filter, tap } from 'rxjs';
 
 @Component({
   selector: 'app-gest-coti-persona',
@@ -56,6 +62,7 @@ import { DialogMedicoComponent } from './dialogs/dialog-medico/dialog-medico.com
     MatSlideToggleModule,
     MatIconModule,
     MatTableModule,
+    MatPaginator,
     MatButtonModule,
     MatDialogModule,
     MatButtonToggleModule,
@@ -72,14 +79,15 @@ export class GestCotiPersonaComponent implements OnInit {
   private _pdfService = inject(CotiPersonaPdfServiceService);
 
   ngOnInit(): void {
-    this.camnbioEstadoRegistroPaciente();
-    this.camnbioEstadoRegistroSolicitante();
+    //this.camnbioEstadoRegistroPaciente();
+    //this.camnbioEstadoRegistroSolicitante();
     this.ultimosServicios(10);
     this.listarServiciosFrecuentes();
-    this.ultimasCotizaciones(10);
-    this.terminoBusquedaCotizacion.valueChanges.subscribe(() =>
-      this.buscarCotizaciones(),
-    );
+    this.ultimasCotizaciones();
+    // this.terminoBusquedaCotizacion.valueChanges.subscribe(() =>
+    //   this.buscarCotizaciones(),
+    // );
+    this.configurarBusquedaCotizaciones();
   }
 
   public myFormCotizacion: FormGroup = this._fb.group({
@@ -87,16 +95,22 @@ export class GestCotiPersonaComponent implements OnInit {
     fechaModificacion: [{ value: '', disabled: true }],
     version: [{ value: '', disabled: true }],
     estadoRegistroPaciente: true,
-    nombreCompleto: [''],
+    clienteId: [{ value: '', required: true }],
+    apePatCliente: [{ value: '', disabled: true }],
+    apeMatCliente: [{ value: '', disabled: true }],
+    nombreCliente: [{ value: '', disabled: true }],
     hc: [''],
-    tipoDoc: [''],
-    nroDoc: [''],
+    tipoDoc: [{ value: '', disabled: true }],
+    nroDoc: [{ value: '', disabled: true }],
     estadoRegistroSolicitante: true,
     codSolicitante: [{ value: '', disabled: true }],
-    nomSolicitante: [''],
-    profesionSolicitante: [''],
+    solicitanteId: [],
+    apePatRefMedico: [{ value: '', disabled: true }],
+    apeMatRefMedico: [{ value: '', disabled: true }],
+    nombreRefMedico: [{ value: '', disabled: true }],
+    profesionSolicitante: [{ value: '', disabled: true }],
     colegiatura: [''],
-    especialidadSolicitante: [''],
+    especialidadSolicitante: [{ value: '', disabled: true }],
     aplicarPrecioGlobal: false,
     aplicarDescuentoPorcentGlobal: false,
     sumaTotalesPrecioLista: 0,
@@ -133,73 +147,73 @@ export class GestCotiPersonaComponent implements OnInit {
   ];
   dataSourceServiciosCotizados = new MatTableDataSource<FormGroup>([]);
 
-  camnbioEstadoRegistroPaciente() {
-    const estado = this.myFormCotizacion.get('estadoRegistroPaciente')?.value;
+  // camnbioEstadoRegistroPaciente() {
+  //   const estado = this.myFormCotizacion.get('estadoRegistroPaciente')?.value;
 
-    if (estado) {
-      // this.myFormCotizacion.get('codCliente')?.reset();
-      this.myFormCotizacion.get('nombreCompleto')?.reset();
-      this.myFormCotizacion.get('tipoDoc')?.reset();
-      this.myFormCotizacion.get('nroDoc')?.reset();
-      this.myFormCotizacion.get('nombreCompleto')?.disable();
-      this.myFormCotizacion.get('tipoDoc')?.disable();
-      this.myFormCotizacion.get('nroDoc')?.disable();
-      document
-        .getElementById('buscarPacienteModalBtn')
-        ?.removeAttribute('disabled');
-    } else {
-      // this.myFormCotizacion.get('codCliente')?.reset();
-      this.myFormCotizacion.get('nombreCompleto')?.reset();
-      this.myFormCotizacion.get('tipoDoc')?.reset();
-      this.myFormCotizacion.get('nroDoc')?.reset();
-      this.myFormCotizacion.get('nombreCompleto')?.enable();
-      this.myFormCotizacion.get('tipoDoc')?.enable();
-      this.myFormCotizacion.get('nroDoc')?.enable();
-      document
-        .getElementById('buscarPacienteModalBtn')
-        ?.setAttribute('disabled', 'true');
-    }
-  }
+  //   if (estado) {
+  //     // this.myFormCotizacion.get('codCliente')?.reset();
+  //     this.myFormCotizacion.get('nombreCompleto')?.reset();
+  //     this.myFormCotizacion.get('tipoDoc')?.reset();
+  //     this.myFormCotizacion.get('nroDoc')?.reset();
+  //     this.myFormCotizacion.get('nombreCompleto')?.disable();
+  //     this.myFormCotizacion.get('tipoDoc')?.disable();
+  //     this.myFormCotizacion.get('nroDoc')?.disable();
+  //     document
+  //       .getElementById('buscarPacienteModalBtn')
+  //       ?.removeAttribute('disabled');
+  //   } else {
+  //     // this.myFormCotizacion.get('codCliente')?.reset();
+  //     this.myFormCotizacion.get('nombreCompleto')?.reset();
+  //     this.myFormCotizacion.get('tipoDoc')?.reset();
+  //     this.myFormCotizacion.get('nroDoc')?.reset();
+  //     this.myFormCotizacion.get('nombreCompleto')?.enable();
+  //     this.myFormCotizacion.get('tipoDoc')?.enable();
+  //     this.myFormCotizacion.get('nroDoc')?.enable();
+  //     document
+  //       .getElementById('buscarPacienteModalBtn')
+  //       ?.setAttribute('disabled', 'true');
+  //   }
+  // }
 
-  camnbioEstadoRegistroSolicitante() {
-    const estado = this.myFormCotizacion.get(
-      'estadoRegistroSolicitante',
-    )?.value;
+  // camnbioEstadoRegistroSolicitante() {
+  //   const estado = this.myFormCotizacion.get(
+  //     'estadoRegistroSolicitante',
+  //   )?.value;
 
-    if (estado) {
-      this.myFormCotizacion.get('codSolicitante')?.reset();
-      this.myFormCotizacion.get('nomSolicitante')?.reset();
-      this.myFormCotizacion.get('profesionSolicitante')?.reset();
-      this.myFormCotizacion.get('colegiatura')?.reset();
-      this.myFormCotizacion.get('especialidadSolicitante')?.reset();
+  //   if (estado) {
+  //     this.myFormCotizacion.get('codSolicitante')?.reset();
+  //     this.myFormCotizacion.get('nomSolicitante')?.reset();
+  //     this.myFormCotizacion.get('profesionSolicitante')?.reset();
+  //     this.myFormCotizacion.get('colegiatura')?.reset();
+  //     this.myFormCotizacion.get('especialidadSolicitante')?.reset();
 
-      // this.myFormCotizacion.get('codSolicitante')?.disable();
-      this.myFormCotizacion.get('nomSolicitante')?.disable();
-      this.myFormCotizacion.get('profesionSolicitante')?.disable();
-      this.myFormCotizacion.get('colegiatura')?.disable();
-      this.myFormCotizacion.get('especialidadSolicitante')?.disable();
+  //     // this.myFormCotizacion.get('codSolicitante')?.disable();
+  //     this.myFormCotizacion.get('nomSolicitante')?.disable();
+  //     this.myFormCotizacion.get('profesionSolicitante')?.disable();
+  //     this.myFormCotizacion.get('colegiatura')?.disable();
+  //     this.myFormCotizacion.get('especialidadSolicitante')?.disable();
 
-      document
-        .getElementById('buscarSolicitanteModalBtn')
-        ?.removeAttribute('disabled');
-    } else {
-      // this.myFormCotizacion.get('codSolicitante')?.reset();
-      this.myFormCotizacion.get('nomSolicitante')?.reset();
-      this.myFormCotizacion.get('profesionSolicitante')?.reset();
-      this.myFormCotizacion.get('colegiatura')?.reset();
-      this.myFormCotizacion.get('especialidadSolicitante')?.reset();
+  //     document
+  //       .getElementById('buscarSolicitanteModalBtn')
+  //       ?.removeAttribute('disabled');
+  //   } else {
+  //     // this.myFormCotizacion.get('codSolicitante')?.reset();
+  //     this.myFormCotizacion.get('nomSolicitante')?.reset();
+  //     this.myFormCotizacion.get('profesionSolicitante')?.reset();
+  //     this.myFormCotizacion.get('colegiatura')?.reset();
+  //     this.myFormCotizacion.get('especialidadSolicitante')?.reset();
 
-      this.myFormCotizacion.get('codSolicitante')?.enable();
-      this.myFormCotizacion.get('nomSolicitante')?.enable();
-      this.myFormCotizacion.get('profesionSolicitante')?.enable();
-      this.myFormCotizacion.get('colegiatura')?.enable();
-      this.myFormCotizacion.get('especialidadSolicitante')?.enable();
+  //     this.myFormCotizacion.get('codSolicitante')?.enable();
+  //     this.myFormCotizacion.get('nomSolicitante')?.enable();
+  //     this.myFormCotizacion.get('profesionSolicitante')?.enable();
+  //     this.myFormCotizacion.get('colegiatura')?.enable();
+  //     this.myFormCotizacion.get('especialidadSolicitante')?.enable();
 
-      document
-        .getElementById('buscarSolicitanteModalBtn')
-        ?.setAttribute('disabled', 'true');
-    }
-  }
+  //     document
+  //       .getElementById('buscarSolicitanteModalBtn')
+  //       ?.setAttribute('disabled', 'true');
+  //   }
+  // }
 
   // PACIENTES
   timeoutBusqueda: any;
@@ -219,8 +233,10 @@ export class GestCotiPersonaComponent implements OnInit {
   setPacienteSeleccionado(paciente: any) {
     // Asigna los datos del paciente seleccionado al formulario
     this.myFormCotizacion.patchValue({
-      nombreCompleto:
-        `${paciente.apePatCliente} ${paciente.apeMatCliente} ${paciente.nombreCliente}`.trim(),
+      clienteId: paciente._id,
+      apePatCliente: paciente.apePatCliente,
+      apeMatCliente: paciente.apeMatCliente,
+      nombreCliente: paciente.nombreCliente,
       hc: paciente.hc,
       tipoDoc: paciente.tipoDoc,
       nroDoc: paciente.nroDoc,
@@ -241,37 +257,62 @@ export class GestCotiPersonaComponent implements OnInit {
 
   setSolicitanteSeleccionado(solicitante: any) {
     // Asigna los datos del paciente seleccionado al formulario
+    //console.log('Solicitante seleccionado:', solicitante);
     this.myFormCotizacion.patchValue({
+      solicitanteId: solicitante._id,
       codSolicitante: solicitante.codRefMedico,
-      nomSolicitante:
-        `${solicitante.apePatRefMedico} ${solicitante.apeMatRefMedico} ${solicitante.nombreRefMedico}`.trim(),
+      apePatRefMedico: solicitante.apePatRefMedico,
+      apeMatRefMedico: solicitante.apeMatRefMedico,
+      nombreRefMedico: solicitante.nombreRefMedico,
       profesionSolicitante: solicitante.profesionSolicitante.profesion,
       colegiatura: solicitante.profesionSolicitante.colegiatura,
-      especialidadSolicitante: solicitante.especialidadesRefMedico.especialidad,
+      especialidadSolicitante: this.getEspecialidadesTexto(solicitante),
     });
   }
 
   getEspecialidadesTexto(solicitante: any): string {
-    return solicitante.especialidadesRecurso &&
-      solicitante.especialidadesRecurso.length > 0
-      ? solicitante.especialidadesRecurso
+    return solicitante.especialidadesRefMedico &&
+      solicitante.especialidadesRefMedico.length > 0
+      ? solicitante.especialidadesRefMedico
           .map((e: any) => e.especialidad)
           .join(', ')
       : 'No tiene especialidad';
   }
 
+  seleccionarTexto(event: FocusEvent): void {
+    const input = event.target as HTMLInputElement;
+    input.select();
+  }
+
   // COTIZACIONES
+
+  @ViewChild(MatTable) table!: MatTable<any>;
+  @ViewChild('MatPaginatorCotizaciones') paginatorCotizaciones!: MatPaginator;
+  @ViewChild('MatPaginatorServicios') paginatorServicios!: MatPaginator;
+  ngAfterViewInit() {
+    this.dataSourceCotizaciones.paginator = this.paginatorCotizaciones;
+    this.dataSourceServicios.paginator = this.paginatorServicios;
+  }
+
+  columnasCotizaciones: string[] = [
+    'codCotizacion',
+    'paciente',
+    'documento',
+    'versiones',
+    'estado',
+  ];
+  dataSourceCotizaciones = new MatTableDataSource<ICotizacion>();
 
   terminoBusquedaCotizacion = new FormControl('');
   cotizaciones: any[] = [];
 
-  ultimasCotizaciones(cantidad: number): void {
-    this._cotizacionService.getLastCotizacion(cantidad).subscribe({
+  ultimasCotizaciones(): void {
+    this._cotizacionService.getLastCotizacion().subscribe({
       next: (res: ICotizacion[]) => {
-        this.cotizaciones = res;
+        this.dataSourceCotizaciones.data = res;
       },
       error: (err: any) => {
-        this.cotizaciones = [];
+        this.dataSourceCotizaciones.data = [];
       },
     });
   }
@@ -286,28 +327,60 @@ export class GestCotiPersonaComponent implements OnInit {
         this._cotizacionService
           .getCotizacion(termino)
           .subscribe((res: ICotizacion[]) => {
-            this.cotizaciones = res;
+            this.dataSourceCotizaciones.data = res;
           });
       } else if (termino.length > 0) {
-        this.cotizaciones = [];
+        this.dataSourceCotizaciones.data = [];
       } else {
-        this.ultimasCotizaciones(10);
+        this.ultimasCotizaciones();
       }
-    }, 200);
+    }, 250);
   }
+
+  configurarBusquedaCotizaciones(): void {
+    this.terminoBusquedaCotizacion.valueChanges
+      .pipe(
+        filter((termino): termino is string => termino !== null),
+        debounceTime(300),
+        distinctUntilChanged(),
+        tap((termino: string) => {
+          termino = termino?.trim() || '';
+
+          if (termino.length >= 3) {
+            this._cotizacionService.getCotizacion(termino).subscribe({
+              next: (res: ICotizacion[]) => {
+                this.dataSourceCotizaciones.data = res;
+              },
+              error: () => {
+                this.dataSourceCotizaciones.data = [];
+              },
+            });
+          } else if (termino.length > 0) {
+            this.dataSourceCotizaciones.data = [];
+          } else {
+            this.ultimasCotizaciones(); // ← carga las cotizaciones recientes
+          }
+        }),
+      )
+      .subscribe();
+  }
+
+  columnasServicios: string[] = ['codigo', 'nombre', 'tipo', 'accion'];
+  dataSourceServicios = new MatTableDataSource<IServicio>();
+  dataSourceServiciosFrecuentes = new MatTableDataSource<IServicio>();
 
   // SERVICIOS
   terminoBusquedaServicio = new FormControl('');
-  servicios: IServicio[] = [];
-  serviciosFrecuentes: IServicio[] = [];
+  //servicios: IServicio[] = [];
+  //serviciosFrecuentes: IServicio[] = [];
 
   ultimosServicios(cantidad: number): void {
     this._servicioService.getLastServicio(cantidad).subscribe({
       next: (res: IServicio[]) => {
-        this.servicios = res;
+        this.dataSourceServicios.data = res;
       },
       error: (err: any) => {
-        this.servicios = [];
+        this.dataSourceServicios.data = [];
       },
     });
   }
@@ -315,10 +388,10 @@ export class GestCotiPersonaComponent implements OnInit {
   listarServiciosFrecuentes() {
     this._servicioService.getAllFavoritesServicios().subscribe({
       next: (res: IServicio[]) => {
-        this.serviciosFrecuentes = res;
+        this.dataSourceServiciosFrecuentes.data = res;
       },
       error: (err: any) => {
-        this.serviciosFrecuentes = [];
+        this.dataSourceServiciosFrecuentes.data = [];
       },
     });
   }
@@ -333,10 +406,10 @@ export class GestCotiPersonaComponent implements OnInit {
         this._servicioService
           .getServicio(termino)
           .subscribe((res: IServicio[]) => {
-            this.servicios = res;
+            this.dataSourceServicios.data = res;
           });
       } else if (termino.length > 0) {
-        this.servicios = [];
+        this.dataSourceServicios.data = [];
       } else {
         this.ultimosServicios(10);
       }
@@ -369,7 +442,7 @@ export class GestCotiPersonaComponent implements OnInit {
       codServicio: [servicio.codServicio, Validators.required],
       tipoServicio: [servicio.tipoServicio, Validators.required],
       nombreServicio: [servicio.nombreServicio, Validators.required],
-      medicoAtiende: [''],
+      medicoAtiende: [servicio.medicoAtiende || null],
       cantidad: [1, [Validators.required, Validators.min(1)]],
       precioLista: [
         servicio.precioServicio,
@@ -608,19 +681,19 @@ export class GestCotiPersonaComponent implements OnInit {
     this.serviciosCotizacion.clear();
     this.myFormCotizacion.get('aplicarPrecioGlobal')?.enable();
     this.myFormCotizacion.get('aplicarDescuentoPorcentGlobal')?.enable();
-    this.myFormCotizacion.get('estadoRegistroPaciente')?.enable();
-    this.myFormCotizacion.get('estadoRegistroSolicitante')?.enable();
+    // this.myFormCotizacion.get('estadoRegistroPaciente')?.enable();
+    // this.myFormCotizacion.get('estadoRegistroSolicitante')?.enable();
 
-    document
-      .getElementById('buscarPacienteModalBtn')
-      ?.removeAttribute('disabled');
-    document
-      .getElementById('buscarSolicitanteModalBtn')
-      ?.removeAttribute('disabled');
+    // document
+    //   .getElementById('buscarPacienteModalBtn')
+    //   ?.removeAttribute('disabled');
+    // document
+    //   .getElementById('buscarSolicitanteModalBtn')
+    //   ?.removeAttribute('disabled');
 
     this.myFormCotizacion.patchValue({
-      estadoRegistroPaciente: true,
-      estadoRegistroSolicitante: true,
+      // estadoRegistroPaciente: true,
+      // estadoRegistroSolicitante: true,
       sumaTotalesPrecioLista: 0,
       descuentoTotal: 0,
       subTotal: 0,
@@ -628,8 +701,8 @@ export class GestCotiPersonaComponent implements OnInit {
       total: 0,
     });
 
-    this.camnbioEstadoRegistroPaciente();
-    this.camnbioEstadoRegistroSolicitante();
+    //this.camnbioEstadoRegistroPaciente();
+    //this.camnbioEstadoRegistroSolicitante();
 
     this.formSubmitted = false; // Reiniciar el estado del formulario
     this.dataSourceServiciosCotizados.data = this.serviciosCotizacion
@@ -645,6 +718,27 @@ export class GestCotiPersonaComponent implements OnInit {
     this.versionActual = null;
     this.cotizacionCargada = null;
     this.ultimosServicios(10);
+  }
+
+  private validarServiciosMedicoAtiende(): boolean {
+    for (const control of this.serviciosCotizacion.controls) {
+      const tipoServicio = control.get('tipoServicio')?.value;
+      const medicoAtiende = control.get('medicoAtiende')?.value;
+      if (
+        (tipoServicio === 'Consulta' || tipoServicio === 'Ecografía') &&
+        (!medicoAtiende || Object.keys(medicoAtiende).length === 0)
+      ) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Falta médico',
+          text: `Debe seleccionar el médico que atiende para el servicio de tipo ${tipoServicio}.`,
+          confirmButtonColor: '#3085d6',
+          confirmButtonText: 'Entendido',
+        });
+        return false;
+      }
+    }
+    return true;
   }
 
   public formSubmitted: boolean = false;
@@ -674,13 +768,19 @@ export class GestCotiPersonaComponent implements OnInit {
               version: 1,
               fechaModificacion: new Date(),
               estadoRegistroPaciente: !!formValue.estadoRegistroPaciente,
-              nombreCompleto: formValue.nombreCompleto,
+              clienteId: formValue.clienteId,
+              nombreCliente: formValue.nombreCliente,
+              apePatCliente: formValue.apePatCliente,
+              apeMatCliente: formValue.apeMatCliente,
               hc: formValue.hc,
               tipoDoc: formValue.tipoDoc,
               nroDoc: formValue.nroDoc,
               estadoRegistroSolicitante: !!formValue.estadoRegistroSolicitante,
               codSolicitante: formValue.codSolicitante,
-              nomSolicitante: formValue.nomSolicitante,
+              solicitanteId: formValue.solicitanteId,
+              apePatRefMedico: formValue.apePatRefMedico,
+              apeMatRefMedico: formValue.apeMatRefMedico,
+              nombreRefMedico: formValue.nombreRefMedico,
               profesionSolicitante: formValue.profesionSolicitante,
               colegiatura: formValue.colegiatura,
               especialidadSolicitante: formValue.especialidadSolicitante,
@@ -705,7 +805,7 @@ export class GestCotiPersonaComponent implements OnInit {
           next: (res) => {
             if (res.ok) {
               this.mostrarAlertaExito('Cotización registrada');
-              this.ultimasCotizaciones(10);
+              this.ultimasCotizaciones();
               this.nuevaCotizacionPersona();
             } else {
               const mensaje = res.msg || 'Ocurrió un error inesperado.';
@@ -774,13 +874,19 @@ export class GestCotiPersonaComponent implements OnInit {
           version: ultimaVersion + 1,
           fechaModificacion: new Date(),
           estadoRegistroPaciente: !!formValue.estadoRegistroPaciente,
-          nombreCompleto: formValue.nombreCompleto,
+          clienteId: formValue.clienteId,
+          nombreCliente: formValue.nombreCliente,
+          apePatCliente: formValue.apePatCliente,
+          apeMatCliente: formValue.apeMatCliente,
           hc: formValue.hc,
           tipoDoc: formValue.tipoDoc,
           nroDoc: formValue.nroDoc,
           estadoRegistroSolicitante: !!formValue.estadoRegistroSolicitante,
           codSolicitante: formValue.codSolicitante,
-          nomSolicitante: formValue.nomSolicitante,
+          solicitanteId: formValue.solicitanteId,
+          apePatRefMedico: formValue.apePatRefMedico,
+          apeMatRefMedico: formValue.apeMatRefMedico,
+          nombreRefMedico: formValue.nombreRefMedico,
           profesionSolicitante: formValue.profesionSolicitante,
           colegiatura: formValue.colegiatura,
           especialidadSolicitante: formValue.especialidadSolicitante,
@@ -809,7 +915,7 @@ export class GestCotiPersonaComponent implements OnInit {
           next: (res) => {
             if (res.ok) {
               this.mostrarAlertaExito('Nueva versión generada');
-              this.ultimasCotizaciones(10);
+              this.ultimasCotizaciones();
               this.nuevaCotizacionPersona();
             } else {
               const mensaje = res.msg || 'Ocurrió un error inesperado.';
@@ -827,7 +933,7 @@ export class GestCotiPersonaComponent implements OnInit {
   }
 
   validarformulario(): boolean {
-    const nomClienteControl = this.myFormCotizacion.get('nombreCompleto');
+    const nomClienteControl = this.myFormCotizacion.get('nombreCliente');
     const nomClienteValor = nomClienteControl
       ? nomClienteControl.getRawValue()
       : '';
@@ -852,6 +958,10 @@ export class GestCotiPersonaComponent implements OnInit {
         confirmButtonColor: '#3085d6',
         confirmButtonText: 'Entendido',
       });
+      return false;
+    }
+
+    if (!this.validarServiciosMedicoAtiende()) {
       return false;
     }
 
@@ -917,26 +1027,34 @@ export class GestCotiPersonaComponent implements OnInit {
       'es-PE',
     );
 
-    const nombre = historialVersion.nombreCompleto;
-    let nombreGrabar = '';
+    // const nombre = historialVersion.nombreCompleto;
+    // let nombreGrabar = '';
 
-    if (nombre) {
-      nombreGrabar = historialVersion.nombreCompleto;
-    } else {
-      nombreGrabar =
-        `${historialVersion.apePatCliente} ${historialVersion.apeMatCliente} ${historialVersion.nombreCliente}`.trim();
-    }
+    // if (nombre) {
+    //   nombreGrabar = historialVersion.nombreCompleto;
+    // } else {
+    //   nombreGrabar =
+    //     `${historialVersion.apePatCliente} ${historialVersion.apeMatCliente} ${historialVersion.nombreCliente}`.trim();
+    // }
 
     this.myFormCotizacion.patchValue({
       estadoRegistroPaciente: historialVersion.estadoRegistroPaciente,
       fechaModificacion: fechaFormateada,
-      nombreCompleto: nombreGrabar,
+      // nombreCompleto: nombreGrabar,
+      apePatCliente: historialVersion.apePatCliente,
+      apeMatCliente: historialVersion.apeMatCliente,
+      nombreCliente: historialVersion.nombreCliente,
+      clienteId: historialVersion.clienteId,
       hc: historialVersion.hc,
       tipoDoc: historialVersion.tipoDoc,
       nroDoc: historialVersion.nroDoc,
       estadoRegistroSolicitante: historialVersion.estadoRegistroSolicitante,
       //codSolicitante: historialVersion.codSolicitante || '',
-      nomSolicitante: historialVersion.nomSolicitante || '',
+      // nomSolicitante: historialVersion.nomSolicitante || '',
+      apePatRefMedico: historialVersion.apePatRefMedico || '',
+      apeMatRefMedico: historialVersion.apeMatRefMedico || '',
+      nombreRefMedico: historialVersion.nombreRefMedico || '',
+      solicitanteId: historialVersion.solicitanteId || '',
       profesionSolicitante: historialVersion.profesionSolicitante || '',
       //colegiatura: historialVersion.colegiatura || '',
       especialidadSolicitante: historialVersion.especialidadSolicitante || '',
@@ -955,16 +1073,16 @@ export class GestCotiPersonaComponent implements OnInit {
     if (this.tienePagos === true) {
       this.myFormCotizacion.get('aplicarPrecioGlobal')?.disable();
       this.myFormCotizacion.get('aplicarDescuentoPorcentGlobal')?.disable();
-      this.myFormCotizacion.get('estadoRegistroPaciente')?.disable();
-      this.myFormCotizacion.get('estadoRegistroSolicitante')?.disable();
-      this.myFormCotizacion.get('nombreCompleto')?.disable();
-      this.myFormCotizacion.get('tipoDoc')?.disable();
-      this.myFormCotizacion.get('nroDoc')?.disable();
-      this.myFormCotizacion.get('codSolicitante')?.disable();
-      this.myFormCotizacion.get('nomSolicitante')?.disable();
-      this.myFormCotizacion.get('profesionSolicitante')?.disable();
-      this.myFormCotizacion.get('colegiatura')?.disable();
-      this.myFormCotizacion.get('especialidadSolicitante')?.disable();
+      // this.myFormCotizacion.get('estadoRegistroPaciente')?.disable();
+      // this.myFormCotizacion.get('estadoRegistroSolicitante')?.disable();
+      // this.myFormCotizacion.get('nombreCompleto')?.disable();
+      // this.myFormCotizacion.get('tipoDoc')?.disable();
+      // this.myFormCotizacion.get('nroDoc')?.disable();
+      // this.myFormCotizacion.get('codSolicitante')?.disable();
+      // this.myFormCotizacion.get('nomSolicitante')?.disable();
+      // this.myFormCotizacion.get('profesionSolicitante')?.disable();
+      // this.myFormCotizacion.get('colegiatura')?.disable();
+      // this.myFormCotizacion.get('especialidadSolicitante')?.disable();
 
       document
         .getElementById('buscarPacienteModalBtn')
@@ -980,6 +1098,8 @@ export class GestCotiPersonaComponent implements OnInit {
             codServicio: [servicio.codServicio, Validators.required],
             tipoServicio: [servicio.tipoServicio, Validators.required],
             nombreServicio: [servicio.nombreServicio, Validators.required],
+            profesionesAsociadas: [servicio.profesionesAsociadas || null],
+            medicoAtiende: [servicio.medicoAtiende || null],
             cantidad: [
               { value: servicio.cantidad, disabled: true },
               [Validators.required, Validators.min(1)],
@@ -1008,60 +1128,59 @@ export class GestCotiPersonaComponent implements OnInit {
       this.dataSourceServiciosCotizados.data = this.serviciosCotizacion
         .controls as FormGroup[];
     } else {
-      this.myFormCotizacion.get('estadoRegistroPaciente')?.enable();
-      this.myFormCotizacion.get('estadoRegistroSolicitante')?.enable();
-      //campos cliente
-      if (this.myFormCotizacion.get('estadoRegistroPaciente')?.value === true) {
-        document
-          .getElementById('buscarPacienteModalBtn')
-          ?.removeAttribute('disabled');
-        this.myFormCotizacion.get('nombreCompleto')?.disable();
-        this.myFormCotizacion.get('tipoDoc')?.disable();
-        this.myFormCotizacion.get('nroDoc')?.disable();
-      } else {
-        document
-          .getElementById('buscarPacienteModalBtn')
-          ?.setAttribute('disabled', 'true');
-        this.myFormCotizacion.get('nombreCompleto')?.enable();
-        this.myFormCotizacion.get('tipoDoc')?.enable();
-        this.myFormCotizacion.get('nroDoc')?.enable();
-      }
-
-      //campos solicitante
-      if (
-        this.myFormCotizacion.get('estadoRegistroSolicitante')?.value === true
-      ) {
-        document
-          .getElementById('buscarSolicitanteModalBtn')
-          ?.removeAttribute('disabled');
-        this.myFormCotizacion.get('codSolicitante')?.disable();
-        this.myFormCotizacion.get('nomSolicitante')?.disable();
-        this.myFormCotizacion.get('profesionSolicitante')?.disable();
-        this.myFormCotizacion.get('colegiatura')?.disable();
-        this.myFormCotizacion.get('especialidadSolicitante')?.disable();
-      } else {
-        document
-          .getElementById('buscarSolicitanteModalBtn')
-          ?.setAttribute('disabled', 'true');
-        this.myFormCotizacion.get('codSolicitante')?.enable();
-        this.myFormCotizacion.get('nomSolicitante')?.enable();
-        this.myFormCotizacion.get('profesionSolicitante')?.enable();
-        this.myFormCotizacion.get('colegiatura')?.enable();
-        this.myFormCotizacion.get('especialidadSolicitante')?.enable();
-      }
-
-      this.myFormCotizacion.get('aplicarPrecioGlobal')?.enable();
-      this.myFormCotizacion.get('aplicarDescuentoPorcentGlobal')?.enable();
       // this.myFormCotizacion.get('estadoRegistroPaciente')?.enable();
       // this.myFormCotizacion.get('estadoRegistroSolicitante')?.enable();
 
-      // Habilitar los botones de búsqueda
-      // document
-      //   .getElementById('buscarPacienteModalBtn')
-      //   ?.removeAttribute('disabled');
-      // document
-      //   .getElementById('buscarSolicitanteModalBtn')
-      //   ?.removeAttribute('disabled');
+      //campos cliente
+      // if (this.myFormCotizacion.get('estadoRegistroPaciente')?.value === true) {
+      //   document
+      //     .getElementById('buscarPacienteModalBtn')
+      //     ?.removeAttribute('disabled');
+      //   this.myFormCotizacion.get('nombreCompleto')?.disable();
+      //   this.myFormCotizacion.get('tipoDoc')?.disable();
+      //   this.myFormCotizacion.get('nroDoc')?.disable();
+      // } else {
+      //   document
+      //     .getElementById('buscarPacienteModalBtn')
+      //     ?.setAttribute('disabled', 'true');
+      //   this.myFormCotizacion.get('nombreCompleto')?.enable();
+      //   this.myFormCotizacion.get('tipoDoc')?.enable();
+      //   this.myFormCotizacion.get('nroDoc')?.enable();
+      // }
+
+      document
+        .getElementById('buscarPacienteModalBtn')
+        ?.removeAttribute('disabled');
+
+      //campos solicitante
+      // if (
+      //   this.myFormCotizacion.get('estadoRegistroSolicitante')?.value === true
+      // ) {
+      //   document
+      //     .getElementById('buscarSolicitanteModalBtn')
+      //     ?.removeAttribute('disabled');
+      //   this.myFormCotizacion.get('codSolicitante')?.disable();
+      //   this.myFormCotizacion.get('nomSolicitante')?.disable();
+      //   this.myFormCotizacion.get('profesionSolicitante')?.disable();
+      //   this.myFormCotizacion.get('colegiatura')?.disable();
+      //   this.myFormCotizacion.get('especialidadSolicitante')?.disable();
+      // } else {
+      //   document
+      //     .getElementById('buscarSolicitanteModalBtn')
+      //     ?.setAttribute('disabled', 'true');
+      //   this.myFormCotizacion.get('codSolicitante')?.enable();
+      //   this.myFormCotizacion.get('nomSolicitante')?.enable();
+      //   this.myFormCotizacion.get('profesionSolicitante')?.enable();
+      //   this.myFormCotizacion.get('colegiatura')?.enable();
+      //   this.myFormCotizacion.get('especialidadSolicitante')?.enable();
+      // }
+
+      document
+        .getElementById('buscarSolicitanteModalBtn')
+        ?.removeAttribute('disabled');
+
+      this.myFormCotizacion.get('aplicarPrecioGlobal')?.enable();
+      this.myFormCotizacion.get('aplicarDescuentoPorcentGlobal')?.enable();
 
       // 📌 Cargar servicios
       this.serviciosCotizacion.clear(); // Limpiar antes de cargar
@@ -1071,6 +1190,8 @@ export class GestCotiPersonaComponent implements OnInit {
             codServicio: [servicio.codServicio, Validators.required],
             tipoServicio: [servicio.tipoServicio, Validators.required],
             nombreServicio: [servicio.nombreServicio, Validators.required],
+            profesionesAsociadas: [servicio.profesionesAsociadas || null],
+            medicoAtiende: [servicio.medicoAtiende || null],
             cantidad: [
               servicio.cantidad,
               [Validators.required, Validators.min(1)],
@@ -1149,15 +1270,9 @@ export class GestCotiPersonaComponent implements OnInit {
     }
   }
 
-  listaMedicos: IPersonalSaludParaConsultas[] = [];
-
   abrirDialogoMedico(index: any): void {
     const servicio = this.serviciosCotizacion.at(index);
-    console.log('abrir dialogo medico', servicio);
-    //const medicoActual = servicio.get('medicoId')?.value || null;
-
     const profesionesAsociadas = servicio.value.profesionesAsociadas || [];
-
     const dialogRef = this.dialog.open(DialogMedicoComponent, {
       width: '500px',
       data: {
@@ -1169,13 +1284,17 @@ export class GestCotiPersonaComponent implements OnInit {
       .afterClosed()
       .subscribe((medico: IPersonalSaludParaConsultas | undefined) => {
         if (medico) {
-          servicio.get('medicoId')?.setValue(medico._id);
           servicio.get('medicoAtiende')?.setValue({
             codRecHumano: medico.codRecHumano,
-            _id: medico._id,
-            nombreCompletoPersonal: medico.nombreCompletoPersonal,
+            medicoId: medico._id,
+            nombreRecHumano: medico.nombreRecHumano,
+            apePatRecHumano: medico.apePatRecHumano,
+            apeMatRecHumano: medico.apeMatRecHumano,
+            nroColegiatura: medico.nroColegiatura,
+            rne: medico.rne,
           });
         }
+        //console.log('Medico atiende:', servicio.get('medicoAtiende')?.value);
       });
   }
 }

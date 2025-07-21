@@ -1,3 +1,5 @@
+import { IPersonalSaludParaConsultas } from './recursoHumano.models';
+
 //SERVICIO
 export interface IProfesionEspecialidad {
   profesionId: string;
@@ -9,6 +11,7 @@ export interface IServicio {
   tipoServicio: string;
   nombreServicio: string;
   descripcionServicio: string;
+  medicoAtiende: IPersonalSaludParaConsultas | null;
   precioServicio: number;
   estadoServicio: string;
   favoritoServicio: boolean;

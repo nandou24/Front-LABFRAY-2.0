@@ -40,6 +40,18 @@ export class ReferenciaMedicoService {
       );
   }
 
+  getLastRefMedicosCotizacion(): Observable<IRefMedico[]> {
+    return this._http
+      .get<IGetLastRefMedico>(
+        `${environment.baseUrl}/api/referenciaMedico/latestRefMedicosCotizacion`,
+      )
+      .pipe(
+        map((data) => {
+          return data.refMedicos;
+        }),
+      );
+  }
+
   getRefMedico(terminoBusqueda: any): Observable<IRefMedico[]> {
     const params = new HttpParams().set('search', terminoBusqueda);
     return this._http

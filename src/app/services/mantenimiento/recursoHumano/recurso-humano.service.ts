@@ -91,7 +91,6 @@ export class RecursoHumanoService {
       )
       .pipe(
         map((data) => {
-          console.log('Recursos humanos obtenidos service:', data);
           return data.recHumanos;
         }),
       );

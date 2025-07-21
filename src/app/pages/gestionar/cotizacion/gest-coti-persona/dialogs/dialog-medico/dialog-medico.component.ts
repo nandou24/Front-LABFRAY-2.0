@@ -61,43 +61,60 @@ export class DialogMedicoComponent implements OnInit {
   @ViewChild(MatTable) table!: MatTable<any>;
 
   //Tabla rrhh
-  columnasTablaPacientes: string[] = [
-    'nro',
-    'colegiatura',
-    'nombreCompleto',
-    'acciones',
-  ];
+  columnasTablaPacientes: string[] = ['nro', 'nombreCompleto', 'acciones'];
   dataSourcePersonal = new MatTableDataSource<IRecHumano>();
 
   obtenerYFiltrarMedicos(): void {
     this.cargando = true;
+    const profesionesAsociadas = this.data.profesionesAsociadas;
 
-    let medicosObtenidos: IRecHumano[] = [];
+    // Extraemos los IDs de especialidad del servicio asociado
+    const especialidadesFiltro = profesionesAsociadas
+      .map((p) => p.especialidadId)
+      .filter((id): id is string => !!id);
+
+    // Extraer profesiones SIN especialidad asociada
+    const profesionesSinEspecialidad = profesionesAsociadas
+      .filter((p) => !p.especialidadId)
+      .map((p) => p.profesionId)
+      .filter((id): id is string => !!id);
+
+    //let personalAtiendeConsultas: IRecHumano[] = [];
     this._recursoHumanoService.getTodosPersonalSalud().subscribe({
       next: (medicos: IRecHumano[]) => {
-        medicosObtenidos = medicos;
-        console.log('Recursos humanos obtenidos:', medicosObtenidos);
+        console.log('Recursos humanos obtenidos:', medicos);
 
-        // Filtrar los médicos según las profesiones asociadas
-        if (this.data.profesionesAsociadas.length > 0) {
-          medicosObtenidos = medicosObtenidos.filter((medico) => {
-            return this.data.profesionesAsociadas.some((profesion) => {
-              return (
-                medico.profesionesRecurso.some(
-                  (p) => p._id === profesion.profesionId,
-                ) &&
-                (!profesion.especialidadId ||
-                  medico.profesionesRecurso.some((p) =>
-                    p.especialidades.some(
-                      (e) => e._id === profesion.especialidadId,
-                    ),
-                  ))
-              );
-            });
-          });
+        // === Paso 1: Filtrar por especialidades ===
+        const filtradosPorEspecialidad = medicos.filter((medico) =>
+          medico.profesionesRecurso?.some((prof) =>
+            prof.especialidades?.some((esp) =>
+              especialidadesFiltro.includes(esp.especialidadRef),
+            ),
+          ),
+        );
+
+        // === Paso 2: Filtrar por profesiones SIN especialidad ===
+        const filtradosPorProfesionSinEsp = medicos.filter((medico) =>
+          medico.profesionesRecurso?.some(
+            (prof) =>
+              profesionesSinEspecialidad.includes(prof.profesionRef) &&
+              (!prof.especialidades || prof.especialidades.length === 0),
+          ),
+        );
+
+        // Unir ambos resultados, evitando duplicados
+        const idsFiltrados = new Set(
+          filtradosPorEspecialidad.map((m) => m._id),
+        );
+        for (const medico of filtradosPorProfesionSinEsp) {
+          if (!idsFiltrados.has(medico._id)) {
+            filtradosPorEspecialidad.push(medico);
+            idsFiltrados.add(medico._id);
+          }
         }
 
-        this.dataSourcePersonal.data = medicosObtenidos;
+        console.log('Médicos filtrados:', filtradosPorEspecialidad);
+        this.dataSourcePersonal.data = filtradosPorEspecialidad;
         this.cargando = false;
       },
       error: (err) => {
@@ -112,7 +129,69 @@ export class DialogMedicoComponent implements OnInit {
     this.dialogRef.close();
   }
 
-  seleccionar(personal: any): void {
-    this.dialogRef.close(personal);
+  seleccionar(personal: IRecHumano): void {
+    const profesionesAsociadas = this.data.profesionesAsociadas;
+
+    // Buscar la coincidencia exacta de especialidad
+    let especialidadMatch:
+      | {
+          especialidadRef: string;
+          rne?: string;
+        }
+      | undefined;
+
+    let profesionMatch:
+      | {
+          profesionRef: string;
+          nroColegiatura?: string;
+          especialidades?: {
+            especialidadRef: string;
+            rne?: string;
+          }[];
+        }
+      | undefined;
+
+    // Buscar coincidencia con especialidad
+    outer: for (const prof of personal.profesionesRecurso || []) {
+      for (const esp of prof.especialidades || []) {
+        if (
+          profesionesAsociadas.some(
+            (p) => p.especialidadId && p.especialidadId === esp.especialidadRef,
+          )
+        ) {
+          especialidadMatch = esp;
+          profesionMatch = prof;
+          break outer;
+        }
+      }
+    }
+
+    // Si no hay especialidad, buscar profesión sin especialidad
+    if (!especialidadMatch) {
+      for (const prof of personal.profesionesRecurso || []) {
+        if (
+          profesionesAsociadas.some(
+            (p) => !p.especialidadId && p.profesionId === prof.profesionRef,
+          )
+        ) {
+          profesionMatch = prof;
+          break;
+        }
+      }
+    }
+
+    const medicoAtiende = {
+      _id: personal._id,
+      codRecHumano: personal.codRecHumano,
+      nombreRecHumano: personal.nombreRecHumano,
+      apePatRecHumano: personal.apePatRecHumano,
+      apeMatRecHumano: personal.apeMatRecHumano,
+      nroColegiatura: profesionMatch?.nroColegiatura,
+      rne: especialidadMatch?.rne,
+    };
+
+    this.dialogRef.close(medicoAtiende);
+
+    //this.dialogRef.close(personal);
   }
 }
