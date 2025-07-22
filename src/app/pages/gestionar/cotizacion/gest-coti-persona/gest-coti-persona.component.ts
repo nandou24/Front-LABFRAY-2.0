@@ -81,7 +81,7 @@ export class GestCotiPersonaComponent implements OnInit {
   ngOnInit(): void {
     //this.camnbioEstadoRegistroPaciente();
     //this.camnbioEstadoRegistroSolicitante();
-    this.ultimosServicios(10);
+    this.ultimosServicios(0);
     this.listarServiciosFrecuentes();
     this.ultimasCotizaciones();
     // this.terminoBusquedaCotizacion.valueChanges.subscribe(() =>
@@ -297,7 +297,7 @@ export class GestCotiPersonaComponent implements OnInit {
   columnasCotizaciones: string[] = [
     'codCotizacion',
     'paciente',
-    'documento',
+    'fecha',
     'versiones',
     'estado',
   ];
@@ -411,7 +411,7 @@ export class GestCotiPersonaComponent implements OnInit {
       } else if (termino.length > 0) {
         this.dataSourceServicios.data = [];
       } else {
-        this.ultimosServicios(10);
+        this.ultimosServicios(0);
       }
     }, 200);
   }
@@ -439,6 +439,7 @@ export class GestCotiPersonaComponent implements OnInit {
     this.myFormCotizacion.get('aplicarDescuentoPorcentGlobal')?.setValue(false);
 
     const servicioForm = this._fb.group({
+      servicioId: [servicio._id, Validators.required],
       codServicio: [servicio.codServicio, Validators.required],
       tipoServicio: [servicio.tipoServicio, Validators.required],
       nombreServicio: [servicio.nombreServicio, Validators.required],
@@ -717,7 +718,7 @@ export class GestCotiPersonaComponent implements OnInit {
     this.versionesDisponibles = [];
     this.versionActual = null;
     this.cotizacionCargada = null;
-    this.ultimosServicios(10);
+    this.ultimosServicios(0);
   }
 
   private validarServiciosMedicoAtiende(): boolean {

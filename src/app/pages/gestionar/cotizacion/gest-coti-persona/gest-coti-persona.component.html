@@ -605,6 +605,13 @@
               <th mat-header-cell *matHeaderCellDef>Paciente</th>
               <td mat-cell *matCellDef="let cotizacion">
                 {{
+                  cotizacion.historial[cotizacion.historial.length - 1].tipoDoc
+                }}
+                {{
+                  cotizacion.historial[cotizacion.historial.length - 1].nroDoc
+                }}
+                --
+                {{
                   cotizacion.historial[cotizacion.historial.length - 1]
                     .apePatCliente
                 }}
@@ -619,14 +626,12 @@
               </td>
             </ng-container>
 
-            <ng-container matColumnDef="documento">
-              <th mat-header-cell *matHeaderCellDef>Documento</th>
+            <ng-container matColumnDef="fecha">
+              <th mat-header-cell *matHeaderCellDef>Fecha</th>
               <td mat-cell *matCellDef="let cotizacion">
                 {{
-                  cotizacion.historial[cotizacion.historial.length - 1].tipoDoc
-                }}
-                {{
-                  cotizacion.historial[cotizacion.historial.length - 1].nroDoc
+                  cotizacion.historial[cotizacion.historial.length - 1]
+                    .fechaModificacion | date: "dd/MM/yyyy"
                 }}
               </td>
             </ng-container>

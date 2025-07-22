@@ -7,6 +7,7 @@ export interface IProfesionEspecialidad {
 }
 
 export interface IServicio {
+  _id?: string;
   codServicio: string;
   tipoServicio: string;
   nombreServicio: string;

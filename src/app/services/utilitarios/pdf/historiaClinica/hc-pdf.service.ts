@@ -81,7 +81,11 @@ export class HcPdfService {
     doc.setFont('helvetica', 'normal');
     doc.text(`${data.nroDocumento}`, 127, 9.5);
     doc.text('18/05/25', 185, 9.5);
-    doc.text(data.nombreCompleto, 127, 14.5);
+    doc.text(
+      `${data.apePatCliente} ${data.apeMatCliente} ${data.nombreCliente}`,
+      127,
+      14.5,
+    );
     doc.text('JOSE CIPRIANO GOMEZ BARBOZA', 127, 21);
 
     //primera fila Sexo, Talla, Peso, Edad

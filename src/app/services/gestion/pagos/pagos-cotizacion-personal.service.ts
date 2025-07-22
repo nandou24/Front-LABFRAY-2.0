@@ -17,7 +17,7 @@ export class PagosCotizacionPersonalService {
   constructor(private _http: HttpClient) {}
 
   registrarPago(body: IPago) {
-    console.log('Enviando valores desde servicio');
+    console.log('Enviando pago desde servicio', body);
 
     return this._http.post<IPagoPostDTOResponse>(
       `${environment.baseUrl}/api/pagos/newPagoPersona`,

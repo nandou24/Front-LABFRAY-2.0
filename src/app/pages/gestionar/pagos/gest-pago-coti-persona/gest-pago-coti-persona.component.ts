@@ -1,5 +1,5 @@
 import { CommonModule, formatDate } from '@angular/common';
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, ViewChild } from '@angular/core';
 import {
   FormArray,
   FormBuilder,
@@ -29,6 +29,7 @@ import Swal from 'sweetalert2';
 import { DialogRegistroPacienteComponent } from './dialogs/dialog-registro-paciente/dialog-registro-paciente.component';
 import { MatDialog } from '@angular/material/dialog';
 import { DateAdapter, MAT_DATE_LOCALE } from '@angular/material/core';
+import { MatPaginator } from '@angular/material/paginator';
 
 @Component({
   selector: 'app-gest-pago-coti-persona',
@@ -44,6 +45,7 @@ import { DateAdapter, MAT_DATE_LOCALE } from '@angular/material/core';
     MatIconModule,
     MatButtonModule,
     MatSelectModule,
+    MatPaginator,
     MatDatepickerModule,
     MatNativeDateModule,
   ],
@@ -71,14 +73,20 @@ export class GestPagoCotiPersonaComponent implements OnInit {
     fechaPago: [{ value: '', disabled: true }],
     codCotizacion: [{ value: '', disabled: true }],
     version: [{ value: 0, disabled: true }],
-    fechaModificacion: [{ value: '', disabled: true }],
+    fechaCotizacion: [{ value: '', disabled: true }],
     estadoCotizacion: [{ value: '', disabled: true }],
     hc: [{ value: '', disabled: true }],
-    nombreCompleto: [{ value: '', disabled: true }],
+    clienteId: [{ value: '', required: true }],
+    apePatCliente: [{ value: '', disabled: true }],
+    apeMatCliente: [{ value: '', disabled: true }],
+    nombreCliente: [{ value: '', disabled: true }],
     tipoDoc: [{ value: '', disabled: true }],
     nroDoc: [{ value: '', disabled: true }],
     codSolicitante: [{ value: '', disabled: true }],
-    nomSolicitante: [{ value: '', disabled: true }],
+    solicitanteId: [],
+    apePatRefMedico: [{ value: '', disabled: true }],
+    apeMatRefMedico: [{ value: '', disabled: true }],
+    nombreRefMedico: [{ value: '', disabled: true }],
     profesionSolicitante: [{ value: '', disabled: true }],
     colegiatura: [{ value: '', disabled: true }],
 
@@ -257,6 +265,23 @@ export class GestPagoCotiPersonaComponent implements OnInit {
   }
 
   // COTIZACIONES
+
+  @ViewChild('MatPaginatorCotizaciones') paginatorCotizaciones!: MatPaginator;
+  @ViewChild('MatPaginatorPagos') paginatorPagos!: MatPaginator;
+
+  ngAfterViewInit() {
+    this.dataSourceCotizaciones.paginator = this.paginatorCotizaciones;
+    this.dataSourcePagos.paginator = this.paginatorPagos;
+  }
+
+  columnasCotizaciones: string[] = [
+    'codCotizacion',
+    'paciente',
+    'fecha',
+    'estado',
+  ];
+
+  dataSourceCotizaciones = new MatTableDataSource<ICotizacion>();
   timeoutBusqueda: any;
   terminoBusquedaCotizacion = new FormControl('');
   cotizaciones: ICotizacion[] = [];
@@ -264,10 +289,10 @@ export class GestPagoCotiPersonaComponent implements OnInit {
   ultimasCotizaciones(cantidad: number): void {
     this._cotizacionService.getLatestCotizacioPorPagar(cantidad).subscribe({
       next: (res: ICotizacion[]) => {
-        this.cotizaciones = res;
+        this.dataSourceCotizaciones.data = res;
       },
       error: (err: any) => {
-        this.cotizaciones = [];
+        this.dataSourceCotizaciones.data = [];
       },
     });
   }
@@ -282,10 +307,10 @@ export class GestPagoCotiPersonaComponent implements OnInit {
         this._cotizacionService
           .getCotizacion(termino)
           .subscribe((res: ICotizacion[]) => {
-            this.cotizaciones = res;
+            this.dataSourceCotizaciones.data = res;
           });
       } else if (termino.length > 0) {
-        this.cotizaciones = [];
+        this.dataSourceCotizaciones.data = [];
       } else {
         this.ultimasCotizaciones(10);
       }
@@ -320,14 +345,16 @@ export class GestPagoCotiPersonaComponent implements OnInit {
       codCotizacion: cotizacion.codCotizacion,
       estadoCotizacion: cotizacion.estadoCotizacion,
       version: ultimaVersion.version,
-      fechaModificacion: fechaFormateada,
+      fechaCotizacion: ultimaVersion.fechaModificacion,
       hc: ultimaVersion.hc,
+      clienteId: ultimaVersion.clienteId,
       nombreCliente: ultimaVersion.nombreCliente,
       apePatCliente: ultimaVersion.apePatCliente,
       apeMatCliente: ultimaVersion.apeMatCliente,
       tipoDoc: ultimaVersion.tipoDoc,
       nroDoc: ultimaVersion.nroDoc,
       codSolicitante: ultimaVersion.codSolicitante,
+      solicitanteId: ultimaVersion.solicitanteId,
       apePatRefMedico: ultimaVersion.apePatRefMedico,
       apeMatRefMedico: ultimaVersion.apeMatRefMedico,
       nombreRefMedico: ultimaVersion.nombreRefMedico,
@@ -380,12 +407,21 @@ export class GestPagoCotiPersonaComponent implements OnInit {
   }
 
   // PAGOS
+  dataSourcePagos = new MatTableDataSource<IPago>();
   pagos: IPago[] = [];
+
+  columnasPagos: string[] = [
+    'codCoti',
+    'codPago',
+    'nombreCompleto',
+    'fecha',
+    'estado',
+  ];
 
   ultimosPagos(cantidad: number): void {
     this._pagoService.getPagos(cantidad).subscribe({
       next: (res: IPago[]) => {
-        this.pagos = res;
+        this.dataSourcePagos.data = res;
       },
       error: (err) => {
         console.error('Error al obtener las cotizaciones:', err);
@@ -409,15 +445,21 @@ export class GestPagoCotiPersonaComponent implements OnInit {
     this.myFormPagoPersona.patchValue({
       codPago: pago.codPago,
       codCotizacion: pago.codCotizacion,
-      fechaModificacion: pago.fechaCotizacion,
+      fechaCotizacion: pago.fechaCotizacion,
       version: pago.version,
       estadoCotizacion: pago.estadoCotizacion,
       hc: pago.hc,
-      nombreCompleto: pago.nombreCompleto,
+      clienteId: pago.clienteId,
+      nombreCliente: pago.nombreCliente,
+      apePatCliente: pago.apePatCliente,
+      apeMatCliente: pago.apeMatCliente,
       tipoDoc: pago.tipoDoc,
       nroDoc: pago.nroDoc,
       codSolicitante: pago.codSolicitante,
-      nomSolicitante: pago.nomSolicitante,
+      solicitanteId: pago.solicitanteId,
+      nombreRefMedico: pago.nombreRefMedico,
+      apePatRefMedico: pago.apePatRefMedico,
+      apeMatRefMedico: pago.apeMatRefMedico,
       profesionSolicitante: pago.profesionSolicitante,
       colegiatura: pago.colegiatura,
       sumaTotalesPrecioLista: pago.sumaTotalesPrecioLista,

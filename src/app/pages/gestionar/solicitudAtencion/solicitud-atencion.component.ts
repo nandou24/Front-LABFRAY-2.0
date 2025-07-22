@@ -139,8 +139,6 @@ export class SolicitudAtencionComponent implements OnInit {
   }
 
   buscarSolicitudes() {
-    console.log('Buscando solicitudes con los siguientes parámetros:');
-
     const termino = this.myGroupBusqueda.get('terminoBusqueda')?.value || '';
     const fechaInicioControl =
       this.myGroupBusqueda.get('fechaInicio')?.value || new Date();
@@ -166,6 +164,7 @@ export class SolicitudAtencionComponent implements OnInit {
       .subscribe({
         next: (solicitudes) => {
           this.dataSourceSolicitud.data = solicitudes;
+          console.log('Solicitudes encontradas:', solicitudes);
           this.snackBar.open(
             `Se encontraron ${solicitudes.length} solicitudes`,
             'Cerrar',

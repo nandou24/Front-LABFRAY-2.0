@@ -40,6 +40,7 @@ export interface IHistorialCotizacion {
 }
 
 export interface IServicioCotizacion {
+  servicioId: string;
   codServicio: string;
   tipoServicio: string;
   nombreServicio: string;
