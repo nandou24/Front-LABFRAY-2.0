@@ -46,6 +46,8 @@ import { IPersonalSaludParaConsultas } from '../../../../models/Mantenimiento/re
 import { DialogMedicoComponent } from './dialogs/dialog-medico/dialog-medico.component';
 import { MatPaginator } from '@angular/material/paginator';
 import { debounceTime, distinctUntilChanged, filter, tap } from 'rxjs';
+import { IPaciente } from '../../../../models/Mantenimiento/paciente.models';
+import { IRefMedico } from '../../../../models/Mantenimiento/referenciaMedico.models';
 
 @Component({
   selector: 'app-gest-coti-persona',
@@ -230,7 +232,7 @@ export class GestCotiPersonaComponent implements OnInit {
     });
   }
 
-  setPacienteSeleccionado(paciente: any) {
+  setPacienteSeleccionado(paciente: IPaciente) {
     // Asigna los datos del paciente seleccionado al formulario
     this.myFormCotizacion.patchValue({
       clienteId: paciente._id,
@@ -255,7 +257,7 @@ export class GestCotiPersonaComponent implements OnInit {
     });
   }
 
-  setSolicitanteSeleccionado(solicitante: any) {
+  setSolicitanteSeleccionado(solicitante: IRefMedico) {
     // Asigna los datos del paciente seleccionado al formulario
     //console.log('Solicitante seleccionado:', solicitante);
     this.myFormCotizacion.patchValue({
@@ -264,8 +266,8 @@ export class GestCotiPersonaComponent implements OnInit {
       apePatRefMedico: solicitante.apePatRefMedico,
       apeMatRefMedico: solicitante.apeMatRefMedico,
       nombreRefMedico: solicitante.nombreRefMedico,
-      profesionSolicitante: solicitante.profesionSolicitante.profesion,
-      colegiatura: solicitante.profesionSolicitante.colegiatura,
+      profesionSolicitante: solicitante.profesionSolicitante?.profesion ?? '',
+      colegiatura: solicitante.profesionSolicitante?.nroColegiatura ?? '',
       especialidadSolicitante: this.getEspecialidadesTexto(solicitante),
     });
   }
@@ -317,25 +319,25 @@ export class GestCotiPersonaComponent implements OnInit {
     });
   }
 
-  buscarCotizaciones() {
-    clearTimeout(this.timeoutBusqueda);
+  // buscarCotizaciones() {
+  //   clearTimeout(this.timeoutBusqueda);
 
-    this.timeoutBusqueda = setTimeout(() => {
-      const termino = this.terminoBusquedaCotizacion.value?.trim() || '';
+  //   this.timeoutBusqueda = setTimeout(() => {
+  //     const termino = this.terminoBusquedaCotizacion.value?.trim() || '';
 
-      if (termino.length >= 3) {
-        this._cotizacionService
-          .getCotizacion(termino)
-          .subscribe((res: ICotizacion[]) => {
-            this.dataSourceCotizaciones.data = res;
-          });
-      } else if (termino.length > 0) {
-        this.dataSourceCotizaciones.data = [];
-      } else {
-        this.ultimasCotizaciones();
-      }
-    }, 250);
-  }
+  //     if (termino.length >= 3) {
+  //       this._cotizacionService
+  //         .getCotizacion(termino)
+  //         .subscribe((res: ICotizacion[]) => {
+  //           this.dataSourceCotizaciones.data = res;
+  //         });
+  //     } else if (termino.length > 0) {
+  //       this.dataSourceCotizaciones.data = [];
+  //     } else {
+  //       this.ultimasCotizaciones();
+  //     }
+  //   }, 250);
+  // }
 
   configurarBusquedaCotizaciones(): void {
     this.terminoBusquedaCotizacion.valueChanges
@@ -685,12 +687,12 @@ export class GestCotiPersonaComponent implements OnInit {
     // this.myFormCotizacion.get('estadoRegistroPaciente')?.enable();
     // this.myFormCotizacion.get('estadoRegistroSolicitante')?.enable();
 
-    // document
-    //   .getElementById('buscarPacienteModalBtn')
-    //   ?.removeAttribute('disabled');
-    // document
-    //   .getElementById('buscarSolicitanteModalBtn')
-    //   ?.removeAttribute('disabled');
+    document
+      .getElementById('buscarPacienteModalBtn')
+      ?.removeAttribute('disabled');
+    document
+      .getElementById('buscarSolicitanteModalBtn')
+      ?.removeAttribute('disabled');
 
     this.myFormCotizacion.patchValue({
       // estadoRegistroPaciente: true,

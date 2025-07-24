@@ -1,6 +1,7 @@
 import { IProfesionEspecialidad } from '../Mantenimiento/servicios.models';
 
 export interface ICotizacion {
+  _id?: string;
   codCotizacion: string;
   historial: IHistorialCotizacion[];
   estadoCotizacion: string;
@@ -56,7 +57,7 @@ export interface IServicioCotizacion {
     codRecHumano: string;
     apePatRecHumano: string;
     apeMatRecHumano: string;
-    nomRecHumano: string;
+    nombreRecHumano: string;
     nroColegiatura: string;
     rne: string;
   };

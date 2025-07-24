@@ -3,7 +3,17 @@
 <mat-dialog-content>
   <mat-form-field appearance="outline" class="w-100 mt-1">
     <mat-label>Ingrese nombre o documento...</mat-label>
-    <input matInput [formControl]="busquedaControl" />
+    <input matInput [formControl]="terminoBusquedaSolicitante" />
+    @if (terminoBusquedaSolicitante.value) {
+      <button
+        matSuffix
+        mat-icon-button
+        aria-label="Clear"
+        (click)="terminoBusquedaSolicitante.setValue('')"
+      >
+        <mat-icon>close</mat-icon>
+      </button>
+    }
   </mat-form-field>
 
   <div *ngIf="cargando" class="text-center my-3">
@@ -54,32 +64,18 @@
       </td>
     </ng-container>
 
-    <tr
-      mat-header-row
-      *matHeaderRowDef="[
-        'nro',
-        'nombreCompleto',
-        'profesion',
-        'colegiatura',
-        'especialidad',
-        'acciones',
-      ]"
-    ></tr>
-    <tr
-      mat-row
-      *matRowDef="
-        let row;
-        columns: [
-          'nro',
-          'nombreCompleto',
-          'profesion',
-          'colegiatura',
-          'especialidad',
-          'acciones',
-        ]
-      "
-    ></tr>
+    <tr mat-header-row *matHeaderRowDef="columnasTablaRefMedicos"></tr>
+    <tr mat-row *matRowDef="let row; columns: columnasTablaRefMedicos"></tr>
   </table>
+
+  <div>
+    <mat-paginator
+      #MatPaginatorSolicitante
+      [pageSize]="10"
+      [pageSizeOptions]="[5, 10, 25]"
+      showFirstLastButtons
+    ></mat-paginator>
+  </div>
 
   <div
     *ngIf="!cargando && dataSourceRefMedicos.data.length === 0"

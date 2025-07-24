@@ -9,7 +9,9 @@ import { ISolicitudAtencion } from '../../../../models/Gestion/solicitudAtencion
 export class HcPdfService {
   constructor(private _sanitizer: DomSanitizer) {}
 
-  generarHistoriaClinicaPDF(data: ISolicitudAtencion): SafeResourceUrl | void {
+  generarHojaConsultaMedicaPDF(
+    data: ISolicitudAtencion,
+  ): SafeResourceUrl | void {
     const doc = new jsPDF({
       orientation: 'landscape',
       unit: 'mm',
@@ -22,10 +24,6 @@ export class HcPdfService {
     let logoHeight = 14; // Alto de la imagen
     let logoWidth = logoHeight * 0.896; // Ancho de la imagen
     doc.addImage(imagenBase64, 'PNG', 10, 7, logoWidth, logoHeight); // (x, y, width, height)
-
-    //guias
-    //doc.line(105, 0, 105, 148.5); // x1, y1, x2, y2 vertical line
-    //doc.line(0, 74.25, 210, 74.25); // x1, y1, x2, y2 horizontal line
 
     //constantes
     const margin = 5; // Margen del documento
@@ -74,19 +72,26 @@ export class HcPdfService {
     // Paciente y doctor
     doc.setFontSize(9);
     doc.setFont('helvetica', 'bold');
-    doc.text(`${data.tipoDocumento}`, 108, 9.5);
+    doc.text(`Documento`, 108, 9.5);
     doc.text(`Fecha:`, 170, 9.5);
     doc.text(`Paciente`, 108, 14.5);
     doc.text(`Médico`, 108, 21);
     doc.setFont('helvetica', 'normal');
-    doc.text(`${data.nroDocumento}`, 127, 9.5);
-    doc.text('18/05/25', 185, 9.5);
+    doc.text(`${data.tipoDoc} ${data.nroDoc}`, 127, 9.5);
+    //Formateando fecha
+    const fecha = new Date(data.fechaEmision);
+    const fechaFormateada = `${fecha.getDate().toString().padStart(2, '0')}/${(fecha.getMonth() + 1).toString().padStart(2, '0')}/${fecha.getFullYear()}`;
+    doc.text(`${fechaFormateada}`, 185, 9.5);
     doc.text(
       `${data.apePatCliente} ${data.apeMatCliente} ${data.nombreCliente}`,
       127,
       14.5,
     );
-    doc.text('JOSE CIPRIANO GOMEZ BARBOZA', 127, 21);
+    doc.text(
+      `${data.servicios[0].medicoAtiende?.apePatRecHumano} ${data.servicios[0].medicoAtiende?.apeMatRecHumano} ${data.servicios[0]?.medicoAtiende?.nombreRecHumano}`,
+      127,
+      21,
+    );
 
     //primera fila Sexo, Talla, Peso, Edad
     const fila1Y = 26.7;

@@ -59,7 +59,11 @@ export class ReferenciaMedicoService {
         `${environment.baseUrl}/api/referenciaMedico/findTerm`,
         { params },
       )
-      .pipe(map((data) => data.refMedicos));
+      .pipe(
+        map((data) => {
+          return data.refMedicos;
+        }),
+      );
   }
 
   public actualizarRefMedico(codRefMedico: string, body: IRefMedico) {

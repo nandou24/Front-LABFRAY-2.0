@@ -147,6 +147,7 @@ export class MantPruebaLabComponent implements OnInit {
 
   private crearItemFormGroup(item: IItemLab): FormGroup {
     return this._fb.group({
+      itemLabId: [item._id],
       codItemLab: [item.codItemLab, Validators.required],
       nombreItemLab: [item.nombreItemLab, Validators.required],
       perteneceA: [item.perteneceA],

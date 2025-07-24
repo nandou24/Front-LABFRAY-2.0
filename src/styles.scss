@@ -99,6 +99,15 @@ app-gest-coti-persona {
     )
   );
 
+  // Clase específica para el botón de limpiar del input de búsqueda
+  .clear-search-button {
+    @include mat.icon-button-overrides(
+      (
+        state-layer-size: 40px,
+      )
+    );
+  }
+
   @include mat.button-overrides(
     (
       filled-container-color: orange,

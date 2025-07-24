@@ -16,6 +16,8 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { FormsModule, ReactiveFormsModule, FormControl } from '@angular/forms';
 import { IRefMedico } from '../../../../../../models/Mantenimiento/referenciaMedico.models';
 import { ReferenciaMedicoService } from '../../../../../../services/mantenimiento/referencias/referencia-medico.service';
+import { MatPaginator } from '@angular/material/paginator';
+import { debounceTime, distinctUntilChanged, filter, tap } from 'rxjs';
 
 @Component({
   selector: 'app-dialog-buscar-paciente',
@@ -28,6 +30,7 @@ import { ReferenciaMedicoService } from '../../../../../../services/mantenimient
     MatTableModule,
     MatButtonModule,
     MatIconModule,
+    MatPaginator,
     MatProgressSpinnerModule,
     FormsModule,
     ReactiveFormsModule,
@@ -37,21 +40,25 @@ import { ReferenciaMedicoService } from '../../../../../../services/mantenimient
 })
 export class DialogBuscarSolicitanteComponent implements OnInit {
   cargando = false;
-  busquedaControl = new FormControl('');
+  terminoBusquedaSolicitante = new FormControl('');
 
   constructor(
     public dialogRef: MatDialogRef<DialogBuscarSolicitanteComponent>,
     private _refMedicoService: ReferenciaMedicoService,
     @Inject(MAT_DIALOG_DATA) public data: any,
-  ) {
-    this.busquedaControl.valueChanges.subscribe(() => this.buscarRefMedicos());
-  }
+  ) {}
 
   ngOnInit(): void {
     this.ultimosRefMedicos();
+    this.configurarBusquedaSolicitante();
   }
 
   @ViewChild(MatTable) table!: MatTable<any>;
+  @ViewChild('MatPaginatorSolicitante') paginatorSolicitante!: MatPaginator;
+
+  ngAfterViewInit() {
+    this.dataSourceRefMedicos.paginator = this.paginatorSolicitante;
+  }
 
   //Tabla rrhh
   columnasTablaRefMedicos: string[] = [
@@ -65,26 +72,54 @@ export class DialogBuscarSolicitanteComponent implements OnInit {
   dataSourceRefMedicos = new MatTableDataSource<IRefMedico>();
   timeoutBusqueda: any;
 
-  buscarRefMedicos() {
-    this.cargando = true;
-    clearTimeout(this.timeoutBusqueda);
-    this.timeoutBusqueda = setTimeout(() => {
-      const termino = this.busquedaControl.value?.trim() || '';
-      if (termino.length >= 3) {
-        this._refMedicoService
-          .getRefMedico(termino)
-          .subscribe((res: IRefMedico[]) => {
-            this.dataSourceRefMedicos.data = res;
-            this.cargando = false;
-          });
-      } else if (termino.length > 0) {
-        this.dataSourceRefMedicos.data = [];
-        this.cargando = false;
-      } else {
-        this.ultimosRefMedicos();
-        this.cargando = false;
-      }
-    }, 200);
+  // buscarRefMedicos() {
+  //   this.cargando = true;
+  //   clearTimeout(this.timeoutBusqueda);
+  //   this.timeoutBusqueda = setTimeout(() => {
+  //     const termino = this.busquedaControl.value?.trim() || '';
+  //     if (termino.length >= 3) {
+  //       this._refMedicoService
+  //         .getRefMedico(termino)
+  //         .subscribe((res: IRefMedico[]) => {
+  //           this.dataSourceRefMedicos.data = res;
+  //           this.cargando = false;
+  //         });
+  //     } else if (termino.length > 0) {
+  //       this.dataSourceRefMedicos.data = [];
+  //       this.cargando = false;
+  //     } else {
+  //       this.ultimosRefMedicos();
+  //       this.cargando = false;
+  //     }
+  //   }, 200);
+  // }
+
+  configurarBusquedaSolicitante(): void {
+    this.terminoBusquedaSolicitante.valueChanges
+      .pipe(
+        filter((termino): termino is string => termino !== null),
+        debounceTime(300),
+        distinctUntilChanged(),
+        tap((termino: string) => {
+          termino = termino?.trim() || '';
+
+          if (termino.length >= 3) {
+            this._refMedicoService.getRefMedico(termino).subscribe({
+              next: (res: IRefMedico[]) => {
+                this.dataSourceRefMedicos.data = res;
+              },
+              error: () => {
+                this.dataSourceRefMedicos.data = [];
+              },
+            });
+          } else if (termino.length > 0) {
+            this.dataSourceRefMedicos.data = [];
+          } else {
+            this.ultimosRefMedicos(); // ← carga los médicos recientes
+          }
+        }),
+      )
+      .subscribe();
   }
 
   ultimosRefMedicos(): void {

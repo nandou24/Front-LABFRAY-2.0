@@ -1,5 +1,6 @@
 //PACIENTE
 export interface IPaciente {
+  _id?: string;
   hc: string;
   tipoDoc: string;
   nroDoc: string;

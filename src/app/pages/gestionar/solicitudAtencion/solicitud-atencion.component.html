@@ -96,7 +96,7 @@
           <th mat-header-cell *matHeaderCellDef mat-sort-header>
             Cod. Solicitud
           </th>
-          <td mat-cell *matCellDef="let row">{{ row.codigoSolicitud }}</td>
+          <td mat-cell *matCellDef="let row">{{ row.codSolicitud }}</td>
         </ng-container>
 
         <!-- Código Solicitud -->
@@ -104,13 +104,13 @@
           <th mat-header-cell *matHeaderCellDef mat-sort-header>
             Cod. Cotización
           </th>
-          <td mat-cell *matCellDef="let row">{{ row.cotizacionId }}</td>
+          <td mat-cell *matCellDef="let row">{{ row.codCotizacion }}</td>
         </ng-container>
 
         <!-- Código Solicitud -->
         <ng-container matColumnDef="codigoPago">
           <th mat-header-cell *matHeaderCellDef mat-sort-header>Cod. Pago</th>
-          <td mat-cell *matCellDef="let row">{{ row.codigoPago }}</td>
+          <td mat-cell *matCellDef="let row">{{ row.codPago }}</td>
         </ng-container>
 
         <!-- Fecha Emisión -->
@@ -124,7 +124,12 @@
         <!-- Nombre del paciente -->
         <ng-container matColumnDef="nombreCompleto">
           <th mat-header-cell *matHeaderCellDef mat-sort-header>Paciente</th>
-          <td mat-cell *matCellDef="let row">{{ row.nombreCompleto }}</td>
+          <td mat-cell *matCellDef="let row">
+            {{ row.tipoDoc }} {{ row.nroDoc }} --
+
+            {{ row.apePatCliente }} {{ row.apeMatCliente }}
+            {{ row.nombreCliente }}
+          </td>
         </ng-container>
 
         <!-- Tipo de atención -->
@@ -208,6 +213,7 @@
                       <tr>
                         <th>Código Servicio</th>
                         <th>Nombre</th>
+                        <th>Médico</th>
                         <th>Estado</th>
                       </tr>
                     </thead>
@@ -215,6 +221,11 @@
                       <tr *ngFor="let servicio of element.servicios">
                         <td>{{ servicio.codigoServicio }}</td>
                         <td>{{ servicio.nombreServicio }}</td>
+                        <td>
+                          {{ servicio.medicoAtiende.apePatRecHumano }}
+                          {{ servicio.medicoAtiende.apeMatRecHumano }}
+                          {{ servicio.medicoAtiende.nombreRecHumano }}
+                        </td>
                         <td>
                           <mat-chip
                             [color]="

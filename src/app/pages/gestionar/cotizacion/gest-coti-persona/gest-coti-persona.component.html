@@ -590,6 +590,17 @@
               [formControl]="terminoBusquedaCotizacion"
               (focus)="seleccionarTexto($event)"
             />
+            @if (terminoBusquedaCotizacion.value) {
+              <button
+                matSuffix
+                mat-icon-button
+                class="clear-search-button"
+                aria-label="Clear"
+                (click)="terminoBusquedaCotizacion.setValue('')"
+              >
+                <mat-icon>close</mat-icon>
+              </button>
+            }
           </mat-form-field>
 
           <table mat-table [dataSource]="dataSourceCotizaciones">
@@ -685,6 +696,17 @@
               [formControl]="terminoBusquedaServicio"
               (input)="buscarServicio()"
             />
+            @if (terminoBusquedaServicio.value) {
+              <button
+                matSuffix
+                class="clear-search-button"
+                mat-icon-button
+                aria-label="Clear"
+                (click)="terminoBusquedaServicio.setValue('')"
+              >
+                <mat-icon>close</mat-icon>
+              </button>
+            }
           </mat-form-field>
 
           <table mat-table [dataSource]="dataSourceServicios">

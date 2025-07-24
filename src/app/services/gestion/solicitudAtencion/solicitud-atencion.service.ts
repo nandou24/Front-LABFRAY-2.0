@@ -3,7 +3,6 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import {
   ISolicitudAtencion,
-  ISolicitudAtencionPostDTO,
   ISolicitudAtencionPostResponse,
 } from '../../../models/Gestion/solicitudAtencion.models';
 import { environment } from '../../../../environments/enviroment';
@@ -17,7 +16,7 @@ export class SolicitudAtencionService {
   constructor(private http: HttpClient) {}
 
   createSolicitudAtencion(
-    data: ISolicitudAtencionPostDTO,
+    data: ISolicitudAtencion,
   ): Observable<ISolicitudAtencionPostResponse> {
     return this.http.post<ISolicitudAtencionPostResponse>(
       `${this.apiUrl}`,
@@ -27,7 +26,7 @@ export class SolicitudAtencionService {
 
   updateSolicitudAtencion(
     id: string,
-    data: Partial<ISolicitudAtencionPostDTO>,
+    data: Partial<ISolicitudAtencion>,
   ): Observable<ISolicitudAtencionPostResponse> {
     return this.http.put<ISolicitudAtencionPostResponse>(
       `${this.apiUrl}/${id}`,

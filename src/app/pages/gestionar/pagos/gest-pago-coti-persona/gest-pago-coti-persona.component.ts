@@ -22,6 +22,7 @@ import { CotizacionPersonalService } from '../../../../services/gestion/cotizaci
 import {
   ICotizacion,
   IHistorialCotizacion,
+  IServicioCotizacion,
 } from '../../../../models/Gestion/cotizacionPersona.models';
 import { IDetallePago, IPago } from '../../../../models/Gestion/pagos.models';
 import { PagosCotizacionPersonalService } from '../../../../services/gestion/pagos/pagos-cotizacion-personal.service';
@@ -71,6 +72,7 @@ export class GestPagoCotiPersonaComponent implements OnInit {
   public myFormPagoPersona: FormGroup = this._fb.group({
     codPago: [{ value: '', disabled: true }],
     fechaPago: [{ value: '', disabled: true }],
+    cotizacionId: [{ value: '', disabled: true }],
     codCotizacion: [{ value: '', disabled: true }],
     version: [{ value: 0, disabled: true }],
     fechaCotizacion: [{ value: '', disabled: true }],
@@ -342,6 +344,7 @@ export class GestPagoCotiPersonaComponent implements OnInit {
 
     // 📌 Cargar datos del paciente
     this.myFormPagoPersona.patchValue({
+      cotizacionId: cotizacion._id,
       codCotizacion: cotizacion.codCotizacion,
       estadoCotizacion: cotizacion.estadoCotizacion,
       version: ultimaVersion.version,
@@ -380,8 +383,11 @@ export class GestPagoCotiPersonaComponent implements OnInit {
       .controls as FormGroup[];
   }
 
-  private crearServiciosCotizacionGroup(servicio: any): FormGroup {
+  private crearServiciosCotizacionGroup(
+    servicio: IServicioCotizacion,
+  ): FormGroup {
     return this._fb.group({
+      servicioId: [servicio.servicioId, Validators.required],
       codServicio: [servicio.codServicio, Validators.required],
       tipoServicio: [servicio.tipoServicio, Validators.required],
       nombreServicio: [servicio.nombreServicio, Validators.required],
@@ -403,6 +409,16 @@ export class GestPagoCotiPersonaComponent implements OnInit {
         servicio.totalUnitario,
         [Validators.required, Validators.min(0)],
       ],
+
+      medicoAtiende: this._fb.group({
+        medicoId: [servicio.medicoAtiende?.medicoId],
+        codRecHumano: [servicio.medicoAtiende?.codRecHumano],
+        apePatRecHumano: [servicio.medicoAtiende?.apePatRecHumano],
+        apeMatRecHumano: [servicio.medicoAtiende?.apeMatRecHumano],
+        nombreRecHumano: [servicio.medicoAtiende?.nombreRecHumano],
+        nroColegiatura: [servicio.medicoAtiende?.nroColegiatura],
+        rne: [servicio.medicoAtiende?.rne],
+      }),
     });
   }
 
@@ -444,6 +460,7 @@ export class GestPagoCotiPersonaComponent implements OnInit {
     // Cargar campos del formulario
     this.myFormPagoPersona.patchValue({
       codPago: pago.codPago,
+      cotizacionId: pago.cotizacionId,
       codCotizacion: pago.codCotizacion,
       fechaCotizacion: pago.fechaCotizacion,
       version: pago.version,
@@ -612,89 +629,118 @@ export class GestPagoCotiPersonaComponent implements OnInit {
   }
 
   registrarPagos(pago: IPago) {
-    const codCotizacion = this.myFormPagoPersona.get('codCotizacion')?.value;
+    // const codCotizacion = this.myFormPagoPersona.get('codCotizacion')?.value;
 
-    this._cotizacionService.verificarHcRegistrada(codCotizacion).subscribe({
-      next: (hcRegistrada: boolean) => {
-        if (!hcRegistrada) {
-          Swal.fire({
-            title: 'Error',
-            text: 'El paciente no está registrado en el sistema.',
-            icon: 'error',
-            showCancelButton: true,
-            confirmButtonText: 'Registrar paciente',
-            cancelButtonText: 'Cancelar',
-          }).then((result) => {
-            if (result.isConfirmed) {
-              const dialogRef = this.dialog.open(
-                DialogRegistroPacienteComponent,
-                {
-                  width: '700px',
-                  height: '850px',
-                  minWidth: '500px',
-                  maxWidth: '1000px',
+    // this._cotizacionService.verificarHcRegistrada(codCotizacion).subscribe({
+    //   next: (hcRegistrada: boolean) => {
+    //     if (!hcRegistrada) {
+    //       Swal.fire({
+    //         title: 'Error',
+    //         text: 'El paciente no está registrado en el sistema.',
+    //         icon: 'error',
+    //         showCancelButton: true,
+    //         confirmButtonText: 'Registrar paciente',
+    //         cancelButtonText: 'Cancelar',
+    //       }).then((result) => {
+    //         if (result.isConfirmed) {
+    //           const dialogRef = this.dialog.open(
+    //             DialogRegistroPacienteComponent,
+    //             {
+    //               width: '700px',
+    //               height: '850px',
+    //               minWidth: '500px',
+    //               maxWidth: '1000px',
 
-                  data: {
-                    codCotizacion:
-                      this.myFormPagoPersona.get('codCotizacion')?.value,
-                    paciente: {
-                      nombreCompleto:
-                        this.myFormPagoPersona.get('nombreCompleto')?.value,
-                      tipoDoc: this.myFormPagoPersona.get('tipoDoc')?.value,
-                      nroDoc: this.myFormPagoPersona.get('nroDoc')?.value,
-                    },
-                  },
-                },
-              );
+    //               data: {
+    //                 codCotizacion:
+    //                   this.myFormPagoPersona.get('codCotizacion')?.value,
+    //                 paciente: {
+    //                   nombreCompleto:
+    //                     this.myFormPagoPersona.get('nombreCompleto')?.value,
+    //                   tipoDoc: this.myFormPagoPersona.get('tipoDoc')?.value,
+    //                   nroDoc: this.myFormPagoPersona.get('nroDoc')?.value,
+    //                 },
+    //               },
+    //             },
+    //           );
 
-              dialogRef.afterClosed().subscribe((pacienteSeleccionado) => {
-                if (pacienteSeleccionado) {
-                  this.setPacienteRegistrado(pacienteSeleccionado);
-                  this.ultimasCotizaciones(20); // Actualizar lista de cotizaciones
-                }
-              });
-            }
-          });
-        } else {
-          this._pagoService.registrarPago(pago).subscribe({
-            next: (data) => {
-              Swal.fire({
-                title: 'Confirmado',
-                text: data.msg,
-                icon: 'success',
-                confirmButtonText: 'Ok',
-              });
-              this.nuevoPago();
-              this.cancelarAnulacion();
-            },
-            error: (err) => {
-              console.error('Error al registrar el pago:', err);
+    //           dialogRef.afterClosed().subscribe((pacienteSeleccionado) => {
+    //             if (pacienteSeleccionado) {
+    //               this.setPacienteRegistrado(pacienteSeleccionado);
+    //               this.ultimasCotizaciones(20); // Actualizar lista de cotizaciones
+    //             }
+    //           });
+    //         }
+    //       });
+    //     } else {
+    //       this._pagoService.registrarPago(pago).subscribe({
+    //         next: (data) => {
+    //           Swal.fire({
+    //             title: 'Confirmado',
+    //             text: data.msg,
+    //             icon: 'success',
+    //             confirmButtonText: 'Ok',
+    //           });
+    //           this.nuevoPago();
+    //           this.cancelarAnulacion();
+    //         },
+    //         error: (err) => {
+    //           console.error('Error al registrar el pago:', err);
 
-              const mensaje =
-                err?.error?.msg ||
-                err.message ||
-                'No se pudo registrar el pago. Intenta nuevamente.';
+    //           const mensaje =
+    //             err?.error?.msg ||
+    //             err.message ||
+    //             'No se pudo registrar el pago. Intenta nuevamente.';
 
-              const hc22: boolean = err?.error?.errors?.faltaHC;
+    //           const hc22: boolean = err?.error?.errors?.faltaHC;
 
-              // Error genérico
-              Swal.fire({
-                title: 'Error',
-                text: mensaje,
-                icon: 'error',
-                confirmButtonText: 'Ok',
-              });
-            },
-          });
-        }
+    //           // Error genérico
+    //           Swal.fire({
+    //             title: 'Error',
+    //             text: mensaje,
+    //             icon: 'error',
+    //             confirmButtonText: 'Ok',
+    //           });
+    //         },
+    //       });
+    //     }
+    //   },
+    //   error: (err) => {
+    //     console.error('Error al verificar HC:', err);
+    //     Swal.fire(
+    //       'Error',
+    //       'No se pudo verificar la historia clínica.',
+    //       'error',
+    //     );
+    //   },
+    // });
+
+    this._pagoService.registrarPago(pago).subscribe({
+      next: (data) => {
+        Swal.fire({
+          title: 'Confirmado',
+          text: data.msg,
+          icon: 'success',
+          confirmButtonText: 'Ok',
+        });
+        this.nuevoPago();
+        this.cancelarAnulacion();
       },
       error: (err) => {
-        console.error('Error al verificar HC:', err);
-        Swal.fire(
-          'Error',
-          'No se pudo verificar la historia clínica.',
-          'error',
-        );
+        console.error('Error al registrar el pago:', err);
+
+        const mensaje =
+          err?.error?.msg ||
+          err.message ||
+          'No se pudo registrar el pago. Intenta nuevamente.';
+
+        // Error genérico
+        Swal.fire({
+          title: 'Error',
+          text: mensaje,
+          icon: 'error',
+          confirmButtonText: 'Ok',
+        });
       },
     });
   }

@@ -1,29 +1,31 @@
 //PRUEBA LAB
 
-import { IItemLab } from "./items.models";
+import { IItemLab } from './items.models';
 
 export interface IPruebaLab {
-    codPruebaLab: string,
-    areaLab: string,
-    nombrePruebaLab: string,
-    condPreAnalitPaciente: string,
-    condPreAnalitRefer: string,
-    tipoMuestra: string[];
-    tipoTuboEnvase: string[],
-    tiempoEntrega: string,
-    observPruebas: string,
-    estadoPrueba: string,
-    itemsComponentes: IItemLab[]
+  _id?: string;
+  pruebaLabId: string;
+  codPruebaLab: string;
+  areaLab: string;
+  nombrePruebaLab: string;
+  condPreAnalitPaciente: string;
+  condPreAnalitRefer: string;
+  tipoMuestra: string[];
+  tipoTuboEnvase: string[];
+  tiempoEntrega: string;
+  observPruebas: string;
+  estadoPrueba: string;
+  itemsComponentes: IItemLab[];
 }
 
 export interface IPruebaLabPostDTO {
-    ok: boolean;
-    msg?: string;
-    errors?: string;
+  ok: boolean;
+  msg?: string;
+  errors?: string;
 }
 
 export interface IGetLastPruebasLab {
-    ok: boolean;
-    search: String;
-    pruebasLab: IPruebaLab[];
+  ok: boolean;
+  search: String;
+  pruebasLab: IPruebaLab[];
 }

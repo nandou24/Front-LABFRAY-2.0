@@ -26,6 +26,8 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { DateAdapter, MAT_DATE_LOCALE } from '@angular/material/core';
 import { HcPdfService } from '../../../services/utilitarios/pdf/historiaClinica/hc-pdf.service';
 import { DialogPdfSolicitudAtencionComponent } from './dialogs/dialog-pdf-solicitud-atencion/dialog-pdf-solicitud-atencion.component';
+import { HojaTrabajoLabPdfService } from '../../../services/utilitarios/pdf/hojaTrabajo-Lab/hoja-trabajo-lab-pdf.service';
+import { ServiciosService } from '../../../services/mantenimiento/servicios/servicios.service';
 
 @Component({
   selector: 'app-solicitud-atencion',
@@ -50,11 +52,13 @@ import { DialogPdfSolicitudAtencionComponent } from './dialogs/dialog-pdf-solici
 export class SolicitudAtencionComponent implements OnInit {
   private _fb = inject(FormBuilder);
   private _solicitudService = inject(SolicitudAtencionService);
+  private _servicioService = inject(ServiciosService);
   private dialog = inject(MatDialog);
   private snackBar = inject(MatSnackBar);
   private readonly _adapter =
     inject<DateAdapter<unknown, unknown>>(DateAdapter);
-  private _pdfHCService = inject(HcPdfService);
+  private _pdfConsultaMedicaService = inject(HcPdfService);
+  private _pdfHojaTrabajoLabService = inject(HojaTrabajoLabPdfService);
 
   ngOnInit(): void {
     this.buscarSolicitudes();
@@ -67,10 +71,12 @@ export class SolicitudAtencionComponent implements OnInit {
     cotizacionId: ['', Validators.required],
     tipo: ['', Validators.required],
     servicios: this._fb.array([], Validators.required),
+    nombreCliente: ['', Validators.required],
+    apePatCliente: ['', Validators.required],
+    apeMatCliente: ['', Validators.required],
     hc: ['', Validators.required],
-    tipoDocumento: ['', Validators.required],
-    nroDocumento: ['', [Validators.required, Validators.minLength(6)]],
-    nombreCompleto: ['', Validators.required],
+    tipoDoc: ['', Validators.required],
+    nroDoc: ['', Validators.required],
     codUsuarioEmisor: ['', Validators.required],
     usuarioEmisor: ['', Validators.required],
   });
@@ -126,11 +132,79 @@ export class SolicitudAtencionComponent implements OnInit {
   }
 
   imprimirSolicitud(solicitud: any) {
+    console.log('Servicios:', solicitud.servicios);
     // Implementar generación de PDF
-    const pdfSrc = this._pdfHCService.generarHistoriaClinicaPDF(solicitud);
 
+    if (!solicitud) {
+      this.snackBar.open('No hay datos para generar el PDF', 'Cerrar', {
+        duration: 3000,
+      });
+      return;
+    }
+
+    let pdfSrc;
+    //let servicios;
+
+    if (solicitud.tipo === 'Consulta') {
+      pdfSrc =
+        this._pdfConsultaMedicaService.generarHojaConsultaMedicaPDF(solicitud);
+    } else if (solicitud.tipo === 'Laboratorio') {
+      // Obtener las pruebas de laboratorio con sus items antes de generar el PDF
+
+      // servicios = this._servicioService.getPruebasLaboratorioItems(
+      //   solicitud.servicios,
+      // );
+
+      // pdfSrc = this._pdfHojaTrabajoLabService.generarHojaTrabajoLabPDF(
+      //   solicitud,
+      //   servicios,
+      // );
+
+      this._servicioService
+        .getPruebasLaboratorioItems(solicitud.servicios)
+        .subscribe({
+          next: (pruebasConItems) => {
+            pdfSrc = this._pdfHojaTrabajoLabService.generarHojaTrabajoLabPDF(
+              solicitud,
+              pruebasConItems,
+            );
+            this.opendialog(pdfSrc, solicitud);
+            // this.dialog.open(DialogPdfSolicitudAtencionComponent, {
+            //   data: { pdfSrc, solicitudData: solicitud },
+            //   width: '70vw',
+            //   height: '95vh',
+            //   maxWidth: '95vw',
+            //   panelClass: 'custom-dialog-container',
+            // });
+          },
+          error: (err) => {
+            console.error('Error al obtener pruebas de laboratorio:', err);
+            this.snackBar.open(
+              'Error al obtener pruebas de laboratorio',
+              'Cerrar',
+              {
+                duration: 3000,
+              },
+            );
+          },
+        });
+      return;
+    }
+
+    this.opendialog(pdfSrc, solicitud);
+
+    // this.dialog.open(DialogPdfSolicitudAtencionComponent, {
+    //   data: { pdfSrc, solicitudData: solicitud },
+    //   width: '70vw',
+    //   height: '95vh',
+    //   maxWidth: '95vw',
+    //   panelClass: 'custom-dialog-container',
+    // });
+  }
+
+  opendialog(pdfSrc: any, solicitudData: any) {
     this.dialog.open(DialogPdfSolicitudAtencionComponent, {
-      data: { pdfSrc, solicitudData: solicitud },
+      data: { pdfSrc: pdfSrc, solicitudData: solicitudData },
       width: '70vw',
       height: '95vh',
       maxWidth: '95vw',
@@ -145,8 +219,8 @@ export class SolicitudAtencionComponent implements OnInit {
     const fechaFinControl =
       this.myGroupBusqueda.get('fechaFin')?.value || new Date();
 
-    console.log('Fecha Inicio:', fechaInicioControl);
-    console.log('Fecha Fin:', fechaFinControl);
+    //console.log('Fecha Inicio:', fechaInicioControl);
+    // console.log('Fecha Fin:', fechaFinControl);
 
     const inicio = new Date(fechaInicioControl);
     inicio.setHours(0, 0, 0, 0);
@@ -154,10 +228,10 @@ export class SolicitudAtencionComponent implements OnInit {
     const fin = new Date(fechaFinControl);
     fin.setHours(23, 59, 59, 999);
 
-    console.log('Inicio:', inicio);
-    console.log('Fin:', fin);
+    // console.log('Inicio:', inicio);
+    // console.log('Fin:', fin);
 
-    console.log('Término despues:', fechaInicioControl, fechaFinControl);
+    // console.log('Término despues:', fechaInicioControl, fechaFinControl);
 
     this._solicitudService
       .getAllByDateRange(inicio.toISOString(), fin.toISOString(), termino)

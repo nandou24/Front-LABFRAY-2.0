@@ -1,13 +1,15 @@
 export interface ISolicitudAtencion {
   _id?: string;
   codSolicitud: string; // Código interno, ej: SOL-LAB-00001
+  cotizacionId: string;
   codCotizacion: string;
+  pagoId: string; // Código de pago asociado
   codPago: string;
   tipo: string;
   servicios: IServicioSolicitud[];
   hc: string;
-  tipoDocumento: string;
-  nroDocumento: string;
+  tipoDoc: string;
+  nroDoc: string;
   clienteId: string;
   nombreCliente: string;
   apePatCliente: string;
@@ -18,6 +20,7 @@ export interface ISolicitudAtencion {
 }
 
 export interface IServicioSolicitud {
+  servicioId: string;
   codigoServicio: string;
   nombreServicio: string;
   estado: string;
@@ -26,7 +29,7 @@ export interface IServicioSolicitud {
     codRecHumano: string;
     apePatRecHumano: string;
     apeMatRecHumano: string;
-    nomRecHumano: string;
+    nombreRecHumano: string;
     nroColegiatura: string;
     rne: string;
   };

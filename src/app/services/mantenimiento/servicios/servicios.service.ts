@@ -7,6 +7,10 @@ import {
   IServicio,
   IServicioPostDTO,
 } from '../../../models/Mantenimiento/servicios.models';
+import {
+  IGetLastPruebasLab,
+  IPruebaLab,
+} from '../../../models/Mantenimiento/pruebaLab.models';
 
 @Injectable({
   providedIn: 'root',
@@ -81,5 +85,27 @@ export class ServiciosService {
       `${environment.baseUrl}/api/servicio/${codServicio}/updateServicio`,
       body,
     );
+  }
+
+  public getPruebasLaboratorioItems(
+    servicios: any[],
+  ): Observable<IPruebaLab[]> {
+    let params = new HttpParams();
+
+    // Agregar cada servicio como un parámetro separado
+    servicios.forEach((servicio) => {
+      params = params.append('servicioIds', servicio.servicioId);
+    });
+
+    console.log('Parametros para obtener pruebas de laboratorio:', params);
+
+    return this._http
+      .get<IGetLastPruebasLab>(
+        `${environment.baseUrl}/api/servicio/pruebaLab-items`,
+        {
+          params,
+        },
+      )
+      .pipe(map((data) => data.pruebasLab));
   }
 }

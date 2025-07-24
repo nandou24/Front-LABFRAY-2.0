@@ -4,6 +4,7 @@ import { IServicioCotizacion } from './cotizacionPersona.models';
 
 export interface IPago {
   codPago: string;
+  cotizacionId: string;
   codCotizacion: string;
   estadoCotizacion: string;
   fechaCotizacion: Date;
