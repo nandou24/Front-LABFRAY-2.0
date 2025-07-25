@@ -27,26 +27,62 @@ export class HojaTrabajoLabPdfService {
     doc.setFont('helvetica', 'bold');
 
     const imagenBase64 = '/images/logo labfray.png';
-    let logoHeight = 14; // Alto de la imagen
+    let logoHeight = 12; // Alto de la imagen
     let logoWidth = logoHeight * 0.896; // Ancho de la imagen
     doc.addImage(imagenBase64, 'PNG', 10, 7, logoWidth, logoHeight); // (x, y, width, height)
 
-    let y = 40;
+    //Constantes datos superiores
+    let xLabelSuperior = 97;
+    let yLabelSuperior = 10;
+    let xValueSuperior = 121;
+    let yValueSuperior = yLabelSuperior;
 
-    doc.setFontSize(14);
-    doc.text('Solicitud de Laboratorio Clínico', 80, 15, {
+    let xLabelDatosPaciente = 10;
+    let yLabelDatosPaciente = 27;
+    let xValueDatosPaciente = 30;
+    let yValueDatosPaciente = yLabelDatosPaciente;
+    let y = 41;
+
+    doc.setFontSize(12);
+    doc.text('Solicitud de Laboratorio Clínico', 60, 15, {
       align: 'center',
     });
 
+    const fecha = new Date(data.fechaEmision);
+    const fechaFormateada = `${fecha.getDate().toString().padStart(2, '0')}/${(fecha.getMonth() + 1).toString().padStart(2, '0')}/${fecha.getFullYear()}`;
+    // Extraer hora de data.fechaEmision
+    const horaFormateada = fecha.toTimeString().slice(0, 5); // formato HH:MM
+
+    // Información superior derecha
+    doc.setFontSize(9);
+    doc.text(`Cod. Solicitud:`, xLabelSuperior, yLabelSuperior);
+    doc.text(`Fecha:`, xLabelSuperior, yLabelSuperior + 5);
+    doc.text(`Hora:`, xLabelSuperior, yLabelSuperior + 10);
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(10);
-    doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 10, 25);
-    doc.text(`Hora: ${new Date().toLocaleTimeString()}`, 10, 30);
+    doc.text(`${data.codSolicitud}`, xValueSuperior, yValueSuperior);
+    doc.text(`${fechaFormateada}`, xValueSuperior, yValueSuperior + 5);
+    doc.text(`${horaFormateada}`, xValueSuperior, yValueSuperior + 10);
+
+    doc.setLineWidth(0.3);
+    doc.line(10, 23, 142, 23); // línea horizontal debajo del encabezado
+
+    // Información del paciente
+    doc.setFont('helvetica', 'bold');
+    doc.text(`Paciente:`, xLabelDatosPaciente, yLabelDatosPaciente);
+    doc.text(`Sexo:`, xLabelDatosPaciente, yLabelDatosPaciente + 5);
+    doc.text(`Edad:`, xLabelDatosPaciente + 50, yLabelDatosPaciente + 5);
+    doc.text(`Solicitante:`, xLabelDatosPaciente, yLabelDatosPaciente + 10);
+
+    doc.setFont('helvetica', 'normal');
     doc.text(
-      `Paciente: ${data.apePatCliente}${data.apeMatCliente} ${data.nombreCliente}`,
-      10,
-      35,
+      `${data.apePatCliente}${data.apeMatCliente} ${data.nombreCliente}`,
+      xValueDatosPaciente,
+      yValueDatosPaciente,
     );
+
+    doc.setLineWidth(0.3);
+    doc.line(10, 39, 142, 39); // línea horizontal debajo del encabezado
+
     //doc.text(`Edad: ${data.paciente.edad}`, 10, 40);
     //doc.text(`Sexo: ${data.paciente.sexo}`, 10, 45);
     //doc.text(`Historia Clínica: ${data.paciente.hc}`, 10, 50);
