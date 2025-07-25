@@ -29,6 +29,7 @@ import { PruebaLabService } from '../../../services/mantenimiento/pruebaLab/prue
 import { ItemLabService } from '../../../services/mantenimiento/itemLab/item-lab.service';
 import Swal from 'sweetalert2';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 
 @Component({
   selector: 'app-mant-prueba-lab',
@@ -41,6 +42,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs';
     ReactiveFormsModule,
     MatSelectModule,
     MatOptionModule,
+    MatSlideToggleModule,
     MatCheckbox,
     MatTableModule,
     MatIconModule,
@@ -98,12 +100,13 @@ export class MantPruebaLabComponent implements OnInit {
       MedioTransporte: [false],
       Lamina: [false],
     }),
-    tiempoEntrega: [
+    tiempoRespuesta: [
       '',
       [Validators.required, Validators.pattern('^[1-9][0-9]*$')],
     ],
     observPruebas: [''],
-    estadoPrueba: ['', [Validators.required]],
+    estadoPrueba: [true, [Validators.required]],
+    ordenImpresion: ['', [Validators.required]],
     itemsComponentes: this._fb.array([]),
   });
 
@@ -115,6 +118,11 @@ export class MantPruebaLabComponent implements OnInit {
   //Tabla items disponibles
   columnasDisponibles: string[] = ['codigo', 'nombre', 'perteneceA', 'accion'];
   dataSourceItemsDisponibles = new MatTableDataSource<IItemLab>();
+
+  //setear los anchos
+  setFlex(valor: number, unidad: 'px' | '%' = 'px'): string {
+    return `0 0 ${valor}${unidad}`;
+  }
 
   //Tabla items seleccionados
   columnasSeleccionados: string[] = [
@@ -135,7 +143,12 @@ export class MantPruebaLabComponent implements OnInit {
     );
 
     if (existe) {
-      console.log('Item ya está agregado');
+      Swal.fire({
+        title: 'Error',
+        text: 'El item ya está agregado',
+        icon: 'error',
+        confirmButtonText: 'Ok',
+      });
       return;
     }
 
@@ -175,6 +188,7 @@ export class MantPruebaLabComponent implements OnInit {
   ultimasPruebas(): void {
     this._pruebaLabService.getLastPruebasLab().subscribe((pruebas) => {
       this.dataSourcePruebas.data = pruebas;
+      console.log('Pruebas de laboratorio obtenidas:', pruebas);
     });
   }
 
@@ -183,6 +197,7 @@ export class MantPruebaLabComponent implements OnInit {
     this._itemLabService.getLastItemsLab(cantidad).subscribe({
       next: (res: IItemLab[]) => {
         this.dataSourceItemsDisponibles.data = res;
+        console.log('Items de laboratorio disponibles:', res);
       },
       error: (err) => {
         console.error('Error al obtener las pruebas:', err);
@@ -443,7 +458,7 @@ export class MantPruebaLabComponent implements OnInit {
       nombrePruebaLab: prueba.nombrePruebaLab,
       condPreAnalitPaciente: prueba.condPreAnalitPaciente,
       condPreAnalitRefer: prueba.condPreAnalitRefer,
-      tiempoEntrega: prueba.tiempoEntrega,
+      tiempoRespuesta: prueba.tiempoRespuesta,
       observPruebas: prueba.observPruebas,
       estadoPrueba: prueba.estadoPrueba,
     });
@@ -470,7 +485,7 @@ export class MantPruebaLabComponent implements OnInit {
 
     // Agregar cada teléfono al FormArray
     prueba.itemsComponentes.forEach((item: any) => {
-      this.itemsComponentes.push(this.crearItemFormGroup(item));
+      this.itemsComponentes.push(this.crearItemFormGroup(item.itemLabId));
     });
 
     this.dataSourceItemsSeleccionados.data = this.itemsComponentes.controls.map(

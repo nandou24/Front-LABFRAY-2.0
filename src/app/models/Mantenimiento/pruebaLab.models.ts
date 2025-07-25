@@ -12,9 +12,10 @@ export interface IPruebaLab {
   condPreAnalitRefer: string;
   tipoMuestra: string[];
   tipoTuboEnvase: string[];
-  tiempoEntrega: string;
+  tiempoRespuesta: string;
   observPruebas: string;
   estadoPrueba: string;
+  ordenImpresion: number;
   itemsComponentes: IItemLab[];
 }
 
