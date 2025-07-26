@@ -14,6 +14,7 @@ export interface ISolicitudAtencion {
   nombreCliente: string;
   apePatCliente: string;
   apeMatCliente: string;
+  solicitanteId?: string;
   fechaEmision: Date | string;
   estado: string;
   usuarioEmisor: string;

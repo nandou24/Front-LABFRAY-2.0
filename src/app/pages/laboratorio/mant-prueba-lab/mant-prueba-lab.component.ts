@@ -461,6 +461,7 @@ export class MantPruebaLabComponent implements OnInit {
       tiempoRespuesta: prueba.tiempoRespuesta,
       observPruebas: prueba.observPruebas,
       estadoPrueba: prueba.estadoPrueba,
+      ordenImpresion: prueba.ordenImpresion,
     });
 
     // Actualizar los checkboxes de tipoTuboEnvase

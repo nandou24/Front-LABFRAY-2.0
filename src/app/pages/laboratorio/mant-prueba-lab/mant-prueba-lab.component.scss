@@ -67,14 +67,17 @@ mat-option {
 }
 
 .checkbox-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  //gap: 4px;
+  align-items: start;
 }
 
 .checkbox-grid mat-checkbox {
-  flex: 1 1 calc(33.3333% - 10px); /* 3 columnas en desktop */
-  min-width: 100px;
+  white-space: nowrap;
+  // min-height: 40px;
+  display: flex;
+  align-items: center;
 }
 
 .tabla-container {
@@ -89,7 +92,15 @@ mat-option {
 .grupo-checkbox {
   border: 1px solid #cbd5e0;
   border-radius: 10px;
-  padding: 12px;
+  padding: 16px;
+  background-color: #f8f9fa;
+}
+
+.grupo-checkbox label {
+  margin-bottom: 12px;
+  display: block;
+  color: #0f3369;
+  font-weight: 600;
 }
 
 @media (max-width: 1430px) {
@@ -100,6 +111,10 @@ mat-option {
   .contenedor-formulario,
   .contenedor-tablaDerecha {
     flex: 0 0 100%;
+  }
+
+  .checkbox-grid {
+    grid-template-columns: repeat(2, 1fr); /* 2 columnas en tablets grandes */
   }
 }
 
@@ -114,6 +129,10 @@ mat-option {
     flex: 0 0 100%;
     padding: 0.5rem;
   }
+
+  .checkbox-grid {
+    grid-template-columns: repeat(2, 1fr); /* 2 columnas en tablets */
+  }
 }
 
 /* Celulares (1 columna) */
@@ -121,6 +140,10 @@ mat-option {
   .campo-flex-25,
   .campo-flex-50 {
     flex: 0 0 100%; /* 1 columna */
+  }
+
+  .checkbox-grid {
+    grid-template-columns: 1fr; /* 1 columna en móviles */
   }
 }
 

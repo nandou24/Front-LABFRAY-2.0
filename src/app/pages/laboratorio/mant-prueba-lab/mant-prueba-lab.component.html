@@ -262,8 +262,8 @@
         </mat-card-content>
       </mat-card>
 
-      <div class="fila-flex">
-        <div class="tabla-flex-50">
+      <div class="row-flex">
+        <div [style.flex]="setFlex(48, '%')" class="flex-item">
           <mat-card>
             <mat-card-title>
               <div class="row align-items-center">
@@ -347,7 +347,7 @@
         </div>
 
         <!-- Tabla de Ítems Seleccionados -->
-        <div class="tabla-flex-50">
+        <div [style.flex]="setFlex(48, '%')" class="flex-item">
           <mat-card>
             <mat-card-title>
               <div class="row align-items-center">
@@ -356,58 +356,56 @@
             </mat-card-title>
 
             <mat-card-content class="mb-2">
-              <div class="tabla-container">
-                <table
-                  mat-table
-                  [dataSource]="dataSourceItemsSeleccionados"
-                  class="mat-elevation-z8 tabla"
-                >
-                  <!-- Definir las columnas -->
-                  <ng-container matColumnDef="codigo">
-                    <th mat-header-cell *matHeaderCellDef>Código</th>
-                    <td mat-cell *matCellDef="let item">
-                      {{ item.codItemLab }}
-                    </td>
-                  </ng-container>
+              <table
+                mat-table
+                [dataSource]="dataSourceItemsSeleccionados"
+                class="mat-elevation-z8 tabla"
+              >
+                <!-- Definir las columnas -->
+                <ng-container matColumnDef="codigo">
+                  <th mat-header-cell *matHeaderCellDef>Código</th>
+                  <td mat-cell *matCellDef="let item">
+                    {{ item.codItemLab }}
+                  </td>
+                </ng-container>
 
-                  <ng-container matColumnDef="nombre">
-                    <th mat-header-cell *matHeaderCellDef>Nombre</th>
-                    <td mat-cell *matCellDef="let item">
-                      {{ item.nombreItemLab }}
-                    </td>
-                  </ng-container>
+                <ng-container matColumnDef="nombre">
+                  <th mat-header-cell *matHeaderCellDef>Nombre</th>
+                  <td mat-cell *matCellDef="let item">
+                    {{ item.nombreItemLab }}
+                  </td>
+                </ng-container>
 
-                  <ng-container matColumnDef="perteneceA">
-                    <th mat-header-cell *matHeaderCellDef>Pertenece</th>
-                    <td mat-cell *matCellDef="let item">
-                      {{ item.perteneceA }}
-                    </td>
-                  </ng-container>
+                <ng-container matColumnDef="perteneceA">
+                  <th mat-header-cell *matHeaderCellDef>Pertenece</th>
+                  <td mat-cell *matCellDef="let item">
+                    {{ item.perteneceA }}
+                  </td>
+                </ng-container>
 
-                  <ng-container matColumnDef="accion">
-                    <th mat-header-cell *matHeaderCellDef>Acción</th>
-                    <td mat-cell *matCellDef="let item">
-                      <button
-                        mat-icon-button
-                        color="warn"
-                        type="button"
-                        (click)="removerItem(item)"
-                      >
-                        <mat-icon>delete</mat-icon>
-                      </button>
-                    </td>
-                  </ng-container>
+                <ng-container matColumnDef="accion">
+                  <th mat-header-cell *matHeaderCellDef>Acción</th>
+                  <td mat-cell *matCellDef="let item">
+                    <button
+                      mat-icon-button
+                      color="warn"
+                      type="button"
+                      (click)="removerItem(item)"
+                    >
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </td>
+                </ng-container>
 
-                  <tr
-                    mat-header-row
-                    *matHeaderRowDef="columnasSeleccionados"
-                  ></tr>
-                  <tr
-                    mat-row
-                    *matRowDef="let row; columns: columnasSeleccionados"
-                  ></tr>
-                </table>
-              </div>
+                <tr
+                  mat-header-row
+                  *matHeaderRowDef="columnasSeleccionados"
+                ></tr>
+                <tr
+                  mat-row
+                  *matRowDef="let row; columns: columnasSeleccionados"
+                ></tr>
+              </table>
             </mat-card-content>
 
             <div

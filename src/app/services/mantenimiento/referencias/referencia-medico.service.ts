@@ -5,6 +5,7 @@ import {
   IRefMedico,
   IRefMedicoPostDTO,
   IGetLastRefMedico,
+  IGetLastRefMedicoById,
 } from '../../../models/Mantenimiento/referenciaMedico.models';
 import { catchError, map, Observable, of } from 'rxjs';
 import { environment } from '../../../../environments/enviroment';
@@ -62,6 +63,20 @@ export class ReferenciaMedicoService {
       .pipe(
         map((data) => {
           return data.refMedicos;
+        }),
+      );
+  }
+
+  getRefMedicobyId(id: any): Observable<IRefMedico> {
+    const params = new HttpParams().set('search', id);
+    return this._http
+      .get<IGetLastRefMedicoById>(
+        `${environment.baseUrl}/api/referenciaMedico/findTermById`,
+        { params },
+      )
+      .pipe(
+        map((data) => {
+          return data.solicitante;
         }),
       );
   }

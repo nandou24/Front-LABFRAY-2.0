@@ -36,3 +36,9 @@ export interface IGetLastPatients {
   search: String;
   pacientes: IPaciente[];
 }
+
+export interface IGetPatientbyId {
+  ok: boolean;
+  search: String;
+  paciente: IPaciente;
+}

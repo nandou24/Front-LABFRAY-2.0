@@ -1,22 +1,62 @@
 import { Injectable } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import jsPDF from 'jspdf';
+import { PacienteService } from '../../../mantenimiento/paciente/paciente.service';
+import { IPaciente } from '../../../../models/Mantenimiento/paciente.models';
+import { firstValueFrom } from 'rxjs';
+import { FechaValidatorService } from '../../validators/fechasValidator/fecha-validator.service';
+import { IRefMedico } from '../../../../models/Mantenimiento/referenciaMedico.models';
+import { ReferenciaMedicoService } from '../../../mantenimiento/referencias/referencia-medico.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class HojaTrabajoLabPdfService {
-  constructor(private _sanitizer: DomSanitizer) {}
+  constructor(
+    private readonly _pacienteService: PacienteService,
+    private readonly _refMedicoService: ReferenciaMedicoService,
+    private readonly _fechasServices: FechaValidatorService,
+    private _sanitizer: DomSanitizer,
+  ) {}
 
-  generarHojaTrabajoLabPDF(
+  datoPaciente = {} as IPaciente;
+  edad = '';
+  datoSolicitante = {} as IRefMedico;
+
+  async generarHojaTrabajoLabPDF(
     data: any,
     pruebasLaboratorio: any,
-  ): SafeResourceUrl | void {
+  ): Promise<SafeResourceUrl | void> {
     console.log(
       'Datos para generar PDF de Hoja de Trabajo de Laboratorio:',
       data,
     );
     console.log('Pruebas de laboratorio con items:', pruebasLaboratorio);
+
+    try {
+      // Obtener los datos del paciente
+      this.datoPaciente = await firstValueFrom(
+        this._pacienteService.getPatientbyId(data.clienteId),
+      );
+    } catch (error) {
+      console.error('Error al obtener los datos del paciente:', error);
+    }
+
+    try {
+      this.edad = this._fechasServices.calcularEdad(
+        this.datoPaciente.fechaNacimiento,
+      );
+    } catch (error) {
+      console.error('Error al calcular la edad:', error);
+    }
+
+    try {
+      this.datoSolicitante = await firstValueFrom(
+        this._refMedicoService.getRefMedicobyId(data.solicitanteId),
+      );
+    } catch (error) {
+      console.error('Error al obtener los datos del solicitante:', error);
+    }
 
     const doc = new jsPDF({
       orientation: 'portrait',
@@ -81,19 +121,43 @@ export class HojaTrabajoLabPdfService {
     doc.setFontSize(8);
     doc.setFont('helvetica', 'bold');
     doc.text(`Paciente:`, xLabelDatosPaciente, yLabelDatosPaciente);
+    doc.text(`Documento:`, xLabelDatosPaciente + 90, yLabelDatosPaciente);
     doc.text(`Sexo:`, xLabelDatosPaciente, yLabelDatosPaciente + 4);
-    doc.text(`Edad:`, xLabelDatosPaciente + 50, yLabelDatosPaciente + 4);
+    doc.text(`Edad:`, xLabelDatosPaciente + 40, yLabelDatosPaciente + 4);
     doc.text(`Solicitante:`, xLabelDatosPaciente, yLabelDatosPaciente + 8);
 
     doc.setFont('helvetica', 'normal');
     doc.text(
-      `${data.apePatCliente}${data.apeMatCliente} ${data.nombreCliente}`,
+      `${data.apePatCliente} ${data.apeMatCliente} ${data.nombreCliente}`,
       xValueDatosPaciente,
       yValueDatosPaciente,
+    );
+    doc.text(
+      `${data.tipoDoc} ${data.nroDoc}`,
+      xValueDatosPaciente + 90,
+      yValueDatosPaciente,
+    );
+    doc.text(
+      `${this.datoPaciente.sexoCliente}`,
+      xValueDatosPaciente,
+      yValueDatosPaciente + 4,
+    );
+    doc.text(`${this.edad}`, xValueDatosPaciente + 31, yValueDatosPaciente + 4);
+    doc.text(
+      `Dr. ${this.datoSolicitante.apePatRefMedico} ${this.datoSolicitante.apeMatRefMedico} ${this.datoSolicitante.nombreRefMedico} `,
+      xValueDatosPaciente,
+      yValueDatosPaciente + 8,
     );
 
     doc.setLineWidth(0.3);
     doc.line(10, 37, 142, 37); // línea horizontal debajo del encabezado
+
+    // Ordenar pruebas por ordenImpresion
+    pruebasLaboratorio.sort((a: any, b: any) => {
+      const ordenA = a.ordenImpresion ?? 0;
+      const ordenB = b.ordenImpresion ?? 0;
+      return ordenA - ordenB;
+    });
 
     for (const prueba of pruebasLaboratorio) {
       const items = prueba.itemsComponentes || [];
@@ -119,7 +183,7 @@ export class HojaTrabajoLabPdfService {
         doc.text(`• ${nombreItem}`, 10, y);
 
         // Línea para escribir resultado a mano
-        doc.line(31, y, 43, y); // ajustado al ancho disponible
+        doc.line(33, y, 43, y); // ajustado al ancho disponible
 
         // Mostrar unidad y referencia (alineado a la derecha, en 2 columnas pequeñas)
         doc.setFontSize(6);
@@ -127,12 +191,12 @@ export class HojaTrabajoLabPdfService {
         let valoresRefText = '';
         if (valoresRef) valoresRefText += `${valoresRef}`;
         if (valoresRefText) doc.text(valoresRefText, xValuesRef, y);
-        const xInfo = 63;
+        const xInfo = 58;
         let infoText = '';
         if (unidad) infoText += `${unidad}`;
         if (infoText) doc.text(infoText, xInfo, y);
 
-        y += 5;
+        y += 5.5;
 
         // Salto de página si es necesario
         if (y >= 195) {

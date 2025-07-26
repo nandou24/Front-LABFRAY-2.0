@@ -6,6 +6,7 @@ import Swal from 'sweetalert2';
 import { environment } from '../../../../environments/enviroment';
 import {
   IGetLastPatients,
+  IGetPatientbyId,
   IPaciente,
   IPacientePostDTO,
   IPacientePostReturnDTO,
@@ -80,6 +81,18 @@ export class PacienteService {
         params,
       })
       .pipe(map((data) => data.pacientes));
+  }
+
+  getPatientbyId(id: any): Observable<IPaciente> {
+    const params = new HttpParams().set('search', id);
+    return this._http
+      .get<IGetPatientbyId>(
+        `${environment.baseUrl}/api/paciente/findTermById`,
+        {
+          params,
+        },
+      )
+      .pipe(map((data) => data.paciente));
   }
 
   getPatientCotizacion(terminoBusqueda: any): Observable<IPaciente[]> {

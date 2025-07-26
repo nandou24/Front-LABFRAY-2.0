@@ -33,3 +33,9 @@ export interface IGetLastRefMedico {
   search: String;
   refMedicos: IRefMedico[];
 }
+
+export interface IGetLastRefMedicoById {
+  ok: boolean;
+  search: String;
+  solicitante: IRefMedico;
+}

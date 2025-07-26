@@ -149,33 +149,16 @@ export class SolicitudAtencionComponent implements OnInit {
       pdfSrc =
         this._pdfConsultaMedicaService.generarHojaConsultaMedicaPDF(solicitud);
     } else if (solicitud.tipo === 'Laboratorio') {
-      // Obtener las pruebas de laboratorio con sus items antes de generar el PDF
-
-      // servicios = this._servicioService.getPruebasLaboratorioItems(
-      //   solicitud.servicios,
-      // );
-
-      // pdfSrc = this._pdfHojaTrabajoLabService.generarHojaTrabajoLabPDF(
-      //   solicitud,
-      //   servicios,
-      // );
-
       this._servicioService
         .getPruebasLaboratorioItems(solicitud.servicios)
         .subscribe({
-          next: (pruebasConItems) => {
-            pdfSrc = this._pdfHojaTrabajoLabService.generarHojaTrabajoLabPDF(
-              solicitud,
-              pruebasConItems,
-            );
+          next: async (pruebasConItems) => {
+            pdfSrc =
+              await this._pdfHojaTrabajoLabService.generarHojaTrabajoLabPDF(
+                solicitud,
+                pruebasConItems,
+              );
             this.opendialog(pdfSrc, solicitud);
-            // this.dialog.open(DialogPdfSolicitudAtencionComponent, {
-            //   data: { pdfSrc, solicitudData: solicitud },
-            //   width: '70vw',
-            //   height: '95vh',
-            //   maxWidth: '95vw',
-            //   panelClass: 'custom-dialog-container',
-            // });
           },
           error: (err) => {
             console.error('Error al obtener pruebas de laboratorio:', err);
@@ -192,14 +175,6 @@ export class SolicitudAtencionComponent implements OnInit {
     }
 
     this.opendialog(pdfSrc, solicitud);
-
-    // this.dialog.open(DialogPdfSolicitudAtencionComponent, {
-    //   data: { pdfSrc, solicitudData: solicitud },
-    //   width: '70vw',
-    //   height: '95vh',
-    //   maxWidth: '95vw',
-    //   panelClass: 'custom-dialog-container',
-    // });
   }
 
   opendialog(pdfSrc: any, solicitudData: any) {
