@@ -131,7 +131,7 @@ export class RutasComponent implements OnInit {
     this._rutasService.registrarRuta(ruta).subscribe({
       next: () => {
         Swal.fire('Registrado', 'Ruta registrada correctamente', 'success');
-        this.formRuta.reset({ estado: true });
+        this.cancelarEdicion();
         this.listarRutas();
       },
       error: (err) => {

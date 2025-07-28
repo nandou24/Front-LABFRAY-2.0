@@ -31,18 +31,20 @@ import {
   MatTableModule,
 } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
-import { UbigeoService } from '../../../services/utilitarios/ubigeo.service';
-import { IRecHumano } from '../../../models/Mantenimiento/recursoHumano.models';
-import { RecursoHumanoService } from '../../../services/mantenimiento/recursoHumano/recurso-humano.service';
-import { customPaginatorIntl } from '../../../services/utilitarios/mat-paginator-intl';
+
 import Swal from 'sweetalert2';
-import { IRol } from '../../../models/permisos/roles.models';
-import { RolesService } from '../../../services/permisos/roles/roles.service';
-import { FechaValidatorService } from '../../../services/utilitarios/validators/fechasValidator/fecha-validator.service';
-import { DocValidatorService } from '../../../services/utilitarios/validators/docValidator/doc-validator.service';
+
 import { DateAdapter, MAT_DATE_LOCALE } from '@angular/material/core';
-import { ProfesionService } from '../../../services/mantenimiento/profesion/profesion.service';
-import { EspecialidadService } from '../../../services/mantenimiento/especialidad/especialidad.service';
+import { RolesService } from '../../../../services/permisos/roles/roles.service';
+import { RecursoHumanoService } from '../../../../services/mantenimiento/recursoHumano/recurso-humano.service';
+import { customPaginatorIntl } from '../../../../services/utilitarios/mat-paginator-intl';
+import { UbigeoService } from '../../../../services/utilitarios/ubigeo.service';
+import { ProfesionService } from '../../../../services/mantenimiento/profesion/profesion.service';
+import { EspecialidadService } from '../../../../services/mantenimiento/especialidad/especialidad.service';
+import { FechaValidatorService } from '../../../../services/utilitarios/validators/fechasValidator/fecha-validator.service';
+import { DocValidatorService } from '../../../../services/utilitarios/validators/docValidator/doc-validator.service';
+import { IRol } from '../../../../models/permisos/roles.models';
+import { IRecHumano } from '../../../../models/Mantenimiento/recursoHumano.models';
 
 @Component({
   selector: 'app-mant-recurso-humano',

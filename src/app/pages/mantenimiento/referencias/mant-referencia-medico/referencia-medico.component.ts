@@ -31,13 +31,13 @@ import {
   MatTableModule,
 } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
-import { UbigeoService } from '../../../services/utilitarios/ubigeo.service';
-import { IRefMedico } from '../../../models/Mantenimiento/referenciaMedico.models';
-import { ReferenciaMedicoService } from '../../../services/mantenimiento/referencias/referencia-medico.service';
 import Swal from 'sweetalert2';
 import { DateAdapter, MAT_DATE_LOCALE } from '@angular/material/core';
-import { DocValidatorService } from '../../../services/utilitarios/validators/docValidator/doc-validator.service';
-import { FechaValidatorService } from '../../../services/utilitarios/validators/fechasValidator/fecha-validator.service';
+import { ReferenciaMedicoService } from '../../../../services/mantenimiento/referencias/referencia-medico.service';
+import { UbigeoService } from '../../../../services/utilitarios/ubigeo.service';
+import { FechaValidatorService } from '../../../../services/utilitarios/validators/fechasValidator/fecha-validator.service';
+import { DocValidatorService } from '../../../../services/utilitarios/validators/docValidator/doc-validator.service';
+import { IRefMedico } from '../../../../models/Mantenimiento/referenciaMedico.models';
 
 @Component({
   selector: 'app-referencia-medico',

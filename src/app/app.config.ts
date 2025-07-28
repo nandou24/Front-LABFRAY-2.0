@@ -7,8 +7,8 @@ import { provideHttpClient } from '@angular/common/http';
 export const MAT_FORM_FIELD_CONFIG = {
   provide: MAT_FORM_FIELD_DEFAULT_OPTIONS,
   useValue: {
-    hideRequiredMarker: true // 👈 oculta el asterisco
-  }
+    hideRequiredMarker: true, // 👈 oculta el asterisco
+  },
 };
 
 export const appConfig: ApplicationConfig = {
@@ -17,6 +17,5 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes),
     provideHttpClient(),
     MAT_FORM_FIELD_CONFIG,
-  ]
+  ],
 };
-

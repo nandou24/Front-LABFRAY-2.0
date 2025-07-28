@@ -22,12 +22,12 @@ export class FechaValidatorService {
   }
 
   calcularEdad(fechaNacimiento: Date | string): string {
-    console.log('Entro calcular edad');
-    console.log(fechaNacimiento);
+    //console.log('Entro calcular edad');
+    //console.log(fechaNacimiento);
 
     if (!fechaNacimiento) return '';
 
-    console.log(fechaNacimiento);
+    //console.log(fechaNacimiento);
 
     const birthDate =
       typeof fechaNacimiento === 'string'
@@ -55,7 +55,7 @@ export class FechaValidatorService {
     }
 
     // Devolver el resultado en años, meses y días
-    console.log(`${years} años, ${months} meses, y ${days} días`);
+    //console.log(`${years} años, ${months} meses, y ${days} días`);
     return `${years} años, ${months} meses, y ${days} días`;
   }
 }

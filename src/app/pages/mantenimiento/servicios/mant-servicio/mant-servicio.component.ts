@@ -15,7 +15,6 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { ServiciosService } from '../../../services/mantenimiento/servicios/servicios.service';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatCardModule } from '@angular/material/card';
@@ -29,13 +28,14 @@ import {
   MatTableModule,
 } from '@angular/material/table';
 import { CommonModule } from '@angular/common';
-import { IServicio } from '../../../models/Mantenimiento/servicios.models';
 import { catchError, distinctUntilChanged, of } from 'rxjs';
 import { MatPaginator, MatPaginatorIntl } from '@angular/material/paginator';
-import { customPaginatorIntl } from '../../../services/utilitarios/mat-paginator-intl'; // actualiza la ruta
 import Swal from 'sweetalert2';
-import { ProfesionService } from '../../../services/mantenimiento/profesion/profesion.service';
-import { EspecialidadService } from '../../../services/mantenimiento/especialidad/especialidad.service';
+import { customPaginatorIntl } from '../../../../services/utilitarios/mat-paginator-intl';
+import { ServiciosService } from '../../../../services/mantenimiento/servicios/servicios.service';
+import { ProfesionService } from '../../../../services/mantenimiento/profesion/profesion.service';
+import { EspecialidadService } from '../../../../services/mantenimiento/especialidad/especialidad.service';
+import { IServicio } from '../../../../models/Mantenimiento/servicios.models';
 
 @Component({
   selector: 'app-mant-servicio',

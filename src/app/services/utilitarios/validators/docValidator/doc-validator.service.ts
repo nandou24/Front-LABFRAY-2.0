@@ -15,6 +15,8 @@ export class DocValidatorService {
       const tipoDoc = parent.get(tipoDocControlName)?.value; // Obtén el valor de tipoDoc
       const nroDoc = control.value; // Obtén el valor del número de documento
 
+      if (!nroDoc) return null; // Si no hay número de documento, no hay error
+
       if (tipoDoc === 'DNI') {
         // DNI: exactamente 8 dígitos numéricos
         if (nroDoc.length > 0 && !/^\d{8}$/.test(nroDoc)) {

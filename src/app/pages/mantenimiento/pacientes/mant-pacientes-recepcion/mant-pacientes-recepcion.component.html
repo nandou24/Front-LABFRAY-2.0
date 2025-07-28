@@ -1,32 +1,26 @@
-<div class="row mt-2">
-  <div class="col-12 col-xxl-7 mb-2">
-    <div class="row mt-2" style="align-items: center">
-      <h5 class="text-center" style="font-weight: 500">
-        MANTENIMIENTO DE PACIENTES
-      </h5>
-    </div>
+<form [formGroup]="pacienteForm">
+  <div class="contenedor-flex">
+    <div class="contenedor-formulario">
+      <div class="row-flex mt-2" style="align-items: center">
+        <div [style.flex]="setFlex(50, '%')" class="flex-item">
+          <h5 class="text-center" style="font-weight: 500">
+            MANTENIMIENTO DE PACIENTES
+          </h5>
+        </div>
 
-    <form [formGroup]="pacienteForm">
+        <div [style.flex]="setFlex(45, '%')" class="flex-item">
+          <h5>HC: {{ pacienteForm.get("hc")?.value }}</h5>
+        </div>
+      </div>
+
       <mat-card>
         <mat-card-title>
-          <div class="row align-items-center">
-            <div class="col-lg-5 col-auto">DATOS PERSONALES</div>
-
-            <div class="col-auto">
-              <label><strong>HC:</strong></label>
-            </div>
-
-            <div class="col-auto">
-              <label
-                ><strong>{{ pacienteForm.get("hc")?.value }}</strong></label
-              >
-            </div>
-          </div>
+          <div class="row-flex align-items-center">DATOS PERSONALES</div>
         </mat-card-title>
 
         <mat-card-content>
-          <div class="row mt-2 align-items-center">
-            <div class="col-lg-2">
+          <div class="row-flex mt-2">
+            <div [style.flex]="setFlex(19, '%')" class="flex-item">
               <mat-form-field appearance="outline">
                 <mat-label>Tipo Doc</mat-label>
                 <mat-select formControlName="tipoDoc">
@@ -34,13 +28,21 @@
                   <mat-option value="CE">CE</mat-option>
                   <mat-option value="Pasaporte">Pasaporte</mat-option>
                 </mat-select>
+                <mat-icon
+                  matSuffix
+                  *ngIf="pacienteForm.get('tipoDoc')?.disabled"
+                  >lock</mat-icon
+                >
               </mat-form-field>
             </div>
 
-            <div class="col-lg-3">
+            <div [style.flex]="setFlex(19, '%')" class="flex-item">
               <mat-form-field appearance="outline">
                 <mat-label>Nro. Documento</mat-label>
                 <input matInput formControlName="nroDoc" />
+                <mat-icon matSuffix *ngIf="pacienteForm.get('nroDoc')?.disabled"
+                  >lock</mat-icon
+                >
                 <mat-error
                   *ngIf="pacienteForm.get('nroDoc')?.hasError('required')"
                 >
@@ -69,7 +71,22 @@
               </mat-form-field>
             </div>
 
-            <div class="col-lg-3">
+            <div [style.flex]="setFlex(15, '%')" class="flex-item">
+              <mat-form-field appearance="outline">
+                <mat-label>Sexo</mat-label>
+                <mat-select formControlName="sexoCliente">
+                  <mat-option value="Masculino">Masculino</mat-option>
+                  <mat-option value="Femenino">Femenino</mat-option>
+                </mat-select>
+                <mat-error
+                  *ngIf="pacienteForm.get('sexoCliente')?.hasError('required')"
+                >
+                  Obligatorio
+                </mat-error>
+              </mat-form-field>
+            </div>
+
+            <div [style.flex]="setFlex(20, '%')" class="flex-item">
               <mat-form-field appearance="outline">
                 <mat-label>Fecha Nacimiento</mat-label>
                 <input
@@ -101,13 +118,13 @@
               </mat-form-field>
             </div>
 
-            <div class="col-lg-3">
+            <div [style.flex]="setFlex(20, '%')" class="flex-item">
               {{ pacienteForm.get("edad")?.value }}
             </div>
           </div>
 
-          <div class="row mt-1 mb-1">
-            <div class="col-lg-3">
+          <div class="row-flex">
+            <div [style.flex]="setFlex(29, '%')" class="flex-item">
               <mat-form-field appearance="outline">
                 <mat-label>Apellido Paterno</mat-label>
                 <input matInput formControlName="apePatCliente" />
@@ -126,7 +143,7 @@
               </mat-form-field>
             </div>
 
-            <div class="col-lg-3">
+            <div [style.flex]="setFlex(29, '%')" class="flex-item">
               <mat-form-field appearance="outline">
                 <mat-label>Apellido Materno</mat-label>
                 <input matInput formControlName="apeMatCliente" />
@@ -138,7 +155,7 @@
               </mat-form-field>
             </div>
 
-            <div class="col-lg-4">
+            <div [style.flex]="setFlex(38, '%')" class="flex-item">
               <mat-form-field appearance="outline">
                 <mat-label>Nombres</mat-label>
                 <input matInput formControlName="nombreCliente" />
@@ -156,35 +173,18 @@
                 </mat-error>
               </mat-form-field>
             </div>
-
-            <div class="col-lg-2">
-              <mat-form-field appearance="outline">
-                <mat-label>Sexo</mat-label>
-                <mat-select formControlName="sexoCliente">
-                  <mat-option value="Masculino">Masculino</mat-option>
-                  <mat-option value="Femenino">Femenino</mat-option>
-                </mat-select>
-                <mat-error
-                  *ngIf="pacienteForm.get('sexoCliente')?.hasError('required')"
-                >
-                  Obligatorio
-                </mat-error>
-              </mat-form-field>
-            </div>
           </div>
         </mat-card-content>
       </mat-card>
 
       <mat-card class="mt-2">
         <mat-card-title>
-          <div class="row align-items-center">
-            <div class="col-lg-5 col-auto">DATOS DE CONTACTO</div>
-          </div>
+          <div class="row-flex align-items-center">DATOS DE CONTACTO</div>
         </mat-card-title>
 
         <mat-card-content>
-          <div class="row mt-2">
-            <div class="col-lg-4">
+          <div class="row-flex mt-2">
+            <div [style.flex]="setFlex(29, '%')" class="flex-item">
               <mat-form-field appearance="outline">
                 <mat-label>Departamento</mat-label>
                 <mat-select formControlName="departamentoCliente">
@@ -197,7 +197,7 @@
               </mat-form-field>
             </div>
 
-            <div class="col-lg-4">
+            <div [style.flex]="setFlex(29, '%')" class="flex-item">
               <mat-form-field appearance="outline">
                 <mat-label>Provincia</mat-label>
                 <mat-select formControlName="provinciaCliente">
@@ -210,7 +210,7 @@
               </mat-form-field>
             </div>
 
-            <div class="col-lg-4">
+            <div [style.flex]="setFlex(38, '%')" class="flex-item">
               <mat-form-field appearance="outline">
                 <mat-label>Distrito</mat-label>
                 <mat-select formControlName="distritoCliente">
@@ -227,15 +227,15 @@
             </div>
           </div>
 
-          <div class="row mt-1">
-            <div class="col-lg-8">
+          <div class="row-flex">
+            <div [style.flex]="setFlex(59, '%')" class="flex-item">
               <mat-form-field appearance="outline">
                 <mat-label>Dirección</mat-label>
                 <input matInput formControlName="direcCliente" />
               </mat-form-field>
             </div>
 
-            <div class="col-lg-4">
+            <div [style.flex]="setFlex(38, '%')" class="flex-item">
               <mat-form-field appearance="outline">
                 <mat-label>e-mail</mat-label>
                 <input matInput formControlName="mailCliente" />
@@ -248,11 +248,14 @@
             </div>
           </div>
 
-          <fieldset class="telefono-fieldset mt-2 mb-3">
+          <fieldset class="campo-fieldset mt-2 mb-3">
             <legend>TELÉFONOS</legend>
 
-            <div class="row mt-1">
-              <div class="col-lg-3 text-center">
+            <div class="row-flex mt-1">
+              <div
+                [style.flex]="setFlex(20, '%')"
+                class="flex-item text-center"
+              >
                 <button
                   mat-flat-button
                   color="primary"
@@ -265,13 +268,16 @@
                 </button>
               </div>
 
-              <div class="col-lg-9">
+              <div [style.flex]="setFlex(75, '%')" class="flex-item">
                 <div
                   formArrayName="phones"
                   *ngFor="let telGroup of phones.controls; let i = index"
                 >
                   <div [formGroupName]="i" class="row align-items-center">
-                    <div class="col-lg-4">
+                    <div
+                      [style.flex]="setFlex(30, '%')"
+                      class="flex-item text-center"
+                    >
                       <mat-form-field appearance="outline">
                         <mat-label>Teléfono</mat-label>
                         <input matInput formControlName="phoneNumber" />
@@ -292,7 +298,10 @@
                       </mat-form-field>
                     </div>
 
-                    <div class="col-lg-7">
+                    <div
+                      [style.flex]="setFlex(60, '%')"
+                      class="flex-item text-center"
+                    >
                       <mat-form-field appearance="outline">
                         <mat-label>Descripción</mat-label>
                         <input matInput formControlName="descriptionPhone" />
@@ -317,7 +326,10 @@
                       </mat-form-field>
                     </div>
 
-                    <div class="col-lg-1">
+                    <div
+                      [style.flex]="setFlex(8, '%')"
+                      class="flex-item text-center"
+                    >
                       <button
                         mat-icon-button
                         class="mb-3"
@@ -344,105 +356,131 @@
         </mat-card-content>
       </mat-card>
 
-      <div class="row mt-4">
-        <div class="col col-4 text-center">
+      <div class="row-flex mt-3">
+        <div [style.flex]="setFlex(25, '%')" class="flex-item text-end">
           <button
             mat-raised-button
-            class="btn-nuevo"
+            color="accent"
             type="button"
+            class="btn-nuevo"
             (click)="nuevoCliente()"
           >
             Nuevo Paciente
           </button>
         </div>
-
-        <div class="col col-4 text-center">
+        <div
+          [style.flex]="setFlex(25, '%')"
+          class="flex-item text-end"
+          *ngIf="!pacienteForm.get('hc')?.value"
+        >
           <button
             mat-raised-button
             class="btn-registrar"
             type="button"
             (click)="registraPaciente()"
           >
-            Registrar Paciente
+            <mat-icon>save</mat-icon> Crear Paciente
           </button>
         </div>
-
-        <div class="col col-4 text-center">
+        <div
+          [style.flex]="setFlex(25, '%')"
+          class="flex-item text-end"
+          *ngIf="pacienteForm.get('hc')?.value"
+        >
           <button
             mat-raised-button
             class="btn-actualizar"
             type="button"
             (click)="actualizarPaciente()"
           >
-            Actualizar Paciente
+            <mat-icon>save</mat-icon> Actualizar Paciente
           </button>
         </div>
       </div>
-    </form>
-  </div>
-
-  <div class="col-12 col-xxl-5">
-    <div class="row align-items-center">
-      <div class="col-6 col-auto">
-        <label><strong>Listado de Pacientes</strong></label>
-      </div>
-
-      <div class="col-6 col-auto">
-        <input
-          class="form-control form-control-sm"
-          type="text"
-          placeholder="Busque paciente"
-          [(ngModel)]="terminoBusqueda"
-          (input)="buscarClientes()"
-        />
-      </div>
     </div>
 
-    <table
-      mat-table
-      [dataSource]="dataSourcePacientes"
-      class="tabla-pacientes mt-1"
-    >
-      <!-- N° -->
-      <ng-container matColumnDef="nro">
-        <th mat-header-cell *matHeaderCellDef>N°</th>
-        <td mat-cell *matCellDef="let paciente; let i = index">{{ i + 1 }}</td>
-      </ng-container>
+    <div class="contenedor-tablaDerecha">
+      <mat-card>
+        <mat-card-title>Listado de Pacientes</mat-card-title>
+        <mat-card-content>
+          <mat-form-field appearance="outline" class="mt-1">
+            <mat-label>Buscar Pacientes</mat-label>
+            <input
+              matInput
+              [formControl]="terminoBusqueda"
+              (input)="buscarClientes()"
+            />
+            @if (terminoBusqueda.value) {
+              <button
+                matSuffix
+                mat-icon-button
+                class="clear-search-button"
+                aria-label="Clear"
+                (click)="terminoBusqueda.setValue('')"
+              >
+                <mat-icon>close</mat-icon>
+              </button>
+            }
+          </mat-form-field>
+          <table
+            mat-table
+            [dataSource]="dataSourcePacientes"
+            class="mat-elevation-z8 mt-2"
+          >
+            <!-- N° -->
+            <ng-container matColumnDef="nro">
+              <th mat-header-cell *matHeaderCellDef>N°</th>
+              <td mat-cell *matCellDef="let paciente; let i = index">
+                {{ i + 1 }}
+              </td>
+            </ng-container>
 
-      <!-- HC -->
-      <ng-container matColumnDef="hc">
-        <th mat-header-cell *matHeaderCellDef>HC</th>
-        <td mat-cell *matCellDef="let paciente">{{ paciente.hc }}</td>
-      </ng-container>
+            <!-- HC -->
+            <ng-container matColumnDef="hc">
+              <th mat-header-cell *matHeaderCellDef>HC</th>
+              <td mat-cell *matCellDef="let paciente">{{ paciente.hc }}</td>
+            </ng-container>
 
-      <!-- Apellidos y Nombres  -->
-      <ng-container matColumnDef="nombreCompleto">
-        <th mat-header-cell *matHeaderCellDef>Apellidos y Nombres</th>
-        <td mat-cell *matCellDef="let paciente">
-          {{ paciente.apePatCliente }} {{ paciente.apeMatCliente }}
-          {{ paciente.nombreCliente }}
-        </td>
-      </ng-container>
+            <!-- Apellidos y Nombres  -->
+            <ng-container matColumnDef="nombreCompleto">
+              <th mat-header-cell *matHeaderCellDef>Apellidos y Nombres</th>
+              <td mat-cell *matCellDef="let paciente">
+                {{ paciente.apePatCliente }} {{ paciente.apeMatCliente }}
+                {{ paciente.nombreCliente }}
+              </td>
+            </ng-container>
 
-      <!-- Tipo Documento -->
-      <ng-container matColumnDef="tipoDoc">
-        <th mat-header-cell *matHeaderCellDef>Tipo Doc</th>
-        <td mat-cell *matCellDef="let paciente">{{ paciente.tipoDoc }}</td>
-      </ng-container>
+            <!-- Tipo Documento -->
+            <ng-container matColumnDef="documento">
+              <th mat-header-cell *matHeaderCellDef>Tipo Doc</th>
+              <td mat-cell *matCellDef="let paciente">
+                {{ paciente.tipoDoc }} {{ paciente.nroDoc }}
+              </td>
+            </ng-container>
 
-      <!-- Nro. Documento -->
-      <ng-container matColumnDef="nroDoc">
-        <th mat-header-cell *matHeaderCellDef>Nro. Doc</th>
-        <td mat-cell *matCellDef="let paciente">{{ paciente.nroDoc }}</td>
-      </ng-container>
-
-      <!-- Filas -->
-      <tr mat-header-row *matHeaderRowDef="columnasTablaPaciente"></tr>
-      <tr
-        mat-row
-        *matRowDef="let row; columns: columnasTablaPaciente"
-        (click)="cargarCliente(row)"
-      ></tr>
-    </table>
+            <!-- Filas -->
+            <tr mat-header-row *matHeaderRowDef="columnasTablaPaciente"></tr>
+            <tr
+              mat-row
+              *matRowDef="
+                let row;
+                let i = index;
+                columns: columnasTablaPaciente
+              "
+              (click)="cargarCliente(row, i)"
+              [class.fila-seleccionada]="i === filaSeleccionadaIndex"
+            ></tr>
+          </table>
+          <div>
+            <mat-paginator
+              #MatPaginatorPacientes
+              [pageSize]="20"
+              [pageSizeOptions]="[20, 30, 50]"
+              showFirstLastButtons
+            ></mat-paginator>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
   </div>
-</div>
+</form>

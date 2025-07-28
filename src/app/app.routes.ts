@@ -12,7 +12,7 @@ export const routes: Routes = [
         path: 'pacientes',
         loadComponent: () =>
           import(
-            './pages/pacientes/mant-pacientes-recepcion/mant-pacientes-recepcion.component'
+            './pages/mantenimiento/pacientes/mant-pacientes-recepcion/mant-pacientes-recepcion.component'
           ).then((m) => m.MantPacientesRecepcionComponent),
       },
       {
@@ -33,21 +33,21 @@ export const routes: Routes = [
         path: 'servicios',
         loadComponent: () =>
           import(
-            './pages/servicios/mant-servicio/mant-servicio.component'
+            './pages/mantenimiento/servicios/mant-servicio/mant-servicio.component'
           ).then((m) => m.MantServicioComponent),
       },
       {
         path: 'recursoHumano',
         loadComponent: () =>
           import(
-            './pages/recursoHumano/mant-recurso-humano/mant-recurso-humano.component'
+            './pages/mantenimiento/recursoHumano/mant-recurso-humano/mant-recurso-humano.component'
           ).then((m) => m.MantRecursoHumanoComponent),
       },
       {
         path: 'referencia-medico',
         loadComponent: () =>
           import(
-            './pages/referencias/referencia-medico/referencia-medico.component'
+            './pages/mantenimiento/referencias/mant-referencia-medico/referencia-medico.component'
           ).then((m) => m.ReferenciaMedicoComponent),
       },
       {

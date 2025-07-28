@@ -27,6 +27,10 @@ export class HojaTrabajoLabPdfService {
     data: any,
     pruebasLaboratorio: any,
   ): Promise<SafeResourceUrl | void> {
+    this.datoPaciente = {} as IPaciente;
+    this.edad = '';
+    this.datoSolicitante = {} as IRefMedico;
+
     console.log(
       'Datos para generar PDF de Hoja de Trabajo de Laboratorio:',
       data,
@@ -51,9 +55,11 @@ export class HojaTrabajoLabPdfService {
     }
 
     try {
-      this.datoSolicitante = await firstValueFrom(
-        this._refMedicoService.getRefMedicobyId(data.solicitanteId),
-      );
+      if (data.solicitanteId) {
+        this.datoSolicitante = await firstValueFrom(
+          this._refMedicoService.getRefMedicobyId(data.solicitanteId),
+        );
+      }
     } catch (error) {
       console.error('Error al obtener los datos del solicitante:', error);
     }
@@ -143,11 +149,14 @@ export class HojaTrabajoLabPdfService {
       yValueDatosPaciente + 4,
     );
     doc.text(`${this.edad}`, xValueDatosPaciente + 31, yValueDatosPaciente + 4);
-    doc.text(
-      `Dr. ${this.datoSolicitante.apePatRefMedico} ${this.datoSolicitante.apeMatRefMedico} ${this.datoSolicitante.nombreRefMedico} `,
-      xValueDatosPaciente,
-      yValueDatosPaciente + 8,
-    );
+
+    if (this.datoSolicitante && Object.keys(this.datoSolicitante).length > 0) {
+      doc.text(
+        `${this.datoSolicitante.apePatRefMedico} ${this.datoSolicitante.apeMatRefMedico} ${this.datoSolicitante.nombreRefMedico} `,
+        xValueDatosPaciente,
+        yValueDatosPaciente + 8,
+      );
+    }
 
     doc.setLineWidth(0.3);
     doc.line(10, 37, 142, 37); // línea horizontal debajo del encabezado
@@ -174,9 +183,9 @@ export class HojaTrabajoLabPdfService {
         const item = comp.itemLabId;
         if (!item) continue;
 
-        const nombreItem = item.nombreItemLab || 'Ítem sin nombre';
+        const nombreItem = item.nombreHojaTrabajo || 'Ítem sin nombre';
         const unidad = item.unidadesRef || '';
-        const valoresRef = item.plantillaValores || '';
+        const valoresRef = item.valoresHojaTrabajo || '';
 
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(7);

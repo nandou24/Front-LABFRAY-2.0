@@ -1,199 +1,196 @@
 mat-form-field {
-    width: 100%;
+  width: 100%;
 }
 
 mat-card-title {
-    background-color: #0f3369;  // Azul Bootstrap
-    color: white;
-    padding-left: 1.5rem;
-    padding-top: 0.1rem;
-    padding-bottom: 0.1rem;
-    font-weight: lighter;
-    //font-size: 18px;
-    border-top-left-radius: 4px;
-    border-top-right-radius: 4px;
+  background-color: #0f3369; // Azul Bootstrap
+  color: white;
+  padding-left: 1.5rem;
+  padding-top: 0.1rem;
+  padding-bottom: 0.1rem;
+  font-weight: lighter;
+  border-top-left-radius: 4px;
+  border-top-right-radius: 4px;
 }
 
 mat-option {
-    font-size: 13px;
-    //color: #0f3369;  // Azul Bootstrap
+  font-size: 13px;
 }
 
-.mat-mdc-header-row{
-    background-color: #0f3369;
-    color: #ffffff;
+.mat-mdc-card-content:last-child {
+  padding-bottom: 0.5rem;
 }
 
-.mat-mdc-card-content:last-child{
-    padding-bottom: 0%;
+.mat-mdc-row .mat-mdc-cell {
+  cursor: pointer;
+}
+
+.mat-mdc-row:hover .mat-mdc-cell,
+.mat-mdc-row:hover .mat-mdc-cell mat-icon {
+  background-color: #0b4b48;
+  color: #ffffff;
+  fill: #ffffff;
 }
 
 //para las filas de parametros de validación
 .flex-row-container {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 8px;
-    flex-wrap: wrap; /* Para que en pantallas pequeñas se acomode */
-    transition: background-color 0.3s ease, box-shadow 0.3s ease; /* ⚡ Transición suave */
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  flex-wrap: wrap; /* Para que en pantallas pequeñas se acomode */
+  transition:
+    background-color 0.3s ease,
+    box-shadow 0.3s ease; /* ⚡ Transición suave */
 }
 
 //para las filas de parametros de validación
 /* Aplicamos hover para TODAS las resoluciones */
 .flex-row-container:hover {
-    background-color: #dfe9f3; /* Fondo azul clarito */
-    border-radius: 8px;
-    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.15); /* Sombra suave */
+  background-color: #dfe9f3; /* Fondo azul clarito */
+  border-radius: 8px;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.15); /* Sombra suave */
 }
 
 //para los items de cada fila de parámetros de validación
 .flex-item {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    min-width: 0;
-    text-align: center;
-    flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  text-align: center;
+  flex: 0 0 auto;
 }
-  
+
 .full-width {
-    width: 100%;
+  width: 100%;
 }
 
 //para los items de cada fila de parámetros de validación
 /* ⚡ Pantalla chica - Celulares */
 @media (max-width: 767px) {
-    .flex-item {
-      flex: 1 1 100% !important; /* Cada item ocupará 100% cuando sea pequeño */
-    }
+  .flex-item {
+    flex: 1 1 100% !important; /* Cada item ocupará 100% cuando sea pequeño */
+  }
 
-    .flex-row-container {
-        border-bottom: 1px solid #ccc; /* 👈 Agregamos línea divisora */
-        margin-bottom: 16px;
-        padding-bottom: 16px;
-    }
+  .flex-row-container {
+    border-bottom: 1px solid #ccc; /* 👈 Agregamos línea divisora */
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+  }
 }
 
 //para los items de cada fila de parámetros de validación
 /* ⚡ Pantalla intermedia - Tablets */
 @media (min-width: 768px) and (max-width: 991px) {
-    .flex-item {
-      flex: 1 1 48% !important; /* 2 columnas en tablet */
-    }
+  .flex-item {
+    flex: 1 1 48% !important; /* 2 columnas en tablet */
+  }
 
-    .flex-row-container {
-        border-bottom: 1px solid #ccc; /* 👈 También en tablet */
-        margin-bottom: 16px;
-        padding-bottom: 16px;
-    }
-}
-
-
-
-.contenedor-flex {
-    display: flex;
-    flex-direction: row;
-    width: 100%;
-    position: relative;
-}
-  
-/* Formulario */
-.contenedor-formulario {
-    flex: 1; /* Ocupará todo el espacio disponible */
-    padding-right: 16px; /* Espacio de separación */
-}
-  
-.mat-mdc-row .mat-mdc-cell {
-    cursor: pointer;
+  .flex-row-container {
+    border-bottom: 1px solid #ccc; /* 👈 También en tablet */
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+  }
 }
 
-.mat-mdc-row:hover .mat-mdc-cell,
-.mat-mdc-row:hover .mat-mdc-cell mat-icon {
-    background-color: #0b4b48;
-    color: #ffffff;
-    fill: #ffffff;
-}
+// .contenedor-flex {
+//   display: flex;
+//   flex-wrap: wrap;
+//   gap: 16px;
+//   align-items: flex-start;
+// }
 
-.listado-items-container {
-    position: relative;
-    width: 0px; /* Solo pestaña visible inicialmente */
-    transition: width 0.1s ease;
-    overflow: visible;
-    background: transparent;
-    z-index: 10;
-}
-  
-/* Estado expandido */
-.listado-items-container.expandido {
-    width: 400px;
-    background: white;
-    box-shadow: 0px 0px 10px rgba(0,0,0,0.2);
-}
-  
-/* Pestaña */
-.listado-items-container::before {
-    content: "Listado de Ítems";
-    position: absolute;
-    top: 50%;
-    left: -50px;
-    transform: translateY(-50%) rotate(-90deg);
-    transform-origin: center;
-    width: 120px;
-    height: 50px;
-    background-color: #0f3369;
-    color: white;
-    text-align: center;
-    line-height: 30px;
-    font-size: 12px;
-    font-weight: normal;
-    border-top-left-radius: 6px;
-    border-top-right-radius: 6px;
-    cursor: pointer;
-    box-shadow: 0px 0px 5px rgba(0,0,0,0.3);
-    transition: opacity 0.15s ease, visibility 0.15s ease;
-}
-  
-/* Al expandirse, ocultamos la pestaña */
-.listado-items-container.expandido::before {
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-}
-  
-.listado-items-container > * {
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.15s ease;
-}
+// //Aplicando flex al formulario
+// .contenedor-formulario {
+//   flex: 0 0 60%;
+//   //min-width: 300px;
+// }
 
-.listado-items-container.expandido > * {
-    opacity: 1;
-    pointer-events: auto;
-}
+// .contenedor-tablaDerecha {
+//   flex: 1 1 38%;
+//   //min-width: 300px;
+// }
 
-//Flex para los campos del item
-.formulario-flex {
+.row-flex {
   display: flex;
   flex-wrap: wrap;
-  gap: 16px; /* Separación entre campos */
-  row-gap: 8px;
+  justify-content: flex-start;
+  gap: 10px; /* Separación entre campos */
+  margin-bottom: 0px;
 }
 
-.campo-flex {
-  flex: 1 1 calc(33.333% - 12px); /* 3 columnas en pantallas grandes */
-  min-width: 250px;
+.flex-item {
+  justify-content: center;
+  min-width: 0;
+  text-align: center;
 }
 
+.fila-seleccionada {
+  background-color: rgba(0, 102, 255, 0.15) !important;
+}
+
+@media (max-width: 1430px) {
+  .contenedor-formulario,
+  .contenedor-tablaDerecha {
+    flex: 0 0 100%;
+  }
+}
 /* Tablets (2 columnas) */
 @media (max-width: 991px) {
-  .campo-flex {
-    flex: 1 1 calc(50% - 8px); /* 2 columnas */
+  .flex-item {
+    flex: 1 1 48% !important; /* Cada item ocupará 100% cuando sea pequeño */
+  }
+}
+/* Celulares (1 columna) */
+@media (max-width: 767px) {
+  .flex-item {
+    flex: 1 1 100% !important; /* Cada item ocupará 100% cuando sea pequeño */
   }
 }
 
-/* Celulares (1 columna) */
-@media (max-width: 767px) {
-  .campo-flex {
-    flex: 1 1 100%; /* 1 columna */
+.row-flex-btn {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px; /* Separación entre campos */
+}
+
+.btn-registrar {
+  background-color: #14532d !important; // verde oscuro
+  color: white !important;
+
+  &:hover {
+    background-color: #077732 !important;
   }
+}
+
+.btn-actualizar {
+  background-color: #ecb80b !important; // amarillo suave
+  color: #154cb3 !important;
+
+  &:hover {
+    background-color: #ffda06 !important;
+  }
+}
+
+.btn-nuevo {
+  background-color: #8d9097 !important; // azul moderno
+  color: white !important;
+
+  &:hover {
+    background-color: #b9b7b7 !important;
+  }
+}
+
+.sidenav-container2 {
+  height: 100vh;
+}
+
+.tabla-sidenav {
+  width: 33%; // o el ancho que quieras
+  padding-left: 0.5rem;
+  //background: #f5f5f5;
+  //box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
+  //overflow: auto;
 }

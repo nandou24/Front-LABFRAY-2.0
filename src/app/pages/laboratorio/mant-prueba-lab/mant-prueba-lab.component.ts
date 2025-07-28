@@ -162,7 +162,7 @@ export class MantPruebaLabComponent implements OnInit {
     return this._fb.group({
       itemLabId: [item._id],
       codItemLab: [item.codItemLab, Validators.required],
-      nombreItemLab: [item.nombreItemLab, Validators.required],
+      nombreItemLab: [item.nombreInforme, Validators.required],
       perteneceA: [item.perteneceA],
     });
   }

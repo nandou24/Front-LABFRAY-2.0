@@ -3,6 +3,7 @@ import { Component, inject, OnInit, ViewChild } from '@angular/core';
 import {
   FormArray,
   FormBuilder,
+  FormControl,
   FormGroup,
   FormsModule,
   ReactiveFormsModule,
@@ -24,6 +25,9 @@ import {
 import { IItemLab } from '../../../models/Mantenimiento/items.models';
 import Swal from 'sweetalert2';
 import { ItemLabService } from '../../../services/mantenimiento/itemLab/item-lab.service';
+import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
+import { MatSidenavModule } from '@angular/material/sidenav';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
   selector: 'app-mant-item-lab',
@@ -36,9 +40,12 @@ import { ItemLabService } from '../../../services/mantenimiento/itemLab/item-lab
     MatOptionModule,
     ReactiveFormsModule,
     MatButtonModule,
+    MatPaginatorModule,
     MatSlideToggleModule,
+    MatSidenavModule,
     MatIconModule,
     MatTableModule,
+    MatTooltipModule,
     CommonModule,
   ],
   templateUrl: './mant-item-lab.component.html',
@@ -48,16 +55,18 @@ export class MantItemLabComponent implements OnInit {
   constructor(private _itemLabService: ItemLabService) {}
 
   ngOnInit(): void {
-    this.ultimosItems(20), this.limpiarValidacion();
+    this.ultimosItems(100), this.limpiarValidacion();
   }
 
   private _fb = inject(FormBuilder);
 
   public myFormItemLab: FormGroup = this._fb.group({
     codItemLab: '',
-    nombreItemLab: ['', [Validators.required]],
+    nombreInforme: ['', [Validators.required]],
+    nombreHojaTrabajo: ['', [Validators.required]],
     metodoItemLab: ['', [Validators.required]],
-    plantillaValores: ['', [Validators.required]],
+    valoresHojaTrabajo: ['', [Validators.required]],
+    valoresInforme: ['', [Validators.required]],
     unidadesRef: ['', [Validators.required]],
     perteneceA: ['', [Validators.required]],
     poseeValidacion: [false],
@@ -169,44 +178,42 @@ export class MantItemLabComponent implements OnInit {
   }
 
   @ViewChild(MatTable) table!: MatTable<any>;
+  @ViewChild('MatPaginatorItems') paginatorItems!: MatPaginator;
+  ngAfterViewInit() {
+    this.dataSourceItems.paginator = this.paginatorItems;
+  }
   //Tabla pacientes
   columnasTablaPaciente: string[] = ['Codigo', 'NombreItem', 'PerteneceA'];
   dataSourceItems = new MatTableDataSource<IItemLab>();
 
   ultimosItems(cantidad: number): void {
-    this._itemLabService.getLastItemsLab(20).subscribe((items) => {
+    this._itemLabService.getLastItemsLab(cantidad).subscribe((items) => {
       this.dataSourceItems.data = items;
     });
   }
 
-  terminoBusqueda: any;
+  terminoBusqueda = new FormControl('');
+  timeoutBusqueda: any;
 
   buscarItems() {
-    if (this.terminoBusqueda.length >= 3) {
-      this._itemLabService
-        .getItem(this.terminoBusqueda)
-        .subscribe((res: IItemLab[]) => {
+    clearTimeout(this.timeoutBusqueda);
+    this.timeoutBusqueda = setTimeout(() => {
+      const termino = this.terminoBusqueda.value?.trim() || '';
+      if (termino.length >= 3) {
+        this._itemLabService.getItem(termino).subscribe((res: IItemLab[]) => {
           this.dataSourceItems.data = res;
         });
-    }
-    if (this.terminoBusqueda.length > 0) {
-      this.dataSourceItems.data = [];
-    } else {
-      this.ultimosItems(30);
-    }
+      } else if (termino.length > 0) {
+        this.dataSourceItems.data = [];
+      } else {
+        this.ultimosItems(100);
+      }
+    }, 200);
   }
 
   //Carga los datos en los campos
   cargarItemLab(item: IItemLab): void {
-    this.myFormItemLab.patchValue({
-      codItemLab: item.codItemLab,
-      nombreItemLab: item.nombreItemLab,
-      metodoItemLab: item.metodoItemLab,
-      plantillaValores: item.plantillaValores,
-      unidadesRef: item.unidadesRef,
-      perteneceA: item.perteneceA,
-      poseeValidacion: item.poseeValidacion,
-    });
+    this.myFormItemLab.patchValue(item);
 
     this.paramValidacion.clear();
 
@@ -285,18 +292,30 @@ export class MantItemLabComponent implements OnInit {
           };
           console.log('capturando valores en component.ts');
 
-          this._itemLabService.registrarItemLab(body).subscribe((res) => {
-            if (res !== 'ERROR') {
+          this._itemLabService.registrarItemLab(body).subscribe({
+            next: () => {
               Swal.fire({
                 title: 'Confirmado',
                 text: 'Item Registrado',
                 icon: 'success',
                 confirmButtonText: 'Ok',
               });
-              this.ultimosItems(20);
+              this.ultimosItems(100);
               this.nuevoItem();
-            } else {
-            }
+            },
+            error: (err) => {
+              const mensaje =
+                err?.error?.msg ||
+                err.message ||
+                'No se pudo registrar el item. Intenta nuevamente.';
+
+              Swal.fire({
+                title: 'Error',
+                text: mensaje,
+                icon: 'error',
+                confirmButtonText: 'Ok',
+              });
+            },
           });
         }
       });
@@ -325,21 +344,31 @@ export class MantItemLabComponent implements OnInit {
         if (result.isConfirmed) {
           const body: IItemLab = this.myFormItemLab.value; //capturando los valores del component.ts
 
-          this._itemLabService
-            .actualizarItem(body.codItemLab, body)
-            .subscribe((res) => {
-              if (res !== 'ERROR') {
-                Swal.fire({
-                  title: 'Confirmado',
-                  text: 'Item Actualizado',
-                  icon: 'success',
-                  confirmButtonText: 'Ok',
-                });
-                this.ultimosItems(20);
-                this.nuevoItem();
-              } else {
-              }
-            });
+          this._itemLabService.actualizarItem(body.codItemLab, body).subscribe({
+            next: () => {
+              Swal.fire({
+                title: 'Confirmado',
+                text: 'Item Actualizado',
+                icon: 'success',
+                confirmButtonText: 'Ok',
+              });
+              this.ultimosItems(100);
+              this.nuevoItem();
+            },
+            error: (err) => {
+              const mensaje =
+                err?.error?.msg ||
+                err.message ||
+                'No se pudo actualizar el item. Intenta nuevamente.';
+
+              Swal.fire({
+                title: 'Error',
+                text: mensaje,
+                icon: 'error',
+                confirmButtonText: 'Ok',
+              });
+            },
+          });
         }
       });
     } else {
@@ -356,13 +385,10 @@ export class MantItemLabComponent implements OnInit {
     });
   }
 
-  listadoExpandido: boolean = false;
+  // public mostrarTabla: boolean = false;
+  opened: boolean = true;
 
-  expandirListado() {
-    this.listadoExpandido = true;
-  }
-
-  colapsarListado() {
-    this.listadoExpandido = false;
-  }
+  // toggleTabla(): void {
+  //   this.mostrarTabla = !this.mostrarTabla;
+  // }
 }

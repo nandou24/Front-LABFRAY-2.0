@@ -1,4 +1,5 @@
 .sidenav-container {
+  //position: absolute;
   height: 100vh;
 }
 
@@ -9,26 +10,6 @@
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
 }
 
-.sidenav-content {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-
 .main-content {
   padding: 16px;
 }
-
-// .drawer-container {
-//   height: 100vh;
-// }
-
-// .drawer {
-//   width: 400px;
-// }
-
-// .main-content {
-//   padding: 16px;
-//   min-height: 100vh;
-//   background-color: #f9f9f9;
-// }

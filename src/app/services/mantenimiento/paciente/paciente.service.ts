@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { catchError, map, Observable, of } from 'rxjs';
@@ -16,37 +16,17 @@ import {
   providedIn: 'root',
 })
 export class PacienteService {
-  constructor(private readonly _http: HttpClient) {}
+  constructor() {}
 
+  private readonly _http = inject(HttpClient);
   private readonly apiUrl = `${environment.baseUrl}/api/paciente`;
 
-  public registrarPaciente(body: IPaciente) {
-    console.log('Enviando valores desde servicio');
-
-    return this._http
-      .post<IPacientePostDTO>(
-        `${environment.baseUrl}/api/paciente/newPaciente`,
-        body,
-      )
-      .pipe(
-        map((data) => {
-          if (data.ok) {
-            return data.ok;
-          } else {
-            throw new Error('ERROR');
-          }
-        }),
-        catchError((err) => {
-          console.log(err.error.msg);
-          Swal.fire({
-            title: 'ERROR!',
-            text: err.error.msg,
-            icon: 'error',
-            confirmButtonText: 'Ok',
-          });
-          return of('ERROR');
-        }),
-      );
+  registrarPaciente(body: IPaciente): Observable<IPacientePostDTO> {
+    console.log('Datos del paciente:', body);
+    return this._http.post<IPacientePostDTO>(
+      `${this.apiUrl}/newPaciente`,
+      body,
+    );
   }
 
   getLastPatients(cantidad: number): Observable<IPaciente[]> {
@@ -60,24 +40,10 @@ export class PacienteService {
       );
   }
 
-  getLastPatientsCotizacion(cantidad: number): Observable<IPaciente[]> {
-    const params = new HttpParams().set('cant', cantidad);
-    return this._http
-      .get<IGetLastPatients>(
-        `${environment.baseUrl}/api/paciente/latestCotizacion`,
-        { params },
-      )
-      .pipe(
-        map((data) => {
-          return data.pacientes;
-        }),
-      );
-  }
-
   getPatient(terminoBusqueda: any): Observable<IPaciente[]> {
     const params = new HttpParams().set('search', terminoBusqueda);
     return this._http
-      .get<IGetLastPatients>(`${environment.baseUrl}/api/paciente/findTerm`, {
+      .get<IGetLastPatients>(`${this.apiUrl}/findTerm`, {
         params,
       })
       .pipe(map((data) => data.pacientes));
@@ -86,67 +52,50 @@ export class PacienteService {
   getPatientbyId(id: any): Observable<IPaciente> {
     const params = new HttpParams().set('search', id);
     return this._http
-      .get<IGetPatientbyId>(
-        `${environment.baseUrl}/api/paciente/findTermById`,
-        {
-          params,
-        },
-      )
+      .get<IGetPatientbyId>(`${this.apiUrl}/findTermById`, {
+        params,
+      })
       .pipe(map((data) => data.paciente));
+  }
+
+  getLastPatientsCotizacion(cantidad: number): Observable<IPaciente[]> {
+    const params = new HttpParams().set('cant', cantidad);
+    return this._http
+      .get<IGetLastPatients>(`${this.apiUrl}/latestCotizacion`, { params })
+      .pipe(
+        map((data) => {
+          return data.pacientes;
+        }),
+      );
   }
 
   getPatientCotizacion(terminoBusqueda: any): Observable<IPaciente[]> {
     const params = new HttpParams().set('search', terminoBusqueda);
     return this._http
-      .get<IGetLastPatients>(
-        `${environment.baseUrl}/api/paciente/findTermCotizacion`,
-        { params },
-      )
+      .get<IGetLastPatients>(`${this.apiUrl}/findTermCotizacion`, { params })
       .pipe(map((data) => data.pacientes));
   }
 
-  public actualizarPaciente(nroHC: string, body: IPaciente) {
-    return this._http
-      .put<IPacientePostDTO>(
-        `${environment.baseUrl}/api/paciente/${nroHC}/updatePatient`,
-        body,
-      )
-      .pipe(
-        map((data) => {
-          if (data.ok) {
-            return data.ok;
-          } else {
-            throw new Error('ERROR');
-          }
-        }),
-        catchError((err) => {
-          console.log(err.error.msg);
-          Swal.fire({
-            title: 'ERROR!',
-            text: err.error.msg,
-            icon: 'error',
-            confirmButtonText: 'Ok',
-          });
-          return of('ERROR');
-        }),
-      );
+  public actualizarPaciente(body: IPaciente) {
+    return this._http.put<IPacientePostDTO>(
+      `${this.apiUrl}/updatePatient`,
+      body,
+    );
   }
 
   registrarPacienteDesdeCotizacion(pacienteData: any): Observable<any> {
-    console.log('Enviando valores desde servicio', pacienteData);
-    return this._http
-      .post<IPacientePostReturnDTO>(
-        `${environment.baseUrl}/api/paciente/newPatientWhitoutHC`,
-        pacienteData,
-      )
-      .pipe(
-        map((data) => {
-          if (data.ok) {
-            return data;
-          } else {
-            throw new Error('ERROR');
-          }
-        }),
-      );
+    return this._http.post<IPacientePostReturnDTO>(
+      `${this.apiUrl}/newPatientWhitoutHC`,
+      pacienteData,
+    );
+    // .pipe(
+    //   map((data) => {
+    //     if (data.ok) {
+    //       return data;
+    //     } else {
+    //       throw new Error('ERROR');
+    //     }
+    //   }),
+    // );
   }
 }

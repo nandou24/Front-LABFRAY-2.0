@@ -4,6 +4,7 @@ import { MatInputModule } from '@angular/material/input';
 import {
   FormArray,
   FormBuilder,
+  FormControl,
   FormGroup,
   FormsModule,
   ReactiveFormsModule,
@@ -20,13 +21,14 @@ import { MatTableDataSource } from '@angular/material/table';
 import { ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
-import { IPaciente } from '../../../models/Mantenimiento/paciente.models';
-import { PacienteService } from '../../../services/mantenimiento/paciente/paciente.service';
-import { UbigeoService } from '../../../services/utilitarios/ubigeo.service';
+import { IPaciente } from '../../../../models/Mantenimiento/paciente.models';
+import { PacienteService } from '../../../../services/mantenimiento/paciente/paciente.service';
+import { UbigeoService } from '../../../../services/utilitarios/ubigeo.service';
 import Swal from 'sweetalert2';
-import { FechaValidatorService } from '../../../services/utilitarios/validators/fechasValidator/fecha-validator.service';
-import { DocValidatorService } from '../../../services/utilitarios/validators/docValidator/doc-validator.service';
+import { FechaValidatorService } from '../../../../services/utilitarios/validators/fechasValidator/fecha-validator.service';
+import { DocValidatorService } from '../../../../services/utilitarios/validators/docValidator/doc-validator.service';
 import { DateAdapter, MAT_DATE_LOCALE } from '@angular/material/core';
+import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 
 @Component({
   standalone: true,
@@ -43,6 +45,7 @@ import { DateAdapter, MAT_DATE_LOCALE } from '@angular/material/core';
     ReactiveFormsModule,
     MatIconModule,
     MatTableModule,
+    MatPaginatorModule,
     CommonModule,
     MatButtonModule,
   ],
@@ -75,6 +78,11 @@ export class MantPacientesRecepcionComponent implements OnInit {
   provincias: any[] = [];
   distritos: any[] = [];
 
+  //setear los anchos
+  setFlex(valor: number, unidad: 'px' | '%' = 'px'): string {
+    return `0 0 ${valor}${unidad}`;
+  }
+
   // Método separado para manejar el cambio de departamento
   onDepartamentoChange(): void {
     this.pacienteForm
@@ -106,7 +114,8 @@ export class MantPacientesRecepcionComponent implements OnInit {
   private _fb = inject(FormBuilder);
 
   public pacienteForm: FormGroup = this._fb.group({
-    hc: [''],
+    _id: [null],
+    hc: [null],
     tipoDoc: ['DNI', [Validators.required]], // Valor por defecto: DNI
     nroDoc: [
       '',
@@ -124,12 +133,9 @@ export class MantPacientesRecepcionComponent implements OnInit {
       '',
       [Validators.required, Validators.pattern(/^[a-zA-ZÀ-ÿ\u00f1\u00d1\s]+$/)],
     ],
-    fechaNacimiento: [
-      '',
-      [Validators.required, this._fechaService.fechaNoFuturaValidator()],
-    ],
+    fechaNacimiento: ['', [this._fechaService.fechaNoFuturaValidator()]],
     edad: [{ value: '', disabled: true }],
-    sexoCliente: ['', Validators.required],
+    sexoCliente: [],
     departamentoCliente: ['15'],
     provinciaCliente: ['01'],
     distritoCliente: ['', Validators.required],
@@ -161,59 +167,79 @@ export class MantPacientesRecepcionComponent implements OnInit {
   }
 
   @ViewChild(MatTable) table!: MatTable<any>;
+  @ViewChild('MatPaginatorPacientes') paginatorPacientes!: MatPaginator;
+  ngAfterViewInit() {
+    this.dataSourcePacientes.paginator = this.paginatorPacientes;
+  }
+
   //Tabla pacientes
   columnasTablaPaciente: string[] = [
     'nro',
     'hc',
     'nombreCompleto',
-    'tipoDoc',
-    'nroDoc',
+    'documento',
   ];
   dataSourcePacientes = new MatTableDataSource<IPaciente>();
 
   ultimosClientes(): void {
-    this._pacienteService.getLastPatients(20).subscribe((pacientes) => {
+    this._pacienteService.getLastPatients(100).subscribe((pacientes) => {
       this.dataSourcePacientes.data = pacientes;
     });
   }
 
-  terminoBusqueda: any;
+  //terminoBusqueda: string = '';
+  terminoBusqueda = new FormControl('');
+  timeoutBusqueda: any;
 
-  // Método para buscar clientes
   buscarClientes() {
-    if (this.terminoBusqueda.length >= 3) {
-      this._pacienteService
-        .getPatient(this.terminoBusqueda)
-        .subscribe((res: IPaciente[]) => {
-          this.dataSourcePacientes.data = res;
-        });
-    }
-    if (this.terminoBusqueda.length > 0) {
-      this.dataSourcePacientes.data = [];
-    } else {
-      this.ultimosClientes();
-    }
+    clearTimeout(this.timeoutBusqueda);
+
+    this.timeoutBusqueda = setTimeout(() => {
+      const termino = this.terminoBusqueda.value?.trim() || '';
+
+      if (termino.length >= 3) {
+        this._pacienteService
+          .getPatient(termino)
+          .subscribe((res: IPaciente[]) => {
+            this.dataSourcePacientes.data = res;
+          });
+      } else if (termino.length > 0) {
+        this.dataSourcePacientes.data = [];
+      } else {
+        this.ultimosClientes();
+      }
+    }, 200);
   }
 
+  filaSeleccionadaIndex: number | null = null;
+
   //Carga los datos en los campos
-  cargarCliente(paciente: IPaciente): void {
-    this.pacienteForm.patchValue({
-      hc: paciente.hc,
-      tipoDoc: paciente.tipoDoc,
-      nroDoc: paciente.nroDoc,
-      nombreCliente: paciente.nombreCliente,
-      apePatCliente: paciente.apePatCliente,
-      apeMatCliente: paciente.apeMatCliente,
-      fechaNacimiento: paciente.fechaNacimiento,
-      sexoCliente: paciente.sexoCliente,
-      departamentoCliente: paciente.departamentoCliente,
-      provinciaCliente: paciente.provinciaCliente,
-      distritoCliente: paciente.distritoCliente,
-      direcCliente: paciente.direcCliente,
-      mailCliente: paciente.mailCliente,
-    });
+  cargarCliente(paciente: IPaciente, index: number): void {
+    this.filaSeleccionadaIndex = index;
+    this.pacienteForm.patchValue(
+      paciente,
+      //   {
+      //   _id: paciente._id,
+      //   hc: paciente.hc,
+      //   tipoDoc: paciente.tipoDoc,
+      //   nroDoc: paciente.nroDoc,
+      //   nombreCliente: paciente.nombreCliente,
+      //   apePatCliente: paciente.apePatCliente,
+      //   apeMatCliente: paciente.apeMatCliente,
+      //   fechaNacimiento: paciente.fechaNacimiento,
+      //   sexoCliente: paciente.sexoCliente,
+      //   departamentoCliente: paciente.departamentoCliente,
+      //   provinciaCliente: paciente.provinciaCliente,
+      //   distritoCliente: paciente.distritoCliente,
+      //   direcCliente: paciente.direcCliente,
+      //   mailCliente: paciente.mailCliente,
+      // }
+    );
     // Limpiar el FormArray antes de llenarlo
     this.phones.clear();
+
+    this.pacienteForm.get('tipoDoc')?.disable();
+    this.pacienteForm.get('nroDoc')?.disable();
 
     // Agregar cada teléfono al FormArray
     paciente.phones.forEach((phone: any) => {
@@ -231,7 +257,6 @@ export class MantPacientesRecepcionComponent implements OnInit {
   }
 
   actualizarEdad() {
-    console.log('Entro actualizar edad');
     const fecha = this.pacienteForm.get('fechaNacimiento')?.value;
     const edadCalculada = this._fechaService.calcularEdad(fecha);
     this.pacienteForm.get('edad')?.setValue(edadCalculada);
@@ -267,24 +292,31 @@ export class MantPacientesRecepcionComponent implements OnInit {
       }).then((result) => {
         if (result.isConfirmed) {
           console.log('Procede registro');
-          const body: IPaciente = this.pacienteForm.value; //capturando los valores del component.ts
+          const paciente: IPaciente = this.pacienteForm.value; //capturando los valores del component.ts
 
-          console.log('capturando valores en component.ts');
+          this._pacienteService.registrarPaciente(paciente).subscribe({
+            next: () => {
+              Swal.fire(
+                'Registrado',
+                'Paciente registrado correctamente',
+                'success',
+              );
+              this.nuevoCliente();
+              this.ultimosClientes();
+            },
+            error: (err) => {
+              const mensaje =
+                err?.error?.msg ||
+                err.message ||
+                'No se pudo registrar el paciente. Intenta nuevamente.';
 
-          this._pacienteService.registrarPaciente(body).subscribe((res) => {
-            if (res !== 'ERROR') {
               Swal.fire({
-                title: 'Confirmado',
-                text: 'Paciente Registrado',
-                icon: 'success',
+                title: 'Error',
+                text: mensaje,
+                icon: 'error',
                 confirmButtonText: 'Ok',
               });
-              this.ultimosClientes();
-              this.nuevoCliente();
-              //this._router.navigateByUrl('/auth/login');
-            } else {
-              //this.pacienteForm.get('fechaNacimiento')?.setValue(fechaSeleccionada);
-            }
+            },
           });
         }
       });
@@ -305,8 +337,9 @@ export class MantPacientesRecepcionComponent implements OnInit {
       provinciaCliente: '01',
       distritoCliente: '',
     });
-    // this.edad = '';
-    // this.filaSeleccionada = null;
+    this.filaSeleccionadaIndex = null;
+    this.pacienteForm.get('tipoDoc')?.enable();
+    this.pacienteForm.get('nroDoc')?.enable();
   }
 
   //actualizar cliente
@@ -327,24 +360,33 @@ export class MantPacientesRecepcionComponent implements OnInit {
         confirmButtonText: 'Sí, confirmar',
         cancelButtonText: 'Cancelar',
       }).then((result) => {
-        const body: IPaciente = this.pacienteForm.value; //capturando los valores del component.ts
+        if (result.isConfirmed) {
+          const body: IPaciente = this.pacienteForm.value;
+          this._pacienteService.actualizarPaciente(body).subscribe({
+            next: () => {
+              Swal.fire(
+                'Actualizado',
+                'Paciente actualizado correctamente',
+                'success',
+              );
+              this.nuevoCliente();
+              this.ultimosClientes();
+            },
+            error: (err) => {
+              const mensaje =
+                err?.error?.msg ||
+                err.message ||
+                'No se pudo registrar el paciente. Intenta nuevamente.';
 
-        this._pacienteService
-          .actualizarPaciente(body.hc, body)
-          .subscribe((res) => {
-            if (res !== 'ERROR') {
               Swal.fire({
-                title: 'Confirmado',
-                text: 'Paciente Actualizado',
-                icon: 'success',
+                title: 'Error',
+                text: mensaje,
+                icon: 'error',
                 confirmButtonText: 'Ok',
               });
-              this.ultimosClientes();
-              this.nuevoCliente();
-            } else {
-              //this.pacienteForm.get('fechaNacimiento')?.setValue(fechaSeleccionada);
-            }
+            },
           });
+        }
       });
     } else {
       console.log('No Procede Actualización');

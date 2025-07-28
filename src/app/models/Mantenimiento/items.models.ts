@@ -2,9 +2,11 @@ export interface IItemLab {
   _id?: string;
   itemLabId: string;
   codItemLab: string;
-  nombreItemLab: string;
+  nombreInforme: string;
+  nombreHojaTrabajo: string;
   metodoItemLab: string;
-  plantillaValores: string;
+  valoresHojaTrabajo: string;
+  valoresInforme: string;
   unidadesRef: string;
   perteneceA: string;
   poseeValidacion: string;

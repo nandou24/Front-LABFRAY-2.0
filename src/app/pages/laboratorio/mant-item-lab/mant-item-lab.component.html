@@ -1,40 +1,43 @@
-<div class="row mt-2" style="align-items: center">
-  <h5 class="text-center" style="font-weight: 500">
-    MANTENIMIENTO DE ITEMS DE LABORATORIO
-  </h5>
-</div>
-
 <form [formGroup]="myFormItemLab">
-  <div class="contenedor-flex">
-    <div class="contenedor-formulario">
+  <!-- <div class="contenedor-flex"> -->
+  <mat-sidenav-container class="sidenav-container2">
+    <mat-sidenav-content>
+      <!-- <div class="contenedor-formulario"> -->
+      <div class="row-flex mt-2" style="align-items: center">
+        <div [style.flex]="setFlex(50, '%')" class="flex-item">
+          <h5 class="text-center" style="font-weight: 500">
+            MANTENIMIENTO DE ITEMS DE LABORATORIO
+          </h5>
+        </div>
+        <div [style.flex]="setFlex(38, '%')" class="flex-item">
+          <label
+            ><strong
+              >Código: {{ myFormItemLab.get("codItemLab")?.value }}</strong
+            ></label
+          >
+        </div>
+
+        <div [style.flex]="setFlex(10, '%')" class="flex-item">
+          <button type="button" mat-button (click)="sidenavItem.toggle()">
+            <mat-icon>table_view</mat-icon>
+          </button>
+        </div>
+      </div>
+
       <mat-card>
         <mat-card-title>
-          <div class="row align-items-center">
-            <div class="col-lg-5 col-auto">Item de Laboratorio</div>
-
-            <div class="col-auto">
-              <label><strong>Código Item:</strong></label>
-            </div>
-
-            <div class="col-auto">
-              <label
-                ><strong>{{
-                  myFormItemLab.get("codItemLab")?.value
-                }}</strong></label
-              >
-            </div>
-          </div>
+          <div class="row-flex align-items-center">Item de Laboratorio</div>
         </mat-card-title>
 
-        <mat-card-content class="mb-2">
-          <div class="formulario-flex mt-2">
-            <div class="campo-flex">
+        <mat-card-content>
+          <div class="row-flex mt-2">
+            <div [style.flex]="setFlex(24, '%')" class="flex-item">
               <mat-form-field appearance="outline">
-                <mat-label>Nombre de Item</mat-label>
-                <input matInput formControlName="nombreItemLab" />
+                <mat-label>Nombre - Informe</mat-label>
+                <input matInput formControlName="nombreInforme" />
                 <mat-error
                   *ngIf="
-                    myFormItemLab.get('nombreItemLab')?.hasError('required')
+                    myFormItemLab.get('nombreInforme')?.hasError('required')
                   "
                 >
                   Nombre es requerido
@@ -42,7 +45,21 @@
               </mat-form-field>
             </div>
 
-            <div class="campo-flex">
+            <div [style.flex]="setFlex(24, '%')" class="flex-item">
+              <mat-form-field appearance="outline">
+                <mat-label>Nombre - Hoja de Trabajo</mat-label>
+                <input matInput formControlName="nombreHojaTrabajo" />
+                <mat-error
+                  *ngIf="
+                    myFormItemLab.get('nombreHojaTrabajo')?.hasError('required')
+                  "
+                >
+                  Nombre es requerido
+                </mat-error>
+              </mat-form-field>
+            </div>
+
+            <div [style.flex]="setFlex(18, '%')" class="flex-item">
               <mat-form-field appearance="outline">
                 <mat-label>Método</mat-label>
                 <input matInput formControlName="metodoItemLab" />
@@ -56,39 +73,19 @@
               </mat-form-field>
             </div>
 
-            <div class="campo-flex">
+            <div [style.flex]="setFlex(10, '%')" class="flex-item">
               <mat-form-field appearance="outline">
                 <mat-label>Unidades</mat-label>
                 <input matInput formControlName="unidadesRef" />
                 <mat-error
                   *ngIf="myFormItemLab.get('unidadesRef')?.hasError('required')"
                 >
-                  Unidades es requerido
+                  Requerido
                 </mat-error>
               </mat-form-field>
             </div>
 
-            <!-- aqui se agregará la plantilla de los valores de referencia del item -->
-
-            <div class="campo-flex">
-              <mat-form-field appearance="outline">
-                <mat-label>Plantilla Valores</mat-label>
-                <textarea
-                  rows="3"
-                  matInput
-                  formControlName="plantillaValores"
-                ></textarea>
-                <mat-error
-                  *ngIf="
-                    myFormItemLab.get('plantillaValores')?.hasError('required')
-                  "
-                >
-                  Debe ingresar una plantilla de valores de referencia
-                </mat-error>
-              </mat-form-field>
-            </div>
-
-            <div class="campo-flex">
+            <div [style.flex]="setFlex(18, '%')" class="flex-item">
               <mat-form-field appearance="outline">
                 <mat-label>Pertenece a</mat-label>
                 <input matInput formControlName="perteneceA" />
@@ -99,8 +96,47 @@
                 </mat-error>
               </mat-form-field>
             </div>
+          </div>
 
-            <div class="campo-flex">
+          <!-- aqui se agregará la plantilla de los valores de referencia del item -->
+          <div class="row-flex mt-2">
+            <div [style.flex]="setFlex(40, '%')" class="flex-item">
+              <mat-form-field appearance="outline">
+                <mat-label>Valores de Referencia - Hoja de Trabajo</mat-label>
+                <textarea
+                  rows="3"
+                  matInput
+                  formControlName="valoresHojaTrabajo"
+                ></textarea>
+                <mat-error
+                  *ngIf="
+                    myFormItemLab
+                      .get('valoresHojaTrabajo')
+                      ?.hasError('required')
+                  "
+                >
+                  Ingrese valores para hoja de trabajo
+                </mat-error>
+              </mat-form-field>
+            </div>
+            <div [style.flex]="setFlex(40, '%')" class="flex-item">
+              <mat-form-field appearance="outline">
+                <mat-label>Valor de Referencia - Informe</mat-label>
+                <textarea
+                  rows="3"
+                  matInput
+                  formControlName="valoresInforme"
+                ></textarea>
+                <mat-error
+                  *ngIf="
+                    myFormItemLab.get('valoresInforme')?.hasError('required')
+                  "
+                >
+                  Ingrese valores para informe
+                </mat-error>
+              </mat-form-field>
+            </div>
+            <div [style.flex]="setFlex(15, '%')" class="flex-item mb-3">
               <mat-slide-toggle formControlName="poseeValidacion"
                 >Posee validación</mat-slide-toggle
               >
@@ -280,48 +316,58 @@
         </mat-card-content>
       </mat-card>
 
-      <div class="row mt-4">
-        <div class="col col-4 text-center">
+      <div class="row-flex-btn mt-3">
+        <div [style.flex]="setFlex(20, '%')" class="flex-item text-end">
           <button
             mat-raised-button
-            class="btn-nuevo"
+            color="accent"
             type="button"
+            class="btn-nuevo"
             (click)="nuevoItem()"
           >
             Nuevo Item
           </button>
         </div>
-
-        <div class="col col-4 text-center">
+        <div
+          [style.flex]="setFlex(20, '%')"
+          class="flex-item text-end"
+          *ngIf="!myFormItemLab.get('codItemLab')?.value"
+        >
           <button
             mat-raised-button
             class="btn-registrar"
             type="button"
             (click)="registraItemLab()"
           >
-            Registrar Item
+            <mat-icon>save</mat-icon> Crear Item
           </button>
         </div>
-
-        <div class="col col-4 text-center">
+        <div
+          [style.flex]="setFlex(20, '%')"
+          class="flex-item text-end"
+          *ngIf="myFormItemLab.get('codItemLab')?.value"
+        >
           <button
             mat-raised-button
             class="btn-actualizar"
             type="button"
             (click)="actualizarItem()"
           >
-            Actualizar Item
+            <mat-icon>save</mat-icon> Actualizar Item
           </button>
         </div>
       </div>
-    </div>
+      <!-- </div> -->
+    </mat-sidenav-content>
 
-    <div
-      class="listado-items-container"
-      [class.expandido]="listadoExpandido"
-      (click)="expandirListado()"
-      (mouseleave)="colapsarListado()"
+    <mat-sidenav
+      #sidenavItem
+      mode="side"
+      position="end"
+      [opened]="opened"
+      class="tabla-sidenav"
     >
+      <!-- <div class="contenedor-tablaDerecha"> -->
       <mat-card>
         <mat-card-title> Listado de Items </mat-card-title>
 
@@ -331,10 +377,20 @@
             <input
               matInput
               (input)="buscarItems()"
-              [(ngModel)]="terminoBusqueda"
-              [ngModelOptions]="{ standalone: true }"
+              [formControl]="terminoBusqueda"
               placeholder="Escribe el nombre del item"
             />
+            @if (terminoBusqueda.value) {
+              <button
+                matSuffix
+                mat-icon-button
+                class="clear-search-button"
+                aria-label="Clear"
+                (click)="terminoBusqueda.setValue('')"
+              >
+                <mat-icon>close</mat-icon>
+              </button>
+            }
           </mat-form-field>
 
           <table mat-table [dataSource]="dataSourceItems">
@@ -345,12 +401,16 @@
 
             <ng-container matColumnDef="NombreItem">
               <th mat-header-cell *matHeaderCellDef>Item</th>
-              <td mat-cell *matCellDef="let item">{{ item.nombreItemLab }}</td>
+              <td mat-cell *matCellDef="let item">
+                {{ item.nombreInforme }}
+              </td>
             </ng-container>
 
             <ng-container matColumnDef="Metodo">
               <th mat-header-cell *matHeaderCellDef>Método</th>
-              <td mat-cell *matCellDef="let item">{{ item.metodoItemLab }}</td>
+              <td mat-cell *matCellDef="let item">
+                {{ item.metodoItemLab }}
+              </td>
             </ng-container>
 
             <ng-container matColumnDef="Validacion">
@@ -373,8 +433,18 @@
               (click)="cargarItemLab(row)"
             ></tr>
           </table>
+          <div>
+            <mat-paginator
+              #MatPaginatorItems
+              [pageSize]="20"
+              [pageSizeOptions]="[10, 20]"
+              showFirstLastButtons
+            ></mat-paginator>
+          </div>
         </mat-card-content>
       </mat-card>
-    </div>
-  </div>
+      <!-- </div> -->
+    </mat-sidenav>
+    <!-- </div> -->
+  </mat-sidenav-container>
 </form>

@@ -1,5 +1,5 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { environment } from '../../../../environments/enviroment';
 import {
   IGetLastRutas,
@@ -12,8 +12,9 @@ import { map, Observable } from 'rxjs';
   providedIn: 'root',
 })
 export class RutasService {
-  constructor(private readonly _http: HttpClient) {}
+  constructor() {}
 
+  private readonly _http = inject(HttpClient);
   private readonly apiUrl = `${environment.baseUrl}/api/rutas`;
 
   registrarRuta(ruta: IRuta): Observable<any> {
