@@ -1,5 +1,11 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, OnInit, ViewChild } from '@angular/core';
+import {
+  Component,
+  inject,
+  OnInit,
+  ViewChild,
+  AfterViewInit,
+} from '@angular/core';
 import {
   AbstractControl,
   FormArray,
@@ -22,6 +28,7 @@ import {
   MatTableDataSource,
   MatTableModule,
 } from '@angular/material/table';
+import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { IPruebaLab } from '../../../models/Mantenimiento/pruebaLab.models';
 import { IItemLab } from '../../../models/Mantenimiento/items.models';
 import { MatButtonModule } from '@angular/material/button';
@@ -47,11 +54,12 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
     MatTableModule,
     MatIconModule,
     MatButtonModule,
+    MatPaginatorModule,
   ],
   templateUrl: './mant-prueba-lab.component.html',
   styleUrl: './mant-prueba-lab.component.scss',
 })
-export class MantPruebaLabComponent implements OnInit {
+export class MantPruebaLabComponent implements OnInit, AfterViewInit {
   constructor(
     private _pruebaLabService: PruebaLabService,
     private _itemLabService: ItemLabService,
@@ -59,8 +67,8 @@ export class MantPruebaLabComponent implements OnInit {
 
   ngOnInit(): void {
     this.ultimasPruebas();
-    this.ultimosItems(5);
-    this.inicializarBusquedaItems();
+    this.ultimosItems();
+    // this.inicializarBusquedaItems();
   }
 
   private _fb = inject(FormBuilder);
@@ -115,6 +123,14 @@ export class MantPruebaLabComponent implements OnInit {
   }
 
   @ViewChild(MatTable) table!: MatTable<any>;
+  @ViewChild('MatPaginatorPruebas') paginatorPruebas!: MatPaginator;
+  @ViewChild('MatPaginatorItems') paginatorItems!: MatPaginator;
+
+  ngAfterViewInit() {
+    this.dataSourcePruebas.paginator = this.paginatorPruebas;
+    this.dataSourceItemsDisponibles.paginator = this.paginatorItems;
+  }
+
   //Tabla items disponibles
   columnasDisponibles: string[] = ['codigo', 'nombre', 'perteneceA', 'accion'];
   dataSourceItemsDisponibles = new MatTableDataSource<IItemLab>();
@@ -162,8 +178,8 @@ export class MantPruebaLabComponent implements OnInit {
     return this._fb.group({
       itemLabId: [item._id],
       codItemLab: [item.codItemLab, Validators.required],
-      nombreItemLab: [item.nombreInforme, Validators.required],
-      perteneceA: [item.perteneceA],
+      nombreInforme: [item.nombreInforme, Validators.required],
+      perteneceA: [item.perteneceAPrueba],
     });
   }
 
@@ -185,17 +201,25 @@ export class MantPruebaLabComponent implements OnInit {
     }
   }
 
+  // Array para mantener todas las pruebas en memoria
+  private todasLasPruebasMemoria: IPruebaLab[] = [];
+
   ultimasPruebas(): void {
     this._pruebaLabService.getLastPruebasLab().subscribe((pruebas) => {
+      this.todasLasPruebasMemoria = pruebas; // Guardar todas las pruebas en memoria
       this.dataSourcePruebas.data = pruebas;
       console.log('Pruebas de laboratorio obtenidas:', pruebas);
     });
   }
 
+  // Array para mantener todos los datos iniciales en memoria
+  private todosLosItems: IItemLab[] = [];
+
   // Método últimos 20* pacientes
-  ultimosItems(cantidad: number): void {
-    this._itemLabService.getLastItemsLab(cantidad).subscribe({
+  ultimosItems(): void {
+    this._itemLabService.getLastItemsLab().subscribe({
       next: (res: IItemLab[]) => {
+        this.todosLosItems = res; // Guardar todos los items en memoria
         this.dataSourceItemsDisponibles.data = res;
         console.log('Items de laboratorio disponibles:', res);
       },
@@ -205,54 +229,44 @@ export class MantPruebaLabComponent implements OnInit {
     });
   }
 
-  terminoBusqueda: any;
+  terminoBusqueda = new FormControl('');
+  terminoBusquedaItems = new FormControl('');
 
   buscarPrueba() {
-    const termino = this.terminoBusqueda?.trim() ?? '';
+    const termino = this.terminoBusqueda?.value?.trim() ?? '';
 
-    if (termino.length >= 3) {
-      this._pruebaLabService
-        .getPruebaLab(this.terminoBusqueda)
-        .subscribe((res: IPruebaLab[]) => {
-          this.dataSourcePruebas.data = res;
-        });
-    }
-    if (termino.length > 0) {
-      this.dataSourcePruebas.data = [];
+    if (termino === '') {
+      // Si no hay término de búsqueda, mostrar todas las pruebas iniciales
+      this.dataSourcePruebas.data = this.todasLasPruebasMemoria;
+      this.dataSourcePruebas.filter = '';
     } else {
-      this.ultimasPruebas();
+      // Si hay término de búsqueda, aplicar filtro del dataSource
+      this.dataSourcePruebas.data = this.todasLasPruebasMemoria; // Asegurar que tiene todos los datos
+      this.dataSourcePruebas.filter = termino.toLowerCase();
     }
-  }
 
-  terminoBusquedaItemsControl = new FormControl('');
-  terminoBusquedaItems: any;
-
-  private inicializarBusquedaItems(): void {
-    this.terminoBusquedaItemsControl.valueChanges
-      .pipe(
-        debounceTime(300), // ⏱️ Espera 300 ms después del último cambio
-        distinctUntilChanged(), // 🔄 Solo si el valor cambió
-      )
-      .subscribe((valor: string | null) => {
-        this.terminoBusquedaItems = valor;
-        this.buscarItems();
-      });
+    // Si hay un paginador, ir a la primera página cuando se filtra
+    if (this.dataSourcePruebas.paginator) {
+      this.dataSourcePruebas.paginator.firstPage();
+    }
   }
 
   buscarItems(): void {
-    const termino = this.terminoBusquedaItems?.trim() ?? '';
+    const termino = this.terminoBusquedaItems?.value?.trim() ?? '';
 
-    if (termino.length >= 3) {
-      this._itemLabService
-        .getItem(this.terminoBusquedaItems)
-        .subscribe((res: IItemLab[]) => {
-          this.dataSourceItemsDisponibles.data = res;
-        });
-    }
-    if (termino.length > 0) {
-      this.dataSourceItemsDisponibles.data = [];
+    if (termino === '') {
+      // Si no hay término de búsqueda, mostrar todos los items iniciales
+      this.dataSourceItemsDisponibles.data = this.todosLosItems;
+      this.dataSourceItemsDisponibles.filter = '';
     } else {
-      this.ultimosItems(5);
+      // Si hay término de búsqueda, aplicar filtro del dataSource
+      this.dataSourceItemsDisponibles.data = this.todosLosItems; // Asegurar que tiene todos los datos
+      this.dataSourceItemsDisponibles.filter = termino.toLowerCase();
+    }
+
+    // Si hay un paginador, ir a la primera página cuando se filtra
+    if (this.dataSourceItemsDisponibles.paginator) {
+      this.dataSourceItemsDisponibles.paginator.firstPage();
     }
   }
 
@@ -305,8 +319,12 @@ export class MantPruebaLabComponent implements OnInit {
     this.dataSourceItemsSeleccionados.data = [];
     this.myFormPruebaLab.get('nombrePruebaLab')?.enable();
     this.myFormPruebaLab.get('areaLab')?.enable();
-    //this.filaSeleccionadaPruebas = null;
     this.pruebaSeleccionada = false;
+    this.filaSeleccionadaIndex = null;
+    this.terminoBusqueda.setValue(''); // Limpia el campo de búsqueda
+    this.terminoBusquedaItems.setValue(''); // Limpia el campo de búsqueda de
+    this.buscarItems(); // Vuelve a cargar los items disponibles
+    this.buscarPrueba(); // Vuelve a cargar las pruebas disponibles
   }
 
   formSubmitted = false;
@@ -355,20 +373,26 @@ export class MantPruebaLabComponent implements OnInit {
             tipoTuboEnvase: tipoTuboEnvaseSeleccionado, //solo los seleccionados
           };
 
-          this._pruebaLabService.registrarPruebaLab(body).subscribe((res) => {
-            if (res !== 'ERROR') {
+          this._pruebaLabService.registrarPruebaLab(body).subscribe({
+            next: (res) => {
               Swal.fire({
                 title: 'Confirmado',
-                text: 'Prueba Registrado',
+                text: 'Prueba Registrada',
                 icon: 'success',
                 confirmButtonText: 'Ok',
               });
               this.ultimasPruebas();
               this.nuevaPrueba();
-              //this._router.navigateByUrl('/auth/login');
-            } else {
-              console.log('No procede');
-            }
+            },
+            error: (err) => {
+              console.error('Error al registrar prueba:', err);
+              Swal.fire({
+                title: 'ERROR!',
+                text: err.error?.msg || 'Error al registrar la prueba',
+                icon: 'error',
+                confirmButtonText: 'Ok',
+              });
+            },
           });
         }
       });
@@ -423,19 +447,26 @@ export class MantPruebaLabComponent implements OnInit {
 
           this._pruebaLabService
             .actualizarPruebaLab(body.codPruebaLab, body)
-            .subscribe((res) => {
-              if (res !== 'ERROR') {
+            .subscribe({
+              next: (res) => {
                 Swal.fire({
                   title: 'Confirmado',
-                  text: 'Prueba Actualizado',
+                  text: 'Prueba Actualizada',
                   icon: 'success',
                   confirmButtonText: 'Ok',
                 });
                 this.ultimasPruebas();
                 this.nuevaPrueba();
-              } else {
-                console.log('Error de servidor');
-              }
+              },
+              error: (err) => {
+                console.error('Error al actualizar prueba:', err);
+                Swal.fire({
+                  title: 'ERROR!',
+                  text: err.error?.msg || 'Error al actualizar la prueba',
+                  icon: 'error',
+                  confirmButtonText: 'Ok',
+                });
+              },
             });
         }
       });
@@ -445,9 +476,11 @@ export class MantPruebaLabComponent implements OnInit {
   }
 
   pruebaSeleccionada = false;
+  filaSeleccionadaIndex: number | null = null;
 
-  cargarPruebas(prueba: IPruebaLab) {
+  cargarPruebas(prueba: IPruebaLab, index: number) {
     this.pruebaSeleccionada = true;
+    this.filaSeleccionadaIndex = index;
 
     this.myFormPruebaLab.get('nombrePruebaLab')?.disable();
     this.myFormPruebaLab.get('areaLab')?.disable();

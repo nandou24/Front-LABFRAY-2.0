@@ -61,7 +61,7 @@ export class MantServicioComponent implements OnInit, AfterViewInit {
   constructor(private _servicioService: ServiciosService) {}
 
   ngOnInit(): void {
-    this.escucharCambioTipo(), this.inicializarBusquedaServicios();
+    this.escucharCambioTipo();
     this.traerServicios();
     this.listarProfesiones();
     this.listarEspecialidades();
@@ -134,12 +134,15 @@ export class MantServicioComponent implements OnInit, AfterViewInit {
     input.select();
   }
 
+  private todasLosExamenesPorTipoMemoria: any[] = [];
+
   obtenerExamenesPorTipo(tipo: string) {
     this._servicioService
       .getExamenesPorTipo(tipo)
       .pipe(
         catchError((error) => {
           this.dataSourceExamenesDisponibles.data = [];
+          this.todasLosExamenesPorTipoMemoria = [];
           console.error('Error al obtener exámenes por tipo:', error);
           return of({ ok: false, examenes: [] }); // devuelve array vacío para que igual entre en next
         }),
@@ -158,29 +161,51 @@ export class MantServicioComponent implements OnInit, AfterViewInit {
             examen.nombreProcedimiento,
         }));
         this.dataSourceExamenesDisponibles.data = examenes;
+        this.todasLosExamenesPorTipoMemoria = examenes;
       });
   }
 
-  terminoBusquedaExamenesControl = new FormControl('');
+  terminoBusquedaExamenes = new FormControl('');
 
-  filtrarExamenes() {
-    const termino = this.terminoBusquedaExamenesControl.value || '';
-    this.dataSourceExamenesDisponibles.filter = termino.trim().toLowerCase();
+  buscarExamenes() {
+    const termino = this.terminoBusquedaExamenes.value?.trim() ?? '';
+
+    if (termino === '') {
+      // Si no hay término de búsqueda, mostrar todas las pruebas iniciales
+      this.dataSourceExamenesDisponibles.data =
+        this.todasLosExamenesPorTipoMemoria;
+      this.dataSourceExamenesDisponibles.filter = '';
+    } else {
+      // Si hay término de búsqueda, aplicar filtro del dataSource
+      this.dataSourceExamenesDisponibles.data =
+        this.todasLosExamenesPorTipoMemoria; // Asegurar que tiene todos los datos
+      this.dataSourceExamenesDisponibles.filter = termino.toLowerCase();
+    }
+
+    // Si hay un paginador, ir a la primera página cuando se filtra
+    if (this.dataSourceExamenesDisponibles.paginator) {
+      this.dataSourceExamenesDisponibles.paginator.firstPage();
+    }
   }
 
-  terminoBusquedaExamenes: any;
+  // filtrarExamenes() {
+  //   const termino = this.terminoBusquedaExamenesControl.value || '';
+  //   this.dataSourceExamenesDisponibles.filter = termino.trim().toLowerCase();
+  // }
 
-  private inicializarBusquedaServicios(): void {
-    this.terminoBusquedaExamenesControl.valueChanges
-      .pipe(
-        //debounceTime(300), // ⏱️ Espera 300 ms después del último cambio
-        distinctUntilChanged(), // 🔄 Solo si el valor cambió
-      )
-      .subscribe((valor: string | null) => {
-        this.terminoBusquedaExamenes = valor;
-        this.filtrarExamenes();
-      });
-  }
+  // terminoBusquedaExamenes: any;
+
+  // private inicializarBusquedaServicios(): void {
+  //   this.terminoBusquedaExamenesControl.valueChanges
+  //     .pipe(
+  //       //debounceTime(300), // ⏱️ Espera 300 ms después del último cambio
+  //       distinctUntilChanged(), // 🔄 Solo si el valor cambió
+  //     )
+  //     .subscribe((valor: string | null) => {
+  //       this.terminoBusquedaExamenes = valor;
+  //       this.filtrarExamenes();
+  //     });
+  // }
 
   agregarExamen(examen: any) {
     const existe = this.examenesServicio.controls.some(
@@ -228,8 +253,8 @@ export class MantServicioComponent implements OnInit, AfterViewInit {
   nuevoServicio() {
     this.myFormServicio.reset(); // Reinicia todos los campos del formulario
     this.formSubmitted = false; // Restablece el estado de validación del formulario
-    this.terminoBusquedaServicioControl.reset();
-    this.terminoBusquedaExamenesControl.reset();
+    this.terminoBusquedaServicio.reset();
+    this.terminoBusquedaExamenes.reset();
     this.tipoServicioTabla.reset();
     this.dataSourceServicios.filter = '';
     this.examenesServicio.clear();
@@ -350,10 +375,13 @@ export class MantServicioComponent implements OnInit, AfterViewInit {
     });
   }
 
+  private todasLosServiciosMemoria: IServicio[] = [];
+
   traerServicios() {
     this._servicioService.getAllServicios().subscribe({
       next: (res: IServicio[]) => {
         this.dataSourceServicios.data = res;
+        this.todasLosServiciosMemoria = res;
       },
       error: (err) => {
         console.error('Error al obtener los servicios:', err);
@@ -361,28 +389,25 @@ export class MantServicioComponent implements OnInit, AfterViewInit {
     });
   }
 
-  terminoBusquedaServicioControl = new FormControl('');
-  terminoBusquedaServicio: any;
+  terminoBusquedaServicio = new FormControl('');
 
-  // buscarServicio(){
+  buscarServicio() {
+    const termino = this.terminoBusquedaServicio?.value?.trim() ?? '';
 
-  //   const termino = this.terminoBusquedaServicio?.trim() ?? '';
+    if (termino === '') {
+      // Si no hay término de búsqueda, mostrar todas las pruebas iniciales
+      this.dataSourceServicios.data = this.todasLosServiciosMemoria;
+      this.dataSourceServicios.filter = '';
+    } else {
+      // Si hay término de búsqueda, aplicar filtro del dataSource
+      this.dataSourceServicios.data = this.todasLosServiciosMemoria; // Asegurar que tiene todos los datos
+      this.dataSourceServicios.filter = termino.toLowerCase();
+    }
 
-  //   if (termino.length >= 3) {
-  //     this._servicioService.getServicio(this.terminoBusquedaServicio).subscribe((res: IServicio[]) => {
-  //       this.dataSourceServicios.data = res;
-  //     });
-  //   }if (termino.length > 0) {
-  //     this.dataSourceServicios.data = [];
-  //   }else{
-  //     this.ultimosServicios(20);
-  //   }
-
-  // }
-
-  filtrarServicio() {
-    const termino = this.terminoBusquedaServicioControl.value || '';
-    this.dataSourceServicios.filter = termino.trim().toLowerCase();
+    // Si hay un paginador, ir a la primera página cuando se filtra
+    if (this.dataSourceServicios.paginator) {
+      this.dataSourceServicios.paginator.firstPage();
+    }
   }
 
   pruebaSeleccionada = false;
@@ -392,15 +417,7 @@ export class MantServicioComponent implements OnInit, AfterViewInit {
 
     this.myFormServicio.get('tipoServicio')?.disable();
 
-    this.myFormServicio.patchValue({
-      codServicio: servicio.codServicio,
-      tipoServicio: servicio.tipoServicio,
-      nombreServicio: servicio.nombreServicio,
-      descripcionServicio: servicio.descripcionServicio,
-      precioServicio: servicio.precioServicio,
-      estadoServicio: servicio.estadoServicio,
-      favoritoServicio: servicio.favoritoServicio,
-    });
+    this.myFormServicio.patchValue(servicio);
 
     this.examenesServicio.clear();
 

@@ -59,11 +59,6 @@ mat-option {
   row-gap: 8px;
 }
 
-.campo-flex {
-  flex: 1 1 calc(25% - 12px); /* 4 columnas en pantallas grandes */
-  min-width: 200px;
-}
-
 //Tablas
 .fila-flex {
   display: flex;
@@ -94,6 +89,10 @@ mat-option {
   text-align: center;
 }
 
+.fila-seleccionada {
+  background-color: rgba(0, 102, 255, 0.15) !important;
+}
+
 @media (max-width: 1430px) {
   .contenedor-formulario,
   .contenedor-tablaDerecha {
@@ -117,6 +116,13 @@ mat-option {
   .campo-flex {
     flex: 1 1 100%; /* 1 columna */
   }
+}
+
+.row-flex-btn {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px; /* Separación entre campos */
 }
 
 .btn-registrar {

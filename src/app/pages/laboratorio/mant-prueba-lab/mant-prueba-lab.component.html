@@ -1,30 +1,21 @@
-<div class="row" style="align-items: center">
-  <h5 class="text-center" style="font-weight: 500">
-    MANTENIMIENTO DE PRUEBA DE LABORATORIO
-  </h5>
-</div>
-
 <form [formGroup]="myFormPruebaLab">
+  <div class="row" style="align-items: center">
+    <div [style.flex]="setFlex(40, '%')" class="flex-item">
+      <h5 class="text-center" style="font-weight: 500">
+        MANTENIMIENTO DE PRUEBA DE LABORATORIO
+      </h5>
+    </div>
+    <div [style.flex]="setFlex(15, '%')" class="flex-item mb-2">
+      <label
+        >Código Prueba: {{ myFormPruebaLab.get("codPruebaLab")?.value }}</label
+      >
+    </div>
+  </div>
+
   <div class="contenedor-flex">
     <div class="contenedor-formulario">
       <mat-card class="mb-2">
-        <mat-card-title>
-          <div class="row align-items-center">
-            <div class="col-lg-5 col-auto">Prueba de Laboratorio</div>
-
-            <div class="col-auto">
-              <label><strong>Código Prueba:</strong></label>
-            </div>
-
-            <div class="col-auto">
-              <label
-                ><strong>{{
-                  myFormPruebaLab.get("codPruebaLab")?.value
-                }}</strong></label
-              >
-            </div>
-          </div>
-        </mat-card-title>
+        <mat-card-title> Prueba de Laboratorio </mat-card-title>
 
         <mat-card-content class="mb-2">
           <div class="formulario-flex mt-2">
@@ -45,7 +36,7 @@
                 </mat-form-field>
               </div>
 
-              <div [style.flex]="setFlex(25, '%')" class="flex-item">
+              <div [style.flex]="setFlex(22, '%')" class="flex-item">
                 <mat-form-field appearance="outline">
                   <mat-label>Area de Laboratorio</mat-label>
                   <mat-select formControlName="areaLab">
@@ -262,85 +253,84 @@
         </mat-card-content>
       </mat-card>
 
-      <div class="row-flex">
+      <div class="row-flex-items">
         <div [style.flex]="setFlex(48, '%')" class="flex-item">
           <mat-card>
-            <mat-card-title>
-              <div class="row align-items-center">
-                <div class="col-lg-5 col-auto">Items disponibles</div>
-              </div>
-            </mat-card-title>
+            <mat-card-title> Items disponibles </mat-card-title>
 
             <mat-card-content class="mb-2">
-              <div class="tabla-container">
-                <mat-form-field appearance="outline" class="mt-2">
-                  <mat-label>Buscar Item</mat-label>
-                  <input
-                    matInput
-                    [formControl]="terminoBusquedaItemsControl"
-                    placeholder="Escribe el nombre de la prueba"
-                  />
-                  @if (terminoBusquedaItems) {
+              <mat-form-field appearance="outline" class="mt-2">
+                <mat-label>Buscar Item</mat-label>
+                <input
+                  matInput
+                  (input)="buscarItems()"
+                  [formControl]="terminoBusquedaItems"
+                  placeholder="Escribe el nombre del item"
+                />
+                @if (terminoBusquedaItems.value) {
+                  <button
+                    type="button"
+                    matSuffix
+                    mat-icon-button
+                    aria-label="Clear"
+                    (click)="terminoBusquedaItems.setValue(''); buscarItems()"
+                  >
+                    <mat-icon>close</mat-icon>
+                  </button>
+                }
+              </mat-form-field>
+              <table mat-table [dataSource]="dataSourceItemsDisponibles">
+                <!-- Definir las columnas -->
+                <ng-container matColumnDef="codigo">
+                  <th mat-header-cell *matHeaderCellDef>Código</th>
+                  <td mat-cell *matCellDef="let item">
+                    {{ item.codItemLab }}
+                  </td>
+                </ng-container>
+
+                <ng-container matColumnDef="nombre">
+                  <th mat-header-cell *matHeaderCellDef>Nombre</th>
+                  <td mat-cell *matCellDef="let item">
+                    {{ item.nombreInforme }}
+                  </td>
+                </ng-container>
+
+                <ng-container matColumnDef="perteneceA">
+                  <th mat-header-cell *matHeaderCellDef>Pertenece</th>
+                  <td mat-cell *matCellDef="let item">
+                    {{ item.perteneceA }}
+                  </td>
+                </ng-container>
+
+                <ng-container matColumnDef="accion">
+                  <th mat-header-cell *matHeaderCellDef>Acción</th>
+                  <td mat-cell *matCellDef="let item">
                     <button
-                      type="button"
-                      matSuffix
                       mat-icon-button
-                      aria-label="Clear"
-                      (click)="
-                        terminoBusquedaItemsControl.setValue('');
-                        ultimosItems(5)
-                      "
+                      color="primary"
+                      type="button"
+                      (click)="agregarItem(item)"
                     >
-                      <mat-icon>close</mat-icon>
+                      <mat-icon>add</mat-icon>
                     </button>
-                  }
-                </mat-form-field>
-                <table mat-table [dataSource]="dataSourceItemsDisponibles">
-                  <!-- Definir las columnas -->
-                  <ng-container matColumnDef="codigo">
-                    <th mat-header-cell *matHeaderCellDef>Código</th>
-                    <td mat-cell *matCellDef="let item">
-                      {{ item.codItemLab }}
-                    </td>
-                  </ng-container>
+                  </td>
+                </ng-container>
 
-                  <ng-container matColumnDef="nombre">
-                    <th mat-header-cell *matHeaderCellDef>Nombre</th>
-                    <td mat-cell *matCellDef="let item">
-                      {{ item.nombreItemLab }}
-                    </td>
-                  </ng-container>
+                <tr mat-header-row *matHeaderRowDef="columnasDisponibles"></tr>
+                <tr
+                  mat-row
+                  *matRowDef="let row; columns: columnasDisponibles"
+                ></tr>
+              </table>
 
-                  <ng-container matColumnDef="perteneceA">
-                    <th mat-header-cell *matHeaderCellDef>Pertenece</th>
-                    <td mat-cell *matCellDef="let item">
-                      {{ item.perteneceA }}
-                    </td>
-                  </ng-container>
-
-                  <ng-container matColumnDef="accion">
-                    <th mat-header-cell *matHeaderCellDef>Acción</th>
-                    <td mat-cell *matCellDef="let item">
-                      <button
-                        mat-icon-button
-                        color="primary"
-                        type="button"
-                        (click)="agregarItem(item)"
-                      >
-                        <mat-icon>add</mat-icon>
-                      </button>
-                    </td>
-                  </ng-container>
-
-                  <tr
-                    mat-header-row
-                    *matHeaderRowDef="columnasDisponibles"
-                  ></tr>
-                  <tr
-                    mat-row
-                    *matRowDef="let row; columns: columnasDisponibles"
-                  ></tr>
-                </table>
+              <div>
+                <mat-paginator
+                  #MatPaginatorItems
+                  [pageSize]="10"
+                  [pageSizeOptions]="[5, 10, 20]"
+                  [hidePageSize]="true"
+                  showFirstLastButtons
+                ></mat-paginator>
               </div>
             </mat-card-content>
           </mat-card>
@@ -372,7 +362,7 @@
                 <ng-container matColumnDef="nombre">
                   <th mat-header-cell *matHeaderCellDef>Nombre</th>
                   <td mat-cell *matCellDef="let item">
-                    {{ item.nombreItemLab }}
+                    {{ item.nombreInforme }}
                   </td>
                 </ng-container>
 
@@ -419,8 +409,8 @@
         </div>
       </div>
 
-      <div class="row mt-4">
-        <div class="col col-4 text-center">
+      <div class="row-flex-btn mt-3">
+        <div [style.flex]="setFlex(20, '%')" class="flex-item text-end">
           <button
             mat-raised-button
             class="btn-nuevo"
@@ -431,33 +421,40 @@
           </button>
         </div>
 
-        <div class="col col-4 text-center">
+        <div
+          [style.flex]="setFlex(20, '%')"
+          class="flex-item text-end"
+          *ngIf="!myFormPruebaLab.get('codPruebaLab')?.value"
+        >
           <button
             mat-raised-button
             class="btn-registrar"
-            *ngIf="!pruebaSeleccionada"
             type="button"
             (click)="registraPrueba()"
           >
-            Registrar Prueba
+            <mat-icon>save</mat-icon>Registrar Prueba
           </button>
         </div>
 
-        <div class="col col-4 text-center">
+        <div
+          [style.flex]="setFlex(20, '%')"
+          class="flex-item text-end"
+          *ngIf="myFormPruebaLab.get('codPruebaLab')?.value"
+        >
           <button
             mat-raised-button
             class="btn-actualizar"
             type="button"
             (click)="actualizarPrueba()"
           >
-            Actualizar Prueba
+            <mat-icon>save</mat-icon> Actualizar Prueba
           </button>
         </div>
       </div>
     </div>
 
     <div class="contenedor-tablaDerecha">
-      <mat-card class="tabla-pruebas-card">
+      <mat-card>
         <mat-card-title> Pruebas Registradas </mat-card-title>
 
         <mat-card-content>
@@ -466,17 +463,16 @@
             <input
               matInput
               (input)="buscarPrueba()"
-              [(ngModel)]="terminoBusqueda"
-              [ngModelOptions]="{ standalone: true }"
+              [formControl]="terminoBusqueda"
               placeholder="Escribe el nombre de la prueba"
             />
-            @if (terminoBusqueda) {
+            @if (terminoBusqueda.value) {
               <button
                 type="button"
                 matSuffix
                 mat-icon-button
                 aria-label="Clear"
-                (click)="terminoBusqueda = ''; ultimasPruebas()"
+                (click)="terminoBusqueda.setValue(''); buscarPrueba()"
               >
                 <mat-icon>close</mat-icon>
               </button>
@@ -511,10 +507,21 @@
             <tr mat-header-row *matHeaderRowDef="columnasPruebas"></tr>
             <tr
               mat-row
-              *matRowDef="let row; columns: columnasPruebas"
-              (click)="cargarPruebas(row)"
+              *matRowDef="let row; let i = index; columns: columnasPruebas"
+              (click)="cargarPruebas(row, i)"
+              [class.fila-seleccionada]="i === filaSeleccionadaIndex"
             ></tr>
           </table>
+
+          <div>
+            <mat-paginator
+              #MatPaginatorPruebas
+              [pageSize]="20"
+              [pageSizeOptions]="[10, 20, 50]"
+              [hidePageSize]="true"
+              showFirstLastButtons
+            ></mat-paginator>
+          </div>
         </mat-card-content>
       </mat-card>
     </div>

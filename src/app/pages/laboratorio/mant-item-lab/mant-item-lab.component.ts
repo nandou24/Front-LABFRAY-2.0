@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject, OnInit, ViewChild } from '@angular/core';
+import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import {
   FormArray,
   FormBuilder,
@@ -55,10 +56,25 @@ export class MantItemLabComponent implements OnInit {
   constructor(private _itemLabService: ItemLabService) {}
 
   ngOnInit(): void {
-    this.ultimosItems(100), this.limpiarValidacion();
+    this.ultimosItems(), this.limpiarValidacion();
+
+    // Detectar si es móvil
+    this.breakpointObserver
+      .observe([Breakpoints.Handset])
+      .subscribe((result) => {
+        this.isMobile = result.matches;
+        if (this.isMobile) {
+          this.opened = false; // Cerrar el sidenav en móvil por defecto
+        }
+      });
   }
 
   private _fb = inject(FormBuilder);
+
+  // Getter para el modo del sidenav
+  get sidenavMode(): 'side' | 'over' {
+    return this.isMobile ? 'over' : 'side';
+  }
 
   public myFormItemLab: FormGroup = this._fb.group({
     codItemLab: '',
@@ -68,7 +84,8 @@ export class MantItemLabComponent implements OnInit {
     valoresHojaTrabajo: ['', [Validators.required]],
     valoresInforme: ['', [Validators.required]],
     unidadesRef: ['', [Validators.required]],
-    perteneceA: ['', [Validators.required]],
+    perteneceAPrueba: ['', [Validators.required]],
+    grupoItemLab: [''],
     poseeValidacion: [false],
     paramValidacion: this._fb.array([]),
   });
@@ -183,11 +200,20 @@ export class MantItemLabComponent implements OnInit {
     this.dataSourceItems.paginator = this.paginatorItems;
   }
   //Tabla pacientes
-  columnasTablaPaciente: string[] = ['Codigo', 'NombreItem', 'PerteneceA'];
+  columnasTablaPaciente: string[] = [
+    'Codigo',
+    'NombreItem',
+    'PerteneceAPrueba',
+    'grupoItemLab',
+  ];
   dataSourceItems = new MatTableDataSource<IItemLab>();
 
-  ultimosItems(cantidad: number): void {
-    this._itemLabService.getLastItemsLab(cantidad).subscribe((items) => {
+  // Array para mantener todos los datos iniciales en memoria
+  private todosLosItems: IItemLab[] = [];
+
+  ultimosItems(): void {
+    this._itemLabService.getLastItemsLab().subscribe((items) => {
+      this.todosLosItems = items; // Guardar todos los datos iniciales
       this.dataSourceItems.data = items;
     });
   }
@@ -195,24 +221,47 @@ export class MantItemLabComponent implements OnInit {
   terminoBusqueda = new FormControl('');
   timeoutBusqueda: any;
 
+  // buscarItems() {
+  //   clearTimeout(this.timeoutBusqueda);
+  //   this.timeoutBusqueda = setTimeout(() => {
+  //     const termino = this.terminoBusqueda.value?.trim() || '';
+  //     if (termino.length >= 3) {
+  //       this._itemLabService.getItem(termino).subscribe((res: IItemLab[]) => {
+  //         this.dataSourceItems.data = res;
+  //       });
+  //     } else if (termino.length > 0) {
+  //       this.dataSourceItems.data = [];
+  //     } else {
+  //       this.ultimosItems();
+  //     }
+  //   }, 200);
+  // }
+
   buscarItems() {
-    clearTimeout(this.timeoutBusqueda);
-    this.timeoutBusqueda = setTimeout(() => {
-      const termino = this.terminoBusqueda.value?.trim() || '';
-      if (termino.length >= 3) {
-        this._itemLabService.getItem(termino).subscribe((res: IItemLab[]) => {
-          this.dataSourceItems.data = res;
-        });
-      } else if (termino.length > 0) {
-        this.dataSourceItems.data = [];
-      } else {
-        this.ultimosItems(100);
-      }
-    }, 200);
+    const termino = this.terminoBusqueda?.value?.trim() ?? '';
+
+    if (termino === '') {
+      // Si no hay término de búsqueda, mostrar todos los datos iniciales
+      this.dataSourceItems.data = this.todosLosItems;
+      this.dataSourceItems.filter = '';
+    } else {
+      // Si hay término de búsqueda, aplicar filtro del dataSource
+      this.dataSourceItems.data = this.todosLosItems; // Asegurar que tiene todos los datos
+      this.dataSourceItems.filter = termino.toLowerCase();
+    }
+
+    // Si hay un paginador, ir a la primera página cuando se filtra
+    if (this.dataSourceItems.paginator) {
+      this.dataSourceItems.paginator.firstPage();
+    }
   }
 
+  filaSeleccionadaIndex: number | null = null;
+
   //Carga los datos en los campos
-  cargarItemLab(item: IItemLab): void {
+  cargarItemLab(item: IItemLab, index: number): void {
+    this.filaSeleccionadaIndex = index;
+    this.myFormItemLab.reset(); // Reinicia el formulario antes de cargar los datos
     this.myFormItemLab.patchValue(item);
 
     this.paramValidacion.clear();
@@ -300,7 +349,7 @@ export class MantItemLabComponent implements OnInit {
                 icon: 'success',
                 confirmButtonText: 'Ok',
               });
-              this.ultimosItems(100);
+              this.ultimosItems();
               this.nuevoItem();
             },
             error: (err) => {
@@ -352,7 +401,7 @@ export class MantItemLabComponent implements OnInit {
                 icon: 'success',
                 confirmButtonText: 'Ok',
               });
-              this.ultimosItems(100);
+              this.ultimosItems();
               this.nuevoItem();
             },
             error: (err) => {
@@ -380,13 +429,17 @@ export class MantItemLabComponent implements OnInit {
     this.myFormItemLab.reset(); // Reinicia todos los campos del formulario
     this.formSubmitted = true;
     this.paramValidacion.clear();
+    this.filaSeleccionadaIndex = null; // Reinicia el índice de la fila seleccionada
     this.myFormItemLab.patchValue({
       poseeValidacion: false,
     });
   }
 
   // public mostrarTabla: boolean = false;
-  opened: boolean = true;
+  opened: boolean = false;
+  isMobile: boolean = false;
+
+  private breakpointObserver = inject(BreakpointObserver);
 
   // toggleTabla(): void {
   //   this.mostrarTabla = !this.mostrarTabla;

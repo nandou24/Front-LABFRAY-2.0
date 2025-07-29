@@ -414,19 +414,16 @@
               <button
                 matSuffix
                 mat-icon-button
+                type="button"
                 class="clear-search-button"
                 aria-label="Clear"
-                (click)="terminoBusqueda.setValue('')"
+                (click)="terminoBusqueda.setValue(''); buscarClientes()"
               >
                 <mat-icon>close</mat-icon>
               </button>
             }
           </mat-form-field>
-          <table
-            mat-table
-            [dataSource]="dataSourcePacientes"
-            class="mat-elevation-z8 mt-2"
-          >
+          <table mat-table [dataSource]="dataSourcePacientes">
             <!-- N° -->
             <ng-container matColumnDef="nro">
               <th mat-header-cell *matHeaderCellDef>N°</th>

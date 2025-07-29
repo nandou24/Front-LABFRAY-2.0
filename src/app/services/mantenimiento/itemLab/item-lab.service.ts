@@ -24,17 +24,12 @@ export class ItemLabService {
     return this._http.post<IItemLabPostDTO>(`${this.apiUrl}/newItemLab`, body);
   }
 
-  getLastItemsLab(cantidad: number): Observable<IItemLab[]> {
-    const params = new HttpParams().set('cant', cantidad);
-    return this._http
-      .get<IGetLastItemsLab>(`${this.apiUrl}/last30`, {
-        params,
-      })
-      .pipe(
-        map((data) => {
-          return data.itemsLab;
-        }),
-      );
+  getLastItemsLab(): Observable<IItemLab[]> {
+    return this._http.get<IGetLastItemsLab>(`${this.apiUrl}/lastItems`).pipe(
+      map((data) => {
+        return data.itemsLab;
+      }),
+    );
   }
 
   getItem(terminoBusqueda: any): Observable<IItemLab[]> {

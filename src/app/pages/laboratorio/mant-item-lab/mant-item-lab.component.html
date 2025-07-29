@@ -17,7 +17,7 @@
           >
         </div>
 
-        <div [style.flex]="setFlex(10, '%')" class="flex-item">
+        <div [style.flex]="setFlex(8, '%')" class="flex-item">
           <button type="button" mat-button (click)="sidenavItem.toggle()">
             <mat-icon>table_view</mat-icon>
           </button>
@@ -31,7 +31,7 @@
 
         <mat-card-content>
           <div class="row-flex mt-2">
-            <div [style.flex]="setFlex(24, '%')" class="flex-item">
+            <div [style.flex]="setFlex(32, '%')" class="flex-item">
               <mat-form-field appearance="outline">
                 <mat-label>Nombre - Informe</mat-label>
                 <input matInput formControlName="nombreInforme" />
@@ -45,7 +45,7 @@
               </mat-form-field>
             </div>
 
-            <div [style.flex]="setFlex(24, '%')" class="flex-item">
+            <div [style.flex]="setFlex(32, '%')" class="flex-item">
               <mat-form-field appearance="outline">
                 <mat-label>Nombre - Hoja de Trabajo</mat-label>
                 <input matInput formControlName="nombreHojaTrabajo" />
@@ -59,7 +59,7 @@
               </mat-form-field>
             </div>
 
-            <div [style.flex]="setFlex(18, '%')" class="flex-item">
+            <div [style.flex]="setFlex(32, '%')" class="flex-item">
               <mat-form-field appearance="outline">
                 <mat-label>Método</mat-label>
                 <input matInput formControlName="metodoItemLab" />
@@ -72,8 +72,10 @@
                 </mat-error>
               </mat-form-field>
             </div>
+          </div>
 
-            <div [style.flex]="setFlex(10, '%')" class="flex-item">
+          <div class="row-flex mt-2">
+            <div [style.flex]="setFlex(32, '%')" class="flex-item">
               <mat-form-field appearance="outline">
                 <mat-label>Unidades</mat-label>
                 <input matInput formControlName="unidadesRef" />
@@ -85,15 +87,24 @@
               </mat-form-field>
             </div>
 
-            <div [style.flex]="setFlex(18, '%')" class="flex-item">
+            <div [style.flex]="setFlex(32, '%')" class="flex-item">
               <mat-form-field appearance="outline">
                 <mat-label>Pertenece a</mat-label>
-                <input matInput formControlName="perteneceA" />
+                <input matInput formControlName="perteneceAPrueba" />
                 <mat-error
-                  *ngIf="myFormItemLab.get('perteneceA')?.hasError('required')"
+                  *ngIf="
+                    myFormItemLab.get('perteneceAPrueba')?.hasError('required')
+                  "
                 >
                   Ingrese a que prueba pertenece
                 </mat-error>
+              </mat-form-field>
+            </div>
+
+            <div [style.flex]="setFlex(32, '%')" class="flex-item">
+              <mat-form-field appearance="outline">
+                <mat-label>Grupo</mat-label>
+                <input matInput formControlName="grupoItemLab" />
               </mat-form-field>
             </div>
           </div>
@@ -320,7 +331,6 @@
         <div [style.flex]="setFlex(20, '%')" class="flex-item text-end">
           <button
             mat-raised-button
-            color="accent"
             type="button"
             class="btn-nuevo"
             (click)="nuevoItem()"
@@ -362,10 +372,10 @@
 
     <mat-sidenav
       #sidenavItem
-      mode="side"
+      [mode]="sidenavMode"
       position="end"
       [opened]="opened"
-      class="tabla-sidenav"
+      class="sidenav2"
     >
       <!-- <div class="contenedor-tablaDerecha"> -->
       <mat-card>
@@ -383,10 +393,11 @@
             @if (terminoBusqueda.value) {
               <button
                 matSuffix
+                type="button"
                 mat-icon-button
                 class="clear-search-button"
                 aria-label="Clear"
-                (click)="terminoBusqueda.setValue('')"
+                (click)="terminoBusqueda.setValue(''); buscarItems()"
               >
                 <mat-icon>close</mat-icon>
               </button>
@@ -420,17 +431,29 @@
               </td>
             </ng-container>
 
-            <ng-container matColumnDef="PerteneceA">
+            <ng-container matColumnDef="PerteneceAPrueba">
               <th mat-header-cell *matHeaderCellDef>Pertence a</th>
-              <td mat-cell *matCellDef="let item">{{ item.perteneceA }}</td>
+              <td mat-cell *matCellDef="let item">
+                {{ item.perteneceAPrueba }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="grupoItemLab">
+              <th mat-header-cell *matHeaderCellDef>Grupo</th>
+              <td mat-cell *matCellDef="let item">{{ item.grupoItemLab }}</td>
             </ng-container>
 
             <!-- Filas -->
             <tr mat-header-row *matHeaderRowDef="columnasTablaPaciente"></tr>
             <tr
               mat-row
-              *matRowDef="let row; columns: columnasTablaPaciente"
-              (click)="cargarItemLab(row)"
+              *matRowDef="
+                let row;
+                let i = index;
+                columns: columnasTablaPaciente
+              "
+              (click)="cargarItemLab(row, i)"
+              [class.fila-seleccionada]="i === filaSeleccionadaIndex"
             ></tr>
           </table>
           <div>
@@ -438,6 +461,7 @@
               #MatPaginatorItems
               [pageSize]="20"
               [pageSizeOptions]="[10, 20]"
+              [hidePageSize]="true"
               showFirstLastButtons
             ></mat-paginator>
           </div>

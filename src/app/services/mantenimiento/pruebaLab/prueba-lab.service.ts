@@ -1,8 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Injectable } from '@angular/core';
-
-import { catchError, map, Observable, of } from 'rxjs';
-import Swal from 'sweetalert2';
+import { inject, Injectable } from '@angular/core';
+import { map, Observable } from 'rxjs';
 import {
   IGetLastPruebasLab,
   IPruebaLab,
@@ -14,82 +12,43 @@ import { environment } from '../../../../environments/enviroment';
   providedIn: 'root',
 })
 export class PruebaLabService {
-  constructor(private _http: HttpClient) {}
+  constructor() {}
 
-  public registrarPruebaLab(body: IPruebaLab) {
+  private readonly _http = inject(HttpClient);
+  private readonly apiUrl = `${environment.baseUrl}/api/pruebaLab`;
+
+  public registrarPruebaLab(body: IPruebaLab): Observable<IPruebaLabPostDTO> {
     console.log('Enviando valores desde servicio');
 
-    return this._http
-      .post<IPruebaLabPostDTO>(
-        `${environment.baseUrl}/api/pruebaLab/newPruebaLab`,
-        body,
-      )
-      .pipe(
-        map((data) => {
-          if (data.ok) {
-            return data.ok;
-          } else {
-            throw new Error('ERROR');
-          }
-        }),
-        catchError((err) => {
-          console.log(err.error.msg);
-          Swal.fire({
-            title: 'ERROR!',
-            text: err.error.msg,
-            icon: 'error',
-            confirmButtonText: 'Ok',
-          });
-          return of('ERROR');
-        }),
-      );
+    return this._http.post<IPruebaLabPostDTO>(
+      `${this.apiUrl}/newPruebaLab`,
+      body,
+    );
   }
 
   getLastPruebasLab(): Observable<IPruebaLab[]> {
-    return this._http
-      .get<IGetLastPruebasLab>(`${environment.baseUrl}/api/pruebaLab/last30`)
-      .pipe(
-        map((data) => {
-          return data.pruebasLab;
-        }),
-      );
+    return this._http.get<IGetLastPruebasLab>(`${this.apiUrl}/last30`).pipe(
+      map((data) => {
+        return data.pruebasLab;
+      }),
+    );
   }
 
   getPruebaLab(terminoBusqueda: any): Observable<IPruebaLab[]> {
     const params = new HttpParams().set('search', terminoBusqueda);
     return this._http
-      .get<IGetLastPruebasLab>(
-        `${environment.baseUrl}/api/pruebaLab/findTerm`,
-        { params },
-      )
+      .get<IGetLastPruebasLab>(`${this.apiUrl}/findTerm`, { params })
       .pipe(map((data) => data.pruebasLab));
   }
 
-  public actualizarPruebaLab(codPruebaLab: string, body: IPruebaLab) {
+  public actualizarPruebaLab(
+    codPruebaLab: string,
+    body: IPruebaLab,
+  ): Observable<IPruebaLabPostDTO> {
     console.log(body);
-    return this._http
-      .put<IPruebaLabPostDTO>(
-        `${environment.baseUrl}/api/pruebaLab/${codPruebaLab}/updatePrueba`,
-        body,
-      )
-      .pipe(
-        map((data) => {
-          if (data.ok) {
-            return data.ok;
-          } else {
-            throw new Error('ERROR');
-          }
-        }),
-        catchError((err) => {
-          console.log(err.error.msg);
-          Swal.fire({
-            title: 'ERROR!',
-            text: err.error.msg,
-            icon: 'error',
-            confirmButtonText: 'Ok',
-          });
-          return of('ERROR');
-        }),
-      );
+    return this._http.put<IPruebaLabPostDTO>(
+      `${this.apiUrl}/${codPruebaLab}/updatePrueba`,
+      body,
+    );
   }
 }

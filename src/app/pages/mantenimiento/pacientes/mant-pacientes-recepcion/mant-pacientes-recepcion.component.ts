@@ -216,25 +216,7 @@ export class MantPacientesRecepcionComponent implements OnInit {
   //Carga los datos en los campos
   cargarCliente(paciente: IPaciente, index: number): void {
     this.filaSeleccionadaIndex = index;
-    this.pacienteForm.patchValue(
-      paciente,
-      //   {
-      //   _id: paciente._id,
-      //   hc: paciente.hc,
-      //   tipoDoc: paciente.tipoDoc,
-      //   nroDoc: paciente.nroDoc,
-      //   nombreCliente: paciente.nombreCliente,
-      //   apePatCliente: paciente.apePatCliente,
-      //   apeMatCliente: paciente.apeMatCliente,
-      //   fechaNacimiento: paciente.fechaNacimiento,
-      //   sexoCliente: paciente.sexoCliente,
-      //   departamentoCliente: paciente.departamentoCliente,
-      //   provinciaCliente: paciente.provinciaCliente,
-      //   distritoCliente: paciente.distritoCliente,
-      //   direcCliente: paciente.direcCliente,
-      //   mailCliente: paciente.mailCliente,
-      // }
-    );
+    this.pacienteForm.patchValue(paciente);
     // Limpiar el FormArray antes de llenarlo
     this.phones.clear();
 

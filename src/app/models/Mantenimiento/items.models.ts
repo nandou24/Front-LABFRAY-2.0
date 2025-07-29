@@ -8,7 +8,8 @@ export interface IItemLab {
   valoresHojaTrabajo: string;
   valoresInforme: string;
   unidadesRef: string;
-  perteneceA: string;
+  perteneceAPrueba: string;
+  grupoItemLab: string;
   poseeValidacion: string;
   paramValidacion: Array<any>[];
 }

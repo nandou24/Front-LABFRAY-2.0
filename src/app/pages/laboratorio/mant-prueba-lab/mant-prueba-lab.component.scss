@@ -66,9 +66,17 @@ mat-option {
   margin-bottom: 8px;
 }
 
+.row-flex-items {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 10px; /* Separación entre campos */
+  margin-bottom: 8px;
+}
+
 .checkbox-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   //gap: 4px;
   align-items: start;
 }
@@ -78,15 +86,6 @@ mat-option {
   // min-height: 40px;
   display: flex;
   align-items: center;
-}
-
-.tabla-container {
-  overflow-x: auto; /* Que la tabla pueda desplazarse si no entra */
-}
-
-.tabla-flex-50 {
-  flex: 0 0 50%;
-  padding: 0.5rem;
 }
 
 .grupo-checkbox {
@@ -103,11 +102,26 @@ mat-option {
   font-weight: 600;
 }
 
-@media (max-width: 1430px) {
-  .campo-flex-25 {
-    flex: 0 0 50%; /* 2 columnas */
-  }
+.campo-fieldset {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 1rem 1rem 0.5rem 1rem;
+  position: relative;
+}
 
+.campo-fieldset legend {
+  font-size: 0.9rem; // más pequeño
+  font-weight: 500;
+  width: auto;
+  color: #0f3369; // azul institucional
+  background-color: #ffffff;
+  padding: 0 0.5rem;
+  margin-left: 1rem;
+  position: absolute;
+  top: -0.6rem;
+}
+
+@media (max-width: 1430px) {
   .contenedor-formulario,
   .contenedor-tablaDerecha {
     flex: 0 0 100%;
@@ -120,14 +134,8 @@ mat-option {
 
 /* Tablets (2 columnas) */
 @media (max-width: 991px) {
-  /* Tablets (1 columna) */
-  .campo-flex-50 {
-    flex: 0 0 100%; /* 1 columna */
-  }
-
-  .tabla-flex-50 {
-    flex: 0 0 100%;
-    padding: 0.5rem;
+  .flex-item {
+    flex: 1 1 48% !important; /* Cada item ocupará 100% cuando sea pequeño */
   }
 
   .checkbox-grid {
@@ -137,14 +145,19 @@ mat-option {
 
 /* Celulares (1 columna) */
 @media (max-width: 767px) {
-  .campo-flex-25,
-  .campo-flex-50 {
-    flex: 0 0 100%; /* 1 columna */
+  .flex-item {
+    flex: 1 1 100% !important; /* Cada item ocupará 100% cuando sea pequeño */
   }
-
   .checkbox-grid {
     grid-template-columns: 1fr; /* 1 columna en móviles */
   }
+}
+
+.row-flex-btn {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px; /* Separación entre campos */
 }
 
 .btn-registrar {
