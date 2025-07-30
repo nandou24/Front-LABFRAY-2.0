@@ -360,7 +360,6 @@
         <div [style.flex]="setFlex(25, '%')" class="flex-item text-end">
           <button
             mat-raised-button
-            color="accent"
             type="button"
             class="btn-nuevo"
             (click)="nuevoCliente()"
@@ -409,6 +408,7 @@
               matInput
               [formControl]="terminoBusqueda"
               (input)="buscarClientes()"
+              placeholder="Buscar por nombre, apellidos, documento"
             />
             @if (terminoBusqueda.value) {
               <button

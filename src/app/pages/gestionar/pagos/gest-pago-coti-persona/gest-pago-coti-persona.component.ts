@@ -31,6 +31,7 @@ import { DialogRegistroPacienteComponent } from './dialogs/dialog-registro-pacie
 import { MatDialog } from '@angular/material/dialog';
 import { DateAdapter, MAT_DATE_LOCALE } from '@angular/material/core';
 import { MatPaginator } from '@angular/material/paginator';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-gest-pago-coti-persona',
@@ -59,6 +60,7 @@ export class GestPagoCotiPersonaComponent implements OnInit {
   private _pagoService = inject(PagosCotizacionPersonalService);
   private _fb = inject(FormBuilder);
   private dialog = inject(MatDialog);
+  private _router = inject(Router);
   private readonly _adapter =
     inject<DateAdapter<unknown, unknown>>(DateAdapter);
 
@@ -321,9 +323,11 @@ export class GestPagoCotiPersonaComponent implements OnInit {
 
   seSeleccionoCotizacion: boolean = false;
   seSeleccionoPago: boolean = false;
+  filaSeleccionadaIndexCoti: number | null = null;
 
-  cargarCotizacion(cotizacion: ICotizacion) {
+  cargarCotizacion(cotizacion: ICotizacion, index: number) {
     let ultimaVersion!: IHistorialCotizacion;
+    this.filaSeleccionadaIndexCoti = index;
 
     this.myFormPagoPersona.reset();
     this.seSeleccionoCotizacion = true;
@@ -446,11 +450,14 @@ export class GestPagoCotiPersonaComponent implements OnInit {
   }
 
   tienePagos: boolean = false;
+  filaSeleccionadaIndexPago: number | null = null;
 
-  cargarPagos(pago: IPago) {
+  cargarPagos(pago: IPago, index: number) {
     this.myFormPagoPersona.reset();
     this.detallePagos.clear();
     this.serviciosCotizacion.clear();
+    this.filaSeleccionadaIndexPago = index;
+    this.filaSeleccionadaIndexCoti = null; // Limpiar selección de cotización
 
     this.seSeleccionoCotizacion = true;
     this.seSeleccionoPago = true;
@@ -718,10 +725,19 @@ export class GestPagoCotiPersonaComponent implements OnInit {
     this._pagoService.registrarPago(pago).subscribe({
       next: (data) => {
         Swal.fire({
-          title: 'Confirmado',
-          text: data.msg,
+          title: data.msg,
+          text: '¿Qué deseas hacer a continuación?',
           icon: 'success',
-          confirmButtonText: 'Ok',
+          showCancelButton: true,
+          reverseButtons: true,
+          confirmButtonText: 'Ir a Atenciones',
+          cancelButtonText: 'Continuar aquí',
+          confirmButtonColor: '#28a745',
+          cancelButtonColor: '#6c757d',
+        }).then((result) => {
+          if (result.isConfirmed) {
+            this._router.navigate(['/pages/solicitudAtencion']);
+          }
         });
         this.nuevoPago();
         this.cancelarAnulacion();
@@ -763,7 +779,8 @@ export class GestPagoCotiPersonaComponent implements OnInit {
     this.serviciosCotizacion.clear();
     this.seSeleccionoCotizacion = false;
     this.seSeleccionoPago = false;
-    //this.filaCotizacionPorPagarSeleccionada = null;
+    this.filaSeleccionadaIndexCoti = null;
+    this.filaSeleccionadaIndexPago = null;
     this.cotizaciones = [];
     this.ultimosPagos(10);
     this.ultimasCotizaciones(10);

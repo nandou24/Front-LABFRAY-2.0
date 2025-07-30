@@ -21,6 +21,17 @@ mat-card-title {
 
 //Fin CARD--------------
 
+.mat-mdc-row .mat-mdc-cell {
+  cursor: pointer;
+}
+
+.mat-mdc-row:hover .mat-mdc-cell,
+.mat-mdc-row:hover .mat-mdc-cell mat-icon {
+  background-color: #dfe9f3;
+  // color: #ffffff;
+  // fill: #ffffff;
+}
+
 mat-option {
   font-size: 13px;
   //color: #0f3369;  // Azul Bootstrap
@@ -82,19 +93,23 @@ mat-option {
   margin-bottom: 8px;
 }
 
-//para las filas de parametros de validación
+//para las filas de las profesiones
 .flex-row-container {
   transition:
     background-color 0.3s ease,
     box-shadow 0.3s ease; /* ⚡ Transición suave */
 }
 
-//para las filas de parametros de validación
+//para las filas de las profesiones
 /* Aplicamos hover para TODAS las resoluciones */
 .flex-row-container:hover {
   background-color: #dfe9f3; /* Fondo azul clarito */
   border-radius: 8px;
   box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.15); /* Sombra suave */
+}
+
+.fila-seleccionada {
+  background-color: rgba(0, 102, 255, 0.15) !important;
 }
 
 @media (max-width: 1430px) {

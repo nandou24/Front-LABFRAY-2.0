@@ -1,3 +1,5 @@
+import { IProfesionRRHH } from '../Mantenimiento/recursoHumano.models';
+
 export interface IRefMedico {
   _id?: string;
   codRefMedico: string;
@@ -14,7 +16,7 @@ export interface IRefMedico {
   direcRefMedico: string;
   mailRefMedico: string;
   phones: Array<any>[];
-  profesionesRefMedico: Array<any>[];
+  profesionesRefMedico: IProfesionRRHH[];
   profesionSolicitante: {
     profesion: string;
     nroColegiatura: string;

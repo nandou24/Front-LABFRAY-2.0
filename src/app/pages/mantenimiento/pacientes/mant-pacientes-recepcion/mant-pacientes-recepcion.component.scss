@@ -32,9 +32,11 @@ mat-option {
   cursor: pointer;
 }
 
-.mat-mdc-row:hover .mat-mdc-cell {
-  background-color: #0b4b48;
-  color: #ffffff;
+.mat-mdc-row:hover .mat-mdc-cell,
+.mat-mdc-row:hover .mat-mdc-cell mat-icon {
+  background-color: #dfe9f3;
+  // color: #ffffff;
+  // fill: #ffffff;
 }
 
 .mat-column-nro {

@@ -40,13 +40,15 @@ input[type="number"]::-webkit-outer-spin-button {
   margin: 0;
 }
 
-.input-centrado {
-  text-align: center;
+.mat-mdc-row:hover .mat-mdc-cell,
+.mat-mdc-row:hover .mat-mdc-cell mat-icon {
+  background-color: #dfe9f3;
+  // color: #ffffff;
+  // fill: #ffffff;
 }
 
-.mat-mdc-row:hover .mat-mdc-cell {
-  background-color: #dfe9f3;
-  cursor: pointer;
+.fila-seleccionada {
+  background-color: rgba(0, 102, 255, 0.15) !important;
 }
 
 mat-option {

@@ -77,7 +77,7 @@ export class AuthService {
   }
 
   obtenerDatosDesdeToken(): any {
-    const token = this.obtenerToken();
+    const token = this.getToken();
     if (!token) return null;
 
     try {
@@ -88,12 +88,18 @@ export class AuthService {
     }
   }
 
-  obtenerToken(): string | null {
-    return localStorage.getItem('token');
+  getToken(): string {
+    return localStorage.getItem('token') || '';
+  }
+
+  getAuthHeaders(): { [header: string]: string } {
+    return {
+      'x-token': this.getToken(),
+    };
   }
 
   tokenValido(): boolean {
-    const token = localStorage.getItem('token');
+    const token = this.getToken();
     if (!token) return false;
 
     try {
@@ -111,7 +117,7 @@ export class AuthService {
   }
 
   isTokenExpirado(): boolean {
-    const token = this.obtenerToken();
+    const token = this.getToken();
     if (!token) return true;
 
     try {

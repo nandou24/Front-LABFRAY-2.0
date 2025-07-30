@@ -710,14 +710,17 @@
             <tr mat-header-row *matHeaderRowDef="columnasCotizaciones"></tr>
             <tr
               mat-row
-              *matRowDef="let row; columns: columnasCotizaciones"
-              (click)="cargarCotizacion(row)"
+              *matRowDef="let row; let i = index; columns: columnasCotizaciones"
+              (click)="cargarCotizacion(row, i)"
+              [class.fila-seleccionada]="i === filaSeleccionadaIndexCoti"
             ></tr>
           </table>
           <div>
             <mat-paginator
               #MatPaginatorCotizaciones
               [pageSizeOptions]="[5, 10, 25]"
+              [pageSize]="6"
+              [hidePageSize]="true"
               showFirstLastButtons
             ></mat-paginator>
           </div>
@@ -778,14 +781,17 @@
             <tr mat-header-row *matHeaderRowDef="columnasPagos"></tr>
             <tr
               mat-row
-              *matRowDef="let row; columns: columnasPagos"
-              (click)="cargarPagos(row)"
+              *matRowDef="let row; let i = index; columns: columnasPagos"
+              (click)="cargarPagos(row, i)"
+              [class.fila-seleccionada]="i === filaSeleccionadaIndexPago"
             ></tr>
           </table>
           <div>
             <mat-paginator
               #MatPaginatorPagos
               [pageSizeOptions]="[5, 10, 25]"
+              [pageSize]="6"
+              [hidePageSize]="true"
               showFirstLastButtons
             ></mat-paginator>
           </div>

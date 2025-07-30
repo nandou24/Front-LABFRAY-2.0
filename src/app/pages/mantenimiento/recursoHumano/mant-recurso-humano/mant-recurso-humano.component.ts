@@ -186,11 +186,6 @@ export class MantRecursoHumanoComponent implements OnInit, AfterViewInit {
 
   hidePassword = true;
 
-  seleccionarTexto(event: FocusEvent): void {
-    const input = event.target as HTMLInputElement;
-    input.select();
-  }
-
   departamentos: any[] = [];
   provincias: any[] = [];
   distritos: any[] = [];
@@ -298,7 +293,10 @@ export class MantRecursoHumanoComponent implements OnInit, AfterViewInit {
   ];
   dataSourceRecursoHumano = new MatTableDataSource<IRecHumano>();
 
-  cargarRecursoHumano(recursoHumano: IRecHumano): void {
+  filaSeleccionadaIndex: number | null = null;
+
+  cargarRecursoHumano(recursoHumano: IRecHumano, index: number): void {
+    this.filaSeleccionadaIndex = index;
     this.recHumanoSeleccionado = true;
 
     // Usuario sistema: activar o desactivar grupo de login
@@ -432,24 +430,41 @@ export class MantRecursoHumanoComponent implements OnInit, AfterViewInit {
       });
   }
 
+  private todosLosRrhh: IRecHumano[] = [];
+
   ultimosRecHumano(): void {
     this._recHumanoService.getLastRecHumanos(0).subscribe((recHumano) => {
       this.dataSourceRecursoHumano.data = recHumano;
+      this.todosLosRrhh = recHumano; // Guardar todos los recursos humanos para futuras búsquedas
       console.log('Recursos humanos obtenidos:', recHumano);
     });
+  }
+
+  terminoBusqueda = new FormControl('');
+
+  buscarRecHumano() {
+    const termino = this.terminoBusqueda?.value?.trim() ?? '';
+
+    if (termino === '') {
+      // Si no hay término de búsqueda, mostrar todos los datos iniciales
+      this.dataSourceRecursoHumano.data = this.todosLosRrhh;
+      this.dataSourceRecursoHumano.filter = '';
+    } else {
+      // Si hay término de búsqueda, aplicar filtro del dataSource
+      this.dataSourceRecursoHumano.data = this.todosLosRrhh; // Asegurar que tiene todos los datos
+      this.dataSourceRecursoHumano.filter = termino.toLowerCase();
+    }
+
+    // Si hay un paginador, ir a la primera página cuando se filtra
+    if (this.dataSourceRecursoHumano.paginator) {
+      this.dataSourceRecursoHumano.paginator.firstPage();
+    }
   }
 
   actualizarEdad() {
     const fecha = this.myFormRecHumano.get('fechaNacimiento')?.value;
     const edadCalculada = this._fechaService.calcularEdad(fecha);
     this.myFormRecHumano.get('edad')?.setValue(edadCalculada);
-  }
-
-  terminoBusquedaRecHumanoControl = new FormControl('');
-
-  filtrar() {
-    const termino = this.terminoBusquedaRecHumanoControl.value || '';
-    this.dataSourceRecursoHumano.filter = termino.trim().toLowerCase();
   }
 
   recHumanoSeleccionado = false;
@@ -581,6 +596,7 @@ export class MantRecursoHumanoComponent implements OnInit, AfterViewInit {
       distritoRecHumano: '',
     });
     this.recHumanoSeleccionado = false;
+    this.filaSeleccionadaIndex = null; // Reinicia el índice de la fila seleccionada
   }
 
   private suscribirseUsuarioSistema(): void {

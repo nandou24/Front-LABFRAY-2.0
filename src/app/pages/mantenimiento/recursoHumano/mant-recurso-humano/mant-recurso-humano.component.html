@@ -1,16 +1,15 @@
 <form [formGroup]="myFormRecHumano">
-  <div class="row-flex mt-2" style="align-items: center">
-    <div [style.flex]="setFlex(30, '%')" class="flex-item">
-      <h5>Código: {{ myFormRecHumano.get("codRecHumano")?.value }}</h5>
-    </div>
-
-    <div [style.flex]="setFlex(65, '%')" class="flex-item">
-      <h5 class="text-center" style="font-weight: 500">RECURSOS HUMANOS</h5>
-    </div>
-  </div>
-
   <div class="contenedor-flex">
     <div class="contenedor-formulario">
+      <div class="row-flex mt-2" style="align-items: center">
+        <div [style.flex]="setFlex(65, '%')" class="flex-item">
+          <h5 class="text-center" style="font-weight: 500">RECURSOS HUMANOS</h5>
+        </div>
+        <div [style.flex]="setFlex(30, '%')" class="flex-item">
+          <h5>Código: {{ myFormRecHumano.get("codRecHumano")?.value }}</h5>
+        </div>
+      </div>
+
       <mat-tab-group mat-stretch-tabs="false" mat-align-tabs="start">
         <mat-tab label="Personales">
           <div class="row-flex mt-4">
@@ -746,26 +745,33 @@
           </button>
         </div>
 
-        <div [style.flex]="setFlex(32, '%')" class="flex-item">
+        <div
+          [style.flex]="setFlex(32, '%')"
+          class="flex-item text-end"
+          *ngIf="!myFormRecHumano.get('codRecHumano')?.value"
+        >
           <button
             mat-raised-button
             class="btn-registrar"
-            *ngIf="!recHumanoSeleccionado"
             type="button"
             (click)="registraRecHumano()"
           >
-            Registrar Recurso Humano
+            <mat-icon>save</mat-icon>Registrar Recurso Humano
           </button>
         </div>
 
-        <div [style.flex]="setFlex(32, '%')" class="flex-item">
+        <div
+          [style.flex]="setFlex(32, '%')"
+          class="flex-item text-end"
+          *ngIf="myFormRecHumano.get('codRecHumano')?.value"
+        >
           <button
             mat-raised-button
             class="btn-actualizar"
             type="button"
             (click)="actualizarRecHumano()"
           >
-            Actualizar Recurso Humano
+            <mat-icon>save</mat-icon>Actualizar Recurso Humano
           </button>
         </div>
       </div>
@@ -780,10 +786,21 @@
             <mat-label>Buscar Recurso Humano</mat-label>
             <input
               matInput
-              [formControl]="terminoBusquedaRecHumanoControl"
-              (keyup)="filtrar()"
-              (focus)="seleccionarTexto($event)"
+              (input)="buscarRecHumano()"
+              [formControl]="terminoBusqueda"
+              placeholder="Escribe datos del recurso humano"
             />
+            @if (terminoBusqueda.value) {
+              <button
+                matSuffix
+                type="button"
+                mat-icon-button
+                aria-label="Clear"
+                (click)="terminoBusqueda.setValue(''); buscarRecHumano()"
+              >
+                <mat-icon>close</mat-icon>
+              </button>
+            }
           </mat-form-field>
 
           <table
@@ -829,8 +846,13 @@
             ></tr>
             <tr
               mat-row
-              *matRowDef="let row; columns: columnasTablaRecursoHumano"
-              (click)="cargarRecursoHumano(row)"
+              *matRowDef="
+                let row;
+                let i = index;
+                columns: columnasTablaRecursoHumano
+              "
+              (click)="cargarRecursoHumano(row, i)"
+              [class.fila-seleccionada]="i === filaSeleccionadaIndex"
             ></tr>
           </table>
 
@@ -838,6 +860,8 @@
             <mat-paginator
               #MatPaginatorRecHumano
               [pageSizeOptions]="[5, 10, 25]"
+              [pageSize]="15"
+              [hidePageSize]="true"
               showFirstLastButtons
             ></mat-paginator>
           </div>

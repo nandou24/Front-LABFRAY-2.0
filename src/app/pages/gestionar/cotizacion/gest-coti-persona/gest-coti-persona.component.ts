@@ -48,6 +48,7 @@ import { MatPaginator } from '@angular/material/paginator';
 import { debounceTime, distinctUntilChanged, filter, tap } from 'rxjs';
 import { IPaciente } from '../../../../models/Mantenimiento/paciente.models';
 import { IRefMedico } from '../../../../models/Mantenimiento/referenciaMedico.models';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-gest-coti-persona',
@@ -79,6 +80,7 @@ export class GestCotiPersonaComponent implements OnInit {
   private _cotizacionService = inject(CotizacionPersonalService);
   private dialog = inject(MatDialog);
   private _pdfService = inject(CotiPersonaPdfServiceService);
+  private _router = inject(Router);
 
   ngOnInit(): void {
     //this.camnbioEstadoRegistroPaciente();
@@ -266,19 +268,14 @@ export class GestCotiPersonaComponent implements OnInit {
       apePatRefMedico: solicitante.apePatRefMedico,
       apeMatRefMedico: solicitante.apeMatRefMedico,
       nombreRefMedico: solicitante.nombreRefMedico,
-      profesionSolicitante: solicitante.profesionSolicitante?.profesion ?? '',
-      colegiatura: solicitante.profesionSolicitante?.nroColegiatura ?? '',
-      especialidadSolicitante: this.getEspecialidadesTexto(solicitante),
+      profesionSolicitante:
+        solicitante.profesionesRefMedico[0]?.profesionRef?.nombreProfesion ??
+        '',
+      colegiatura: solicitante.profesionesRefMedico[0]?.nroColegiatura ?? '',
+      especialidadSolicitante:
+        solicitante.profesionesRefMedico[0]?.especialidades[0]?.especialidadRef
+          ?.nombreEspecialidad ?? '',
     });
-  }
-
-  getEspecialidadesTexto(solicitante: any): string {
-    return solicitante.especialidadesRefMedico &&
-      solicitante.especialidadesRefMedico.length > 0
-      ? solicitante.especialidadesRefMedico
-          .map((e: any) => e.especialidad)
-          .join(', ')
-      : 'No tiene especialidad';
   }
 
   seleccionarTexto(event: FocusEvent): void {
@@ -300,7 +297,7 @@ export class GestCotiPersonaComponent implements OnInit {
     'codCotizacion',
     'paciente',
     'fecha',
-    'versiones',
+    // 'versiones',
     'estado',
   ];
   dataSourceCotizaciones = new MatTableDataSource<ICotizacion>();
@@ -721,6 +718,7 @@ export class GestCotiPersonaComponent implements OnInit {
     this.versionActual = null;
     this.cotizacionCargada = null;
     this.ultimosServicios(0);
+    this.filaSeleccionadaIndex = null;
   }
 
   private validarServiciosMedicoAtiende(): boolean {
@@ -827,10 +825,19 @@ export class GestCotiPersonaComponent implements OnInit {
 
   private mostrarAlertaExito(tipo: string): void {
     Swal.fire({
-      title: 'Confirmado',
-      text: tipo + ' correctamente',
+      title: tipo + ' exitosamente',
+      text: '¿Qué deseas hacer a continuación?',
       icon: 'success',
-      confirmButtonText: 'Ok',
+      showCancelButton: true,
+      reverseButtons: true,
+      confirmButtonText: 'Ir a Pagos',
+      cancelButtonText: 'Continuar aquí',
+      confirmButtonColor: '#28a745',
+      cancelButtonColor: '#6c757d',
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this._router.navigate(['/pages/pagoCotiPersona']);
+      }
     });
   }
 
@@ -978,11 +985,12 @@ export class GestCotiPersonaComponent implements OnInit {
   versionActual: number | null = null;
   cotizacionCargada: any;
   cotizacionParaImprimir: any;
+  filaSeleccionadaIndex: number | null = null;
   //fin variables axuliares
 
-  cargarCotizacion(cotizacion: any) {
+  cargarCotizacion(cotizacion: any, index: number) {
     this.seSeleccionoCotizacion = true; //Ocultamos el botón de generar cotización
-
+    this.filaSeleccionadaIndex = index;
     this.cotizacionCargada = cotizacion;
 
     if (
@@ -1273,7 +1281,7 @@ export class GestCotiPersonaComponent implements OnInit {
     }
   }
 
-  abrirDialogoMedico(index: any): void {
+  abrirDialogoMedicoAtiende(index: any): void {
     const servicio = this.serviciosCotizacion.at(index);
     const profesionesAsociadas = servicio.value.profesionesAsociadas || [];
     const dialogRef = this.dialog.open(DialogMedicoComponent, {

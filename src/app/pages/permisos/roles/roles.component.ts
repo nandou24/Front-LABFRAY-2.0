@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, ViewChild } from '@angular/core';
+import { Component, inject, OnInit, ViewChild, AfterViewInit } from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
@@ -21,7 +21,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { CommonModule } from '@angular/common';
 import { MatSelectModule } from '@angular/material/select';
-import { MatPaginator } from '@angular/material/paginator';
+import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 
 @Component({
   selector: 'app-roles',
@@ -36,11 +36,12 @@ import { MatPaginator } from '@angular/material/paginator';
     MatButtonModule,
     MatTableModule,
     MatSelectModule,
+    MatPaginatorModule,
   ],
   templateUrl: './roles.component.html',
   styleUrl: './roles.component.scss',
 })
-export class RolesComponent implements OnInit {
+export class RolesComponent implements OnInit, AfterViewInit {
   private _fb = inject(FormBuilder);
   private _rolesService = inject(RolesService);
   private _rutasService = inject(RutasService);
@@ -60,11 +61,14 @@ export class RolesComponent implements OnInit {
     return this.formRol.get('rutasPermitidas') as FormArray;
   }
 
-  public roles: IRol[] = [];
-  //private rolesOriginal: IRol[] = [];
+  // Array para mantener todos los datos iniciales en memoria
+  private todosLosRoles: IRol[] = [];
+  public dataSourceRol = new MatTableDataSource<IRol>();
+  public columnasTablaRol: string[] = ['codigo', 'nombre', 'estado', 'accion'];
   public modoEdicion: boolean = false;
-  terminoBusqueda = new FormControl('');
+  public terminoBusqueda = new FormControl('');
   public rolSeleccionado: IRol | null = null;
+  public filaSeleccionadaIndex: number | null = null;
   public rutasDisponibles: IRuta[] = [];
 
   ngOnInit(): void {
@@ -76,30 +80,48 @@ export class RolesComponent implements OnInit {
     return `0 0 ${valor}${unidad}`;
   }
 
-  @ViewChild('paginatorRol') paginatorRol!: MatPaginator;
-  ngAfterViewInit() {
-    this.dataSourceRol.paginator = this.paginatorRol;
-  }
+  @ViewChild('MatPaginatorRoles') paginatorRoles!: MatPaginator;
 
-  //Tabla roles
-  columnasTablaRol: string[] = ['codigo', 'nombre', 'estado', 'accion'];
-  dataSourceRol = new MatTableDataSource<IRol>();
+  ngAfterViewInit() {
+    this.dataSourceRol.paginator = this.paginatorRoles;
+  }
 
   listarRoles() {
     this._rolesService.getAllRoles().subscribe({
       next: (roles) => {
+        this.todosLosRoles = roles; // Guardar todos los datos en memoria
         this.dataSourceRol.data = roles;
         //console.log('Roles obtenidos:', roles);
       },
       error: () => {
+        this.todosLosRoles = [];
         this.dataSourceRol.data = [];
       },
     });
   }
 
-  filtrar() {
-    const termino = this.terminoBusqueda.value || '';
-    this.dataSourceRol.filter = termino.trim().toLowerCase();
+  buscarRoles() {
+    const termino = this.terminoBusqueda?.value?.trim() ?? '';
+
+    if (termino === '') {
+      // Si no hay término de búsqueda, mostrar todos los datos iniciales
+      this.dataSourceRol.data = this.todosLosRoles;
+      this.dataSourceRol.filter = '';
+    } else {
+      // Si hay término de búsqueda, aplicar filtro del dataSource
+      this.dataSourceRol.data = this.todosLosRoles; // Asegurar que tiene todos los datos
+      this.dataSourceRol.filter = termino.toLowerCase();
+    }
+
+    // Si hay un paginador, ir a la primera página cuando se filtra
+    if (this.dataSourceRol.paginator) {
+      this.dataSourceRol.paginator.firstPage();
+    }
+  }
+
+  limpiarBusqueda() {
+    this.terminoBusqueda.setValue('');
+    this.buscarRoles();
   }
 
   listarRutasDisponibles() {
@@ -194,9 +216,10 @@ export class RolesComponent implements OnInit {
     });
   }
 
-  editarRol(rol: IRol) {
+  editarRol(rol: IRol, index: number) {
     this.modoEdicion = true;
     this.rolSeleccionado = rol;
+    this.filaSeleccionadaIndex = index;
 
     this.rutasPermitidas.clear();
 
@@ -244,8 +267,11 @@ export class RolesComponent implements OnInit {
   cancelarEdicion() {
     this.modoEdicion = false;
     this.rolSeleccionado = null;
+    this.filaSeleccionadaIndex = null; // Resetear la fila seleccionada
     this.formRol.reset({ estado: true });
     this.rutasPermitidas.clear();
+    this.terminoBusqueda.setValue(''); // Limpiar el campo de búsqueda
+    this.buscarRoles(); // Volver a cargar todos los datos
   }
 
   agregarRuta() {

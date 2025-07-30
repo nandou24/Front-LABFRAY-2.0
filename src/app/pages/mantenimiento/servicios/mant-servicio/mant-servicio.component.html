@@ -427,8 +427,9 @@
             <tr mat-header-row *matHeaderRowDef="columnasServicios"></tr>
             <tr
               mat-row
-              *matRowDef="let row; columns: columnasServicios"
-              (click)="cargarServicio(row)"
+              *matRowDef="let row; let i = index; columns: columnasServicios"
+              (click)="cargarServicio(row, i)"
+              [class.fila-seleccionada]="i === filaSeleccionadaIndex"
             ></tr>
           </table>
 

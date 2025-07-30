@@ -107,6 +107,7 @@ export class DialogBuscarSolicitanteComponent implements OnInit {
             this._refMedicoService.getRefMedico(termino).subscribe({
               next: (res: IRefMedico[]) => {
                 this.dataSourceRefMedicos.data = res;
+                console.log('Resultados de búsqueda:', res);
               },
               error: () => {
                 this.dataSourceRefMedicos.data = [];

@@ -264,6 +264,7 @@ export class MantServicioComponent implements OnInit, AfterViewInit {
     this.dataSourceExamenesDisponibles.data = [];
     this.myFormServicio.get('tipoServicio')?.enable();
     this.pruebaSeleccionada = false;
+    this.filaSeleccionadaIndex = null; // Reinicia el índice de la fila seleccionada
   }
 
   formSubmitted = false;
@@ -411,8 +412,10 @@ export class MantServicioComponent implements OnInit, AfterViewInit {
   }
 
   pruebaSeleccionada = false;
+  filaSeleccionadaIndex: number | null = null;
 
-  cargarServicio(servicio: IServicio) {
+  cargarServicio(servicio: IServicio, index: number) {
+    this.filaSeleccionadaIndex = index;
     this.pruebaSeleccionada = true;
 
     this.myFormServicio.get('tipoServicio')?.disable();

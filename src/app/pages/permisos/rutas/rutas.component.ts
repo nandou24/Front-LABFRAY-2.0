@@ -1,6 +1,7 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, ViewChild, AfterViewInit } from '@angular/core';
 import {
   FormBuilder,
+  FormControl,
   FormGroup,
   FormsModule,
   ReactiveFormsModule,
@@ -12,11 +13,12 @@ import { CommonModule } from '@angular/common';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatCardModule } from '@angular/material/card';
-import { MatTableModule } from '@angular/material/table';
+import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSelectModule } from '@angular/material/select';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSlideToggle } from '@angular/material/slide-toggle';
+import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { RutasService } from '../../../services/permisos/rutas/rutas.service';
 import { IRuta } from '../../../models/permisos/rutas.models';
 
@@ -34,11 +36,12 @@ import { IRuta } from '../../../models/permisos/rutas.models';
     MatSelectModule,
     MatIconModule,
     MatSlideToggle,
+    MatPaginatorModule,
   ],
   templateUrl: './rutas.component.html',
   styleUrl: './rutas.component.scss',
 })
-export class RutasComponent implements OnInit {
+export class RutasComponent implements OnInit, AfterViewInit {
   private _fb = inject(FormBuilder);
   private _rutasService = inject(RutasService);
 
@@ -65,11 +68,16 @@ export class RutasComponent implements OnInit {
     return `0 0 ${valor}${unidad}`;
   }
 
-  public rutas: IRuta[] = [];
-  private rutasOriginal: IRuta[] = [];
+  @ViewChild('MatPaginatorRutas') paginatorRutas!: MatPaginator;
+
+  // Array para mantener todos los datos iniciales en memoria
+  private todasLasRutas: IRuta[] = [];
+  public dataSourceRutas = new MatTableDataSource<IRuta>();
+  public columnasTablaRutas: string[] = ['codigo', 'nombre', 'url', 'estado', 'accion'];
   public modoEdicion: boolean = false;
-  public terminoBusqueda: string = '';
   public rutaSeleccionada: IRuta | null = null;
+  public filaSeleccionadaIndex: number | null = null;
+  public terminoBusqueda = new FormControl('');
 
   constructor() {}
 
@@ -77,33 +85,45 @@ export class RutasComponent implements OnInit {
     this.listarRutas();
   }
 
+  ngAfterViewInit() {
+    this.dataSourceRutas.paginator = this.paginatorRutas;
+  }
+
   listarRutas() {
     this._rutasService.getAllRutas().subscribe({
       next: (rutas) => {
-        this.rutas = rutas;
-        this.rutasOriginal = rutas;
+        this.todasLasRutas = rutas; // Guardar todos los datos en memoria
+        this.dataSourceRutas.data = rutas;
       },
       error: () => {
-        this.rutas = [];
-        this.rutasOriginal = [];
+        this.todasLasRutas = [];
+        this.dataSourceRutas.data = [];
       },
     });
   }
 
   buscarRutas() {
-    const termino = this.terminoBusqueda.trim().toLowerCase();
-    if (!termino) {
-      this.rutas = [...this.rutasOriginal];
-      return;
+    const termino = this.terminoBusqueda?.value?.trim() ?? '';
+
+    if (termino === '') {
+      // Si no hay término de búsqueda, mostrar todos los datos iniciales
+      this.dataSourceRutas.data = this.todasLasRutas;
+      this.dataSourceRutas.filter = '';
+    } else {
+      // Si hay término de búsqueda, aplicar filtro del dataSource
+      this.dataSourceRutas.data = this.todasLasRutas; // Asegurar que tiene todos los datos
+      this.dataSourceRutas.filter = termino.toLowerCase();
     }
-    this.rutas = this.rutasOriginal.filter(
-      (ruta) =>
-        //ruta.codRuta?.toLowerCase().includes(termino) ||
-        ruta.nombreRuta?.toLowerCase().includes(termino) ||
-        ruta.urlRuta?.toLowerCase().includes(termino) ||
-        ruta.nombreMostrar?.toLowerCase().includes(termino) ||
-        ruta.descripcionRuta?.toLowerCase().includes(termino),
-    );
+
+    // Si hay un paginador, ir a la primera página cuando se filtra
+    if (this.dataSourceRutas.paginator) {
+      this.dataSourceRutas.paginator.firstPage();
+    }
+  }
+
+  limpiarBusqueda() {
+    this.terminoBusqueda.setValue('');
+    this.buscarRutas();
   }
 
   guardarRuta() {
@@ -195,9 +215,10 @@ export class RutasComponent implements OnInit {
     });
   }
 
-  editarRuta(ruta: IRuta) {
+  editarRuta(ruta: IRuta, index: number) {
     this.modoEdicion = true;
     this.rutaSeleccionada = ruta;
+    this.filaSeleccionadaIndex = index;
     this.formRuta.patchValue(ruta);
   }
 
@@ -226,11 +247,13 @@ export class RutasComponent implements OnInit {
   cancelarEdicion() {
     this.modoEdicion = false;
     this.rutaSeleccionada = null;
+    this.filaSeleccionadaIndex = null; // Resetear la fila seleccionada
     this.formRuta.reset({ estado: true });
+    this.terminoBusqueda.setValue(''); // Limpiar el campo de búsqueda
+    this.buscarRutas(); // Volver a cargar todos los datos
   }
 
   onBuscarInput(event: any) {
-    this.terminoBusqueda = event.target.value;
     this.buscarRutas();
   }
 }

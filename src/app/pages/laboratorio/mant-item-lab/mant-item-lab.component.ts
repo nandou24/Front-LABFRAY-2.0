@@ -440,8 +440,4 @@ export class MantItemLabComponent implements OnInit {
   isMobile: boolean = false;
 
   private breakpointObserver = inject(BreakpointObserver);
-
-  // toggleTabla(): void {
-  //   this.mostrarTabla = !this.mostrarTabla;
-  // }
 }

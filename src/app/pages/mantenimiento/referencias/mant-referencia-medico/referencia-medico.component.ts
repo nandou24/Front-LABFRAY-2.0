@@ -38,6 +38,8 @@ import { UbigeoService } from '../../../../services/utilitarios/ubigeo.service';
 import { FechaValidatorService } from '../../../../services/utilitarios/validators/fechasValidator/fecha-validator.service';
 import { DocValidatorService } from '../../../../services/utilitarios/validators/docValidator/doc-validator.service';
 import { IRefMedico } from '../../../../models/Mantenimiento/referenciaMedico.models';
+import { ProfesionService } from '../../../../services/mantenimiento/profesion/profesion.service';
+import { EspecialidadService } from '../../../../services/mantenimiento/especialidad/especialidad.service';
 
 @Component({
   selector: 'app-referencia-medico',
@@ -75,6 +77,7 @@ export class ReferenciaMedicoComponent implements OnInit, AfterViewInit {
     this.onDepartamentoChange();
     this.onProvinciaChange();
     this.ultimosRefMedico();
+    this.listarProfesiones();
     this._adapter.setLocale('es-PE'); // Establecer el locale para el adaptador de fecha
   }
 
@@ -83,6 +86,8 @@ export class ReferenciaMedicoComponent implements OnInit, AfterViewInit {
     inject<DateAdapter<unknown, unknown>>(DateAdapter);
   private _fechaService = inject(FechaValidatorService);
   private _documentValidator = inject(DocValidatorService);
+  private _profesionService = inject(ProfesionService);
+  private _especialidadService = inject(EspecialidadService);
 
   public myFormRefMedico: FormGroup = this._fb.group({
     codRefMedico: '',
@@ -111,8 +116,31 @@ export class ReferenciaMedicoComponent implements OnInit, AfterViewInit {
     phones: this._fb.array([], Validators.required),
     profesionesRefMedico: this._fb.array([]),
     profesionSolicitante: new FormControl(null),
-    especialidadesRefMedico: this._fb.array([]),
+    //especialidadesRefMedico: this._fb.array([]),
   });
+
+  crearProfesion(): FormGroup {
+    return this._fb.group({
+      profesionRef: [''],
+      //codProfesion: ['', Validators.required],
+      nivelProfesion: ['', Validators.required],
+      titulo: [''],
+      nroColegiatura: [''],
+      centroEstudiosProfesion: [''],
+      anioEgresoProfesion: [''],
+      especialidades: this._fb.array([]),
+    });
+  }
+
+  crearEspecialidad(): FormGroup {
+    return this._fb.group({
+      especialidadRef: [''],
+      //codEspecialidad: ['', Validators.required],
+      rne: ['', Validators.required],
+      centroEstudiosEspecialidad: [''],
+      anioEgresoEspecialidad: [''],
+    });
+  }
 
   get phones(): FormArray {
     return this.myFormRefMedico.get('phones') as FormArray;
@@ -120,13 +148,9 @@ export class ReferenciaMedicoComponent implements OnInit, AfterViewInit {
   get profesionesRefMedico(): FormArray {
     return this.myFormRefMedico.get('profesionesRefMedico') as FormArray;
   }
-  get especialidadesRefMedico(): FormArray {
-    return this.myFormRefMedico.get('especialidadesRefMedico') as FormArray;
-  }
 
-  seleccionarTexto(event: FocusEvent): void {
-    const input = event.target as HTMLInputElement;
-    input.select();
+  especialidades(i: number): FormArray {
+    return this.profesionesRefMedico.at(i).get('especialidades') as FormArray;
   }
 
   departamentos: any[] = [];
@@ -174,32 +198,21 @@ export class ReferenciaMedicoComponent implements OnInit, AfterViewInit {
   eliminarTelefono(index: number) {
     this.phones.removeAt(index);
   }
+
   agregarProfesion() {
-    const profesionForm = this._fb.group({
-      nivelProfesion: ['', [Validators.required]],
-      titulo: [''],
-      profesion: ['', [Validators.required]],
-      nroColegiatura: [''],
-      centroEstudiosProfesion: [''],
-      anioEgresoProfesion: [''],
-      profesionSolicitante: [false],
-    });
-    this.profesionesRefMedico.push(profesionForm);
+    this.profesionesRefMedico.push(this.crearProfesion());
   }
+
   eliminarProfesion(index: number) {
     this.profesionesRefMedico.removeAt(index);
   }
-  agregarEspecialidad() {
-    const especialidadForm = this._fb.group({
-      especialidad: ['', [Validators.required]],
-      centroEstudiosEspecialidad: [''],
-      rne: ['', [Validators.required]],
-      anioEgresoEspecialidad: [''],
-    });
-    this.especialidadesRefMedico.push(especialidadForm);
+
+  agregarEspecialidad(i: number) {
+    this.especialidades(i).push(this.crearEspecialidad());
   }
-  eliminarEspecialidad(index: number) {
-    this.especialidadesRefMedico.removeAt(index);
+
+  eliminarEspecialidad(i: number, j: number) {
+    this.especialidades(i).removeAt(j);
   }
 
   public formSubmitted: boolean = false;
@@ -223,47 +236,26 @@ export class ReferenciaMedicoComponent implements OnInit, AfterViewInit {
   ];
   dataSourceRefMedico = new MatTableDataSource<IRefMedico>();
 
-  cargarRefMedico(refMedico: IRefMedico): void {
+  filaSeleccionadaIndex: number | null = null;
+
+  cargarRefMedico(refMedico: IRefMedico, index: number): void {
+    this.filaSeleccionadaIndex = index;
+
     this.refMedicoSeleccionado = true;
 
-    this.myFormRefMedico.patchValue({
-      codRefMedico: refMedico.codRefMedico,
-      tipoDoc: refMedico.tipoDoc,
-      nroDoc: refMedico.nroDoc,
-      nombreRefMedico: refMedico.nombreRefMedico,
-      apePatRefMedico: refMedico.apePatRefMedico,
-      apeMatRefMedico: refMedico.apeMatRefMedico,
-      fechaNacimiento: refMedico.fechaNacimiento,
-      sexoRefMedico: refMedico.sexoRefMedico,
-      departamentoRefMedico: refMedico.departamentoRefMedico,
-      provinciaRefMedico: refMedico.provinciaRefMedico,
-      distritoRefMedico: refMedico.distritoRefMedico,
-      direcRefMedico: refMedico.direcRefMedico,
-      mailRefMedico: refMedico.mailRefMedico,
-    });
+    this.myFormRefMedico.patchValue(refMedico);
     this.phones.clear();
     refMedico.phones.forEach((phone: any) => {
       this.phones.push(this.crearTelefonoGroup(phone));
     });
     this.actualizarEdad();
     this.profesionesRefMedico.clear();
-    if (refMedico.profesionesRefMedico) {
-      refMedico.profesionesRefMedico.forEach((profesion: any) => {
-        const esSolicitante =
-          refMedico.profesionSolicitante?.profesion === profesion.profesion;
-        this.profesionesRefMedico.push(
-          this.crearProfesionGroup(profesion, esSolicitante),
-        );
-      });
-    }
-    this.especialidadesRefMedico.clear();
-    if (refMedico.especialidadesRefMedico) {
-      refMedico.especialidadesRefMedico.forEach((especialidad: any) => {
-        this.especialidadesRefMedico.push(
-          this.crearEspecialidadGroup(especialidad),
-        );
-      });
-    }
+
+    refMedico.profesionesRefMedico.forEach((profesion: any, index: number) => {
+      this.profesionesRefMedico.push(this.crearProfesionGroup(profesion));
+      const profesionId = profesion.profesionRef._id || profesion.profesionRef;
+      this.onProfesionSeleccionada(profesionId, index);
+    });
   }
   private crearTelefonoGroup(phone: any): FormGroup {
     return this._fb.group({
@@ -271,44 +263,102 @@ export class ReferenciaMedicoComponent implements OnInit, AfterViewInit {
       descriptionPhone: [phone.descriptionPhone],
     });
   }
-  private crearProfesionGroup(
-    profesion: any,
-    esSolicitante: boolean,
-  ): FormGroup {
+
+  private crearProfesionGroup(profesion: any): FormGroup {
+    const especialidadesArray = this._fb.array([]) as FormArray;
+
+    if (profesion.especialidades && profesion.especialidades.length > 0) {
+      profesion.especialidades.forEach((esp: any) => {
+        especialidadesArray.push(this.crearEspecialidadGroup(esp));
+      });
+    }
+
     return this._fb.group({
+      profesionRef: [profesion.profesionRef],
       nivelProfesion: [profesion.nivelProfesion],
       titulo: [profesion.titulo],
-      profesion: [profesion.profesion],
+      codProfesion: [profesion.codProfesion],
       nroColegiatura: [profesion.nroColegiatura],
       centroEstudiosProfesion: [profesion.centroEstudiosProfesion],
       anioEgresoProfesion: [profesion.anioEgresoProfesion],
-      profesionSolicitante: [esSolicitante],
+      especialidades: especialidadesArray,
     });
   }
+
   private crearEspecialidadGroup(especialidad: any): FormGroup {
     return this._fb.group({
-      especialidad: [especialidad.especialidad],
+      especialidadRef: [especialidad.especialidadRef],
+      codEspecialidad: [especialidad.codEspecialidad],
       rne: [especialidad.rne],
       centroEstudiosEspecialidad: [especialidad.centroEstudiosEspecialidad],
       anioEgresoEspecialidad: [especialidad.anioEgresoEspecialidad],
     });
   }
+
+  profesiones: any[] = [];
+  especialidadesPorProfesion: any[][] = [];
+  listarProfesiones() {
+    this._profesionService.getAllProfesions().subscribe({
+      next: (profesiones) => {
+        this.profesiones = profesiones;
+      },
+      error: () => {
+        this.profesiones = [];
+      },
+    });
+  }
+
+  onProfesionSeleccionada(idProfesion: string, index: number): void {
+    this._especialidadService
+      .getEspecialidadesPorProfesion(idProfesion)
+      .subscribe({
+        next: (especialidades) => {
+          this.especialidadesPorProfesion[index] = especialidades;
+          console.log('Especialidades cargadas:', especialidades);
+        },
+        error: (err) => {
+          console.error('Error al cargar especialidades', err);
+          this.especialidadesPorProfesion[index] = [];
+        },
+      });
+  }
+
+  // Array para mantener todos los datos iniciales en memoria
+  private todosLosRefMedicos: IRefMedico[] = [];
+
   ultimosRefMedico(): void {
     console.log('Cargando últimos referentes médicos');
     this._refMedicoService.getLastRefMedicos(0).subscribe((refMedico) => {
+      this.todosLosRefMedicos = refMedico; // Guardar todos los datos en memoria
       this.dataSourceRefMedico.data = refMedico;
     });
   }
+
   actualizarEdad() {
     const fecha = this.myFormRefMedico.get('fechaNacimiento')?.value;
     const edadCalculada = this._fechaService.calcularEdad(fecha);
     this.myFormRefMedico.get('edad')?.setValue(edadCalculada);
   }
 
-  terminoBusquedaRefMedicoControl = new FormControl('');
-  filtrarRefMedico() {
-    const termino = this.terminoBusquedaRefMedicoControl.value || '';
-    this.dataSourceRefMedico.filter = termino.trim().toLowerCase();
+  terminoBusqueda = new FormControl('');
+
+  buscarRefMedico() {
+    const termino = this.terminoBusqueda?.value?.trim() ?? '';
+
+    if (termino === '') {
+      // Si no hay término de búsqueda, mostrar todos los datos iniciales
+      this.dataSourceRefMedico.data = this.todosLosRefMedicos;
+      this.dataSourceRefMedico.filter = '';
+    } else {
+      // Si hay término de búsqueda, aplicar filtro del dataSource
+      this.dataSourceRefMedico.data = this.todosLosRefMedicos; // Asegurar que tiene todos los datos
+      this.dataSourceRefMedico.filter = termino.toLowerCase();
+    }
+
+    // Si hay un paginador, ir a la primera página cuando se filtra
+    if (this.dataSourceRefMedico.paginator) {
+      this.dataSourceRefMedico.paginator.firstPage();
+    }
   }
   seleccionarProfesionSolicitante(index: number) {
     const grupo = this.profesionesRefMedico.at(index);
@@ -428,7 +478,6 @@ export class ReferenciaMedicoComponent implements OnInit, AfterViewInit {
     this.formSubmitted = false;
     this.phones.clear();
     this.profesionesRefMedico.clear();
-    this.especialidadesRefMedico.clear();
     this.myFormRefMedico.patchValue({
       departamentoRefMedico: '15',
       provinciaRefMedico: '01',
@@ -436,5 +485,6 @@ export class ReferenciaMedicoComponent implements OnInit, AfterViewInit {
       profesionSolicitante: { profesion: '', nroColegiatura: '' },
     });
     this.refMedicoSeleccionado = false;
+    this.filaSeleccionadaIndex = null; // Resetear la fila seleccionada
   }
 }

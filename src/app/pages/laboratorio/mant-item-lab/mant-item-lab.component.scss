@@ -27,9 +27,9 @@ mat-option {
 
 .mat-mdc-row:hover .mat-mdc-cell,
 .mat-mdc-row:hover .mat-mdc-cell mat-icon {
-  background-color: #0b4b48;
-  color: #ffffff;
-  fill: #ffffff;
+  background-color: #dfe9f3;
+  // color: #ffffff;
+  // fill: #ffffff;
 }
 
 //para las filas de parametros de validación
@@ -53,14 +53,14 @@ mat-option {
 }
 
 //para los items de cada fila de parámetros de validación
-.flex-item {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  min-width: 0;
-  text-align: center;
-  flex: 0 0 auto;
-}
+// .flex-item {
+//   display: flex;
+//   flex-direction: column;
+//   justify-content: center;
+//   min-width: 0;
+//   text-align: center;
+//   flex: 0 0 auto;
+// }
 
 .full-width {
   width: 100%;

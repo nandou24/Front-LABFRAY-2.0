@@ -108,15 +108,25 @@
             </div>
           </div>
 
-          <div class="row-flex mt-2">
+          <div class="row-flex mt-3">
+            <div [style.flex]="setFlex(25, '%')" class="flex-item text-end">
+              <button
+                mat-raised-button
+                type="button"
+                class="btn-nuevo"
+                (click)="cancelarEdicion()"
+              >
+                <mat-icon>add</mat-icon> Nuevo
+              </button>
+            </div>
             <div
               [style.flex]="setFlex(25, '%')"
               class="flex-item text-end"
-              *ngIf="!modoEdicion"
+              *ngIf="!formRol.get('codRol')?.value"
             >
               <button
                 mat-raised-button
-                class="mb-2"
+                class="btn-registrar"
                 type="button"
                 (click)="guardarRol()"
               >
@@ -126,26 +136,16 @@
             <div
               [style.flex]="setFlex(25, '%')"
               class="flex-item text-end"
-              *ngIf="modoEdicion"
+              *ngIf="formRol.get('codRol')?.value"
             >
               <button
                 mat-raised-button
-                class="mb-2"
+                class="btn-actualizar"
                 type="button"
                 (click)="actualizarRol()"
+                [disabled]="formRol.invalid"
               >
-                <mat-icon>save</mat-icon> Actualizar Rol
-              </button>
-            </div>
-            <div [style.flex]="setFlex(25, '%')" class="flex-item text-end">
-              <button
-                mat-raised-button
-                color="accent"
-                type="button"
-                class="ml-2"
-                (click)="cancelarEdicion()"
-              >
-                Nuevo
+                <mat-icon>save</mat-icon> Actualizar
               </button>
             </div>
           </div>
@@ -157,72 +157,96 @@
       <mat-card>
         <mat-card-title>Roles Registrados</mat-card-title>
         <mat-card-content>
-          <mat-form-field appearance="outline" class="mt-2">
+          <mat-form-field appearance="outline" class="mt-1">
             <mat-label>Buscar Rol</mat-label>
             <input
               matInput
               [formControl]="terminoBusqueda"
-              (keyup)="filtrar()"
+              (keyup)="buscarRoles()"
+              placeholder="Buscar por nombre, descripción, etc."
             />
+            @if (terminoBusqueda.value) {
+              <button
+                matSuffix
+                mat-icon-button
+                type="button"
+                class="clear-search-button"
+                aria-label="Clear"
+                (click)="limpiarBusqueda()"
+              >
+                <mat-icon>close</mat-icon>
+              </button>
+            }
           </mat-form-field>
 
-          <table
-            mat-table
-            [dataSource]="dataSourceRol"
-            class="mat-elevation-z8 mt-2"
-          >
-            <ng-container matColumnDef="codigo">
-              <th mat-header-cell *matHeaderCellDef>Código</th>
-              <td mat-cell *matCellDef="let rol">{{ rol.codRol }}</td>
-            </ng-container>
-            <ng-container matColumnDef="nombre">
-              <th mat-header-cell *matHeaderCellDef>Nombre</th>
-              <td mat-cell *matCellDef="let rol">{{ rol.nombreRol }}</td>
-            </ng-container>
-            <ng-container matColumnDef="estado">
-              <th mat-header-cell *matHeaderCellDef>Estado</th>
-              <td mat-cell *matCellDef="let rol">
-                {{ rol.estado ? "Activo" : "Inactivo" }}
-              </td>
-            </ng-container>
-            <ng-container matColumnDef="accion">
-              <th mat-header-cell *matHeaderCellDef>Acción</th>
-              <td mat-cell *matCellDef="let rol">
-                <button
-                  mat-icon-button
-                  color="primary"
-                  type="button"
-                  (click)="editarRol(rol)"
-                >
-                  <mat-icon>edit</mat-icon>
-                </button>
-                <button
-                  mat-icon-button
-                  color="warn"
-                  type="button"
-                  (click)="eliminarRol(rol)"
-                >
-                  <mat-icon>delete</mat-icon>
-                </button>
-              </td>
-            </ng-container>
+          <div class="tabla-contenedor">
+            <table
+              mat-table
+              [dataSource]="dataSourceRol"
+              class="mat-elevation-z8 mt-2"
+            >
+              <ng-container matColumnDef="codigo">
+                <th mat-header-cell *matHeaderCellDef>Código</th>
+                <td mat-cell *matCellDef="let rol">{{ rol.codRol }}</td>
+              </ng-container>
+              <ng-container matColumnDef="nombre">
+                <th mat-header-cell *matHeaderCellDef>Nombre</th>
+                <td mat-cell *matCellDef="let rol">{{ rol.nombreRol }}</td>
+              </ng-container>
+              <ng-container matColumnDef="estado">
+                <th mat-header-cell *matHeaderCellDef>Estado</th>
+                <td mat-cell *matCellDef="let rol">
+                  {{ rol.estado ? "Activo" : "Inactivo" }}
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="accion">
+                <th mat-header-cell *matHeaderCellDef>Acción</th>
+                <td mat-cell *matCellDef="let rol; let i = index">
+                  <button
+                    mat-icon-button
+                    color="primary"
+                    type="button"
+                    (click)="editarRol(rol, i)"
+                  >
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <button
+                    mat-icon-button
+                    color="warn"
+                    type="button"
+                    (click)="eliminarRol(rol)"
+                  >
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </td>
+              </ng-container>
 
-            <!-- Filas -->
-            <tr mat-header-row *matHeaderRowDef="columnasTablaRol"></tr>
-            <tr mat-row *matRowDef="let row; columns: columnasTablaRol"></tr>
+              <!-- Filas -->
+              <tr mat-header-row *matHeaderRowDef="columnasTablaRol"></tr>
+              <tr
+                mat-row
+                *matRowDef="let row; let i = index; columns: columnasTablaRol"
+                [class.fila-seleccionada]="i === filaSeleccionadaIndex"
+              ></tr>
+            </table>
 
-            <!-- <tr
-              mat-header-row
-              *matHeaderRowDef="['codigo', 'nombre', 'estado', 'accion']"
-            ></tr>
-            <tr
-              mat-row
-              *matRowDef="
-                let row;
-                columns: ['codigo', 'nombre', 'estado', 'accion']
-              "
-            ></tr> -->
-          </table>
+            <!-- Mensaje cuando no hay datos -->
+            <div
+              *ngIf="dataSourceRol.data.length === 0"
+              class="no-datos-mensaje"
+            >
+              <p>No se encontraron roles</p>
+            </div>
+
+            <!-- Paginador -->
+            <mat-paginator
+              #MatPaginatorRoles
+              [pageSizeOptions]="[5, 10, 20, 50]"
+              [pageSize]="20"
+              [hidePageSize]="true"
+              showFirstLastButtons
+            ></mat-paginator>
+          </div>
         </mat-card-content>
       </mat-card>
     </div>

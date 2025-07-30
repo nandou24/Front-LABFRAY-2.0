@@ -3,6 +3,73 @@ mat-form-field {
   height: 50%;
 }
 
+// Estilos para tabla con cursor pointer y hover
+// .mat-mdc-row .mat-mdc-cell {
+//   cursor: pointer;
+// }
+
+.mat-mdc-row:hover .mat-mdc-cell {
+  background-color: #dfe9f3;
+}
+
+.mat-mdc-row:hover .mat-mdc-cell mat-icon {
+  cursor: pointer;
+}
+
+.fila-seleccionada {
+  background-color: rgba(0, 102, 255, 0.15) !important;
+}
+
+// Contenedor de tabla con mensaje de datos vacíos
+.tabla-contenedor {
+  position: relative;
+}
+
+.no-datos-mensaje {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+  font-style: italic;
+}
+
+// Estilos para botones
+.btn-registrar {
+  background-color: #4caf50 !important; // verde
+  color: white !important;
+
+  &:hover {
+    background-color: #45a049 !important;
+  }
+
+  &:disabled {
+    background-color: #cccccc !important;
+    color: #666666 !important;
+  }
+}
+
+.btn-actualizar {
+  background-color: #ecb80b !important; // amarillo suave
+  color: #154cb3 !important;
+
+  &:hover {
+    background-color: #ffda06 !important;
+  }
+
+  &:disabled {
+    background-color: #cccccc !important;
+    color: #666666 !important;
+  }
+}
+
+.btn-nuevo {
+  background-color: #8d9097 !important; // gris moderno
+  color: white !important;
+
+  &:hover {
+    background-color: #b9b7b7 !important;
+  }
+}
+
 //Inicio CARD-----------
 mat-card-title {
   background-color: #0f3369;
@@ -38,15 +105,6 @@ input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;
-}
-
-.input-centrado {
-  text-align: center;
-}
-
-.mat-mdc-row:hover .mat-mdc-cell {
-  background-color: #dfe9f3;
-  cursor: pointer;
 }
 
 mat-option {
@@ -108,18 +166,6 @@ mat-option {
   align-items: center;
   gap: 10px;
   margin-bottom: 0px;
-}
-
-.flex-row-container {
-  transition:
-    background-color 0.3s ease,
-    box-shadow 0.3s ease;
-}
-
-.flex-row-container:hover {
-  background-color: #dfe9f3;
-  border-radius: 8px;
-  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 @media (max-width: 1430px) {

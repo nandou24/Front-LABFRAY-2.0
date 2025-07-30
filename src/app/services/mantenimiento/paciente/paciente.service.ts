@@ -11,6 +11,7 @@ import {
   IPacientePostDTO,
   IPacientePostReturnDTO,
 } from '../../../models/Mantenimiento/paciente.models';
+import { AuthService } from '../../auth/auth.service';
 
 @Injectable({
   providedIn: 'root',
@@ -20,12 +21,15 @@ export class PacienteService {
 
   private readonly _http = inject(HttpClient);
   private readonly apiUrl = `${environment.baseUrl}/api/paciente`;
+  private readonly _auth = inject(AuthService);
 
   registrarPaciente(body: IPaciente): Observable<IPacientePostDTO> {
     console.log('Datos del paciente:', body);
+
     return this._http.post<IPacientePostDTO>(
       `${this.apiUrl}/newPaciente`,
       body,
+      { headers: this._auth.getAuthHeaders() },
     );
   }
 
@@ -80,6 +84,7 @@ export class PacienteService {
     return this._http.put<IPacientePostDTO>(
       `${this.apiUrl}/updatePatient`,
       body,
+      { headers: this._auth.getAuthHeaders() },
     );
   }
 
@@ -88,14 +93,5 @@ export class PacienteService {
       `${this.apiUrl}/newPatientWhitoutHC`,
       pacienteData,
     );
-    // .pipe(
-    //   map((data) => {
-    //     if (data.ok) {
-    //       return data;
-    //     } else {
-    //       throw new Error('ERROR');
-    //     }
-    //   }),
-    // );
   }
 }

@@ -232,6 +232,7 @@ export class HcPdfService {
     // undécima fila, firma
     doc.text(`Firma y sello:`, 108, fila1Y + altofila * 22);
 
+    doc.autoPrint();
     const pdfBlob = doc.output('blob');
     const pdfUrl = URL.createObjectURL(pdfBlob);
 

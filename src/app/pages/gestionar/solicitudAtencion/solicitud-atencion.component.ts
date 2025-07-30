@@ -158,7 +158,7 @@ export class SolicitudAtencionComponent implements OnInit {
                 solicitud,
                 pruebasConItems,
               );
-            this.opendialog(pdfSrc, solicitud);
+            this.opendialog(pdfSrc);
           },
           error: (err) => {
             console.error('Error al obtener pruebas de laboratorio:', err);
@@ -174,12 +174,12 @@ export class SolicitudAtencionComponent implements OnInit {
       return;
     }
 
-    this.opendialog(pdfSrc, solicitud);
+    this.opendialog(pdfSrc);
   }
 
-  opendialog(pdfSrc: any, solicitudData: any) {
+  opendialog(pdfSrc: any) {
     this.dialog.open(DialogPdfSolicitudAtencionComponent, {
-      data: { pdfSrc: pdfSrc, solicitudData: solicitudData },
+      data: { pdfSrc: pdfSrc },
       width: '70vw',
       height: '95vh',
       maxWidth: '95vw',

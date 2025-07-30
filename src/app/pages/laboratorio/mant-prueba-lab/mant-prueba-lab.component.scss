@@ -25,9 +25,9 @@ mat-option {
 
 .mat-mdc-row:hover .mat-mdc-cell,
 .mat-mdc-row:hover .mat-mdc-cell mat-icon {
-  background-color: #0b4b48;
-  color: #ffffff;
-  fill: #ffffff;
+  background-color: #dfe9f3;
+  // color: #ffffff;
+  // fill: #ffffff;
 }
 
 //para los items de cada fila de parámetros de validación
@@ -119,6 +119,10 @@ mat-option {
   margin-left: 1rem;
   position: absolute;
   top: -0.6rem;
+}
+
+.fila-seleccionada {
+  background-color: rgba(0, 102, 255, 0.15) !important;
 }
 
 @media (max-width: 1430px) {

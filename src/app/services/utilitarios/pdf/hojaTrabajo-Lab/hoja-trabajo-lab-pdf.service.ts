@@ -179,9 +179,32 @@ export class HojaTrabajoLabPdfService {
         y += 4;
       }
 
-      for (const comp of items) {
+      // Ordenar por grupoItem (opcional) y luego por nombre
+      const itemsOrdenados = [...items].sort((a: any, b: any) => {
+        const grupoA = a.itemLabId?.grupoItemLab?.toLowerCase() || '';
+        const grupoB = b.itemLabId?.grupoItemLab?.toLowerCase() || '';
+        if (grupoA !== grupoB) return grupoA.localeCompare(grupoB);
+
+        const nombreA = a.itemLabId?.nombreHojaTrabajo?.toLowerCase() || '';
+        const nombreB = b.itemLabId?.nombreHojaTrabajo?.toLowerCase() || '';
+        return nombreA.localeCompare(nombreB);
+      });
+
+      let grupoActual: string | null = null;
+
+      for (const comp of itemsOrdenados) {
         const item = comp.itemLabId;
         if (!item) continue;
+
+        const grupo = item.grupoItemLab || null;
+        if (grupo && grupo !== grupoActual) {
+          // Cambió el grupo => imprimimos encabezado de grupo
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(7);
+          doc.text(grupo, 12, y);
+          y += 4;
+          grupoActual = grupo;
+        }
 
         const nombreItem = item.nombreHojaTrabajo || 'Ítem sin nombre';
         const unidad = item.unidadesRef || '';
@@ -217,8 +240,11 @@ export class HojaTrabajoLabPdfService {
       y += 1; // espacio entre pruebas
     }
 
-    return this._sanitizer.bypassSecurityTrustResourceUrl(
-      doc.output('datauristring'),
-    );
+    doc.autoPrint();
+    const pdfBlob = doc.output('blob');
+    const pdfUrl = URL.createObjectURL(pdfBlob);
+
+    // Opcional: abrir el PDF en una nueva pestaña
+    return this._sanitizer.bypassSecurityTrustResourceUrl(pdfUrl);
   }
 }

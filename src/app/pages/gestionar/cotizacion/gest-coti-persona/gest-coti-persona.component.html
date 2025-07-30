@@ -324,7 +324,7 @@
                         <button
                           mat-icon-button
                           color="primary"
-                          (click)="abrirDialogoMedico(i)"
+                          (click)="abrirDialogoMedicoAtiende(i)"
                           matTooltip="Editar Médico"
                         >
                           <mat-icon>edit</mat-icon>
@@ -334,7 +334,7 @@
                         <button
                           mat-button
                           color="primary"
-                          (click)="abrirDialogoMedico(i)"
+                          (click)="abrirDialogoMedicoAtiende(i)"
                           style="font-size: 12px"
                         >
                           Seleccionar Médico
@@ -554,11 +554,18 @@
         </mat-card-content>
       </mat-card>
 
-      <div class="row-flex mt-4">
-        <button mat-raised-button (click)="nuevaCotizacionPersona()">
+      <div class="row-flex-btn mt-4">
+        <button
+          type="button"
+          class="btn-nuevo"
+          mat-raised-button
+          (click)="nuevaCotizacionPersona()"
+        >
           NUEVA COTIZACIÓN
         </button>
         <button
+          type="button"
+          class="btn-registrar"
           mat-raised-button
           *ngIf="!seSeleccionoCotizacion"
           (click)="generarCotizacion()"
@@ -566,13 +573,15 @@
           GENERAR COTIZACIÓN
         </button>
         <button
+          type="button"
+          class="btn-actualizar"
           mat-raised-button
           *ngIf="!tienePagos"
           (click)="generarVersionCotizacionPersona()"
         >
           GENERAR NUEVA VERSIÓN
         </button>
-        <button mat-raised-button (click)="generarPDF(true)">
+        <button type="button" mat-raised-button (click)="generarPDF(true)">
           VISTA PREVIA
         </button>
       </div>
@@ -583,25 +592,38 @@
         <mat-card-title> Últimas Cotizaciones </mat-card-title>
 
         <mat-card-content>
-          <mat-form-field appearance="outline">
-            <mat-label>Buscar Cotización</mat-label>
-            <input
-              matInput
-              [formControl]="terminoBusquedaCotizacion"
-              (focus)="seleccionarTexto($event)"
-            />
-            @if (terminoBusquedaCotizacion.value) {
-              <button
-                matSuffix
-                mat-icon-button
-                class="clear-search-button"
-                aria-label="Clear"
-                (click)="terminoBusquedaCotizacion.setValue('')"
-              >
-                <mat-icon>close</mat-icon>
-              </button>
-            }
-          </mat-form-field>
+          <div class="row-flex" style="background-color: #faf9fe">
+            <div [style.flex]="setFlex(50, '%')" class="flex-item">
+              <mat-form-field appearance="outline">
+                <mat-label>Buscar Cotización</mat-label>
+                <input
+                  matInput
+                  [formControl]="terminoBusquedaCotizacion"
+                  (focus)="seleccionarTexto($event)"
+                />
+                @if (terminoBusquedaCotizacion.value) {
+                  <button
+                    matSuffix
+                    mat-icon-button
+                    class="clear-search-button"
+                    aria-label="Clear"
+                    (click)="terminoBusquedaCotizacion.setValue('')"
+                  >
+                    <mat-icon>close</mat-icon>
+                  </button>
+                }
+              </mat-form-field>
+            </div>
+            <div [style.flex]="setFlex(45, '%')" class="flex-item">
+              <mat-paginator
+                #MatPaginatorCotizaciones
+                [pageSizeOptions]="[5, 10, 25]"
+                [pageSize]="6"
+                [hidePageSize]="true"
+                showFirstLastButtons
+              ></mat-paginator>
+            </div>
+          </div>
 
           <table mat-table [dataSource]="dataSourceCotizaciones">
             |
@@ -647,12 +669,12 @@
               </td>
             </ng-container>
 
-            <ng-container matColumnDef="versiones">
+            <!-- <ng-container matColumnDef="versiones">
               <th mat-header-cell *matHeaderCellDef>Vers.</th>
               <td mat-cell *matCellDef="let cotizacion">
                 {{ cotizacion.historial.length }}
               </td>
-            </ng-container>
+            </ng-container> -->
 
             <ng-container matColumnDef="estado">
               <th mat-header-cell *matHeaderCellDef>Estado</th>
@@ -664,17 +686,11 @@
             <tr mat-header-row *matHeaderRowDef="columnasCotizaciones"></tr>
             <tr
               mat-row
-              *matRowDef="let row; columns: columnasCotizaciones"
-              (click)="cargarCotizacion(row)"
+              *matRowDef="let row; let i = index; columns: columnasCotizaciones"
+              (click)="cargarCotizacion(row, i)"
+              [class.fila-seleccionada]="i === filaSeleccionadaIndex"
             ></tr>
           </table>
-          <div>
-            <mat-paginator
-              #MatPaginatorCotizaciones
-              [pageSizeOptions]="[5, 10, 25]"
-              showFirstLastButtons
-            ></mat-paginator>
-          </div>
 
           <div
             *ngIf="dataSourceCotizaciones.data.length === 0"
@@ -689,25 +705,40 @@
         <mat-card-title> Servicios Disponibles </mat-card-title>
 
         <mat-card-content>
-          <mat-form-field appearance="outline">
-            <mat-label>Buscar Servicio</mat-label>
-            <input
-              matInput
-              [formControl]="terminoBusquedaServicio"
-              (input)="buscarServicio()"
-            />
-            @if (terminoBusquedaServicio.value) {
-              <button
-                matSuffix
-                class="clear-search-button"
-                mat-icon-button
-                aria-label="Clear"
-                (click)="terminoBusquedaServicio.setValue('')"
-              >
-                <mat-icon>close</mat-icon>
-              </button>
-            }
-          </mat-form-field>
+          <div class="row-flex" style="background-color: #faf9fe">
+            <div [style.flex]="setFlex(50, '%')" class="flex-item">
+              <mat-form-field appearance="outline">
+                <mat-label>Buscar Servicio</mat-label>
+                <input
+                  matInput
+                  [formControl]="terminoBusquedaServicio"
+                  (input)="buscarServicio()"
+                />
+                @if (terminoBusquedaServicio.value) {
+                  <button
+                    matSuffix
+                    class="clear-search-button"
+                    mat-icon-button
+                    aria-label="Clear"
+                    (click)="
+                      terminoBusquedaServicio.setValue(''); buscarServicio()
+                    "
+                  >
+                    <mat-icon>close</mat-icon>
+                  </button>
+                }
+              </mat-form-field>
+            </div>
+            <div [style.flex]="setFlex(45, '%')" class="flex-item">
+              <mat-paginator
+                #MatPaginatorServicios
+                [pageSizeOptions]="[5, 10, 25]"
+                [pageSize]="6"
+                [hidePageSize]="true"
+                showFirstLastButtons
+              ></mat-paginator>
+            </div>
+          </div>
 
           <table mat-table [dataSource]="dataSourceServicios">
             <ng-container matColumnDef="codigo">
@@ -746,13 +777,7 @@
             <tr mat-header-row *matHeaderRowDef="columnasServicios"></tr>
             <tr mat-row *matRowDef="let row; columns: columnasServicios"></tr>
           </table>
-          <div>
-            <mat-paginator
-              #MatPaginatorServicios
-              [pageSizeOptions]="[5, 10, 25]"
-              showFirstLastButtons
-            ></mat-paginator>
-          </div>
+
           <div
             *ngIf="dataSourceServicios.data.length === 0"
             class="text-center mt-2"
