@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import {
@@ -6,6 +6,7 @@ import {
   ISolicitudAtencionPostResponse,
 } from '../../../models/Gestion/solicitudAtencion.models';
 import { environment } from '../../../../environments/enviroment';
+import { AuthService } from '../../auth/auth.service';
 
 @Injectable({
   providedIn: 'root',
@@ -13,7 +14,10 @@ import { environment } from '../../../../environments/enviroment';
 export class SolicitudAtencionService {
   private readonly apiUrl = `${environment.baseUrl}/api/solicitudAtencion`; // Ajusta la URL base según tu backend
 
-  constructor(private http: HttpClient) {}
+  constructor() {}
+
+  private readonly http = inject(HttpClient);
+  private readonly _auth = inject(AuthService);
 
   createSolicitudAtencion(
     data: ISolicitudAtencion,
@@ -21,6 +25,7 @@ export class SolicitudAtencionService {
     return this.http.post<ISolicitudAtencionPostResponse>(
       `${this.apiUrl}`,
       data,
+      { headers: this._auth.getAuthHeaders() },
     );
   }
 
@@ -31,6 +36,7 @@ export class SolicitudAtencionService {
     return this.http.put<ISolicitudAtencionPostResponse>(
       `${this.apiUrl}/${id}`,
       data,
+      { headers: this._auth.getAuthHeaders() },
     );
   }
 

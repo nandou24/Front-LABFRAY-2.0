@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import {
   IDetallePago,
   IGetDetallePago,
@@ -9,12 +9,16 @@ import {
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../../../environments/enviroment';
 import { map, Observable } from 'rxjs';
+import { AuthService } from '../../auth/auth.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class PagosCotizacionPersonalService {
-  constructor(private _http: HttpClient) {}
+  constructor() {}
+
+  private readonly _http = inject(HttpClient);
+  private readonly _auth = inject(AuthService);
 
   registrarPago(body: IPago) {
     console.log('Enviando pago desde servicio', body);
@@ -22,6 +26,7 @@ export class PagosCotizacionPersonalService {
     return this._http.post<IPagoPostDTOResponse>(
       `${environment.baseUrl}/api/pagos/newPagoPersona`,
       body,
+      { headers: this._auth.getAuthHeaders() },
     );
   }
 
@@ -59,6 +64,7 @@ export class PagosCotizacionPersonalService {
     return this._http.put<IPagoPostDTOResponse>(
       `${environment.baseUrl}/api/pagos/anularPago/${codPago}`,
       body,
+      { headers: this._auth.getAuthHeaders() },
     );
   }
 }

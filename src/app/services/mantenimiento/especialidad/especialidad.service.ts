@@ -1,5 +1,5 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { environment } from '../../../../environments/enviroment';
 import {
   IEspecialidad,
@@ -7,14 +7,17 @@ import {
   IGetLastEspecialidades,
 } from '../../../models/Mantenimiento/especialidad.models';
 import { map, Observable } from 'rxjs';
+import { AuthService } from '../../auth/auth.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class EspecialidadService {
-  constructor(private _http: HttpClient) {}
+  constructor() {}
 
+  private readonly _http = inject(HttpClient);
   private readonly apiUrl = `${environment.baseUrl}/api/especialidad`;
+  private readonly _auth = inject(AuthService);
 
   public registrarEspecialidad(body: IEspecialidad) {
     console.log('Enviando valores desde registro especialidad');
@@ -22,6 +25,7 @@ export class EspecialidadService {
     return this._http.post<IEspecialidadPostResponseDTO>(
       `${this.apiUrl}/newEspecialidad`,
       body,
+      { headers: this._auth.getAuthHeaders() },
     );
   }
 
@@ -32,12 +36,14 @@ export class EspecialidadService {
     return this._http.put<IEspecialidadPostResponseDTO>(
       `${this.apiUrl}/${codEspecialidad}`,
       Especialidad,
+      { headers: this._auth.getAuthHeaders() },
     );
   }
 
   eliminarEspecialidad(codEspecialidad: string): Observable<any> {
     return this._http.delete<IEspecialidadPostResponseDTO>(
       `${this.apiUrl}/${codEspecialidad}`,
+      { headers: this._auth.getAuthHeaders() },
     );
   }
 

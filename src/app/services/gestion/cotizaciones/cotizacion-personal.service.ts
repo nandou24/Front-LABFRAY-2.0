@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { environment } from '../../../../environments/enviroment';
@@ -7,12 +7,16 @@ import {
   ICotizacionPostDTO,
   IGetLastCotizacion,
 } from '../../../models/Gestion/cotizacionPersona.models';
+import { AuthService } from '../../auth/auth.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class CotizacionPersonalService {
-  constructor(private _http: HttpClient) {}
+  constructor() {}
+
+  private readonly _http = inject(HttpClient);
+  private readonly _auth = inject(AuthService);
 
   public generarCotizacion(body: ICotizacion) {
     console.log('Enviando valores desde cotizacion.service');
@@ -20,6 +24,7 @@ export class CotizacionPersonalService {
     return this._http.post<ICotizacionPostDTO>(
       `${environment.baseUrl}/api/cotizacion/newCotizacionPersona`,
       body,
+      { headers: this._auth.getAuthHeaders() },
     );
   }
 
@@ -29,6 +34,7 @@ export class CotizacionPersonalService {
     return this._http.post<ICotizacionPostDTO>(
       `${environment.baseUrl}/api/cotizacion/newVersionCotizacionPersona`,
       body,
+      { headers: this._auth.getAuthHeaders() },
     );
   }
 

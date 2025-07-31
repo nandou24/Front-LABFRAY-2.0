@@ -7,6 +7,7 @@ import {
   IPruebaLabPostDTO,
 } from '../../../models/Mantenimiento/pruebaLab.models';
 import { environment } from '../../../../environments/enviroment';
+import { AuthService } from '../../auth/auth.service';
 
 @Injectable({
   providedIn: 'root',
@@ -16,6 +17,7 @@ export class PruebaLabService {
 
   private readonly _http = inject(HttpClient);
   private readonly apiUrl = `${environment.baseUrl}/api/pruebaLab`;
+  private readonly _auth = inject(AuthService);
 
   public registrarPruebaLab(body: IPruebaLab): Observable<IPruebaLabPostDTO> {
     console.log('Enviando valores desde servicio');
@@ -23,6 +25,7 @@ export class PruebaLabService {
     return this._http.post<IPruebaLabPostDTO>(
       `${this.apiUrl}/newPruebaLab`,
       body,
+      { headers: this._auth.getAuthHeaders() },
     );
   }
 
@@ -49,6 +52,7 @@ export class PruebaLabService {
     return this._http.put<IPruebaLabPostDTO>(
       `${this.apiUrl}/${codPruebaLab}/updatePrueba`,
       body,
+      { headers: this._auth.getAuthHeaders() },
     );
   }
 }

@@ -1,5 +1,5 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import {
   IGetLastProfesiones,
   IProfesion,
@@ -7,14 +7,17 @@ import {
 } from '../../../models/Mantenimiento/profesion.models';
 import { environment } from '../../../../environments/enviroment';
 import { map, Observable } from 'rxjs';
+import { AuthService } from '../../auth/auth.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ProfesionService {
-  constructor(private _http: HttpClient) {}
+  constructor() {}
 
+  private readonly _http = inject(HttpClient);
   private readonly apiUrl = `${environment.baseUrl}/api/profesion`;
+  private readonly _auth = inject(AuthService);
 
   public registrarProfesion(body: IProfesion) {
     console.log('Enviando valores desde registro profesion');
@@ -22,6 +25,7 @@ export class ProfesionService {
     return this._http.post<IProfesionPostResponseDTO>(
       `${this.apiUrl}/newProfesion`,
       body,
+      { headers: this._auth.getAuthHeaders() },
     );
   }
 
@@ -32,12 +36,14 @@ export class ProfesionService {
     return this._http.put<IProfesionPostResponseDTO>(
       `${this.apiUrl}/${codProfesion}`,
       Profesion,
+      { headers: this._auth.getAuthHeaders() },
     );
   }
 
   eliminarProfesion(codProfesion: string): Observable<any> {
     return this._http.delete<IProfesionPostResponseDTO>(
       `${this.apiUrl}/${codProfesion}`,
+      { headers: this._auth.getAuthHeaders() },
     );
   }
 

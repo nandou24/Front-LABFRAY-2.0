@@ -1,5 +1,5 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import {
   IRefMedico,
@@ -7,23 +7,25 @@ import {
   IGetLastRefMedico,
   IGetLastRefMedicoById,
 } from '../../../models/Mantenimiento/referenciaMedico.models';
-import { catchError, map, Observable, of } from 'rxjs';
+import { map, Observable } from 'rxjs';
 import { environment } from '../../../../environments/enviroment';
-import Swal from 'sweetalert2';
+import { AuthService } from '../../auth/auth.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ReferenciaMedicoService {
-  constructor(
-    private _http: HttpClient,
-    private _router: Router,
-  ) {}
+  constructor() {}
+
+  private readonly _http = inject(HttpClient);
+  private readonly _router = inject(Router);
+  private readonly _auth = inject(AuthService);
 
   public registrarRefMedico(body: IRefMedico) {
     return this._http.post<IRefMedicoPostDTO>(
       `${environment.baseUrl}/api/referenciaMedico/newRefMedico`,
       body,
+      { headers: this._auth.getAuthHeaders() },
     );
   }
 
@@ -85,6 +87,7 @@ export class ReferenciaMedicoService {
     return this._http.put<IRefMedicoPostDTO>(
       `${environment.baseUrl}/api/referenciaMedico/${codRefMedico}/updateRefMedico`,
       body,
+      { headers: this._auth.getAuthHeaders() },
     );
   }
 }

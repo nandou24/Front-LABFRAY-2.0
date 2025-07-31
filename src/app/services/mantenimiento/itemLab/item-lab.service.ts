@@ -7,6 +7,7 @@ import {
   IItemLabPostDTO,
 } from '../../../models/Mantenimiento/items.models';
 import { environment } from '../../../../environments/enviroment';
+import { AuthService } from '../../auth/auth.service';
 
 @Injectable({
   providedIn: 'root',
@@ -16,12 +17,17 @@ export class ItemLabService {
 
   private readonly _http = inject(HttpClient);
   private readonly apiUrl = `${environment.baseUrl}/api/itemLab`;
+  private readonly _auth = inject(AuthService);
 
   public registrarItemLab(body: IItemLab): Observable<IItemLabPostDTO> {
     console.log('Enviando valores desde servicio');
     console.log(body);
 
-    return this._http.post<IItemLabPostDTO>(`${this.apiUrl}/newItemLab`, body);
+    return this._http.post<IItemLabPostDTO>(
+      `${this.apiUrl}/newItemLab`,
+      body,
+      { headers: this._auth.getAuthHeaders() },
+    );
   }
 
   getLastItemsLab(): Observable<IItemLab[]> {
@@ -48,6 +54,7 @@ export class ItemLabService {
     return this._http.put<IItemLabPostDTO>(
       `${this.apiUrl}/${codigo}/updateItem`,
       body,
+      { headers: this._auth.getAuthHeaders() },
     );
   }
 }

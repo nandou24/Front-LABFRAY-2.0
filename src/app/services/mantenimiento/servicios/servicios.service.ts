@@ -1,5 +1,5 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { map, Observable } from 'rxjs';
 import { environment } from '../../../../environments/enviroment';
 import {
@@ -11,12 +11,16 @@ import {
   IGetLastPruebasLab,
   IPruebaLab,
 } from '../../../models/Mantenimiento/pruebaLab.models';
+import { AuthService } from '../../auth/auth.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ServiciosService {
-  constructor(private _http: HttpClient) {}
+  constructor() {}
+
+  private readonly _http = inject(HttpClient);
+  private readonly _auth = inject(AuthService);
 
   getExamenesPorTipo(tipoExamen: string): Observable<any[]> {
     const params = new HttpParams().set('search', tipoExamen);
@@ -32,6 +36,7 @@ export class ServiciosService {
     return this._http.post<IServicioPostDTO>(
       `${environment.baseUrl}/api/servicio/newServicio`,
       body,
+      { headers: this._auth.getAuthHeaders() },
     );
   }
 
@@ -84,6 +89,7 @@ export class ServiciosService {
     return this._http.put<IServicioPostDTO>(
       `${environment.baseUrl}/api/servicio/${codServicio}/updateServicio`,
       body,
+      { headers: this._auth.getAuthHeaders() },
     );
   }
 
