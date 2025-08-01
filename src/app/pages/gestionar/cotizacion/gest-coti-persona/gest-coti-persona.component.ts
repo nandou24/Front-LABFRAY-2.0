@@ -1265,9 +1265,9 @@ export class GestCotiPersonaComponent implements OnInit {
 
   //pdfSrc: SafeResourceUrl | null = null;
 
-  generarPDF(preview: boolean) {
+  async generarPDF(preview: boolean) {
     // Implementar generación de PDF
-    const pdfSrc = this._pdfService.generarPDFCotizacion(
+    const pdfSrc = await this._pdfService.generarPDFCotizacion(
       this.cotizacionParaImprimir,
       preview,
     );

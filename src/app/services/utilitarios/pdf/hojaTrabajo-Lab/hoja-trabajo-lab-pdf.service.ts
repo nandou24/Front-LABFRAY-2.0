@@ -69,33 +69,35 @@ export class HojaTrabajoLabPdfService {
     const doc = new jsPDF({
       orientation: 'portrait',
       unit: 'mm',
-      format: [148.5, 210], // width, height
+      format: 'a4', // Cambiado a formato A4 estándar (210 x 297 mm)
     });
 
     doc.setFont('helvetica', 'bold');
 
     const imagenBase64 = '/images/logo labfray.png';
-    let logoHeight = 12; // Alto de la imagen
+    let logoHeight = 15; // Alto de la imagen (escalado)
     let logoWidth = logoHeight * 0.896; // Ancho de la imagen
-    doc.addImage(imagenBase64, 'PNG', 10, 7, logoWidth, logoHeight); // (x, y, width, height)
+    doc.addImage(imagenBase64, 'PNG', 15, 10, logoWidth, logoHeight); // (x, y, width, height)
 
-    //Constantes datos superiores
-    let xLabelSuperior = 75;
-    let yLabelSuperior = 10;
-    let xValueSuperior = 97;
+    //Constantes datos superiores (ajustadas para A4)
+    let xLabelSuperior = 110;
+    let yLabelSuperior = 15;
+    let xValueSuperior = 140;
     let yValueSuperior = yLabelSuperior;
 
-    let xLabelDatosPaciente = 10;
-    let yLabelDatosPaciente = 27;
-    let xValueDatosPaciente = 28;
+    let xLabelDatosPaciente = 8;
+    let yLabelDatosPaciente = 35;
+    let xValueDatosPaciente = 30;
     let yValueDatosPaciente = yLabelDatosPaciente;
-    let y = 41;
+    let y = 55;
 
-    doc.setFontSize(12);
-    doc.text('Solicitud de', 48, 13, {
+    doc.setFontSize(14); // Aumentado el tamaño de fuente
+    doc.text('Solicitud de', 70, 18, {
+      // Centrado en A4
       align: 'center',
     });
-    doc.text('Laboratorio Clínico', 48, 18, {
+    doc.text('Laboratorio Clínico', 70, 24, {
+      // Centrado en A4
       align: 'center',
     });
 
@@ -105,35 +107,35 @@ export class HojaTrabajoLabPdfService {
     const horaFormateada = fecha.toTimeString().slice(0, 5); // formato HH:MM
 
     // Información superior derecha
-    doc.setFontSize(8);
+    doc.setFontSize(10);
     doc.text(`Cod. Solicitud:`, xLabelSuperior, yLabelSuperior);
-    doc.text(`Fecha:`, xLabelSuperior, yLabelSuperior + 4);
-    doc.text(`Hora:`, xLabelSuperior, yLabelSuperior + 8);
+    doc.text(`Fecha:`, xLabelSuperior, yLabelSuperior + 5);
+    doc.text(`Hora:`, xLabelSuperior, yLabelSuperior + 10);
     doc.setFont('helvetica', 'normal');
     doc.text(`${data.codSolicitud}`, xValueSuperior, yValueSuperior);
-    doc.text(`${fechaFormateada}`, xValueSuperior, yValueSuperior + 4);
-    doc.text(`${horaFormateada}`, xValueSuperior, yValueSuperior + 8);
+    doc.text(`${fechaFormateada}`, xValueSuperior, yValueSuperior + 5);
+    doc.text(`${horaFormateada}`, xValueSuperior, yValueSuperior + 10);
 
     doc.setDrawColor(0);
     doc.setLineWidth(0.5);
-    const squareX = 118;
-    const squareY = yLabelSuperior - 4;
-    const rectWidth = 22;
-    const rectHeight = 14;
+    const squareX = 170; // Ajustado para A4
+    const squareY = yLabelSuperior - 6;
+    const rectWidth = 30; // Más ancho para A4
+    const rectHeight = 18; // Más alto para A4
     doc.rect(squareX, squareY, rectWidth, rectHeight);
 
     doc.setLineWidth(0.3);
-    doc.line(10, 23, 142, 23); // línea horizontal debajo del encabezado
+    doc.line(8, 30, 200, 30); // línea horizontal debajo del encabezado (ajustada para A4)
 
-    // Información del paciente
-    doc.setFontSize(8);
+    // Información del paciente (ajustada para A4)
+    doc.setFontSize(11); // Ligeramente más grande
     doc.setFont('helvetica', 'bold');
     doc.text(`Paciente:`, xLabelDatosPaciente, yLabelDatosPaciente);
-    doc.text(`Documento:`, xLabelDatosPaciente + 90, yLabelDatosPaciente);
-    doc.text(`Sexo:`, xLabelDatosPaciente, yLabelDatosPaciente + 4);
-    doc.text(`Edad:`, xLabelDatosPaciente + 40, yLabelDatosPaciente + 4);
-    doc.text(`Teléfono:`, xLabelDatosPaciente + 90, yLabelDatosPaciente + 4);
-    doc.text(`Solicitante:`, xLabelDatosPaciente, yLabelDatosPaciente + 8);
+    doc.text(`Documento:`, xLabelDatosPaciente + 125, yLabelDatosPaciente); // Más espacio
+    doc.text(`Sexo:`, xLabelDatosPaciente, yLabelDatosPaciente + 6);
+    doc.text(`Edad:`, xLabelDatosPaciente + 50, yLabelDatosPaciente + 6); // Más espacio
+    doc.text(`Teléfono:`, xLabelDatosPaciente + 125, yLabelDatosPaciente + 6); // Más espacio
+    doc.text(`Solicitante:`, xLabelDatosPaciente, yLabelDatosPaciente + 12);
 
     doc.setFont('helvetica', 'normal');
     doc.text(
@@ -143,31 +145,42 @@ export class HojaTrabajoLabPdfService {
     );
     doc.text(
       `${data.tipoDoc} ${data.nroDoc}`,
-      xValueDatosPaciente + 90,
+      xValueDatosPaciente + 130, // Ajustado
       yValueDatosPaciente,
     );
     doc.text(
       `${this.datoPaciente.sexoCliente}`,
       xValueDatosPaciente,
-      yValueDatosPaciente + 4,
+      yValueDatosPaciente + 6,
     );
-    doc.text(`${this.edad}`, xValueDatosPaciente + 31, yValueDatosPaciente + 4);
+    doc.text(`${this.edad}`, xValueDatosPaciente + 40, yValueDatosPaciente + 6); // Ajustado
     doc.text(
       `${this.datoPaciente.phones[0].phoneNumber || ''}`,
-      xValueDatosPaciente + 90,
-      yValueDatosPaciente + 4,
+      xValueDatosPaciente + 130, // Ajustado
+      yValueDatosPaciente + 6,
     );
 
     if (this.datoSolicitante && Object.keys(this.datoSolicitante).length > 0) {
       doc.text(
         `${this.datoSolicitante.apePatRefMedico} ${this.datoSolicitante.apeMatRefMedico} ${this.datoSolicitante.nombreRefMedico} `,
         xValueDatosPaciente,
-        yValueDatosPaciente + 8,
+        yValueDatosPaciente + 12,
       );
     }
 
     doc.setLineWidth(0.3);
-    doc.line(10, 37, 142, 37); // línea horizontal debajo del encabezado
+    doc.line(8, 50, 200, 50); // línea horizontal debajo de datos del paciente (ajustada para A4)
+
+    // Variables para el sistema de columnas
+    const columnaIzquierda = 8;
+    const columnaDerecha = 110; // Columna derecha comienza en x=110
+    const limiteInferior = 280; // Límite inferior de la página
+    const yInicial = 55; // Posición Y inicial
+    let xActual = columnaIzquierda; // Posición X actual (comienza en columna izquierda)
+    let enColumnaIzquierda = true; // Flag para saber en qué columna estamos
+
+    // Línea vertical divisoria entre columnas
+    doc.line(105, 50, 105, limiteInferior);
 
     // Ordenar pruebas por ordenImpresion
     pruebasLaboratorio.sort((a: any, b: any) => {
@@ -176,76 +189,151 @@ export class HojaTrabajoLabPdfService {
       return ordenA - ordenB;
     });
 
+    let numeroPrueba = 1; // Contador para enumerar las pruebas
+
+    // Función para verificar y cambiar de columna o página
+    const verificarSaltoColumnaOPagina = () => {
+      if (y >= limiteInferior) {
+        if (enColumnaIzquierda) {
+          // Cambiar a columna derecha
+          xActual = columnaDerecha;
+          y = yInicial;
+          enColumnaIzquierda = false;
+        } else {
+          // Crear nueva página y volver a columna izquierda
+          doc.addPage();
+          // Agregar línea divisoria en la nueva página
+          doc.line(105, 25, 105, limiteInferior);
+          xActual = columnaIzquierda;
+          y = 25;
+          enColumnaIzquierda = true;
+        }
+      }
+    };
+
     for (const prueba of pruebasLaboratorio) {
       const items = prueba.itemsComponentes || [];
 
-      // Mostrar encabezado solo si hay más de 1 ítem
-      if (items.length > 1) {
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(7);
-        doc.text(prueba.nombrePruebaLab, 10, y);
-        y += 4;
-      }
-
-      // Ordenar por grupoItem (opcional) y luego por nombre
-      const itemsOrdenados = [...items].sort((a: any, b: any) => {
-        const grupoA = a.itemLabId?.grupoItemLab?.toLowerCase() || '';
-        const grupoB = b.itemLabId?.grupoItemLab?.toLowerCase() || '';
-        if (grupoA !== grupoB) return grupoA.localeCompare(grupoB);
-
-        const nombreA = a.itemLabId?.nombreHojaTrabajo?.toLowerCase() || '';
-        const nombreB = b.itemLabId?.nombreHojaTrabajo?.toLowerCase() || '';
-        return nombreA.localeCompare(nombreB);
-      });
-
-      let grupoActual: string | null = null;
-
-      for (const comp of itemsOrdenados) {
-        const item = comp.itemLabId;
+      // Si hay solo 1 item, mostrar como prueba numerada sin viñeta
+      if (items.length === 1) {
+        const item = items[0].itemLabId;
         if (!item) continue;
-
-        const grupo = item.grupoItemLab || null;
-        if (grupo && grupo !== grupoActual) {
-          // Cambió el grupo => imprimimos encabezado de grupo
-          doc.setFont('helvetica', 'bold');
-          doc.setFontSize(7);
-          doc.text(grupo, 12, y);
-          y += 4;
-          grupoActual = grupo;
-        }
 
         const nombreItem = item.nombreHojaTrabajo || 'Ítem sin nombre';
         const unidad = item.unidadesRef || '';
         const valoresRef = item.valoresHojaTrabajo || '';
 
+        // Capitalizar solo la primera letra
+        const nombreCapitalizado =
+          nombreItem.charAt(0).toUpperCase() +
+          nombreItem.slice(1).toLowerCase();
+
+        doc.setFont('helvetica', 'bold'); // Negrita
+        doc.setFontSize(11);
+        doc.text(`${numeroPrueba}. ${nombreCapitalizado}`, xActual, y);
+
+        // Línea para escribir resultado a mano (ajustada a la columna)
+        const lineaInicio = xActual + 37;
+        const lineaFin = xActual + 57;
+        doc.line(lineaInicio, y, lineaFin, y);
+
+        // Mostrar unidad y referencia (ajustadas a la columna)
         doc.setFont('helvetica', 'normal');
-        doc.setFontSize(7);
-        doc.text(`• ${nombreItem}`, 10, y);
-
-        // Línea para escribir resultado a mano
-        doc.line(33, y, 43, y); // ajustado al ancho disponible
-
-        // Mostrar unidad y referencia (alineado a la derecha, en 2 columnas pequeñas)
-        doc.setFontSize(6);
-        const xValuesRef = 45;
+        doc.setFontSize(8.5);
+        const xValuesRef = xActual + 62;
         let valoresRefText = '';
         if (valoresRef) valoresRefText += `${valoresRef}`;
         if (valoresRefText) doc.text(valoresRefText, xValuesRef, y);
-        const xInfo = 58;
+        const xInfo = xActual + 81;
         let infoText = '';
         if (unidad) infoText += `${unidad}`;
         if (infoText) doc.text(infoText, xInfo, y);
 
-        y += 5.5;
+        y += 7;
+        verificarSaltoColumnaOPagina();
+      } else {
+        // Si hay más de 1 item, mostrar encabezado numerado y items con viñeta
 
-        // Salto de página si es necesario
-        if (y >= 195) {
-          doc.addPage();
-          y = 20;
+        // Capitalizar solo la primera letra del nombre de la prueba
+        const nombrePruebaCapitalizado =
+          prueba.nombrePruebaLab.charAt(0).toUpperCase() +
+          prueba.nombrePruebaLab.slice(1).toLowerCase();
+
+        doc.setFont('helvetica', 'bold'); // Negrita
+        doc.setFontSize(11);
+        doc.text(`${numeroPrueba}. ${nombrePruebaCapitalizado}`, xActual, y);
+        y += 7.5;
+
+        // Ordenar por ordenImpresion, luego por grupoItem y finalmente por nombre
+        const itemsOrdenados = [...items].sort((a: any, b: any) => {
+          // Primer criterio: ordenImpresion
+          const ordenA = a.itemLabId?.ordenImpresion ?? 0;
+          const ordenB = b.itemLabId?.ordenImpresion ?? 0;
+          if (ordenA !== ordenB) return ordenA - ordenB;
+
+          // Segundo criterio: grupoItem
+          const grupoA = a.itemLabId?.grupoItemLab?.toLowerCase() || '';
+          const grupoB = b.itemLabId?.grupoItemLab?.toLowerCase() || '';
+          if (grupoA !== grupoB) return grupoA.localeCompare(grupoB);
+
+          // Tercer criterio: nombre
+          const nombreA = a.itemLabId?.nombreHojaTrabajo?.toLowerCase() || '';
+          const nombreB = b.itemLabId?.nombreHojaTrabajo?.toLowerCase() || '';
+          return nombreA.localeCompare(nombreB);
+        });
+
+        let grupoActual: string | null = null;
+
+        for (const comp of itemsOrdenados) {
+          const item = comp.itemLabId;
+          if (!item) continue;
+
+          const grupo = item.grupoItemLab || null;
+          if (grupo && grupo !== grupoActual) {
+            // Cambió el grupo => imprimimos encabezado de grupo
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(11);
+            doc.text(grupo, xActual + 3, y);
+            y += 5;
+            grupoActual = grupo;
+          }
+
+          const nombreItem = item.nombreHojaTrabajo || 'Ítem sin nombre';
+          const unidad = item.unidadesRef || '';
+          const valoresRef = item.valoresHojaTrabajo || '';
+
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(11);
+          doc.text(`• ${nombreItem}`, xActual + 3, y); // Items con viñeta e indentados
+
+          // Línea para escribir resultado a mano (ajustada a la columna)
+          const lineaInicio = xActual + 37;
+          const lineaFin = xActual + 57;
+          doc.line(lineaInicio, y, lineaFin, y);
+
+          // Mostrar unidad y referencia (ajustadas a la columna)
+          doc.setFontSize(8.5);
+          const xValuesRef = xActual + 62;
+          let valoresRefText = '';
+          if (valoresRef) valoresRefText += `${valoresRef}`;
+          if (valoresRefText) doc.text(valoresRefText, xValuesRef, y);
+          const xInfo = xActual + 81;
+          let infoText = '';
+          if (unidad) infoText += `${unidad}`;
+          if (infoText) doc.text(infoText, xInfo, y);
+
+          y += 7;
+
+          // Verificar salto de columna o página
+          verificarSaltoColumnaOPagina();
         }
       }
 
+      numeroPrueba++; // Incrementar contador de pruebas
       y += 1; // espacio entre pruebas
+
+      // Verificar salto de columna o página
+      verificarSaltoColumnaOPagina();
     }
 
     doc.autoPrint();
