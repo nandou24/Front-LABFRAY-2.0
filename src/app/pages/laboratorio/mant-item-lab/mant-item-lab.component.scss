@@ -21,15 +21,13 @@ mat-option {
   padding-bottom: 0.5rem;
 }
 
-.mat-mdc-row .mat-mdc-cell {
-  cursor: pointer;
+// Estilos para tabla con cursor pointer y hover
+.mat-mdc-row:hover .mat-mdc-cell {
+  background-color: #dfe9f3;
 }
 
-.mat-mdc-row:hover .mat-mdc-cell,
 .mat-mdc-row:hover .mat-mdc-cell mat-icon {
-  background-color: #dfe9f3;
-  // color: #ffffff;
-  // fill: #ffffff;
+  cursor: pointer;
 }
 
 //para las filas de parametros de validación
@@ -170,5 +168,5 @@ mat-option {
 }
 
 .sidenav2 {
-  width: 600px;
+  width: 800px;
 }

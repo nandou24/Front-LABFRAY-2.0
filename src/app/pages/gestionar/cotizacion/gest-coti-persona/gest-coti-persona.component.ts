@@ -1106,6 +1106,7 @@ export class GestCotiPersonaComponent implements OnInit {
       historialVersion.serviciosCotizacion.forEach((servicio: any) => {
         this.serviciosCotizacion.push(
           this._fb.group({
+            servicioId: [servicio.servicioId, Validators.required],
             codServicio: [servicio.codServicio, Validators.required],
             tipoServicio: [servicio.tipoServicio, Validators.required],
             nombreServicio: [servicio.nombreServicio, Validators.required],
@@ -1198,6 +1199,7 @@ export class GestCotiPersonaComponent implements OnInit {
       historialVersion.serviciosCotizacion.forEach((servicio: any) => {
         this.serviciosCotizacion.push(
           this._fb.group({
+            servicioId: [servicio.servicioId, Validators.required],
             codServicio: [servicio.codServicio, Validators.required],
             tipoServicio: [servicio.tipoServicio, Validators.required],
             nombreServicio: [servicio.nombreServicio, Validators.required],

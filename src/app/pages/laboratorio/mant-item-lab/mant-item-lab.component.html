@@ -75,7 +75,7 @@
           </div>
 
           <div class="row-flex mt-2">
-            <div [style.flex]="setFlex(32, '%')" class="flex-item">
+            <div [style.flex]="setFlex(16, '%')" class="flex-item">
               <mat-form-field appearance="outline">
                 <mat-label>Unidades</mat-label>
                 <input matInput formControlName="unidadesRef" />
@@ -90,13 +90,22 @@
             <div [style.flex]="setFlex(32, '%')" class="flex-item">
               <mat-form-field appearance="outline">
                 <mat-label>Pertenece a</mat-label>
-                <input matInput formControlName="perteneceAPrueba" />
+                <mat-select formControlName="perteneceAPrueba">
+                  <mat-option
+                    *ngFor="let prueba of pruebas"
+                    [value]="prueba._id"
+                  >
+                    {{ prueba.codPruebaLab }} -
+                    {{ prueba.nombrePruebaLab }}
+                  </mat-option>
+                </mat-select>
+
                 <mat-error
                   *ngIf="
                     myFormItemLab.get('perteneceAPrueba')?.hasError('required')
                   "
                 >
-                  Ingrese a que prueba pertenece
+                  Obligatorio
                 </mat-error>
               </mat-form-field>
             </div>
@@ -105,6 +114,25 @@
               <mat-form-field appearance="outline">
                 <mat-label>Grupo</mat-label>
                 <input matInput formControlName="grupoItemLab" />
+              </mat-form-field>
+            </div>
+
+            <div [style.flex]="setFlex(16, '%')" class="flex-item">
+              <mat-form-field appearance="outline">
+                <mat-label>Orden de Impresión</mat-label>
+                <input
+                  matInput
+                  type="number"
+                  min="1"
+                  formControlName="ordenImpresion"
+                />
+                <mat-error
+                  *ngIf="
+                    myFormItemLab.get('ordenImpresion')?.hasError('required')
+                  "
+                >
+                  Requerido
+                </mat-error>
               </mat-form-field>
             </div>
           </div>
@@ -434,13 +462,41 @@
             <ng-container matColumnDef="PerteneceAPrueba">
               <th mat-header-cell *matHeaderCellDef>Pertence a</th>
               <td mat-cell *matCellDef="let item">
-                {{ item.perteneceAPrueba }}
+                {{ item.perteneceAPrueba.nombrePruebaLab || "N/A" }}
               </td>
             </ng-container>
 
             <ng-container matColumnDef="grupoItemLab">
               <th mat-header-cell *matHeaderCellDef>Grupo</th>
               <td mat-cell *matCellDef="let item">{{ item.grupoItemLab }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="ordenImpresion">
+              <th mat-header-cell *matHeaderCellDef>Orden</th>
+              <td mat-cell *matCellDef="let item">{{ item.ordenImpresion }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="accion">
+              <th mat-header-cell *matHeaderCellDef>Acción</th>
+              <td mat-cell *matCellDef="let item; let i = index">
+                <button
+                  mat-icon-button
+                  color="primary"
+                  type="button"
+                  (click)="cargarItemLab(item, i)"
+                >
+                  <mat-icon>edit</mat-icon>
+                </button>
+
+                <button
+                  mat-icon-button
+                  color="warn"
+                  type="button"
+                  (click)="eliminarItemLab(item)"
+                >
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </td>
             </ng-container>
 
             <!-- Filas -->
@@ -452,7 +508,6 @@
                 let i = index;
                 columns: columnasTablaPaciente
               "
-              (click)="cargarItemLab(row, i)"
               [class.fila-seleccionada]="i === filaSeleccionadaIndex"
             ></tr>
           </table>

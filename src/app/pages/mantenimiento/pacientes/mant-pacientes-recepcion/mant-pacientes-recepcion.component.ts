@@ -320,6 +320,7 @@ export class MantPacientesRecepcionComponent implements OnInit {
       distritoCliente: '',
     });
     this.filaSeleccionadaIndex = null;
+    this.terminoBusqueda.setValue(''); // Limpiar el campo de búsqueda
     this.pacienteForm.get('tipoDoc')?.enable();
     this.pacienteForm.get('nroDoc')?.enable();
   }

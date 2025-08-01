@@ -294,6 +294,7 @@ export class GestPagoCotiPersonaComponent implements OnInit {
     this._cotizacionService.getLatestCotizacioPorPagar(cantidad).subscribe({
       next: (res: ICotizacion[]) => {
         this.dataSourceCotizaciones.data = res;
+        console.log('Últimas cotizaciones cargadas:', res);
       },
       error: (err: any) => {
         this.dataSourceCotizaciones.data = [];
@@ -575,6 +576,7 @@ export class GestPagoCotiPersonaComponent implements OnInit {
 
     if (this.myFormPagoPersona.invalid) {
       this.myFormPagoPersona.markAllAsTouched();
+      console.log(this.myFormPagoPersona);
       console.log('Formulario inválido');
       return;
     }

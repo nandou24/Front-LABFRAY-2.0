@@ -1,6 +1,5 @@
 export interface IItemLab {
   _id?: string;
-  itemLabId: string;
   codItemLab: string;
   nombreInforme: string;
   nombreHojaTrabajo: string;
@@ -8,7 +7,12 @@ export interface IItemLab {
   valoresHojaTrabajo: string;
   valoresInforme: string;
   unidadesRef: string;
-  perteneceAPrueba: string;
+  perteneceAPrueba: {
+    _id: string;
+    codPruebaLab: string;
+    nombrePruebaLab: string;
+  };
+  ordenImpresion: number;
   grupoItemLab: string;
   poseeValidacion: string;
   paramValidacion: Array<any>[];

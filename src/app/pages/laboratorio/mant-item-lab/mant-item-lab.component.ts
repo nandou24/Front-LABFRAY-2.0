@@ -29,6 +29,7 @@ import { ItemLabService } from '../../../services/mantenimiento/itemLab/item-lab
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { PruebaLabService } from '../../../services/mantenimiento/pruebaLab/prueba-lab.service';
 
 @Component({
   selector: 'app-mant-item-lab',
@@ -53,23 +54,26 @@ import { MatTooltipModule } from '@angular/material/tooltip';
   styleUrl: './mant-item-lab.component.scss',
 })
 export class MantItemLabComponent implements OnInit {
-  constructor(private _itemLabService: ItemLabService) {}
+  constructor() {}
 
   ngOnInit(): void {
-    this.ultimosItems(), this.limpiarValidacion();
-
-    // Detectar si es móvil
-    this.breakpointObserver
-      .observe([Breakpoints.Handset])
-      .subscribe((result) => {
-        this.isMobile = result.matches;
-        if (this.isMobile) {
-          this.opened = false; // Cerrar el sidenav en móvil por defecto
-        }
-      });
+    this.ultimosItems(),
+      this.limpiarValidacion(),
+      this.listarPruebas(),
+      // Detectar si es móvil
+      this.breakpointObserver
+        .observe([Breakpoints.Handset])
+        .subscribe((result) => {
+          this.isMobile = result.matches;
+          if (this.isMobile) {
+            this.opened = false; // Cerrar el sidenav en móvil por defecto
+          }
+        });
   }
 
   private _fb = inject(FormBuilder);
+  private _itemLabService = inject(ItemLabService);
+  private _pruebaService = inject(PruebaLabService);
 
   // Getter para el modo del sidenav
   get sidenavMode(): 'side' | 'over' {
@@ -77,6 +81,7 @@ export class MantItemLabComponent implements OnInit {
   }
 
   public myFormItemLab: FormGroup = this._fb.group({
+    _id: [null],
     codItemLab: '',
     nombreInforme: ['', [Validators.required]],
     nombreHojaTrabajo: ['', [Validators.required]],
@@ -84,7 +89,8 @@ export class MantItemLabComponent implements OnInit {
     valoresHojaTrabajo: ['', [Validators.required]],
     valoresInforme: ['', [Validators.required]],
     unidadesRef: ['', [Validators.required]],
-    perteneceAPrueba: ['', [Validators.required]],
+    perteneceAPrueba: [null, [Validators.required]],
+    ordenImpresion: [null, [Validators.required]],
     grupoItemLab: [''],
     poseeValidacion: [false],
     paramValidacion: this._fb.array([]),
@@ -198,6 +204,29 @@ export class MantItemLabComponent implements OnInit {
   @ViewChild('MatPaginatorItems') paginatorItems!: MatPaginator;
   ngAfterViewInit() {
     this.dataSourceItems.paginator = this.paginatorItems;
+    // Configurar el filtro personalizado para buscar en propiedades anidadas
+    this.dataSourceItems.filterPredicate = (data: IItemLab, filter: string) => {
+      const searchStr = filter.toLowerCase();
+
+      // Buscar en propiedades simples
+      const simpleFields = [
+        data.codItemLab?.toLowerCase() || '',
+        data.nombreInforme?.toLowerCase() || '',
+        data.nombreHojaTrabajo?.toLowerCase() || '',
+        data.grupoItemLab?.toLowerCase() || '',
+      ];
+
+      // Buscar en propiedades anidadas de perteneceAPrueba
+      const pruebaFields = [
+        data.perteneceAPrueba?.nombrePruebaLab?.toLowerCase() || '',
+      ];
+
+      // Combinar todos los campos
+      const allFields = [...simpleFields, ...pruebaFields];
+
+      // Verificar si algún campo contiene el término de búsqueda
+      return allFields.some((field) => field.includes(searchStr));
+    };
   }
   //Tabla pacientes
   columnasTablaPaciente: string[] = [
@@ -205,6 +234,8 @@ export class MantItemLabComponent implements OnInit {
     'NombreItem',
     'PerteneceAPrueba',
     'grupoItemLab',
+    'ordenImpresion',
+    'accion',
   ];
   dataSourceItems = new MatTableDataSource<IItemLab>();
 
@@ -215,40 +246,33 @@ export class MantItemLabComponent implements OnInit {
     this._itemLabService.getLastItemsLab().subscribe((items) => {
       this.todosLosItems = items; // Guardar todos los datos iniciales
       this.dataSourceItems.data = items;
+      console.log('Items obtenidos:', items);
+    });
+  }
+
+  pruebas: any[] = [];
+  listarPruebas() {
+    this._pruebaService.getLastPruebasLab().subscribe({
+      next: (pruebas) => {
+        this.pruebas = pruebas;
+      },
+      error: () => {
+        this.pruebas = [];
+      },
     });
   }
 
   terminoBusqueda = new FormControl('');
   timeoutBusqueda: any;
 
-  // buscarItems() {
-  //   clearTimeout(this.timeoutBusqueda);
-  //   this.timeoutBusqueda = setTimeout(() => {
-  //     const termino = this.terminoBusqueda.value?.trim() || '';
-  //     if (termino.length >= 3) {
-  //       this._itemLabService.getItem(termino).subscribe((res: IItemLab[]) => {
-  //         this.dataSourceItems.data = res;
-  //       });
-  //     } else if (termino.length > 0) {
-  //       this.dataSourceItems.data = [];
-  //     } else {
-  //       this.ultimosItems();
-  //     }
-  //   }, 200);
-  // }
-
   buscarItems() {
     const termino = this.terminoBusqueda?.value?.trim() ?? '';
 
-    if (termino === '') {
-      // Si no hay término de búsqueda, mostrar todos los datos iniciales
-      this.dataSourceItems.data = this.todosLosItems;
-      this.dataSourceItems.filter = '';
-    } else {
-      // Si hay término de búsqueda, aplicar filtro del dataSource
-      this.dataSourceItems.data = this.todosLosItems; // Asegurar que tiene todos los datos
-      this.dataSourceItems.filter = termino.toLowerCase();
-    }
+    // Asegurar que el dataSource tenga todos los datos
+    this.dataSourceItems.data = this.todosLosItems;
+
+    // Aplicar el filtro (el filterPredicate personalizado se encargará de la búsqueda)
+    this.dataSourceItems.filter = termino.toLowerCase();
 
     // Si hay un paginador, ir a la primera página cuando se filtra
     if (this.dataSourceItems.paginator) {
@@ -263,6 +287,9 @@ export class MantItemLabComponent implements OnInit {
     this.filaSeleccionadaIndex = index;
     this.myFormItemLab.reset(); // Reinicia el formulario antes de cargar los datos
     this.myFormItemLab.patchValue(item);
+    this.myFormItemLab
+      .get('perteneceAPrueba')
+      ?.setValue(item.perteneceAPrueba._id.toString());
 
     this.paramValidacion.clear();
 
@@ -440,4 +467,54 @@ export class MantItemLabComponent implements OnInit {
   isMobile: boolean = false;
 
   private breakpointObserver = inject(BreakpointObserver);
+
+  editarItemLab(item: IItemLab, index: number) {
+    this.filaSeleccionadaIndex = index;
+    this.myFormItemLab.reset(); // Reinicia el formulario antes de cargar los datos
+    this.myFormItemLab.patchValue(item);
+    this.paramValidacion.clear();
+
+    // Agregar cada validación al FormArray
+    item.paramValidacion.forEach((validacion: any) => {
+      this.paramValidacion.push(this.crearValidacionGroup(validacion));
+    });
+  }
+
+  eliminarItemLab(item: IItemLab) {
+    Swal.fire({
+      title: '¿Estás seguro?',
+      text: `¿Deseas eliminar el item ${item.nombreInforme}?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this._itemLabService.eliminarItemLab(item._id).subscribe({
+          next: () => {
+            Swal.fire({
+              title: 'Confirmado',
+              text: 'Item Eliminado',
+              icon: 'success',
+              confirmButtonText: 'Ok',
+            });
+            this.ultimosItems();
+          },
+          error: (err) => {
+            const mensaje =
+              err?.error?.msg ||
+              err.message ||
+              'No se pudo eliminar el item. Intenta nuevamente.';
+
+            Swal.fire({
+              title: 'Error',
+              text: mensaje,
+              icon: 'error',
+              confirmButtonText: 'Ok',
+            });
+          },
+        });
+      }
+    });
+  }
 }

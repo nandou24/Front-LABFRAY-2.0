@@ -179,7 +179,11 @@ export class MantPruebaLabComponent implements OnInit, AfterViewInit {
       itemLabId: [item._id],
       codItemLab: [item.codItemLab, Validators.required],
       nombreInforme: [item.nombreInforme, Validators.required],
-      perteneceA: [item.perteneceAPrueba],
+      perteneceAPrueba: [item.perteneceAPrueba, Validators.required],
+      // perteneceAPrueba: [
+      //   (item.perteneceAPrueba as any).nombrePruebaLab,
+      //   Validators.required,
+      // ],
     });
   }
 
@@ -319,7 +323,6 @@ export class MantPruebaLabComponent implements OnInit, AfterViewInit {
     this.dataSourceItemsSeleccionados.data = [];
     this.myFormPruebaLab.get('nombrePruebaLab')?.enable();
     this.myFormPruebaLab.get('areaLab')?.enable();
-    this.pruebaSeleccionada = false;
     this.filaSeleccionadaIndex = null;
     this.terminoBusqueda.setValue(''); // Limpia el campo de búsqueda
     this.terminoBusquedaItems.setValue(''); // Limpia el campo de búsqueda de
@@ -330,7 +333,9 @@ export class MantPruebaLabComponent implements OnInit, AfterViewInit {
   formSubmitted = false;
 
   registraPrueba() {
+    console.log('Registrando prueba...');
     if (this.myFormPruebaLab.invalid) {
+      console.log('Formulario inválido');
       this.myFormPruebaLab.markAllAsTouched();
       return;
     }
@@ -339,7 +344,7 @@ export class MantPruebaLabComponent implements OnInit, AfterViewInit {
 
     if (
       this.myFormPruebaLab.valid &&
-      this.validarArrayItems() &&
+      //this.validarArrayItems() &&
       this.validarTipoMuestra() &&
       this.validarTipoEnvase()
     ) {
@@ -411,7 +416,7 @@ export class MantPruebaLabComponent implements OnInit, AfterViewInit {
 
     if (
       this.myFormPruebaLab.valid &&
-      this.validarArrayItems() &&
+      //this.validarArrayItems() &&
       this.validarTipoMuestra() &&
       this.validarTipoEnvase()
     ) {
@@ -475,11 +480,9 @@ export class MantPruebaLabComponent implements OnInit, AfterViewInit {
     }
   }
 
-  pruebaSeleccionada = false;
   filaSeleccionadaIndex: number | null = null;
 
   cargarPruebas(prueba: IPruebaLab, index: number) {
-    this.pruebaSeleccionada = true;
     this.filaSeleccionadaIndex = index;
 
     this.myFormPruebaLab.get('nombrePruebaLab')?.disable();
