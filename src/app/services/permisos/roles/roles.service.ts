@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { environment } from '../../../../environments/enviroment';
+import { environment } from '../../../../environments/environment';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import {
   IGetLastRoles,
@@ -21,26 +21,21 @@ export class RolesService {
   private readonly _auth = inject(AuthService);
 
   registrarRol(rol: IRol): Observable<IRolPostDTO> {
-    return this._http.post<IRolPostDTO>(
-      `${this.apiUrl}/newRol`,
-      rol,
-      { headers: this._auth.getAuthHeaders() },
-    );
+    return this._http.post<IRolPostDTO>(`${this.apiUrl}/newRol`, rol, {
+      headers: this._auth.getAuthHeaders(),
+    });
   }
 
   actualizarRol(codRol: string, rol: IRol): Observable<IRolPostDTO> {
-    return this._http.put<IRolPostDTO>(
-      `${this.apiUrl}/${codRol}`,
-      rol,
-      { headers: this._auth.getAuthHeaders() },
-    );
+    return this._http.put<IRolPostDTO>(`${this.apiUrl}/${codRol}`, rol, {
+      headers: this._auth.getAuthHeaders(),
+    });
   }
 
   eliminarRol(codRol: string): Observable<IRolPostDTO> {
-    return this._http.delete<IRolPostDTO>(
-      `${this.apiUrl}/${codRol}`,
-      { headers: this._auth.getAuthHeaders() },
-    );
+    return this._http.delete<IRolPostDTO>(`${this.apiUrl}/${codRol}`, {
+      headers: this._auth.getAuthHeaders(),
+    });
   }
 
   getAllRoles(): Observable<IRol[]> {

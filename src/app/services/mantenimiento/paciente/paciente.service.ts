@@ -3,7 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { catchError, map, Observable, of } from 'rxjs';
 import Swal from 'sweetalert2';
-import { environment } from '../../../../environments/enviroment';
+import { environment } from '../../../../environments/environment';
 import {
   IGetLastPatients,
   IGetPatientbyId,

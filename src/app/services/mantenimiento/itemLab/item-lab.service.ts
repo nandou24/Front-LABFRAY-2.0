@@ -6,7 +6,7 @@ import {
   IItemLab,
   IItemLabPostDTO,
 } from '../../../models/Mantenimiento/items.models';
-import { environment } from '../../../../environments/enviroment';
+import { environment } from '../../../../environments/environment';
 import { AuthService } from '../../auth/auth.service';
 
 @Injectable({

@@ -7,7 +7,7 @@ import {
   IPagoPostDTOResponse,
 } from '../../../models/Gestion/pagos.models';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { environment } from '../../../../environments/enviroment';
+import { environment } from '../../../../environments/environment';
 import { map, Observable } from 'rxjs';
 import { AuthService } from '../../auth/auth.service';
 

@@ -5,7 +5,7 @@ import {
   IProfesion,
   IProfesionPostResponseDTO,
 } from '../../../models/Mantenimiento/profesion.models';
-import { environment } from '../../../../environments/enviroment';
+import { environment } from '../../../../environments/environment';
 import { map, Observable } from 'rxjs';
 import { AuthService } from '../../auth/auth.service';
 

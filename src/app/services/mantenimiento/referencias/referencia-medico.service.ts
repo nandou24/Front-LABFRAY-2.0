@@ -8,7 +8,7 @@ import {
   IGetLastRefMedicoById,
 } from '../../../models/Mantenimiento/referenciaMedico.models';
 import { map, Observable } from 'rxjs';
-import { environment } from '../../../../environments/enviroment';
+import { environment } from '../../../../environments/environment';
 import { AuthService } from '../../auth/auth.service';
 
 @Injectable({

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { environment } from '../../../environments/enviroment';
+import { environment } from '../../../environments/environment';
 import { Observable } from 'rxjs';
 import { ILoginResponse } from '../../models/login.model';
 import { HttpClient } from '@angular/common/http';

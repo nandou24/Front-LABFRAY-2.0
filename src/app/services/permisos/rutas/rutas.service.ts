@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { environment } from '../../../../environments/enviroment';
+import { environment } from '../../../../environments/environment';
 import {
   IGetLastRutas,
   IRuta,
@@ -20,26 +20,21 @@ export class RutasService {
   private readonly _auth = inject(AuthService);
 
   registrarRuta(ruta: IRuta): Observable<any> {
-    return this._http.post<IRutaPostDTO>(
-      `${this.apiUrl}/newRuta`,
-      ruta,
-      { headers: this._auth.getAuthHeaders() },
-    );
+    return this._http.post<IRutaPostDTO>(`${this.apiUrl}/newRuta`, ruta, {
+      headers: this._auth.getAuthHeaders(),
+    });
   }
 
   actualizarRuta(codRuta: string, ruta: IRuta): Observable<any> {
-    return this._http.put<IRutaPostDTO>(
-      `${this.apiUrl}/${codRuta}`,
-      ruta,
-      { headers: this._auth.getAuthHeaders() },
-    );
+    return this._http.put<IRutaPostDTO>(`${this.apiUrl}/${codRuta}`, ruta, {
+      headers: this._auth.getAuthHeaders(),
+    });
   }
 
   eliminarRuta(codRuta: string): Observable<any> {
-    return this._http.delete<IRutaPostDTO>(
-      `${this.apiUrl}/${codRuta}`,
-      { headers: this._auth.getAuthHeaders() },
-    );
+    return this._http.delete<IRutaPostDTO>(`${this.apiUrl}/${codRuta}`, {
+      headers: this._auth.getAuthHeaders(),
+    });
   }
 
   getAllRutas(): Observable<IRuta[]> {

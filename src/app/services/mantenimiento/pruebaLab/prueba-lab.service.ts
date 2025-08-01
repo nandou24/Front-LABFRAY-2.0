@@ -6,7 +6,7 @@ import {
   IPruebaLab,
   IPruebaLabPostDTO,
 } from '../../../models/Mantenimiento/pruebaLab.models';
-import { environment } from '../../../../environments/enviroment';
+import { environment } from '../../../../environments/environment';
 import { AuthService } from '../../auth/auth.service';
 
 @Injectable({
