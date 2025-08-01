@@ -1,5 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://rickandmortyapi.com/api/character',
-  baseUrl: 'http://localhost:4000',
+  baseUrl: process.env['NG_APP_API_URL'],
 };
