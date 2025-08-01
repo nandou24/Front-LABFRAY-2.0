@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  baseUrl: process.env['NG_APP_API_URL'],
+  baseUrl: 'https://back-labfray-production.up.railway.app', // TODO: Cambiar por la URL real del backend
 };
