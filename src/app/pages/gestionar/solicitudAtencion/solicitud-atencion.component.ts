@@ -131,7 +131,7 @@ export class SolicitudAtencionComponent implements OnInit {
     this.dataSourceSolicitud.filter = termino.trim().toLowerCase();
   }
 
-  imprimirSolicitud(solicitud: any) {
+  async imprimirSolicitud(solicitud: any) {
     console.log('Servicios:', solicitud.servicios);
     // Implementar generación de PDF
 
@@ -147,7 +147,9 @@ export class SolicitudAtencionComponent implements OnInit {
 
     if (solicitud.tipo === 'Consulta') {
       pdfSrc =
-        this._pdfConsultaMedicaService.generarHojaConsultaMedicaPDF(solicitud);
+        await this._pdfConsultaMedicaService.generarHojaConsultaMedicaPDF(
+          solicitud,
+        );
     } else if (solicitud.tipo === 'Laboratorio') {
       this._servicioService
         .getPruebasLaboratorioItems(solicitud.servicios)

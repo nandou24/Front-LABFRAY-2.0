@@ -2,21 +2,53 @@ import { Injectable } from '@angular/core';
 import jsPDF from 'jspdf';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ISolicitudAtencion } from '../../../../models/Gestion/solicitudAtencion.models';
+import { PacienteService } from '../../../mantenimiento/paciente/paciente.service';
+import { IPaciente } from '../../../../models/Mantenimiento/paciente.models';
+import { FechaValidatorService } from '../../validators/fechasValidator/fecha-validator.service';
+import { firstValueFrom } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
 })
 export class HcPdfService {
-  constructor(private _sanitizer: DomSanitizer) {}
+  constructor(
+    private _sanitizer: DomSanitizer,
+    private readonly _pacienteService: PacienteService,
+    private readonly _fechasServices: FechaValidatorService,
+  ) {}
 
-  generarHojaConsultaMedicaPDF(
+  datoPaciente = {} as IPaciente;
+  edad = '';
+
+  async generarHojaConsultaMedicaPDF(
     data: ISolicitudAtencion,
-  ): SafeResourceUrl | void {
+  ): Promise<SafeResourceUrl | void> {
     const doc = new jsPDF({
       orientation: 'landscape',
       unit: 'mm',
       format: [210, 148.5], // width, height
     });
+
+    console.log('Datos para generar PDF de Hoja de Consulta Médica:', data);
+
+    try {
+      // Obtener los datos del paciente
+      this.datoPaciente = await firstValueFrom(
+        this._pacienteService.getPatientbyId(data.clienteId),
+      );
+      console.log('Datos del paciente obtenidos:', this.datoPaciente);
+    } catch (error) {
+      console.error('Error al obtener los datos del paciente:', error);
+    }
+
+    try {
+      this.edad = this._fechasServices.calcularEdadEnFecha(
+        this.datoPaciente.fechaNacimiento,
+        data.fechaEmision,
+      );
+    } catch (error) {
+      console.error('Error al calcular la edad:', error);
+    }
 
     doc.setFont('helvetica', 'bold');
 
@@ -101,6 +133,9 @@ export class HcPdfService {
     doc.text(`Peso:`, 80, fila1Y);
     doc.text(`Edad:`, 110, fila1Y);
 
+    doc.text(`${this.datoPaciente.sexoCliente}`, 21, fila1Y);
+    doc.text(`${this.edad}`, 121, fila1Y);
+
     //segunda fila Motivo de Consulta, Tipo de Enfermedad
     doc.text(`Motivo de consulta:`, 10, fila1Y + altofila);
     doc.text(`Tipo de Enfermedad:`, 110, fila1Y + altofila);
@@ -118,6 +153,7 @@ export class HcPdfService {
     doc.text(`FC:`, 80, fila1Y + altofila * 10);
     doc.text(`PA:`, 108, fila1Y + altofila * 10);
     doc.text(`T°:`, 140, fila1Y + altofila * 10);
+    doc.text(`Sat:`, 168, fila1Y + altofila * 10);
 
     //sexta fila, diagnóstico, CIE10
     doc.text(`Diagnóstico:`, 10, fila1Y + altofila * 14);

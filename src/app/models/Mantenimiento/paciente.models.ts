@@ -14,7 +14,7 @@ export interface IPaciente {
   distritoCliente: string;
   direcCliente: string;
   mailCliente: string;
-  phones: Array<any>[];
+  phones: any[];
 }
 
 export interface IPacientePostDTO {

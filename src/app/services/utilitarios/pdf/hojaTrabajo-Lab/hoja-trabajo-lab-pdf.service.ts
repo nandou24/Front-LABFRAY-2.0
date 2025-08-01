@@ -31,24 +31,26 @@ export class HojaTrabajoLabPdfService {
     this.edad = '';
     this.datoSolicitante = {} as IRefMedico;
 
-    console.log(
-      'Datos para generar PDF de Hoja de Trabajo de Laboratorio:',
-      data,
-    );
-    console.log('Pruebas de laboratorio con items:', pruebasLaboratorio);
+    // console.log(
+    //   'Datos para generar PDF de Hoja de Trabajo de Laboratorio:',
+    //   data,
+    // );
+    // console.log('Pruebas de laboratorio con items:', pruebasLaboratorio);
 
     try {
       // Obtener los datos del paciente
       this.datoPaciente = await firstValueFrom(
         this._pacienteService.getPatientbyId(data.clienteId),
       );
+      console.log('Datos del paciente obtenidos:', this.datoPaciente);
     } catch (error) {
       console.error('Error al obtener los datos del paciente:', error);
     }
 
     try {
-      this.edad = this._fechasServices.calcularEdad(
+      this.edad = this._fechasServices.calcularEdadEnFecha(
         this.datoPaciente.fechaNacimiento,
+        data.fechaEmision,
       );
     } catch (error) {
       console.error('Error al calcular la edad:', error);
@@ -130,6 +132,7 @@ export class HojaTrabajoLabPdfService {
     doc.text(`Documento:`, xLabelDatosPaciente + 90, yLabelDatosPaciente);
     doc.text(`Sexo:`, xLabelDatosPaciente, yLabelDatosPaciente + 4);
     doc.text(`Edad:`, xLabelDatosPaciente + 40, yLabelDatosPaciente + 4);
+    doc.text(`Teléfono:`, xLabelDatosPaciente + 90, yLabelDatosPaciente + 4);
     doc.text(`Solicitante:`, xLabelDatosPaciente, yLabelDatosPaciente + 8);
 
     doc.setFont('helvetica', 'normal');
@@ -149,6 +152,11 @@ export class HojaTrabajoLabPdfService {
       yValueDatosPaciente + 4,
     );
     doc.text(`${this.edad}`, xValueDatosPaciente + 31, yValueDatosPaciente + 4);
+    doc.text(
+      `${this.datoPaciente.phones[0].phoneNumber || ''}`,
+      xValueDatosPaciente + 90,
+      yValueDatosPaciente + 4,
+    );
 
     if (this.datoSolicitante && Object.keys(this.datoSolicitante).length > 0) {
       doc.text(
