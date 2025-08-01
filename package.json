@@ -4,9 +4,10 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
-    "build": "ng build",
+    "build": "ng build --configuration production",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "start:prod": "http-server dist/front-labfray-2.0/browser -p $PORT --gzip -c-1"
   },
   "private": true,
   "dependencies": {
@@ -26,7 +27,8 @@
     "rxjs": "~7.8.0",
     "sweetalert2": "^11.19.1",
     "tslib": "^2.3.0",
-    "zone.js": "~0.15.0"
+    "zone.js": "~0.15.0",
+    "http-server": "^14.1.1"
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "^19.2.0",
