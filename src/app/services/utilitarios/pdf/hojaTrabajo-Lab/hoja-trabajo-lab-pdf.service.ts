@@ -268,39 +268,36 @@ export class HojaTrabajoLabPdfService {
         doc.text(`${numeroPrueba}. ${nombrePruebaCapitalizado}`, xActual, y);
         y += 7.5;
 
-        // Ordenar por ordenImpresion, luego por grupoItem y finalmente por nombre
-        const itemsOrdenados = [...items].sort((a: any, b: any) => {
-          // Primer criterio: ordenImpresion
-          const ordenA = a.itemLabId?.ordenImpresion ?? 0;
-          const ordenB = b.itemLabId?.ordenImpresion ?? 0;
-          if (ordenA !== ordenB) return ordenA - ordenB;
-
-          // Segundo criterio: grupoItem
-          const grupoA = a.itemLabId?.grupoItemLab?.toLowerCase() || '';
-          const grupoB = b.itemLabId?.grupoItemLab?.toLowerCase() || '';
-          if (grupoA !== grupoB) return grupoA.localeCompare(grupoB);
-
-          // Tercer criterio: nombre
-          const nombreA = a.itemLabId?.nombreHojaTrabajo?.toLowerCase() || '';
-          const nombreB = b.itemLabId?.nombreHojaTrabajo?.toLowerCase() || '';
-          return nombreA.localeCompare(nombreB);
+        // Primero ordenamos todos los items por ordenImpresion
+        const itemsOrdenadosPorImpresion = [...items].sort((a: any, b: any) => {
+          const ordenA = a.itemLabId?.ordenImpresion ?? 999;
+          const ordenB = b.itemLabId?.ordenImpresion ?? 999;
+          return ordenA - ordenB;
         });
 
-        let grupoActual: string | null = null;
+        // Agrupamos los items por grupo
+        const gruposMap = new Map();
+        const itemsSinGrupo = [];
 
-        for (const comp of itemsOrdenados) {
+        for (const comp of itemsOrdenadosPorImpresion) {
           const item = comp.itemLabId;
           if (!item) continue;
 
-          const grupo = item.grupoItemLab || null;
-          if (grupo && grupo !== grupoActual) {
-            // Cambió el grupo => imprimimos encabezado de grupo
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(11);
-            doc.text(grupo, xActual + 3, y);
-            y += 5;
-            grupoActual = grupo;
+          const grupo = item.grupoItemLab;
+          if (grupo) {
+            if (!gruposMap.has(grupo)) {
+              gruposMap.set(grupo, []);
+            }
+            gruposMap.get(grupo).push(comp);
+          } else {
+            itemsSinGrupo.push(comp);
           }
+        }
+
+        // Procesamos primero los items sin grupo
+        for (const comp of itemsSinGrupo) {
+          const item = comp.itemLabId;
+          if (!item) continue;
 
           const nombreItem = item.nombreHojaTrabajo || 'Ítem sin nombre';
           const unidad = item.unidadesRef || '';
@@ -308,7 +305,7 @@ export class HojaTrabajoLabPdfService {
 
           doc.setFont('helvetica', 'normal');
           doc.setFontSize(11);
-          doc.text(`• ${nombreItem}`, xActual + 1, y); // Items con viñeta e indentados
+          doc.text(`• ${nombreItem}`, xActual + 1, y);
 
           // Línea para escribir resultado a mano (ajustada a la columna)
           const lineaInicio = xActual + 43;
@@ -327,9 +324,60 @@ export class HojaTrabajoLabPdfService {
           if (infoText) doc.text(infoText, xInfo, y);
 
           y += 7;
-
-          // Verificar salto de columna o página
           verificarSaltoColumnaOPagina();
+        }
+
+        // Procesamos los grupos ordenados alfabéticamente
+        const gruposOrdenados = Array.from(gruposMap.keys()).sort();
+
+        for (const nombreGrupo of gruposOrdenados) {
+          const itemsDelGrupo = gruposMap.get(nombreGrupo);
+
+          // Solo mostrar encabezado de grupo si hay más de 1 item
+          if (itemsDelGrupo.length > 1) {
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(10);
+            doc.text(nombreGrupo, xActual + 3, y);
+            y += 5;
+            verificarSaltoColumnaOPagina();
+          }
+
+          // Mostrar items del grupo (ya están ordenados por ordenImpresion)
+          for (const comp of itemsDelGrupo) {
+            const item = comp.itemLabId;
+            if (!item) continue;
+
+            const nombreItem = item.nombreHojaTrabajo || 'Ítem sin nombre';
+            const unidad = item.unidadesRef || '';
+            const valoresRef = item.valoresHojaTrabajo || '';
+
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(11);
+
+            // Si hay más de 1 item en el grupo, indentar más
+            const indentacion =
+              itemsDelGrupo.length > 1 ? xActual + 6 : xActual + 1;
+            doc.text(`• ${nombreItem}`, indentacion, y);
+
+            // Línea para escribir resultado a mano (ajustada a la columna)
+            const lineaInicio = xActual + 43;
+            const lineaFin = xActual + 62;
+            doc.line(lineaInicio, y, lineaFin, y);
+
+            // Mostrar unidad y referencia (ajustadas a la columna)
+            doc.setFontSize(8.5);
+            const xValuesRef = xActual + 66;
+            let valoresRefText = '';
+            if (valoresRef) valoresRefText += `${valoresRef}`;
+            if (valoresRefText) doc.text(valoresRefText, xValuesRef, y);
+            const xInfo = xActual + 83;
+            let infoText = '';
+            if (unidad) infoText += `${unidad}`;
+            if (infoText) doc.text(infoText, xInfo, y);
+
+            y += 7;
+            verificarSaltoColumnaOPagina();
+          }
         }
       }
 
