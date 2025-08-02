@@ -154,8 +154,12 @@ export class HojaTrabajoLabPdfService {
       yValueDatosPaciente + 6,
     );
     doc.text(`${this.edad}`, xValueDatosPaciente + 40, yValueDatosPaciente + 6); // Ajustado
+    const phoneNumber =
+      this.datoPaciente.phones && this.datoPaciente.phones.length > 0
+        ? this.datoPaciente.phones[0].phoneNumber || ''
+        : '';
     doc.text(
-      `${this.datoPaciente.phones[0].phoneNumber || ''}`,
+      `${phoneNumber}`,
       xValueDatosPaciente + 130, // Ajustado
       yValueDatosPaciente + 6,
     );
@@ -233,18 +237,18 @@ export class HojaTrabajoLabPdfService {
         doc.text(`${numeroPrueba}. ${nombreCapitalizado}`, xActual, y);
 
         // Línea para escribir resultado a mano (ajustada a la columna)
-        const lineaInicio = xActual + 37;
-        const lineaFin = xActual + 57;
+        const lineaInicio = xActual + 43;
+        const lineaFin = xActual + 62;
         doc.line(lineaInicio, y, lineaFin, y);
 
         // Mostrar unidad y referencia (ajustadas a la columna)
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(8.5);
-        const xValuesRef = xActual + 62;
+        const xValuesRef = xActual + 66;
         let valoresRefText = '';
         if (valoresRef) valoresRefText += `${valoresRef}`;
         if (valoresRefText) doc.text(valoresRefText, xValuesRef, y);
-        const xInfo = xActual + 81;
+        const xInfo = xActual + 83;
         let infoText = '';
         if (unidad) infoText += `${unidad}`;
         if (infoText) doc.text(infoText, xInfo, y);
@@ -304,20 +308,20 @@ export class HojaTrabajoLabPdfService {
 
           doc.setFont('helvetica', 'normal');
           doc.setFontSize(11);
-          doc.text(`• ${nombreItem}`, xActual + 3, y); // Items con viñeta e indentados
+          doc.text(`• ${nombreItem}`, xActual + 1, y); // Items con viñeta e indentados
 
           // Línea para escribir resultado a mano (ajustada a la columna)
-          const lineaInicio = xActual + 37;
-          const lineaFin = xActual + 57;
+          const lineaInicio = xActual + 43;
+          const lineaFin = xActual + 62;
           doc.line(lineaInicio, y, lineaFin, y);
 
           // Mostrar unidad y referencia (ajustadas a la columna)
           doc.setFontSize(8.5);
-          const xValuesRef = xActual + 62;
+          const xValuesRef = xActual + 66;
           let valoresRefText = '';
           if (valoresRef) valoresRefText += `${valoresRef}`;
           if (valoresRefText) doc.text(valoresRefText, xValuesRef, y);
-          const xInfo = xActual + 81;
+          const xInfo = xActual + 83;
           let infoText = '';
           if (unidad) infoText += `${unidad}`;
           if (infoText) doc.text(infoText, xInfo, y);
