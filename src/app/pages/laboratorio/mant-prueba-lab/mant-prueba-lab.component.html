@@ -504,6 +504,13 @@
               <td mat-cell *matCellDef="let prueba">{{ prueba.areaLab }}</td>
             </ng-container>
 
+            <ng-container matColumnDef="ordenImpresion">
+              <th mat-header-cell *matHeaderCellDef>Orden de Impresión</th>
+              <td mat-cell *matCellDef="let prueba">
+                {{ prueba.ordenImpresion }}
+              </td>
+            </ng-container>
+
             <tr mat-header-row *matHeaderRowDef="columnasPruebas"></tr>
             <tr
               mat-row

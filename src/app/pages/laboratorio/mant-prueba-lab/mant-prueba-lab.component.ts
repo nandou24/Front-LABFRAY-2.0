@@ -150,7 +150,7 @@ export class MantPruebaLabComponent implements OnInit, AfterViewInit {
   dataSourceItemsSeleccionados = new MatTableDataSource<IItemLab>();
 
   //Tabla pruebas de laboratorio
-  columnasPruebas: string[] = ['codigo', 'nombre', 'areaLab'];
+  columnasPruebas: string[] = ['codigo', 'nombre', 'areaLab', 'ordenImpresion'];
   dataSourcePruebas = new MatTableDataSource<IPruebaLab>();
 
   agregarItem(item: IItemLab) {
