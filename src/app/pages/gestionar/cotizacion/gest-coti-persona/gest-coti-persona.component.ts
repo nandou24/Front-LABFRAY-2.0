@@ -278,6 +278,19 @@ export class GestCotiPersonaComponent implements OnInit {
     });
   }
 
+  quitarSolicitante() {
+    this.myFormCotizacion.patchValue({
+      solicitanteId: null,
+      codSolicitante: null,
+      apePatRefMedico: null,
+      apeMatRefMedico: null,
+      nombreRefMedico: null,
+      profesionSolicitante: null,
+      colegiatura: null,
+      especialidadSolicitante: null,
+    });
+  }
+
   seleccionarTexto(event: FocusEvent): void {
     const input = event.target as HTMLInputElement;
     input.select();
@@ -1065,7 +1078,7 @@ export class GestCotiPersonaComponent implements OnInit {
       apePatRefMedico: historialVersion.apePatRefMedico || '',
       apeMatRefMedico: historialVersion.apeMatRefMedico || '',
       nombreRefMedico: historialVersion.nombreRefMedico || '',
-      solicitanteId: historialVersion.solicitanteId || '',
+      solicitanteId: historialVersion.solicitanteId,
       profesionSolicitante: historialVersion.profesionSolicitante || '',
       //colegiatura: historialVersion.colegiatura || '',
       especialidadSolicitante: historialVersion.especialidadSolicitante || '',

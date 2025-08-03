@@ -187,7 +187,7 @@
                         </mat-form-field>
                     </div> -->
 
-          <div [style.flex]="setFlex(43, '%')" class="flex-item">
+          <div [style.flex]="setFlex(40, '%')" class="flex-item">
             <mat-form-field appearance="outline">
               <mat-label>Nombre</mat-label>
               <!-- <input matInput formControlName="nomSolicitante" /> -->
@@ -229,7 +229,7 @@
                         </mat-form-field>
                     </div> -->
 
-          <div [style.flex]="setFlex(24, '%')" class="flex-item">
+          <div [style.flex]="setFlex(22, '%')" class="flex-item">
             <mat-form-field appearance="outline">
               <mat-label>Especialidad</mat-label>
               <!-- <input matInput formControlName="especialidadSolicitante" /> -->
@@ -242,6 +242,16 @@
                 readonly
               />
             </mat-form-field>
+          </div>
+
+          <div [style.flex]="setFlex(4, '%')" class="flex-item mb-3">
+            <button
+              mat-mini-fab
+              id="buscarSolicitanteModalBtn"
+              (click)="quitarSolicitante()"
+            >
+              <mat-icon>delete</mat-icon>
+            </button>
           </div>
         </div>
       </fieldset>
