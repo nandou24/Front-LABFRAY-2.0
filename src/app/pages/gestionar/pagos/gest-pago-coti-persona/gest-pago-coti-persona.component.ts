@@ -105,7 +105,7 @@ export class GestPagoCotiPersonaComponent implements OnInit {
     subTotalFacturar: [{ value: 0, disabled: true }],
     igvFacturar: [{ value: 0, disabled: true }],
     totalFacturar: [{ value: 0, disabled: true }],
-    estadPago: '',
+    estadoPago: '',
     anulacionPago: this._fb.group({
       motivo: [''],
       observacion: [''],
@@ -336,6 +336,7 @@ export class GestPagoCotiPersonaComponent implements OnInit {
     this.detallePagos.clear();
     this.cancelarAnulacion();
     this.tienePagos = false;
+    this.tienePagoTotal = false;
 
     //buscando la última versión del historial
     const historial = cotizacion.historial;
@@ -450,6 +451,7 @@ export class GestPagoCotiPersonaComponent implements OnInit {
     });
   }
 
+  tienePagoTotal: boolean = false;
   tienePagos: boolean = false;
   filaSeleccionadaIndexPago: number | null = null;
 
@@ -463,6 +465,7 @@ export class GestPagoCotiPersonaComponent implements OnInit {
     this.seSeleccionoCotizacion = true;
     this.seSeleccionoPago = true;
     this.tienePagos = true;
+    this.tienePagoTotal = false;
     this.cancelarAnulacion();
 
     // Cargar campos del formulario
@@ -496,8 +499,12 @@ export class GestPagoCotiPersonaComponent implements OnInit {
       subTotalFacturar: pago.subTotalFacturar,
       igvFacturar: pago.igvFacturar,
       totalFacturar: pago.totalFacturar,
-      estadPago: pago.estadoPago,
+      estadoPago: pago.estadoPago,
     });
+
+    if (pago.estadoPago === 'PAGO TOTAL') {
+      this.tienePagoTotal = true;
+    }
 
     // Servicios cotizados
     pago.serviciosCotizacion.forEach((servicio) => {

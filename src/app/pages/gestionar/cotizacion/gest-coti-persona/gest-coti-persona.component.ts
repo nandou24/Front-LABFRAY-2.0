@@ -1065,7 +1065,7 @@ export class GestCotiPersonaComponent implements OnInit {
       apePatRefMedico: historialVersion.apePatRefMedico || '',
       apeMatRefMedico: historialVersion.apeMatRefMedico || '',
       nombreRefMedico: historialVersion.nombreRefMedico || '',
-      solicitanteId: historialVersion.solicitanteId || '',
+      solicitanteId: historialVersion.solicitanteId,
       profesionSolicitante: historialVersion.profesionSolicitante || '',
       //colegiatura: historialVersion.colegiatura || '',
       especialidadSolicitante: historialVersion.especialidadSolicitante || '',

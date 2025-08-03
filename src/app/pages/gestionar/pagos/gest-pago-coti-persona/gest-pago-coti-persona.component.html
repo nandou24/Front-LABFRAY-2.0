@@ -455,7 +455,7 @@
             </div>
           </div>
 
-          <div class="row-flex mt-3">
+          <div class="row-flex mt-3" *ngIf="!tienePagoTotal">
             <div [style.flex]="setFlex(20, '%')" class="flex-item">
               <button
                 mat-raised-button
@@ -506,7 +506,11 @@
               </h3>
             </div>
 
-            <div [style.flex]="setFlex(17, '%')" class="flex-item">
+            <div
+              [style.flex]="setFlex(17, '%')"
+              class="flex-item"
+              *ngIf="!tienePagoTotal"
+            >
               <button
                 mat-raised-button
                 class="mb-2"
@@ -677,15 +681,15 @@
 
                 {{
                   cotizacion.historial[cotizacion.historial.length - 1]
-                    .nombreCliente
-                }}
-                {{
-                  cotizacion.historial[cotizacion.historial.length - 1]
                     .apePatCliente
                 }}
                 {{
                   cotizacion.historial[cotizacion.historial.length - 1]
                     .apeMatCliente
+                }}
+                {{
+                  cotizacion.historial[cotizacion.historial.length - 1]
+                    .nombreCliente
                 }}
               </td>
             </ng-container>
