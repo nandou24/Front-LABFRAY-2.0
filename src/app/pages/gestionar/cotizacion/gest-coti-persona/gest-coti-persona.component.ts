@@ -49,6 +49,7 @@ import { debounceTime, distinctUntilChanged, filter, tap } from 'rxjs';
 import { IPaciente } from '../../../../models/Mantenimiento/paciente.models';
 import { IRefMedico } from '../../../../models/Mantenimiento/referenciaMedico.models';
 import { Router } from '@angular/router';
+import { NumberValidatorService } from '../../../../services/utilitarios/validators/numberValidator/number-validator.service';
 
 @Component({
   selector: 'app-gest-coti-persona',
@@ -81,6 +82,7 @@ export class GestCotiPersonaComponent implements OnInit {
   private dialog = inject(MatDialog);
   private _pdfService = inject(CotiPersonaPdfServiceService);
   private _router = inject(Router);
+  private _numeroValidatorService = inject(NumberValidatorService);
 
   ngOnInit(): void {
     //this.camnbioEstadoRegistroPaciente();
@@ -144,9 +146,10 @@ export class GestCotiPersonaComponent implements OnInit {
     'medicoAtiende',
     'cantidad',
     'precioLista',
-    'diferencia',
+    // 'diferencia',
     'precioVenta',
     'descuentoPorcentaje',
+    'nuevoPrecioVenta',
     'totalUnitario',
   ];
   dataSourceServiciosCotizados = new MatTableDataSource<FormGroup>([]);
@@ -461,7 +464,7 @@ export class GestCotiPersonaComponent implements OnInit {
         servicio.precioServicio,
         [Validators.required, Validators.min(0)],
       ],
-      diferencia: [0, [Validators.min(0)]],
+      diferencia: [0],
       precioVenta: [
         servicio.precioServicio,
         [
@@ -471,6 +474,10 @@ export class GestCotiPersonaComponent implements OnInit {
         ],
       ],
       descuentoPorcentaje: [0, [Validators.min(0), Validators.max(100)]],
+      nuevoPrecioVenta: [
+        servicio.precioServicio,
+        [Validators.required, Validators.min(0)],
+      ],
       totalUnitario: [
         servicio.precioServicio,
         [Validators.required, Validators.min(0)],
@@ -491,13 +498,14 @@ export class GestCotiPersonaComponent implements OnInit {
     let precioVenta = servicio.get('precioVenta')?.value || 0;
     let descuentoPorcentual = servicio.get('descuentoPorcentaje')?.value || 0;
     let precioListaTotal = cantidad * precioLista;
-    let totalUnitario =
-      (cantidad *
-        Math.round(precioVenta * ((100 - descuentoPorcentual) / 100) * 100)) /
-      100;
-    const diferencia =
-      Math.round((totalUnitario - precioListaTotal) * 100) / 100;
+    let montoDescuento =
+      Math.round(precioVenta * (descuentoPorcentual / 100) * 100) / 100;
+    let nuevoPrecioVenta = precioVenta - montoDescuento;
+    console.log('nuevoPrecioVenta:', nuevoPrecioVenta);
+    let totalUnitario = cantidad * nuevoPrecioVenta;
+    let diferencia = Math.round((totalUnitario - precioListaTotal) * 100) / 100;
     servicio.get('diferencia')?.setValue(diferencia);
+    servicio.get('nuevoPrecioVenta')?.setValue(nuevoPrecioVenta);
 
     if (totalUnitario < 0) {
       servicio.get('totalUnitario')?.setValue(0);
@@ -984,12 +992,133 @@ export class GestCotiPersonaComponent implements OnInit {
       return false;
     }
 
+    if (this.myFormCotizacion.invalid) {
+      this.myFormCotizacion.markAllAsTouched();
+
+      // Depurar formulario para ver todos los errores
+      // this.depurarFormulario();
+
+      // Mostrar errores específicos
+      this.mostrarErroresFormulario();
+      return false;
+    }
+
     if (!this.validarServiciosMedicoAtiende()) {
       return false;
     }
 
     return true;
   }
+
+  // Método para mostrar errores específicos del formulario
+  mostrarErroresFormulario(): void {
+    const errores: string[] = [];
+
+    // Verificar errores en el formulario principal
+    Object.keys(this.myFormCotizacion.controls).forEach((key) => {
+      const control = this.myFormCotizacion.get(key);
+      if (control && control.invalid) {
+        const erroresControl = this.obtenerMensajeError(key, control.errors);
+        if (erroresControl) {
+          errores.push(`${key}: ${erroresControl}`);
+        }
+      }
+    });
+
+    // Verificar errores en los servicios (FormArray)
+    this.serviciosCotizacion.controls.forEach((servicioControl, index) => {
+      const servicioGroup = servicioControl as FormGroup;
+      if (servicioGroup.invalid) {
+        Object.keys(servicioGroup.controls).forEach((key) => {
+          const control = servicioGroup.get(key);
+          if (control && control.invalid) {
+            const erroresControl = this.obtenerMensajeError(
+              key,
+              control.errors,
+            );
+            if (erroresControl) {
+              errores.push(`Servicio ${index + 1} - ${key}: ${erroresControl}`);
+            }
+          }
+        });
+      }
+    });
+
+    // Mostrar los errores encontrados
+    if (errores.length > 0) {
+      console.log('Errores encontrados:', errores);
+
+      Swal.fire({
+        icon: 'error',
+        title: 'Errores en el formulario',
+        html: `<div style="text-align: left;">
+          <p>Se encontraron los siguientes errores:</p>
+          <ul>
+            ${errores.map((error) => `<li>${error}</li>`).join('')}
+          </ul>
+        </div>`,
+        confirmButtonColor: '#3085d6',
+        confirmButtonText: 'Entendido',
+      });
+    }
+  }
+
+  // Método auxiliar para obtener mensajes de error legibles
+  obtenerMensajeError(campo: string, errors: any): string {
+    if (!errors) return '';
+
+    if (errors['required']) return 'Campo requerido';
+    if (errors['min']) return `Valor mínimo: ${errors['min'].min}`;
+    if (errors['max']) return `Valor máximo: ${errors['max'].max}`;
+    if (errors['pattern']) return 'Formato inválido';
+
+    // Agregar más validaciones según sea necesario
+    return Object.keys(errors).join(', ');
+  }
+
+  // Método de depuración para mostrar el estado completo del formulario
+  // depurarFormulario(): void {
+  //   console.log('=== ESTADO DEL FORMULARIO ===');
+  //   console.log('Form Valid:', this.myFormCotizacion.valid);
+  //   console.log('Form Value:', this.myFormCotizacion.value);
+  //   console.log('Form Raw Value:', this.myFormCotizacion.getRawValue());
+  //   console.log('Form Errors:', this.myFormCotizacion.errors);
+
+  //   // Estado de cada control principal
+  //   Object.keys(this.myFormCotizacion.controls).forEach((key) => {
+  //     const control = this.myFormCotizacion.get(key);
+  //     if (control && control.invalid) {
+  //       console.log(`❌ ${key}:`, {
+  //         value: control.value,
+  //         errors: control.errors,
+  //         valid: control.valid,
+  //       });
+  //     }
+  //   });
+
+  //   // Estado de servicios
+  //   console.log('=== SERVICIOS ===');
+  //   this.serviciosCotizacion.controls.forEach((servicioControl, index) => {
+  //     const servicioGroup = servicioControl as FormGroup;
+  //     console.log(`Servicio ${index + 1}:`, {
+  //       valid: servicioGroup.valid,
+  //       value: servicioGroup.value,
+  //       errors: servicioGroup.errors,
+  //     });
+
+  //     if (servicioGroup.invalid) {
+  //       Object.keys(servicioGroup.controls).forEach((key) => {
+  //         const control = servicioGroup.get(key);
+  //         if (control && control.invalid) {
+  //           console.log(`  ❌ ${key}:`, {
+  //             value: control.value,
+  //             errors: control.errors,
+  //           });
+  //         }
+  //       });
+  //     }
+  //   });
+  // }
 
   //inicio variables axuliares
   seSeleccionoCotizacion = false; // Indica si se ha seleccionado una cotización y borra el botón de generar cotización
@@ -1133,14 +1262,19 @@ export class GestCotiPersonaComponent implements OnInit {
               servicio.precioLista,
               [Validators.required, Validators.min(0)],
             ],
-            diferencia: [servicio.diferencia, [Validators.min(0)]],
+            diferencia: [servicio.diferencia],
             precioVenta: [
               { value: servicio.precioVenta, disabled: true },
               [Validators.required, Validators.min(0)],
             ],
+
             descuentoPorcentaje: [
               { value: servicio.descuentoPorcentaje, disabled: true },
               [Validators.min(0), Validators.max(100)],
+            ],
+            nuevoPrecioVenta: [
+              { value: servicio.nuevoPrecioVenta, disabled: true },
+              [Validators.required, Validators.min(0)],
             ],
             totalUnitario: [
               servicio.totalUnitario,
@@ -1226,7 +1360,7 @@ export class GestCotiPersonaComponent implements OnInit {
               servicio.precioLista,
               [Validators.required, Validators.min(0)],
             ],
-            diferencia: [servicio.diferencia, [Validators.min(0)]],
+            diferencia: [servicio.diferencia],
             precioVenta: [
               servicio.precioVenta,
               [Validators.required, Validators.min(0)],
@@ -1234,6 +1368,10 @@ export class GestCotiPersonaComponent implements OnInit {
             descuentoPorcentaje: [
               servicio.descuentoPorcentaje,
               [Validators.min(0), Validators.max(100)],
+            ],
+            nuevoPrecioVenta: [
+              { value: servicio.nuevoPrecioVenta, disabled: true },
+              [Validators.required, Validators.min(0)],
             ],
             totalUnitario: [
               servicio.totalUnitario,
@@ -1322,5 +1460,9 @@ export class GestCotiPersonaComponent implements OnInit {
         }
         //console.log('Medico atiende:', servicio.get('medicoAtiende')?.value);
       });
+  }
+
+  validarEntero(event: KeyboardEvent) {
+    return this._numeroValidatorService.validarNumeroEntero(event);
   }
 }

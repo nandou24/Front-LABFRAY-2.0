@@ -50,6 +50,7 @@ export interface IServicioCotizacion {
   diferencia: number;
   precioVenta: number;
   descuentoPorcentaje: number;
+  nuevoPrecioVenta: number;
   totalUnitario: number;
   profesionesAsociadas: IProfesionEspecialidad[];
   medicoAtiende?: {

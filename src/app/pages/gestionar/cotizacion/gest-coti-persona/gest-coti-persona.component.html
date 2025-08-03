@@ -371,6 +371,7 @@
                     type="number"
                     formControlName="cantidad"
                     min="1"
+                    (keydown)="validarEntero($event)"
                     (input)="calcularTotalUnitario(i)"
                     class="input-centrado"
                     style="width: 50px"
@@ -388,18 +389,18 @@
               </td>
             </ng-container>
 
-            <ng-container matColumnDef="diferencia">
+            <!-- <ng-container matColumnDef="diferencia">
               <th mat-header-cell *matHeaderCellDef class="text-center">
                 Desc o Aum.
               </th>
               <td mat-cell *matCellDef="let row" class="text-center">
                 S/ {{ row.get("diferencia")?.value }}
               </td>
-            </ng-container>
+            </ng-container> -->
 
             <ng-container matColumnDef="precioVenta">
               <th mat-header-cell *matHeaderCellDef class="text-center">
-                Precio Venta
+                Ajuste Precio
               </th>
               <td
                 mat-cell
@@ -412,6 +413,7 @@
                     type="number"
                     formControlName="precioVenta"
                     min="0"
+                    (keydown)="validarEntero($event)"
                     (input)="calcularTotalUnitario(i)"
                     class="input-centrado"
                     style="width: 50px"
@@ -436,11 +438,21 @@
                     formControlName="descuentoPorcentaje"
                     min="0"
                     max="100"
+                    (keydown)="validarEntero($event)"
                     (input)="calcularTotalUnitario(i)"
                     class="input-centrado"
                     style="width: 50px"
                   />
                 </ng-container>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="nuevoPrecioVenta">
+              <th mat-header-cell *matHeaderCellDef class="text-center">
+                Precio Venta
+              </th>
+              <td mat-cell *matCellDef="let row" class="text-center">
+                S/ {{ row.get("nuevoPrecioVenta")?.value }}
               </td>
             </ng-container>
 
@@ -496,7 +508,7 @@
               </div>
 
               <div class="fila quicksand-subtotal">
-                <span>Descuento Total: S/</span>
+                <span>Diferencia Total: S/</span>
                 <span>{{
                   myFormCotizacion.get("descuentoTotal")?.value
                     | number: "1.2-2"
@@ -514,8 +526,11 @@
                     matInput
                     #inputPrecioGlobal
                     style="width: 60px"
+                    type="number"
+                    min="0"
                     formControlName="precioConDescGlobal"
                     class="text-center"
+                    (keydown)="validarEntero($event)"
                     (input)="calcularTotalGeneral()"
                   />
                 </span>
@@ -532,8 +547,12 @@
                     matInput
                     #inputPorcentajeGlobal
                     style="width: 60px"
+                    type="number"
+                    min="0"
+                    max="100"
                     formControlName="descuentoPorcentaje"
                     class="text-center"
+                    (keydown)="validarEntero($event)"
                     (input)="calcularTotalGeneral()"
                   />
                 </span>

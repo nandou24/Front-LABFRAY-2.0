@@ -646,18 +646,22 @@ export class CotiPersonaPdfServiceService {
     doc.text('COTIZACIÓN', 195, 37, { align: 'right' });
 
     // 📌 Tabla de Servicios Cotizados
-    const servicios = ultimaVersion.serviciosCotizacion.map((servicio: any) => [
-      servicio.codServicio,
-      servicio.nombreServicio,
-      servicio.cantidad,
-      `S/ ${servicio.precioLista.toFixed(2)}`,
-      `S/ ${servicio.diferencia.toFixed(2)}`,
-      `S/ ${servicio.totalUnitario.toFixed(2)}`,
-    ]);
+    const servicios = ultimaVersion.serviciosCotizacion.map(
+      (servicio: any, index: number) => [
+        `${index + 1}`, // Código del servicio
+        servicio.codServicio,
+        servicio.cantidad,
+        servicio.nombreServicio,
+
+        // `S/ ${servicio.precioLista.toFixed(2)}`,
+        `S/ ${servicio.nuevoPrecioVenta.toFixed(2)}`,
+        `S/ ${servicio.totalUnitario.toFixed(2)}`,
+      ],
+    );
 
     autoTable(doc, {
       startY: 78,
-      head: [['Código', 'Nombre', 'Cantidad', 'Precio', 'Descuento', 'Total']],
+      head: [['N°', 'Código', 'Cantidad', 'Nombre', 'Precio Venta', 'Total']],
       body: servicios,
       theme: 'grid',
       styles: { fontSize: 8, cellPadding: 0.1, textColor: [0, 0, 0] },
@@ -668,12 +672,12 @@ export class CotiPersonaPdfServiceService {
         halign: 'center',
       },
       columnStyles: {
-        0: { halign: 'center' },
-        1: { halign: 'left' },
-        2: { halign: 'center' },
-        3: { halign: 'right' },
-        4: { halign: 'right' },
-        5: { halign: 'right' },
+        0: { halign: 'center', cellWidth: 10 },
+        1: { halign: 'center', cellWidth: 20 },
+        2: { halign: 'center', cellWidth: 17 },
+        3: { halign: 'left', cellWidth: 85 },
+        4: { halign: 'right', cellWidth: 25 },
+        5: { halign: 'right', cellWidth: 25 },
       },
     });
 
@@ -683,49 +687,46 @@ export class CotiPersonaPdfServiceService {
 
     doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
-    doc.text(`Total:`, 165, finalY, { align: 'right' });
-    doc.text(
-      `S/ ${ultimaVersion.sumaTotalesPrecioLista.toFixed(2)}`,
-      195,
-      finalY,
-      { align: 'right' },
-    );
-    doc.text(`Descuento Total:`, 165, finalY + espaciadoResumenCostos, {
+    // doc.text(`Total:`, 165, finalY, { align: 'right' });
+    // doc.text(
+    //   `S/ ${ultimaVersion.sumaTotalesPrecioLista.toFixed(2)}`,
+    //   195,
+    //   finalY,
+    //   { align: 'right' },
+    // );
+    // doc.text(`Descuento Total:`, 165, finalY + espaciadoResumenCostos, {
+    //   align: 'right',
+    // });
+    // doc.text(
+    //   `S/ ${ultimaVersion.descuentoTotal.toFixed(2)}`,
+    //   195,
+    //   finalY + espaciadoResumenCostos,
+    //   { align: 'right' },
+    // );
+    doc.text(`Subtotal:`, 165, finalY, {
       align: 'right',
     });
-    doc.text(
-      `S/ ${ultimaVersion.descuentoTotal.toFixed(2)}`,
-      195,
-      finalY + espaciadoResumenCostos,
-      { align: 'right' },
-    );
-    doc.text(`Subtotal:`, 165, finalY + espaciadoResumenCostos * 2, {
+    doc.text(`S/ ${ultimaVersion.subTotal.toFixed(2)}`, 195, finalY, {
       align: 'right',
     });
-    doc.text(
-      `S/ ${ultimaVersion.subTotal.toFixed(2)}`,
-      195,
-      finalY + espaciadoResumenCostos * 2,
-      { align: 'right' },
-    );
-    doc.text(`IGV (18%):`, 165, finalY + espaciadoResumenCostos * 3, {
+    doc.text(`IGV (18%):`, 165, finalY + espaciadoResumenCostos, {
       align: 'right',
     });
     doc.text(
       `S/ ${ultimaVersion.igv.toFixed(2)}`,
       195,
-      finalY + espaciadoResumenCostos * 3,
+      finalY + espaciadoResumenCostos,
       { align: 'right' },
     );
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
-    doc.text(`Total a Pagar:`, 165, finalY + espaciadoResumenCostos * 4 + 2, {
+    doc.text(`Total a Pagar:`, 165, finalY + espaciadoResumenCostos * 2 + 2, {
       align: 'right',
     });
     doc.text(
       `S/ ${ultimaVersion.total.toFixed(2)}`,
       195,
-      finalY + espaciadoResumenCostos * 4 + 2,
+      finalY + espaciadoResumenCostos * 2 + 2,
       { align: 'right' },
     );
 
