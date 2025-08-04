@@ -664,7 +664,7 @@ export class CotiPersonaPdfServiceService {
       head: [['N°', 'Código', 'Cantidad', 'Nombre', 'Precio Venta', 'Total']],
       body: servicios,
       theme: 'grid',
-      styles: { fontSize: 8, cellPadding: 0.1, textColor: [0, 0, 0] },
+      styles: { fontSize: 8, cellPadding: 1, textColor: [0, 0, 0] },
       headStyles: {
         fillColor: [39, 96, 114], // Azul oscuro (RGB)
         textColor: [255, 255, 255], // Texto blanco
@@ -675,7 +675,7 @@ export class CotiPersonaPdfServiceService {
         0: { halign: 'center', cellWidth: 10 },
         1: { halign: 'center', cellWidth: 20 },
         2: { halign: 'center', cellWidth: 17 },
-        3: { halign: 'left', cellWidth: 85 },
+        3: { halign: 'left', cellWidth: 84 },
         4: { halign: 'right', cellWidth: 25 },
         5: { halign: 'right', cellWidth: 25 },
       },
