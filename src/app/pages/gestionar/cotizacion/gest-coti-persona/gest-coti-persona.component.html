@@ -247,7 +247,7 @@
           <div [style.flex]="setFlex(4, '%')" class="flex-item mb-3">
             <button
               mat-mini-fab
-              id="buscarSolicitanteModalBtn"
+              id="quitarSolicitanteBtn"
               (click)="quitarSolicitante()"
             >
               <mat-icon>delete</mat-icon>
@@ -520,7 +520,7 @@
                 <span>
                   <mat-slide-toggle
                     formControlName="aplicarPrecioGlobal"
-                    (change)="cambioEstadoDescGlobal(false)"
+                    (change)="cambioEstadoPrecioGlobal()"
                   ></mat-slide-toggle>
                   <input
                     matInput
@@ -541,7 +541,7 @@
                 <span>
                   <mat-slide-toggle
                     formControlName="aplicarDescuentoPorcentGlobal"
-                    (change)="cambioEstadoDescPorcentajeGlobal(false)"
+                    (change)="cambioEstadoDescuentoPorcentGlobal()"
                   ></mat-slide-toggle>
                   <input
                     matInput
