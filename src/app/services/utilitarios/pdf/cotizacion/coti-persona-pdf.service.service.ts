@@ -687,48 +687,89 @@ export class CotiPersonaPdfServiceService {
 
     doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
-    // doc.text(`Total:`, 165, finalY, { align: 'right' });
-    // doc.text(
-    //   `S/ ${ultimaVersion.sumaTotalesPrecioLista.toFixed(2)}`,
-    //   195,
-    //   finalY,
-    //   { align: 'right' },
-    // );
-    // doc.text(`Descuento Total:`, 165, finalY + espaciadoResumenCostos, {
-    //   align: 'right',
-    // });
-    // doc.text(
-    //   `S/ ${ultimaVersion.descuentoTotal.toFixed(2)}`,
-    //   195,
-    //   finalY + espaciadoResumenCostos,
-    //   { align: 'right' },
-    // );
-    doc.text(`Subtotal:`, 165, finalY, {
-      align: 'right',
-    });
-    doc.text(`S/ ${ultimaVersion.subTotal.toFixed(2)}`, 195, finalY, {
-      align: 'right',
-    });
-    doc.text(`IGV (18%):`, 165, finalY + espaciadoResumenCostos, {
-      align: 'right',
-    });
-    doc.text(
-      `S/ ${ultimaVersion.igv.toFixed(2)}`,
-      195,
-      finalY + espaciadoResumenCostos,
-      { align: 'right' },
-    );
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.text(`Total a Pagar:`, 165, finalY + espaciadoResumenCostos * 2 + 2, {
-      align: 'right',
-    });
-    doc.text(
-      `S/ ${ultimaVersion.total.toFixed(2)}`,
-      195,
-      finalY + espaciadoResumenCostos * 2 + 2,
-      { align: 'right' },
-    );
+
+    if (ultimaVersion.descuentoTotal < 0) {
+      doc.text(`Monto total:`, 165, finalY, { align: 'right' });
+      doc.text(
+        `S/ ${ultimaVersion.sumaTotalesPrecioLista.toFixed(2)}`,
+        195,
+        finalY,
+        { align: 'right' },
+      );
+
+      doc.text(`Descuento Total:`, 165, finalY + espaciadoResumenCostos, {
+        align: 'right',
+      });
+      doc.text(
+        `S/ ${ultimaVersion.descuentoTotal.toFixed(2)}`,
+        195,
+        finalY + espaciadoResumenCostos,
+        { align: 'right' },
+      );
+
+      doc.text(`Subtotal:`, 165, finalY + espaciadoResumenCostos * 2, {
+        align: 'right',
+      });
+      doc.text(
+        `S/ ${ultimaVersion.subTotal.toFixed(2)}`,
+        195,
+        finalY + espaciadoResumenCostos * 2,
+        {
+          align: 'right',
+        },
+      );
+
+      doc.text(`IGV (18%):`, 165, finalY + espaciadoResumenCostos * 3, {
+        align: 'right',
+      });
+      doc.text(
+        `S/ ${ultimaVersion.igv.toFixed(2)}`,
+        195,
+        finalY + espaciadoResumenCostos * 3,
+        { align: 'right' },
+      );
+
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`Total a Pagar:`, 165, finalY + espaciadoResumenCostos * 4 + 2, {
+        align: 'right',
+      });
+      doc.text(
+        `S/ ${ultimaVersion.total.toFixed(2)}`,
+        195,
+        finalY + espaciadoResumenCostos * 4 + 2,
+        { align: 'right' },
+      );
+    } else {
+      doc.text(`Subtotal:`, 165, finalY, {
+        align: 'right',
+      });
+      doc.text(`S/ ${ultimaVersion.subTotal.toFixed(2)}`, 195, finalY, {
+        align: 'right',
+      });
+
+      doc.text(`IGV (18%):`, 165, finalY + espaciadoResumenCostos, {
+        align: 'right',
+      });
+      doc.text(
+        `S/ ${ultimaVersion.igv.toFixed(2)}`,
+        195,
+        finalY + espaciadoResumenCostos,
+        { align: 'right' },
+      );
+
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`Total a Pagar:`, 165, finalY + espaciadoResumenCostos * 2 + 2, {
+        align: 'right',
+      });
+      doc.text(
+        `S/ ${ultimaVersion.total.toFixed(2)}`,
+        195,
+        finalY + espaciadoResumenCostos * 2 + 2,
+        { align: 'right' },
+      );
+    }
 
     // 📌 Números de cuenta
     const puntoRefMediosPago = finalY + 40;

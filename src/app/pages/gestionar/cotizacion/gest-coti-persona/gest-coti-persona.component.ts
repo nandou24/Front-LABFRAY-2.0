@@ -121,6 +121,7 @@ export class GestCotiPersonaComponent implements OnInit {
     aplicarDescuentoPorcentGlobal: false,
     sumaTotalesPrecioLista: 0,
     descuentoTotal: 0,
+    descTotalMenosNuevoPrecio: 0,
     precioConDescGlobal: [{ value: '', disabled: true }],
     descuentoPorcentaje: [{ value: '', disabled: true }],
     subTotal: 0,
@@ -313,7 +314,6 @@ export class GestCotiPersonaComponent implements OnInit {
     'codCotizacion',
     'paciente',
     'fecha',
-    // 'versiones',
     'estado',
   ];
   dataSourceCotizaciones = new MatTableDataSource<ICotizacion>();
@@ -501,7 +501,6 @@ export class GestCotiPersonaComponent implements OnInit {
     let montoDescuento =
       Math.round(precioVenta * (descuentoPorcentual / 100) * 100) / 100;
     let nuevoPrecioVenta = precioVenta - montoDescuento;
-    console.log('nuevoPrecioVenta:', nuevoPrecioVenta);
     let totalUnitario = cantidad * nuevoPrecioVenta;
     let diferencia = Math.round((totalUnitario - precioListaTotal) * 100) / 100;
     servicio.get('diferencia')?.setValue(diferencia);
@@ -535,106 +534,218 @@ export class GestCotiPersonaComponent implements OnInit {
   @ViewChild('inputPorcentajeGlobal')
   inputPorcentajeGlobal!: ElementRef<HTMLInputElement>;
 
-  cambioEstadoDescGlobal(cargando: boolean) {
+  deshabilitarCamposServicios() {
+    this.serviciosCotizacion.controls.forEach((control, index) => {
+      const precioLista = parseFloat(control.get('precioLista')?.value) || 0;
+      control.get('precioVenta')?.setValue(precioLista);
+      control.get('descuentoPorcentaje')?.setValue(0);
+      control.get('nuevoPrecioVenta')?.setValue(precioLista);
+      control.get('diferencia')?.setValue(0);
+      control.get('precioVenta')?.disable();
+      control.get('descuentoPorcentaje')?.disable();
+      this.calcularTotalUnitario(index);
+    });
+  }
+
+  habilitarCamposServicios() {
+    this.serviciosCotizacion.controls.forEach((control, index) => {
+      control.get('precioVenta')?.enable();
+      control.get('descuentoPorcentaje')?.enable();
+      this.calcularTotalUnitario(index);
+    });
+  }
+
+  cambioEstadoPrecioGlobal() {
     const estadoPrecioGlobal = this.myFormCotizacion.get(
       'aplicarPrecioGlobal',
     )?.value;
 
-    if (this.serviciosCotizacion.length === 0) {
-      this.myFormCotizacion
-        .get('aplicarPrecioGlobal')
-        ?.setValue(false, { emitEvent: false });
-
-      Swal.fire({
-        icon: 'warning',
-        title: 'No hay servicios',
-        text: 'Debe agregar al menos un servicio para aplicar un descuento global.',
-        confirmButtonColor: '#3085d6',
-        confirmButtonText: 'Entendido',
-      });
-
-      return;
-    }
-
     if (estadoPrecioGlobal) {
-      //this.myFormCotizacion.get('precioConDescGlobal')?.reset();
-      this.myFormCotizacion.get('precioConDescGlobal')?.enable();
-
-      this.serviciosCotizacion.controls.forEach((control, index) => {
-        const precioLista = parseFloat(control.get('precioLista')?.value) || 0;
-        control.get('precioVenta')?.setValue(precioLista);
-        control.get('precioVenta')?.disable();
-        control.get('diferencia')?.setValue(0);
-        this.calcularTotalUnitario(index);
-      });
-
-      if (cargando === false) {
-        this.myFormCotizacion.get('precioConDescGlobal')?.setValue(0);
-
-        this.inputPrecioGlobal.nativeElement.focus();
-        this.inputPrecioGlobal.nativeElement.select();
-      }
-    } else {
-      this.myFormCotizacion.get('precioConDescGlobal')?.reset();
-      this.myFormCotizacion.get('precioConDescGlobal')?.disable();
-
-      this.serviciosCotizacion.controls.forEach((control, index) => {
-        control.get('precioVenta')?.enable();
-        this.calcularTotalUnitario(index);
-      });
+      // Si se activa precio global, desactivar descuento porcentual
+      this.myFormCotizacion
+        .get('aplicarDescuentoPorcentGlobal')
+        ?.setValue(false, { emitEvent: false });
     }
+    this.resetDescuentoGlobal();
+    this.myFormCotizacion.get('precioConDescGlobal')?.enable();
+    this.myFormCotizacion.get('descuentoPorcentaje')?.disable();
+    this.cambioEstadoDescuentosGlobal();
   }
 
-  cambioEstadoDescPorcentajeGlobal(cargando: boolean) {
+  cambioEstadoDescuentoPorcentGlobal() {
     const estadoPorcentGlobal = this.myFormCotizacion.get(
       'aplicarDescuentoPorcentGlobal',
     )?.value;
 
-    if (this.serviciosCotizacion.length === 0) {
-      this.myFormCotizacion
-        .get('aplicarDescuentoPorcentGlobal')
-        ?.setValue(false, { emitEvent: false });
-
-      // 🔥 SweetAlert de advertencia
-      Swal.fire({
-        icon: 'warning',
-        title: 'No hay servicios',
-        text: 'Debes agregar al menos un servicio antes de aplicar un descuento porcentual.',
-        confirmButtonColor: '#3085d6',
-        confirmButtonText: 'Entendido',
-      });
-
-      return;
-    }
-
     if (estadoPorcentGlobal) {
-      this.myFormCotizacion.get('descuentoPorcentaje')?.enable();
+      // Si se activa descuento porcentual, desactivar precio global
+      this.myFormCotizacion
+        .get('aplicarPrecioGlobal')
+        ?.setValue(false, { emitEvent: false });
+    }
+    this.resetDescuentoGlobal();
+    this.myFormCotizacion.get('precioConDescGlobal')?.disable();
+    this.myFormCotizacion.get('descuentoPorcentaje')?.enable();
+    this.cambioEstadoDescuentosGlobal();
+  }
 
-      //this.myFormCotizacion.get('descuentoPorcentaje')?.reset();
+  cambioEstadoDescuentosGlobal() {
+    const estadoPrecioGlobal = this.myFormCotizacion.get(
+      'aplicarPrecioGlobal',
+    )?.value;
 
-      this.serviciosCotizacion.controls.forEach((control, index) => {
-        control.get('descuentoPorcentaje')?.setValue(0);
-        control.get('descuentoPorcentaje')?.disable();
-        control.get('diferencia')?.setValue(0);
-        this.calcularTotalUnitario(index);
-      });
+    const estadoPorcentGlobal = this.myFormCotizacion.get(
+      'aplicarDescuentoPorcentGlobal',
+    )?.value;
 
-      if (cargando === false) {
-        this.myFormCotizacion.get('descuentoPorcentaje')?.setValue(0);
-
-        this.inputPorcentajeGlobal.nativeElement.focus();
-        this.inputPorcentajeGlobal.nativeElement.select();
-      }
+    if (estadoPrecioGlobal === false && estadoPorcentGlobal === false) {
+      this.habilitarCamposServicios();
     } else {
-      this.myFormCotizacion.get('descuentoPorcentaje')?.reset();
-      this.myFormCotizacion.get('descuentoPorcentaje')?.disable();
-
-      this.serviciosCotizacion.controls.forEach((control, index) => {
-        control.get('descuentoPorcentaje')?.enable();
-        this.calcularTotalUnitario(index);
-      });
+      this.deshabilitarCamposServicios();
     }
   }
+
+  resetDescuentoGlobal() {
+    const totalPrecioLista = this.myFormCotizacion.get(
+      'sumaTotalesPrecioLista',
+    )?.value;
+    this.myFormCotizacion
+      .get('precioConDescGlobal')
+      ?.setValue(totalPrecioLista);
+    this.myFormCotizacion.get('descuentoPorcentaje')?.setValue(0);
+  }
+
+  // deshabilitaReseteaDescuentosGlobal() {
+  //   this.myFormCotizacion
+  //     .get('aplicarPrecioGlobal')
+  //     ?.setValue(false, { emitEvent: false });
+  //   this.myFormCotizacion.get('precioConDescGlobal')?.disable();
+  //   this.myFormCotizacion.get('precioConDescGlobal')?.reset();
+  // }
+
+  // deshabilitaReseteaDescPorcentajeGlobal() {
+  //   this.myFormCotizacion
+  //     .get('aplicarDescuentoPorcentGlobal')
+  //     ?.setValue(false, { emitEvent: false });
+  //   this.myFormCotizacion.get('aplicarDescuentoPorcentGlobal')?.reset();
+  // }
+
+  resetCamposDescuentosGlobales() {
+    this.myFormCotizacion.get('precioConDescGlobal')?.reset();
+    this.myFormCotizacion.get('descuentoPorcentaje')?.reset();
+  }
+
+  // cambioEstadoDescGlobal(cargando: boolean) {
+  //   const estadoPrecioGlobal = this.myFormCotizacion.get(
+  //     'aplicarPrecioGlobal',
+  //   )?.value;
+
+  //   if (this.serviciosCotizacion.length === 0) {
+  //     this.myFormCotizacion
+  //       .get('aplicarPrecioGlobal')
+  //       ?.setValue(false, { emitEvent: false });
+
+  //     Swal.fire({
+  //       icon: 'warning',
+  //       title: 'No hay servicios',
+  //       text: 'Debe agregar al menos un servicio para aplicar un descuento global.',
+  //       confirmButtonColor: '#3085d6',
+  //       confirmButtonText: 'Entendido',
+  //     });
+
+  //     return;
+  //   }
+
+  //   if (estadoPrecioGlobal) {
+  //     //this.myFormCotizacion.get('precioConDescGlobal')?.reset();
+  //     this.myFormCotizacion.get('precioConDescGlobal')?.enable();
+
+  //     // this.serviciosCotizacion.controls.forEach((control, index) => {
+  //     //   const precioLista = parseFloat(control.get('precioLista')?.value) || 0;
+  //     //   control.get('precioVenta')?.setValue(precioLista);
+  //     //   control.get('precioVenta')?.disable();
+  //     //   control.get('descuentoPorcentaje')?.setValue(0);
+  //     //   control.get('descuentoPorcentaje')?.disable();
+  //     //   control.get('nuevoPrecioVenta')?.setValue(precioLista);
+  //     //   control.get('diferencia')?.setValue(0);
+  //     //   this.calcularTotalUnitario(index);
+  //     // });
+
+  //     this.deshabilitarCamposServicios();
+
+  //     if (cargando === false) {
+  //       this.myFormCotizacion.get('precioConDescGlobal')?.setValue(0);
+
+  //       this.inputPrecioGlobal.nativeElement.focus();
+  //       this.inputPrecioGlobal.nativeElement.select();
+  //     }
+  //   } else {
+  //     this.myFormCotizacion.get('precioConDescGlobal')?.reset();
+  //     this.myFormCotizacion.get('precioConDescGlobal')?.disable();
+
+  //     this.habilitarCamposServicios();
+  //     // this.serviciosCotizacion.controls.forEach((control, index) => {
+  //     //   control.get('precioVenta')?.enable();
+  //     //   control.get('descuentoPorcentaje')?.enable();
+  //     //   this.calcularTotalUnitario(index);
+  //     // });
+  //   }
+  // }
+
+  // cambioEstadoDescPorcentajeGlobal(cargando: boolean) {
+  //   const estadoPorcentGlobal = this.myFormCotizacion.get(
+  //     'aplicarDescuentoPorcentGlobal',
+  //   )?.value;
+
+  //   if (this.serviciosCotizacion.length === 0) {
+  //     this.myFormCotizacion
+  //       .get('aplicarDescuentoPorcentGlobal')
+  //       ?.setValue(false, { emitEvent: false });
+
+  //     // 🔥 SweetAlert de advertencia
+  //     Swal.fire({
+  //       icon: 'warning',
+  //       title: 'No hay servicios',
+  //       text: 'Debes agregar al menos un servicio antes de aplicar un descuento porcentual.',
+  //       confirmButtonColor: '#3085d6',
+  //       confirmButtonText: 'Entendido',
+  //     });
+
+  //     return;
+  //   }
+
+  //   if (estadoPorcentGlobal) {
+  //     this.myFormCotizacion.get('descuentoPorcentaje')?.enable();
+
+  //     //this.myFormCotizacion.get('descuentoPorcentaje')?.reset();
+
+  //     this.serviciosCotizacion.controls.forEach((control, index) => {
+  //       const precioLista = parseFloat(control.get('precioLista')?.value) || 0;
+  //       control.get('precioVenta')?.setValue(precioLista);
+  //       control.get('precioVenta')?.disable();
+  //       control.get('descuentoPorcentaje')?.setValue(0);
+  //       control.get('descuentoPorcentaje')?.disable();
+  //       control.get('nuevoPrecioVenta')?.setValue(precioLista);
+  //       control.get('diferencia')?.setValue(0);
+  //       this.calcularTotalUnitario(index);
+  //     });
+
+  //     if (cargando === false) {
+  //       this.myFormCotizacion.get('descuentoPorcentaje')?.setValue(0);
+
+  //       this.inputPorcentajeGlobal.nativeElement.focus();
+  //       this.inputPorcentajeGlobal.nativeElement.select();
+  //     }
+  //   } else {
+  //     this.myFormCotizacion.get('descuentoPorcentaje')?.reset();
+  //     this.myFormCotizacion.get('descuentoPorcentaje')?.disable();
+
+  //     this.serviciosCotizacion.controls.forEach((control, index) => {
+  //       control.get('descuentoPorcentaje')?.enable();
+  //       this.calcularTotalUnitario(index);
+  //     });
+  //   }
+  // }
 
   calcularTotalGeneral() {
     //const serviciosArray = this.serviciosCotizacion.controls as FormArray[];
@@ -680,6 +791,9 @@ export class GestCotiPersonaComponent implements OnInit {
     let diferenciaTotal =
       Math.round((totalAPagar - totalPrecioLista) * 100) / 100;
 
+    let diferenciaConNuevoPrecio =
+      Math.round((totalAPagar - sumaTotalUnitarios) * 100) / 100;
+
     // calcular subTotal
     let calSubTotal = Math.round((totalAPagar / 1.18) * 100) / 100;
 
@@ -690,6 +804,8 @@ export class GestCotiPersonaComponent implements OnInit {
     this.myFormCotizacion.patchValue({
       sumaTotalesPrecioLista: Math.round(totalPrecioLista * 100) / 100,
       descuentoTotal: Math.round(diferenciaTotal * 100) / 100,
+      descTotalMenosNuevoPrecio:
+        Math.round(diferenciaConNuevoPrecio * 100) / 100,
       precioConDescGlobal: Math.round(precioGlobal * 100) / 100,
       subTotal: calSubTotal,
       igv: calIgv,
@@ -702,6 +818,8 @@ export class GestCotiPersonaComponent implements OnInit {
     this.serviciosCotizacion.clear();
     this.myFormCotizacion.get('aplicarPrecioGlobal')?.enable();
     this.myFormCotizacion.get('aplicarDescuentoPorcentGlobal')?.enable();
+    this.myFormCotizacion.get('precioConDescGlobal')?.disable();
+    this.myFormCotizacion.get('descuentoPorcentaje')?.disable();
     // this.myFormCotizacion.get('estadoRegistroPaciente')?.enable();
     // this.myFormCotizacion.get('estadoRegistroSolicitante')?.enable();
 
@@ -710,6 +828,9 @@ export class GestCotiPersonaComponent implements OnInit {
       ?.removeAttribute('disabled');
     document
       .getElementById('buscarSolicitanteModalBtn')
+      ?.removeAttribute('disabled');
+    document
+      .getElementById('quitarSolicitanteBtn')
       ?.removeAttribute('disabled');
 
     this.myFormCotizacion.patchValue({
@@ -1191,41 +1312,47 @@ export class GestCotiPersonaComponent implements OnInit {
     // }
 
     this.myFormCotizacion.patchValue({
-      estadoRegistroPaciente: historialVersion.estadoRegistroPaciente,
+      ...historialVersion,
       fechaModificacion: fechaFormateada,
-      // nombreCompleto: nombreGrabar,
-      apePatCliente: historialVersion.apePatCliente,
-      apeMatCliente: historialVersion.apeMatCliente,
-      nombreCliente: historialVersion.nombreCliente,
-      clienteId: historialVersion.clienteId,
-      hc: historialVersion.hc,
-      tipoDoc: historialVersion.tipoDoc,
-      nroDoc: historialVersion.nroDoc,
-      estadoRegistroSolicitante: historialVersion.estadoRegistroSolicitante,
-      //codSolicitante: historialVersion.codSolicitante || '',
-      // nomSolicitante: historialVersion.nomSolicitante || '',
-      apePatRefMedico: historialVersion.apePatRefMedico || '',
-      apeMatRefMedico: historialVersion.apeMatRefMedico || '',
-      nombreRefMedico: historialVersion.nombreRefMedico || '',
-      solicitanteId: historialVersion.solicitanteId,
-      profesionSolicitante: historialVersion.profesionSolicitante || '',
-      //colegiatura: historialVersion.colegiatura || '',
-      especialidadSolicitante: historialVersion.especialidadSolicitante || '',
-      aplicarPrecioGlobal: historialVersion.aplicarPrecioGlobal,
-      aplicarDescuentoPorcentGlobal:
-        historialVersion.aplicarDescuentoPorcentGlobal,
-      sumaTotalesPrecioLista: historialVersion.sumaTotalesPrecioLista,
-      descuentoTotal: historialVersion.descuentoTotal || 0,
-      precioConDescGlobal: historialVersion.precioConDescGlobal || 0,
-      descuentoPorcentaje: historialVersion.descuentoPorcentaje || 0,
-      subTotal: historialVersion.subTotal,
-      igv: historialVersion.igv,
-      total: historialVersion.total,
+
+      // estadoRegistroPaciente: historialVersion.estadoRegistroPaciente,
+      // fechaModificacion: fechaFormateada,
+      // // nombreCompleto: nombreGrabar,
+      // apePatCliente: historialVersion.apePatCliente,
+      // apeMatCliente: historialVersion.apeMatCliente,
+      // nombreCliente: historialVersion.nombreCliente,
+      // clienteId: historialVersion.clienteId,
+      // hc: historialVersion.hc,
+      // tipoDoc: historialVersion.tipoDoc,
+      // nroDoc: historialVersion.nroDoc,
+      // estadoRegistroSolicitante: historialVersion.estadoRegistroSolicitante,
+      // //codSolicitante: historialVersion.codSolicitante || '',
+      // // nomSolicitante: historialVersion.nomSolicitante || '',
+      // apePatRefMedico: historialVersion.apePatRefMedico || '',
+      // apeMatRefMedico: historialVersion.apeMatRefMedico || '',
+      // nombreRefMedico: historialVersion.nombreRefMedico || '',
+      // solicitanteId: historialVersion.solicitanteId,
+      // profesionSolicitante: historialVersion.profesionSolicitante || '',
+      // //colegiatura: historialVersion.colegiatura || '',
+      // especialidadSolicitante: historialVersion.especialidadSolicitante || '',
+      // aplicarPrecioGlobal: historialVersion.aplicarPrecioGlobal,
+      // aplicarDescuentoPorcentGlobal:
+      //   historialVersion.aplicarDescuentoPorcentGlobal,
+      // sumaTotalesPrecioLista: historialVersion.sumaTotalesPrecioLista,
+      // descuentoTotal: historialVersion.descuentoTotal || 0,
+      // precioConDescGlobal: historialVersion.precioConDescGlobal || 0,
+      // descuentoPorcentaje: historialVersion.descuentoPorcentaje || 0,
+      // subTotal: historialVersion.subTotal,
+      // igv: historialVersion.igv,
+      // total: historialVersion.total,
     });
 
     if (this.tienePagos === true) {
       this.myFormCotizacion.get('aplicarPrecioGlobal')?.disable();
       this.myFormCotizacion.get('aplicarDescuentoPorcentGlobal')?.disable();
+      this.myFormCotizacion.get('precioConDescGlobal')?.disable();
+      this.myFormCotizacion.get('descuentoPorcentaje')?.disable();
+
       // this.myFormCotizacion.get('estadoRegistroPaciente')?.disable();
       // this.myFormCotizacion.get('estadoRegistroSolicitante')?.disable();
       // this.myFormCotizacion.get('nombreCompleto')?.disable();
@@ -1242,6 +1369,9 @@ export class GestCotiPersonaComponent implements OnInit {
         ?.setAttribute('disabled', 'true');
       document
         .getElementById('buscarSolicitanteModalBtn')
+        ?.setAttribute('disabled', 'true');
+      document
+        .getElementById('quitarSolicitanteBtn')
         ?.setAttribute('disabled', 'true');
 
       this.serviciosCotizacion.clear(); // Limpiar antes de cargar
@@ -1337,6 +1467,9 @@ export class GestCotiPersonaComponent implements OnInit {
       document
         .getElementById('buscarSolicitanteModalBtn')
         ?.removeAttribute('disabled');
+      document
+        .getElementById('quitarSolicitanteBtn')
+        ?.removeAttribute('disabled');
 
       this.myFormCotizacion.get('aplicarPrecioGlobal')?.enable();
       this.myFormCotizacion.get('aplicarDescuentoPorcentGlobal')?.enable();
@@ -1384,8 +1517,17 @@ export class GestCotiPersonaComponent implements OnInit {
         .controls as FormGroup[];
     }
 
-    this.cambioEstadoDescGlobal(true);
-    this.cambioEstadoDescPorcentajeGlobal(true);
+    this.cambioEstadoDescuentosGlobal();
+    this.myFormCotizacion.get('precioConDescGlobal')?.disable();
+    this.myFormCotizacion.get('descuentoPorcentaje')?.disable();
+    if (historialVersion.aplicarPrecioGlobal) {
+      this.myFormCotizacion.get('precioConDescGlobal')?.enable();
+    }
+    if (historialVersion.aplicarDescuentoPorcentGlobal) {
+      this.myFormCotizacion.get('descuentoPorcentaje')?.enable();
+    }
+    // this.cambioEstadoDescGlobal(true);
+    // this.cambioEstadoDescPorcentajeGlobal(true);
   }
 
   cambiarVersion(version: number) {
