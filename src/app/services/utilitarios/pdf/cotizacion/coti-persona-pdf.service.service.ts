@@ -688,7 +688,12 @@ export class CotiPersonaPdfServiceService {
     doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
 
-    if (ultimaVersion.descuentoTotal < 0) {
+    console.log('Ultima version:', ultimaVersion);
+
+    if (
+      ultimaVersion.aplicarDescuentoPorcentGlobal === true ||
+      ultimaVersion.aplicarPrecioGlobal === true
+    ) {
       doc.text(`Monto total:`, 165, finalY, { align: 'right' });
       doc.text(
         `S/ ${ultimaVersion.sumaTotalesPrecioLista.toFixed(2)}`,
