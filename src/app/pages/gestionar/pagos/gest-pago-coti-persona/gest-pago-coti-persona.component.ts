@@ -411,6 +411,10 @@ export class GestPagoCotiPersonaComponent implements OnInit {
         servicio.descuentoPorcentaje,
         [Validators.min(0), Validators.max(100)],
       ],
+      nuevoPrecioVenta: [
+        servicio.nuevoPrecioVenta,
+        [Validators.required, Validators.min(0)],
+      ],
       totalUnitario: [
         servicio.totalUnitario,
         [Validators.required, Validators.min(0)],
