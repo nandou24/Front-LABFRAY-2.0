@@ -92,7 +92,6 @@ export class SolicitudAtencionComponent implements OnInit {
     filtroBusqueda: new FormControl(),
   });
 
-  terminoBusqueda = new FormControl('');
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
 

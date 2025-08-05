@@ -16,7 +16,7 @@ import { AuthService } from '../../auth/auth.service';
 })
 export class PagosCotizacionPersonalService {
   constructor() {}
-
+  private readonly apiUrl = `${environment.baseUrl}/api/pagos`;
   private readonly _http = inject(HttpClient);
   private readonly _auth = inject(AuthService);
 
@@ -24,7 +24,7 @@ export class PagosCotizacionPersonalService {
     console.log('Enviando pago desde servicio', body);
 
     return this._http.post<IPagoPostDTOResponse>(
-      `${environment.baseUrl}/api/pagos/newPagoPersona`,
+      `${this.apiUrl}/newPagoPersona`,
       body,
       { headers: this._auth.getAuthHeaders() },
     );
@@ -33,7 +33,7 @@ export class PagosCotizacionPersonalService {
   getDetallePago(codCoti: string): Observable<IDetallePago[]> {
     const params = new HttpParams().set('codCoti', codCoti);
     return this._http
-      .get<IGetDetallePago>(`${environment.baseUrl}/api/pagos/findPayDetail`, {
+      .get<IGetDetallePago>(`${this.apiUrl}/findPayDetail`, {
         params,
       })
       .pipe(
@@ -46,12 +46,27 @@ export class PagosCotizacionPersonalService {
   getPagos(cantidad: number): Observable<IPago[]> {
     const params = new HttpParams().set('cant', cantidad);
     return this._http
-      .get<IGetLastPagos>(`${environment.baseUrl}/api/pagos/latest`, { params })
+      .get<IGetLastPagos>(`${this.apiUrl}/latest`, { params })
       .pipe(
         map((data) => {
           return data.pagos;
         }),
       );
+  }
+
+  getAllByDateRange(
+    start: string,
+    end: string,
+    termino: string,
+  ): Observable<IPago[]> {
+    const params = new HttpParams()
+      .set('fechaInicio', start)
+      .set('fechaFin', end)
+      .set('terminoBusqueda', termino);
+
+    return this._http.get<IPago[]>(`${this.apiUrl}/findReport`, {
+      params,
+    });
   }
 
   anularPago(
@@ -62,7 +77,7 @@ export class PagosCotizacionPersonalService {
     const body = { motivo, observacion };
 
     return this._http.put<IPagoPostDTOResponse>(
-      `${environment.baseUrl}/api/pagos/anularPago/${codPago}`,
+      `${this.apiUrl}/anularPago/${codPago}`,
       body,
       { headers: this._auth.getAuthHeaders() },
     );

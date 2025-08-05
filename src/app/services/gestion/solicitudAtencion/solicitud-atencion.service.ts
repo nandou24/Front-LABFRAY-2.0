@@ -54,9 +54,12 @@ export class SolicitudAtencionService {
       .set('fechaFin', end)
       .set('terminoBusqueda', termino);
 
-    return this.http.get<ISolicitudAtencion[]>(`${this.apiUrl}/findTerm`, {
-      params,
-    });
+    return this.http.get<ISolicitudAtencion[]>(
+      `${this.apiUrl}/findByRangoFechas`,
+      {
+        params,
+      },
+    );
   }
 
   buscarPorTermino(termino: string): Observable<ISolicitudAtencion[]> {
