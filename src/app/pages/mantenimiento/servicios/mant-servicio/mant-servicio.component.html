@@ -220,19 +220,18 @@
                       [formControl]="terminoBusquedaExamenes"
                       placeholder="Escribe el examen"
                     />
-                    @if (terminoBusquedaExamenes.value) {
-                      <button
-                        type="button"
-                        matSuffix
-                        mat-icon-button
-                        aria-label="Clear"
-                        (click)="
-                          terminoBusquedaExamenes.setValue(''); buscarExamenes()
-                        "
-                      >
-                        <mat-icon>close</mat-icon>
-                      </button>
-                    }
+                    <button
+                      *ngIf="terminoBusquedaExamenes.value"
+                      type="button"
+                      matSuffix
+                      mat-icon-button
+                      aria-label="Clear"
+                      (click)="
+                        terminoBusquedaExamenes.setValue(''); buscarExamenes()
+                      "
+                    >
+                      <mat-icon>close</mat-icon>
+                    </button>
                   </mat-form-field>
                 </div>
               </div>
@@ -388,17 +387,16 @@
               (input)="buscarServicio()"
               placeholder="Escribe el nombre del servicio"
             />
-            @if (terminoBusquedaServicio.value) {
-              <button
-                type="button"
-                matSuffix
-                mat-icon-button
-                aria-label="Clear"
-                (click)="terminoBusquedaServicio.setValue(''); buscarServicio()"
-              >
-                <mat-icon>close</mat-icon>
-              </button>
-            }
+            <button
+              *ngIf="terminoBusquedaServicio.value"
+              type="button"
+              matSuffix
+              mat-icon-button
+              aria-label="Clear"
+              (click)="terminoBusquedaServicio.setValue(''); buscarServicio()"
+            >
+              <mat-icon>close</mat-icon>
+            </button>
           </mat-form-field>
 
           <table mat-table [dataSource]="dataSourceServicios">
