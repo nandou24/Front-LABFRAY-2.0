@@ -92,6 +92,13 @@ export const routes: Routes = [
             './pages/mantenimiento/profesiones/profesiones.component'
           ).then((m) => m.ProfesionesComponent),
       },
+      {
+        path: 'reportePagosRecepcion',
+        loadComponent: () =>
+          import(
+            './pages/reports/report-pagos-recepcion/report-pagos-recepcion.component'
+          ).then((m) => m.ReportPagosRecepcionComponent),
+      },
     ],
   },
   {
