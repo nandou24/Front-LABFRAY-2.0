@@ -4,7 +4,7 @@
 
     <div [formGroup]="myGroupBusqueda">
       <div class="row-flex">
-        <div [style.flex]="setFlex(40, '%')" class="flex-item">
+        <div [style.flex]="setFlex(25, '%')" class="flex-item">
           <mat-form-field appearance="outline">
             <mat-label>Buscar por nombre o documento</mat-label>
             <input
@@ -16,7 +16,7 @@
           </mat-form-field>
         </div>
 
-        <div [style.flex]="setFlex(15, '%')" class="flex-item">
+        <div [style.flex]="setFlex(10, '%')" class="flex-item">
           <mat-form-field appearance="outline">
             <mat-label>Fecha Inicio</mat-label>
             <input
@@ -33,7 +33,7 @@
           </mat-form-field>
         </div>
 
-        <div [style.flex]="setFlex(15, '%')" class="flex-item">
+        <div [style.flex]="setFlex(10, '%')" class="flex-item">
           <mat-form-field appearance="outline">
             <mat-label>Fecha Fin</mat-label>
             <input
@@ -50,7 +50,7 @@
           </mat-form-field>
         </div>
 
-        <div [style.flex]="setFlex(10, '%')" class="flex-item">
+        <div [style.flex]="setFlex(8, '%')" class="flex-item">
           <button
             mat-flat-button
             type="button"
@@ -58,19 +58,6 @@
             class="mb-3"
           >
             Buscar
-          </button>
-        </div>
-
-        <div [style.flex]="setFlex(10, '%')" class="flex-item">
-          <button
-            mat-raised-button
-            color="accent"
-            type="button"
-            (click)="exportarReporte()"
-            [disabled]="dataSourceReporte.data.length === 0"
-          >
-            <mat-icon>file_download</mat-icon>
-            Exportar
           </button>
         </div>
 
@@ -85,6 +72,19 @@
             />
             <mat-icon matSuffix>search</mat-icon>
           </mat-form-field>
+        </div>
+
+        <div [style.flex]="setFlex(8, '%')" class="flex-item mb-3">
+          <button
+            mat-raised-button
+            color="accent"
+            type="button"
+            (click)="exportarReporte()"
+            [disabled]="dataSourceReporte.data.length === 0"
+          >
+            <mat-icon>file_download</mat-icon>
+            Exportar
+          </button>
         </div>
       </div>
     </div>
@@ -126,6 +126,33 @@
             estadisticas.pagosPendientes
           }}</span>
           <span class="estadistica-label">Pagos Pendientes</span>
+        </div>
+      </div>
+
+      <!-- Sección de Ingresos por Medio de Pago -->
+      <div class="ingresos-medios-pago" *ngIf="getMediosPagoList().length > 0">
+        <h6>Ingresos por Medio de Pago</h6>
+        <div class="medios-pago-grid">
+          <div
+            class="medio-pago-item"
+            *ngFor="let medioPago of getMediosPagoList()"
+          >
+            <span class="medio-pago-nombre">{{ medioPago }}:</span>
+            <span class="medio-pago-monto text-primary">
+              S/ {{ getIngresosPorMedio(medioPago) | number: "1.2-2" }}
+            </span>
+          </div>
+          <div class="medio-pago-item total-medios">
+            <span class="medio-pago-nombre"
+              ><strong>Total Ingresos:</strong></span
+            >
+            <span class="medio-pago-monto text-success">
+              <strong
+                >S/
+                {{ getTotalIngresosPorMediosPago() | number: "1.2-2" }}</strong
+              >
+            </span>
+          </div>
         </div>
       </div>
     </div>

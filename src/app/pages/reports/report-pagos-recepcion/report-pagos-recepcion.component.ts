@@ -102,6 +102,7 @@ export class ReportPagosRecepcionComponent implements OnInit {
     montoFaltante: 0,
     pagosCompletos: 0,
     pagosPendientes: 0,
+    ingresosPorMedioPago: {} as { [key: string]: number },
   };
 
   filtrar(event: Event) {
@@ -116,30 +117,35 @@ export class ReportPagosRecepcionComponent implements OnInit {
     const fechaFinControl =
       this.myGroupBusqueda.get('fechaFin')?.value || new Date();
 
-    //console.log('Fecha Inicio:', fechaInicioControl);
-    // console.log('Fecha Fin:', fechaFinControl);
-
     const inicio = new Date(fechaInicioControl);
     inicio.setHours(0, 0, 0, 0);
 
     const fin = new Date(fechaFinControl);
     fin.setHours(23, 59, 59, 999);
 
-    // console.log('Inicio:', inicio);
-    // console.log('Fin:', fin);
-
-    // console.log('Término despues:', fechaInicioControl, fechaFinControl);
-
     this._pagoService
       .getAllByDateRange(inicio.toISOString(), fin.toISOString(), termino)
       .subscribe({
         next: (pagos) => {
-          this.dataSourceReporte.data = pagos;
-          this.calcularEstadisticas(pagos);
-          console.log('Pagos encontrados:', pagos);
-          this.snackBar.open(`Se encontraron ${pagos.length} pagos`, 'Cerrar', {
-            duration: 3000,
-          });
+          console.log('Datos originales del servicio:', pagos);
+
+          // Filtrar todos los pagos por fecha (incluyendo anulados para mostrar en la tabla)
+          const pagosFiltrados = this.filtrarPagosPorFecha(pagos, inicio, fin);
+          console.log('Pagos filtrados por fecha:', pagosFiltrados);
+
+          this.dataSourceReporte.data = pagosFiltrados;
+          this.calcularEstadisticas(pagosFiltrados, inicio, fin);
+          console.log(
+            'Datos asignados al dataSource:',
+            this.dataSourceReporte.data,
+          );
+          this.snackBar.open(
+            `Se encontraron ${pagosFiltrados.length} pagos con detalles en el rango`,
+            'Cerrar',
+            {
+              duration: 3000,
+            },
+          );
         },
         error: (err) => {
           console.error('Error al buscar pagos:', err);
@@ -150,6 +156,49 @@ export class ReportPagosRecepcionComponent implements OnInit {
       });
   }
 
+  private filtrarPagosPorFecha(
+    pagos: IPago[],
+    fechaInicio: Date,
+    fechaFin: Date,
+  ): IPago[] {
+    console.log('🔍 Filtrando pagos por fecha:', {
+      fechaInicio: fechaInicio.toISOString(),
+      fechaFin: fechaFin.toISOString(),
+      cantidadPagos: pagos.length,
+    });
+
+    return pagos
+      .map((pago) => {
+        // Filtrar solo los detalles de pagos que estén dentro del rango de fechas
+        // REMOVIDO el filtro por esAntiguo ya que parece que todos los detalles lo tienen en true
+        const detallesFiltrados = pago.detallePagos.filter((detalle) => {
+          const fechaPago = new Date(detalle.fechaPago);
+          const esFechaValida =
+            fechaPago >= fechaInicio && fechaPago <= fechaFin;
+
+          console.log(
+            `🔎 Evaluando detalle: ${detalle.medioPago} | Fecha: ${fechaPago.toISOString()} | Válida: ${esFechaValida} | Antiguo: ${detalle.esAntiguo}`,
+          );
+
+          return esFechaValida; // Solo filtrar por fecha, no por esAntiguo
+        });
+
+        console.log(
+          `✅ Pago ${pago.codCotizacion}: ${detallesFiltrados.length} detalles válidos de ${pago.detallePagos.length} totales`,
+        );
+
+        // Solo incluir el pago si tiene al menos un detalle válido en el rango de fechas
+        if (detallesFiltrados.length > 0) {
+          return {
+            ...pago,
+            detallePagos: detallesFiltrados,
+          };
+        }
+        return null;
+      })
+      .filter((pago) => pago !== null) as IPago[];
+  }
+
   getEstadoClass(estado: string): string {
     switch (estado?.toLowerCase()) {
       case 'pagado':
@@ -158,6 +207,7 @@ export class ReportPagosRecepcionComponent implements OnInit {
       case 'pendiente':
       case 'parcial':
         return 'text-warning';
+      case 'pago anulado':
       case 'anulado':
       case 'cancelado':
         return 'text-danger';
@@ -205,18 +255,69 @@ export class ReportPagosRecepcionComponent implements OnInit {
     return mensaje;
   }
 
-  calcularEstadisticas(pagos: IPago[]): void {
+  calcularEstadisticas(
+    pagos: IPago[],
+    fechaInicio?: Date,
+    fechaFin?: Date,
+  ): void {
+    const ingresosPorMedioPago: { [key: string]: number } = {};
+    let montoPagadoEnRango = 0;
+
+    // Filtrar pagos no anulados para los cálculos monetarios
+    const pagosNoAnulados = pagos.filter(
+      (pago) => pago.estadoPago?.toLowerCase() !== 'anulado',
+    );
+
+    // Calcular totales solo con pagos no anulados
+    pagosNoAnulados.forEach((pago) => {
+      pago.detallePagos.forEach((detalle) => {
+        // Los detalles ya están filtrados por fecha, solo sumamos
+        montoPagadoEnRango += detalle.monto;
+        if (ingresosPorMedioPago[detalle.medioPago]) {
+          ingresosPorMedioPago[detalle.medioPago] += detalle.monto;
+        } else {
+          ingresosPorMedioPago[detalle.medioPago] = detalle.monto;
+        }
+      });
+    });
+
+    // Estadísticas generales incluyen todos los pagos (para conteo)
+    // pero montos solo de pagos no anulados
     this.estadisticas = {
-      totalPagos: pagos.length,
-      montoTotal: pagos.reduce((sum, pago) => sum + pago.total, 0),
-      montoPagado: pagos.reduce(
-        (sum, pago) => sum + (pago.total - pago.faltaPagar),
+      totalPagos: pagos.length, // Incluye anulados para el conteo total
+      montoTotal: pagosNoAnulados.reduce((sum, pago) => sum + pago.total, 0), // Solo no anulados
+      montoPagado: montoPagadoEnRango, // Solo no anulados
+      montoFaltante: pagosNoAnulados.reduce(
+        (sum, pago) => sum + pago.faltaPagar,
         0,
-      ),
-      montoFaltante: pagos.reduce((sum, pago) => sum + pago.faltaPagar, 0),
-      pagosCompletos: pagos.filter((pago) => pago.faltaPagar === 0).length,
-      pagosPendientes: pagos.filter((pago) => pago.faltaPagar > 0).length,
+      ), // Solo no anulados
+      pagosCompletos: pagosNoAnulados.filter((pago) => pago.faltaPagar === 0)
+        .length, // Solo no anulados
+      pagosPendientes: pagosNoAnulados.filter((pago) => pago.faltaPagar > 0)
+        .length, // Solo no anulados
+      ingresosPorMedioPago: ingresosPorMedioPago, // Solo no anulados
     };
+
+    console.log('Estadísticas calculadas:', this.estadisticas);
+    console.log('Pagos totales (incluyendo anulados):', pagos.length);
+    console.log('Pagos no anulados para cálculos:', pagosNoAnulados.length);
+    console.log('Ingresos por medio de pago:', ingresosPorMedioPago);
+  }
+
+  // Métodos para acceder a los ingresos por medio de pago
+  getMediosPagoList(): string[] {
+    return Object.keys(this.estadisticas.ingresosPorMedioPago);
+  }
+
+  getIngresosPorMedio(medioPago: string): number {
+    return this.estadisticas.ingresosPorMedioPago[medioPago] || 0;
+  }
+
+  getTotalIngresosPorMediosPago(): number {
+    return Object.values(this.estadisticas.ingresosPorMedioPago).reduce(
+      (sum, monto) => sum + monto,
+      0,
+    );
   }
 
   exportarReporte(): void {
