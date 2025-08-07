@@ -38,8 +38,6 @@ export class HojaTrabajoLabPdfService {
     // );
     // console.log('Pruebas de laboratorio con items:', pruebasLaboratorio);
 
-    this.sexo = this.datoPaciente?.sexoCliente ?? '';
-
     try {
       // Obtener los datos del paciente
       this.datoPaciente = await firstValueFrom(
@@ -68,6 +66,8 @@ export class HojaTrabajoLabPdfService {
     } catch (error) {
       console.error('Error al obtener los datos del solicitante:', error);
     }
+
+    this.sexo = this.datoPaciente?.sexoCliente ?? '';
 
     const doc = new jsPDF({
       orientation: 'portrait',
