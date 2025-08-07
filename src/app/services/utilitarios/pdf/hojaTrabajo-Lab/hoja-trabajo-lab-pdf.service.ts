@@ -21,6 +21,7 @@ export class HojaTrabajoLabPdfService {
 
   datoPaciente = {} as IPaciente;
   edad = '';
+  sexo = '';
   datoSolicitante = {} as IRefMedico;
 
   async generarHojaTrabajoLabPDF(
@@ -36,6 +37,8 @@ export class HojaTrabajoLabPdfService {
     //   data,
     // );
     // console.log('Pruebas de laboratorio con items:', pruebasLaboratorio);
+
+    this.sexo = this.datoPaciente?.sexoCliente ?? '';
 
     try {
       // Obtener los datos del paciente
@@ -148,11 +151,7 @@ export class HojaTrabajoLabPdfService {
       xValueDatosPaciente + 130, // Ajustado
       yValueDatosPaciente,
     );
-    doc.text(
-      `${this.datoPaciente.sexoCliente}`,
-      xValueDatosPaciente,
-      yValueDatosPaciente + 6,
-    );
+    doc.text(`${this.sexo}`, xValueDatosPaciente, yValueDatosPaciente + 6);
     doc.text(`${this.edad}`, xValueDatosPaciente + 40, yValueDatosPaciente + 6); // Ajustado
     const phoneNumber =
       this.datoPaciente.phones && this.datoPaciente.phones.length > 0
@@ -334,7 +333,7 @@ export class HojaTrabajoLabPdfService {
           const itemsDelGrupo = gruposMap.get(nombreGrupo);
 
           // Solo mostrar encabezado de grupo si hay más de 1 item
-          if (itemsDelGrupo.length > 1) {
+          if (itemsDelGrupo.length >= 1) {
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(10);
             doc.text(nombreGrupo, xActual + 3, y);
@@ -356,7 +355,7 @@ export class HojaTrabajoLabPdfService {
 
             // Si hay más de 1 item en el grupo, indentar más
             const indentacion =
-              itemsDelGrupo.length > 1 ? xActual + 6 : xActual + 1;
+              itemsDelGrupo.length >= 1 ? xActual + 6 : xActual + 1;
             doc.text(`• ${nombreItem}`, indentacion, y);
 
             // Línea para escribir resultado a mano (ajustada a la columna)
