@@ -238,13 +238,20 @@ export class ReportPagosRecepcionComponent implements OnInit {
 
   private construirMensajeDetalle(pago: IPago): string {
     let mensaje = `Cotización: ${pago.codCotizacion}\n`;
-    mensaje += `Total: S/ ${pago.total.toFixed(2)}\n`;
+    mensaje += `Total: S/ ${(pago.totalFacturar || pago.total).toFixed(2)}\n`;
     mensaje += `Falta pagar: S/ ${pago.faltaPagar.toFixed(2)}\n`;
 
     if (pago.detallePagos && pago.detallePagos.length > 0) {
       mensaje += `\nPagos realizados:\n`;
       pago.detallePagos.forEach((detalle, index) => {
-        mensaje += `${index + 1}. ${detalle.medioPago}: S/ ${detalle.monto.toFixed(2)}`;
+        const montoConRecargo = detalle.monto + (detalle.recargo || 0);
+        mensaje += `${index + 1}. ${detalle.medioPago}: S/ ${montoConRecargo.toFixed(2)}`;
+
+        // Mostrar desglose si hay recargo
+        if (detalle.recargo && detalle.recargo > 0) {
+          mensaje += ` (Monto: S/ ${detalle.monto.toFixed(2)} + Recargo: S/ ${detalle.recargo.toFixed(2)})`;
+        }
+
         if (detalle.numOperacion) {
           mensaje += ` (Op: ${detalle.numOperacion})`;
         }
@@ -271,22 +278,27 @@ export class ReportPagosRecepcionComponent implements OnInit {
     // Calcular totales solo con pagos no anulados
     pagosNoAnulados.forEach((pago) => {
       pago.detallePagos.forEach((detalle) => {
-        // Los detalles ya están filtrados por fecha, solo sumamos
-        montoPagadoEnRango += detalle.monto;
+        // Calcular monto total incluyendo recargo
+        const montoConRecargo = detalle.monto + (detalle.recargo || 0);
+        montoPagadoEnRango += montoConRecargo;
+
         if (ingresosPorMedioPago[detalle.medioPago]) {
-          ingresosPorMedioPago[detalle.medioPago] += detalle.monto;
+          ingresosPorMedioPago[detalle.medioPago] += montoConRecargo;
         } else {
-          ingresosPorMedioPago[detalle.medioPago] = detalle.monto;
+          ingresosPorMedioPago[detalle.medioPago] = montoConRecargo;
         }
       });
     });
 
     // Estadísticas generales incluyen todos los pagos (para conteo)
-    // pero montos solo de pagos no anulados
+    // pero montos solo de pagos no anulados usando totalFacturar
     this.estadisticas = {
       totalPagos: pagos.length, // Incluye anulados para el conteo total
-      montoTotal: pagosNoAnulados.reduce((sum, pago) => sum + pago.total, 0), // Solo no anulados
-      montoPagado: montoPagadoEnRango, // Solo no anulados
+      montoTotal: pagosNoAnulados.reduce(
+        (sum, pago) => sum + (pago.totalFacturar || 0),
+        0,
+      ), // Usar totalFacturar
+      montoPagado: montoPagadoEnRango, // Solo no anulados con recargos incluidos
       montoFaltante: pagosNoAnulados.reduce(
         (sum, pago) => sum + pago.faltaPagar,
         0,
@@ -295,13 +307,17 @@ export class ReportPagosRecepcionComponent implements OnInit {
         .length, // Solo no anulados
       pagosPendientes: pagosNoAnulados.filter((pago) => pago.faltaPagar > 0)
         .length, // Solo no anulados
-      ingresosPorMedioPago: ingresosPorMedioPago, // Solo no anulados
+      ingresosPorMedioPago: ingresosPorMedioPago, // Solo no anulados con recargos incluidos
     };
 
     console.log('Estadísticas calculadas:', this.estadisticas);
     console.log('Pagos totales (incluyendo anulados):', pagos.length);
     console.log('Pagos no anulados para cálculos:', pagosNoAnulados.length);
-    console.log('Ingresos por medio de pago:', ingresosPorMedioPago);
+    console.log(
+      'Ingresos por medio de pago (con recargos incluidos):',
+      ingresosPorMedioPago,
+    );
+    console.log('Usando totalFacturar para montoTotal en estadísticas');
   }
 
   // Métodos para acceder a los ingresos por medio de pago

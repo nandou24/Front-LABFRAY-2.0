@@ -201,7 +201,7 @@
         <ng-container matColumnDef="montoTotal">
           <th mat-header-cell *matHeaderCellDef mat-sort-header>Monto Total</th>
           <td mat-cell *matCellDef="let row">
-            S/ {{ row.total | number: "1.2-2" }}
+            S/ {{ row.totalFacturar | number: "1.2-2" }}
           </td>
         </ng-container>
 
@@ -233,7 +233,7 @@
               >
                 <small>
                   {{ detalle.medioPago }} - S/
-                  {{ detalle.monto | number: "1.2-2" }}
+                  {{ detalle.monto + (detalle.recargo || 0) | number: "1.2-2" }}
                   <br />
                   <em>{{ detalle.fechaPago | date: "dd/MM/yyyy HH:mm" }}</em>
                   <span *ngIf="detalle.numOperacion">
