@@ -19,6 +19,9 @@ import { IPago } from '../../../models/Gestion/pagos.models';
 import { MatSort } from '@angular/material/sort';
 import { PagosCotizacionPersonalService } from '../../../services/gestion/pagos/pagos-cotizacion-personal.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { ExcelExportService } from '../../../services/utilitarios/excel/excel-export.service';
+import { MatDialog } from '@angular/material/dialog';
+import { DetalleServiciosDialogComponent } from './detalle-servicios-dialog/detalle-servicios-dialog.component';
 
 @Component({
   selector: 'app-report-pagos-recepcion',
@@ -40,7 +43,9 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 export class ReportPagosRecepcionComponent implements OnInit {
   private _fb = inject(FormBuilder);
   private _pagoService = inject(PagosCotizacionPersonalService);
+  private _excelService = inject(ExcelExportService);
   private snackBar = inject(MatSnackBar);
+  private dialog = inject(MatDialog);
   private readonly _adapter =
     inject<DateAdapter<unknown, unknown>>(DateAdapter);
 
@@ -84,7 +89,6 @@ export class ReportPagosRecepcionComponent implements OnInit {
   columnasTablaReporte: string[] = [
     'cotizacionId',
     'codigoPago',
-    'fechaEmision',
     'nombreCompleto',
     'montoTotal',
     'faltaPagar',
@@ -216,50 +220,58 @@ export class ReportPagosRecepcionComponent implements OnInit {
     }
   }
 
+  /**
+   * Valida si la información del médico es válida para mostrar
+   */
+  private esMedicoValido(medico: any): boolean {
+    return (
+      medico &&
+      medico.nombreRecHumano &&
+      medico.nombreRecHumano !== 'null' &&
+      medico.nombreRecHumano.trim() !== '' &&
+      medico.apePatRecHumano &&
+      medico.apePatRecHumano !== 'null' &&
+      medico.apePatRecHumano.trim() !== ''
+    );
+  }
+
   verDetallePago(pago: IPago): void {
-    console.log('Detalle del pago:', pago);
-
-    // Aquí puedes implementar un modal o navegación para mostrar el detalle completo
-    const mensaje = this.construirMensajeDetalle(pago);
-
-    this.snackBar.open(mensaje, 'Cerrar', {
-      duration: 8000,
-      panelClass: ['custom-snackbar'],
+    this.dialog.open(DetalleServiciosDialogComponent, {
+      data: pago,
+      width: '90vw',
+      maxWidth: '1200px',
+      maxHeight: '90vh',
+      disableClose: false,
+      panelClass: 'custom-dialog-container',
     });
   }
 
   exportarPago(pago: IPago): void {
-    console.log('Exportando pago:', pago);
-    // Aquí puedes implementar la funcionalidad de exportación (PDF, Excel, etc.)
-    this.snackBar.open('Funcionalidad de exportación en desarrollo', 'Cerrar', {
-      duration: 3000,
-    });
-  }
+    try {
+      const nombreArchivo = `pago-${pago.codCotizacion}-${pago.codPago}`;
 
-  private construirMensajeDetalle(pago: IPago): string {
-    let mensaje = `Cotización: ${pago.codCotizacion}\n`;
-    mensaje += `Total: S/ ${(pago.totalFacturar || pago.total).toFixed(2)}\n`;
-    mensaje += `Falta pagar: S/ ${pago.faltaPagar.toFixed(2)}\n`;
+      // Exportar solo este pago
+      this._excelService.exportarPagosAExcel([pago], nombreArchivo);
 
-    if (pago.detallePagos && pago.detallePagos.length > 0) {
-      mensaje += `\nPagos realizados:\n`;
-      pago.detallePagos.forEach((detalle, index) => {
-        const montoConRecargo = detalle.monto + (detalle.recargo || 0);
-        mensaje += `${index + 1}. ${detalle.medioPago}: S/ ${montoConRecargo.toFixed(2)}`;
-
-        // Mostrar desglose si hay recargo
-        if (detalle.recargo && detalle.recargo > 0) {
-          mensaje += ` (Monto: S/ ${detalle.monto.toFixed(2)} + Recargo: S/ ${detalle.recargo.toFixed(2)})`;
-        }
-
-        if (detalle.numOperacion) {
-          mensaje += ` (Op: ${detalle.numOperacion})`;
-        }
-        mensaje += `\n`;
-      });
+      this.snackBar.open(
+        `Pago exportado exitosamente: ${nombreArchivo}.xlsx`,
+        'Cerrar',
+        {
+          duration: 5000,
+          panelClass: ['success-snackbar'],
+        },
+      );
+    } catch (error) {
+      console.error('Error al exportar pago:', error);
+      this.snackBar.open(
+        'Error al exportar el pago. Intente nuevamente.',
+        'Cerrar',
+        {
+          duration: 5000,
+          panelClass: ['error-snackbar'],
+        },
+      );
     }
-
-    return mensaje;
   }
 
   calcularEstadisticas(
@@ -345,10 +357,43 @@ export class ReportPagosRecepcionComponent implements OnInit {
       return;
     }
 
-    // Aquí puedes implementar la exportación a Excel o PDF
-    console.log('Exportando reporte:', datos);
-    this.snackBar.open('Funcionalidad de exportación en desarrollo', 'Cerrar', {
-      duration: 3000,
-    });
+    try {
+      // Obtener fechas del formulario para el nombre del archivo
+      const fechaInicio =
+        this.myGroupBusqueda.get('fechaInicio')?.value || new Date();
+      const fechaFin =
+        this.myGroupBusqueda.get('fechaFin')?.value || new Date();
+
+      const fechaInicioStr = new Date(fechaInicio).toISOString().split('T')[0];
+      const fechaFinStr = new Date(fechaFin).toISOString().split('T')[0];
+
+      const nombreArchivo = `reporte-pagos-${fechaInicioStr}_a_${fechaFinStr}`;
+
+      // Exportar a Excel con estadísticas
+      this._excelService.exportarPagosAExcel(
+        datos,
+        nombreArchivo,
+        this.estadisticas,
+      );
+
+      this.snackBar.open(
+        `Reporte exportado exitosamente: ${nombreArchivo}.xlsx`,
+        'Cerrar',
+        {
+          duration: 5000,
+          panelClass: ['success-snackbar'],
+        },
+      );
+    } catch (error) {
+      console.error('Error al exportar reporte:', error);
+      this.snackBar.open(
+        'Error al exportar el reporte. Intente nuevamente.',
+        'Cerrar',
+        {
+          duration: 5000,
+          panelClass: ['error-snackbar'],
+        },
+      );
+    }
   }
 }
