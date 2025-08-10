@@ -17,10 +17,7 @@ export interface IUbicacionSede {
   coordenadasMaps?: string; // URL de Google Maps o coordenadas lat,lng
   telefonoSede?: string;
   emailSede?: string;
-  responsableSede?: string;
-  cargoResponsable?: string;
   observacionesSede?: string;
-  activa?: boolean;
 }
 
 export interface IEmpresa {
@@ -39,7 +36,6 @@ export interface IEmpresa {
   telefono?: string;
   tipoEmpresa?: string; // 'Privada' | 'Publica' | 'Mixta'
   sector?: string; // 'Salud' | 'Educacion' | 'Mineria' | 'Construccion' | 'Otros'
-  fechaRegistro?: Date;
   estado?: boolean;
   observaciones?: string;
 }
@@ -61,9 +57,6 @@ export interface IGetEmpresas {
   ok: boolean;
   search: string;
   empresas: IEmpresa[];
-  total?: number;
-  page?: number;
-  limit?: number;
 }
 
 export interface IGetEmpresaById {

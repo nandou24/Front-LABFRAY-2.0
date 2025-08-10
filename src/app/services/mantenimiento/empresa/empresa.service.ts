@@ -28,7 +28,7 @@ export class EmpresaService {
   registrarEmpresa(body: IEmpresa): Observable<IEmpresaPostDTO> {
     console.log('Datos de la empresa:', body);
 
-    return this._http.post<IEmpresaPostDTO>(`${this.apiUrl}/newEmpresa`, body, {
+    return this._http.post<IEmpresaPostDTO>(`${this.apiUrl}`, body, {
       headers: this._auth.getAuthHeaders(),
     });
   }
@@ -36,7 +36,10 @@ export class EmpresaService {
   getLastEmpresas(cantidad: number): Observable<IEmpresa[]> {
     const params = new HttpParams().set('cant', cantidad);
     return this._http
-      .get<IGetEmpresas>(`${this.apiUrl}/latest`, { params })
+      .get<IGetEmpresas>(`${this.apiUrl}`, {
+        params,
+        headers: this._auth.getAuthHeaders(),
+      })
       .pipe(
         map((data) => {
           return data.empresas;
@@ -45,7 +48,7 @@ export class EmpresaService {
   }
 
   getEmpresa(terminoBusqueda: any): Observable<IEmpresa[]> {
-    const params = new HttpParams().set('search', terminoBusqueda);
+    const params = new HttpParams().set('termino', terminoBusqueda);
     return this._http
       .get<IGetEmpresas>(`${this.apiUrl}/findTerm`, {
         params,
@@ -63,11 +66,10 @@ export class EmpresaService {
   }
 
   public actualizarEmpresa(body: IEmpresa): Observable<IEmpresaUpdateDTO> {
-    return this._http.put<IEmpresaUpdateDTO>(
-      `${this.apiUrl}/updateEmpresa`,
-      body,
-      { headers: this._auth.getAuthHeaders() },
-    );
+    console.log('Datos de la empresa a actualizar:', body);
+    return this._http.put<IEmpresaUpdateDTO>(`${this.apiUrl}`, body, {
+      headers: this._auth.getAuthHeaders(),
+    });
   }
 
   public eliminarEmpresa(id: string): Observable<IEmpresaDeleteDTO> {

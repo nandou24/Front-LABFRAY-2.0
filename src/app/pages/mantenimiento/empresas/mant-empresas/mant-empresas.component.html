@@ -3,9 +3,7 @@
     <div class="contenedor-formulario">
       <div class="row-flex mt-2" style="align-items: center">
         <div [style.flex]="setFlex(50, '%')" class="flex-item">
-          <h5 class="text-center" style="font-weight: 500">
-            MANTENIMIENTO DE EMPRESAS
-          </h5>
+          <h5 style="font-weight: 500">MANTENIMIENTO DE EMPRESAS</h5>
         </div>
 
         <div [style.flex]="setFlex(45, '%')" class="flex-item">
@@ -15,12 +13,12 @@
 
       <mat-card>
         <mat-card-title>
-          <div class="row-flex align-items-center">DATOS DE LA EMPRESA</div>
+          <div class="row-flex">DATOS DE LA EMPRESA</div>
         </mat-card-title>
 
         <mat-card-content>
           <div class="row-flex mt-2">
-            <div [style.flex]="setFlex(22, '%')" class="flex-item">
+            <div [style.flex]="setFlex(23, '%')" class="flex-item">
               <mat-form-field appearance="outline">
                 <mat-label>RUC</mat-label>
                 <input matInput formControlName="ruc" maxlength="11" />
@@ -62,9 +60,9 @@
               </mat-form-field>
             </div>
 
-            <div [style.flex]="setFlex(10, '%')" class="flex-item">
+            <div [style.flex]="setFlex(14, '%')" class="flex-item">
               <mat-form-field appearance="outline">
-                <mat-label>Cantidad Trabajadores</mat-label>
+                <mat-label>Trabajadores</mat-label>
                 <input
                   matInput
                   type="number"
@@ -150,7 +148,7 @@
 
       <mat-card class="mt-2">
         <mat-card-title>
-          <div class="row-flex align-items-center">DIRECCIÓN FISCAL</div>
+          <div class="row-flex">DIRECCIÓN FISCAL</div>
         </mat-card-title>
 
         <mat-card-content>
@@ -181,7 +179,7 @@
               </mat-form-field>
             </div>
 
-            <div [style.flex]="setFlex(38, '%')" class="flex-item">
+            <div [style.flex]="setFlex(37, '%')" class="flex-item">
               <mat-form-field appearance="outline">
                 <mat-label>Distrito</mat-label>
                 <mat-select formControlName="distrito">
@@ -199,7 +197,7 @@
           </div>
 
           <div class="row-flex">
-            <div [style.flex]="setFlex(96, '%')" class="flex-item">
+            <div [style.flex]="setFlex(97, '%')" class="flex-item">
               <mat-form-field appearance="outline">
                 <mat-label>Dirección Fiscal</mat-label>
                 <input
@@ -229,14 +227,14 @@
 
       <mat-card class="mt-2">
         <mat-card-title>
-          <div class="row-flex align-items-center">INFORMACIÓN DE CONTACTO</div>
+          <div class="row-flex">INFORMACIÓN DE CONTACTO</div>
         </mat-card-title>
 
         <mat-card-content>
           <div class="row-flex mt-2">
             <div [style.flex]="setFlex(48, '%')" class="flex-item">
               <mat-form-field appearance="outline">
-                <mat-label>Email Principal</mat-label>
+                <mat-label>Email empresa</mat-label>
                 <input matInput formControlName="email" type="email" />
                 <mat-error *ngIf="empresaForm.get('email')?.hasError('email')">
                   Ingrese correo válido
@@ -246,7 +244,7 @@
 
             <div [style.flex]="setFlex(48, '%')" class="flex-item">
               <mat-form-field appearance="outline">
-                <mat-label>Teléfono Principal</mat-label>
+                <mat-label>Teléfono empresa</mat-label>
                 <input matInput formControlName="telefono" />
                 <mat-error
                   *ngIf="empresaForm.get('telefono')?.hasError('pattern')"
@@ -257,14 +255,143 @@
             </div>
           </div>
 
-          <fieldset class="campo-fieldset mt-2 mb-3">
-            <legend>PERSONAS DE CONTACTO</legend>
+          <div class="row-flex mt-2">
+            <fieldset
+              [style.flex]="setFlex(97, '%')"
+              class="campo-fieldset mt-2 mb-3"
+            >
+              <legend>PERSONAS DE CONTACTO</legend>
 
-            <div class="row-flex mt-1">
-              <div
-                [style.flex]="setFlex(20, '%')"
-                class="flex-item text-center"
-              >
+              <div class="row-flex mt-1">
+                <div [style.flex]="setFlex(100, '%')" class="flex-item">
+                  <div
+                    formArrayName="personasContacto"
+                    *ngFor="
+                      let contactoGroup of personasContacto.controls;
+                      let i = index
+                    "
+                  >
+                    <div [formGroupName]="i" class="sede-container mb-2">
+                      <div class="sede-header">
+                        <h6>Contacto {{ i + 1 }}</h6>
+                        <div class="sede-actions">
+                          <button
+                            mat-icon-button
+                            color="accent"
+                            type="button"
+                            (click)="marcarContactoPrincipal(i)"
+                            [class.contact-principal]="
+                              contactoGroup.get('principal')?.value
+                            "
+                            matTooltip="Marcar como principal"
+                          >
+                            <mat-icon>star</mat-icon>
+                          </button>
+                          <button
+                            mat-icon-button
+                            color="warn"
+                            type="button"
+                            (click)="eliminarContacto(i)"
+                          >
+                            <mat-icon>delete</mat-icon>
+                          </button>
+                        </div>
+                      </div>
+
+                      <div class="row-flex">
+                        <div [style.flex]="setFlex(34, '%')" class="flex-item">
+                          <mat-form-field appearance="outline">
+                            <mat-label>Nombre</mat-label>
+                            <input
+                              matInput
+                              formControlName="nombre"
+                              maxlength="100"
+                            />
+                            <mat-error
+                              *ngIf="
+                                contactoGroup
+                                  .get('nombre')
+                                  ?.hasError('required')
+                              "
+                            >
+                              Nombre requerido
+                            </mat-error>
+                            <mat-error
+                              *ngIf="
+                                contactoGroup.get('nombre')?.hasError('pattern')
+                              "
+                            >
+                              Solo letras y espacios
+                            </mat-error>
+                          </mat-form-field>
+                        </div>
+
+                        <div [style.flex]="setFlex(20, '%')" class="flex-item">
+                          <mat-form-field appearance="outline">
+                            <mat-label>Cargo</mat-label>
+                            <input
+                              matInput
+                              formControlName="cargo"
+                              maxlength="50"
+                            />
+                            <mat-error
+                              *ngIf="
+                                contactoGroup.get('cargo')?.hasError('required')
+                              "
+                            >
+                              Cargo requerido
+                            </mat-error>
+                          </mat-form-field>
+                        </div>
+
+                        <div [style.flex]="setFlex(13, '%')" class="flex-item">
+                          <mat-form-field appearance="outline">
+                            <mat-label>Teléfono</mat-label>
+                            <input matInput formControlName="telefono" />
+                            <mat-error
+                              *ngIf="
+                                contactoGroup
+                                  .get('telefono')
+                                  ?.hasError('required')
+                              "
+                            >
+                              Teléfono requerido
+                            </mat-error>
+                            <mat-error
+                              *ngIf="
+                                contactoGroup
+                                  .get('telefono')
+                                  ?.hasError('pattern')
+                              "
+                            >
+                              7-11 dígitos
+                            </mat-error>
+                          </mat-form-field>
+                        </div>
+
+                        <div [style.flex]="setFlex(29, '%')" class="flex-item">
+                          <mat-form-field appearance="outline">
+                            <mat-label>Email</mat-label>
+                            <input
+                              matInput
+                              formControlName="email"
+                              type="email"
+                            />
+                            <mat-error
+                              *ngIf="
+                                contactoGroup.get('email')?.hasError('email')
+                              "
+                            >
+                              Email inválido
+                            </mat-error>
+                          </mat-form-field>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div [style.flex]="setFlex(20, '%')" class="flex-item">
                 <button
                   mat-flat-button
                   color="primary"
@@ -277,152 +404,270 @@
                 </button>
               </div>
 
-              <div [style.flex]="setFlex(75, '%')" class="flex-item">
-                <div
-                  formArrayName="personasContacto"
-                  *ngFor="
-                    let contactoGroup of personasContacto.controls;
-                    let i = index
-                  "
-                >
-                  <div [formGroupName]="i" class="row align-items-center mb-2">
-                    <div
-                      [style.flex]="setFlex(25, '%')"
-                      class="flex-item text-center"
-                    >
-                      <mat-form-field appearance="outline">
-                        <mat-label>Nombre</mat-label>
-                        <input
-                          matInput
-                          formControlName="nombre"
-                          maxlength="100"
-                        />
-                        <mat-error
-                          *ngIf="
-                            contactoGroup.get('nombre')?.hasError('required')
-                          "
-                        >
-                          Nombre requerido
-                        </mat-error>
-                        <mat-error
-                          *ngIf="
-                            contactoGroup.get('nombre')?.hasError('pattern')
-                          "
-                        >
-                          Solo letras y espacios
-                        </mat-error>
-                      </mat-form-field>
-                    </div>
+              <div
+                *ngIf="!validarArrayContactos() && formSubmitted"
+                class="text-danger mt-2"
+                style="font-size: 14px; text-align: center"
+              >
+                Debe agregar al menos una persona de contacto
+              </div>
+            </fieldset>
+          </div>
 
-                    <div
-                      [style.flex]="setFlex(20, '%')"
-                      class="flex-item text-center"
-                    >
-                      <mat-form-field appearance="outline">
-                        <mat-label>Cargo</mat-label>
-                        <input
-                          matInput
-                          formControlName="cargo"
-                          maxlength="50"
-                        />
-                        <mat-error
-                          *ngIf="
-                            contactoGroup.get('cargo')?.hasError('required')
-                          "
-                        >
-                          Cargo requerido
-                        </mat-error>
-                      </mat-form-field>
-                    </div>
+          <div class="row-flex mt-2">
+            <fieldset
+              [style.flex]="setFlex(97, '%')"
+              class="campo-fieldset mt-2 mb-3"
+            >
+              <legend>SEDES / UBICACIONES PARA EVALUACIÓN</legend>
 
-                    <div
-                      [style.flex]="setFlex(18, '%')"
-                      class="flex-item text-center"
-                    >
-                      <mat-form-field appearance="outline">
-                        <mat-label>Teléfono</mat-label>
-                        <input matInput formControlName="telefono" />
-                        <mat-error
-                          *ngIf="
-                            contactoGroup.get('telefono')?.hasError('required')
-                          "
-                        >
-                          Teléfono requerido
-                        </mat-error>
-                        <mat-error
-                          *ngIf="
-                            contactoGroup.get('telefono')?.hasError('pattern')
-                          "
-                        >
-                          7-11 dígitos
-                        </mat-error>
-                      </mat-form-field>
-                    </div>
+              <div class="row-flex mt-1">
+                <div [style.flex]="setFlex(100, '%')" class="flex-item">
+                  <div
+                    formArrayName="ubicacionesSedes"
+                    *ngFor="
+                      let ubicacionGroup of ubicacionesSedes.controls;
+                      let i = index
+                    "
+                  >
+                    <div [formGroupName]="i" class="sede-container mb-3">
+                      <div class="sede-header">
+                        <h6>Sede {{ i + 1 }}</h6>
+                        <div class="sede-actions">
+                          <button
+                            mat-icon-button
+                            color="primary"
+                            type="button"
+                            (click)="
+                              abrirEnMaps(
+                                ubicacionGroup.get('coordenadasMaps')?.value
+                              )
+                            "
+                            matTooltip="Abrir en Google Maps"
+                            [disabled]="
+                              !ubicacionGroup.get('coordenadasMaps')?.value
+                            "
+                          >
+                            <mat-icon>map</mat-icon>
+                          </button>
+                          <button
+                            mat-icon-button
+                            color="warn"
+                            type="button"
+                            (click)="eliminarUbicacion(i)"
+                          >
+                            <mat-icon>delete</mat-icon>
+                          </button>
+                        </div>
+                      </div>
 
-                    <div
-                      [style.flex]="setFlex(20, '%')"
-                      class="flex-item text-center"
-                    >
-                      <mat-form-field appearance="outline">
-                        <mat-label>Email</mat-label>
-                        <input matInput formControlName="email" type="email" />
-                        <mat-error
-                          *ngIf="contactoGroup.get('email')?.hasError('email')"
-                        >
-                          Email inválido
-                        </mat-error>
-                      </mat-form-field>
-                    </div>
+                      <!-- Información básica de la sede -->
+                      <div class="row-flex">
+                        <div [style.flex]="setFlex(45, '%')" class="flex-item">
+                          <mat-form-field appearance="outline">
+                            <mat-label>Nombre de la Sede</mat-label>
+                            <input
+                              matInput
+                              formControlName="nombreSede"
+                              maxlength="100"
+                            />
+                            <mat-error
+                              *ngIf="
+                                ubicacionGroup
+                                  .get('nombreSede')
+                                  ?.hasError('required')
+                              "
+                            >
+                              Nombre requerido
+                            </mat-error>
+                            <mat-error
+                              *ngIf="
+                                ubicacionGroup
+                                  .get('nombreSede')
+                                  ?.hasError('minlength')
+                              "
+                            >
+                              Mínimo 3 caracteres
+                            </mat-error>
+                          </mat-form-field>
+                        </div>
 
-                    <div
-                      [style.flex]="setFlex(8, '%')"
-                      class="flex-item text-center"
-                    >
-                      <button
-                        mat-icon-button
-                        class="mb-3 me-1"
-                        color="accent"
-                        type="button"
-                        (click)="marcarContactoPrincipal(i)"
-                        [class.contact-principal]="
-                          contactoGroup.get('principal')?.value
-                        "
-                        matTooltip="Marcar como principal"
-                      >
-                        <mat-icon>star</mat-icon>
-                      </button>
-                      <button
-                        mat-icon-button
-                        class="mb-3"
-                        color="warn"
-                        type="button"
-                        (click)="eliminarContacto(i)"
-                      >
-                        <mat-icon>delete</mat-icon>
-                      </button>
+                        <div [style.flex]="setFlex(22, '%')" class="flex-item">
+                          <mat-form-field appearance="outline">
+                            <mat-label>Teléfono Sede</mat-label>
+                            <input matInput formControlName="telefonoSede" />
+                            <mat-error
+                              *ngIf="
+                                ubicacionGroup
+                                  .get('telefonoSede')
+                                  ?.hasError('pattern')
+                              "
+                            >
+                              7-11 dígitos
+                            </mat-error>
+                          </mat-form-field>
+                        </div>
+
+                        <div [style.flex]="setFlex(30, '%')" class="flex-item">
+                          <mat-form-field appearance="outline">
+                            <mat-label>Email Sede</mat-label>
+                            <input
+                              matInput
+                              formControlName="emailSede"
+                              type="email"
+                            />
+                            <mat-error
+                              *ngIf="
+                                ubicacionGroup
+                                  .get('emailSede')
+                                  ?.hasError('email')
+                              "
+                            >
+                              Email inválido
+                            </mat-error>
+                          </mat-form-field>
+                        </div>
+                      </div>
+
+                      <!-- Ubicación geográfica -->
+                      <div class="row-flex">
+                        <div [style.flex]="setFlex(30, '%')" class="flex-item">
+                          <mat-form-field appearance="outline">
+                            <mat-label>Departamento</mat-label>
+                            <mat-select formControlName="departamentoSede">
+                              <mat-option
+                                *ngFor="let depart of departamentos"
+                                [value]="depart.id"
+                                >{{ depart.nombre }}</mat-option
+                              >
+                            </mat-select>
+                          </mat-form-field>
+                        </div>
+
+                        <div [style.flex]="setFlex(30, '%')" class="flex-item">
+                          <mat-form-field appearance="outline">
+                            <mat-label>Provincia</mat-label>
+                            <mat-select formControlName="provinciaSede">
+                              <mat-option
+                                *ngFor="let provin of provincias"
+                                [value]="provin.id_Prov"
+                                >{{ provin.nombre }}</mat-option
+                              >
+                            </mat-select>
+                          </mat-form-field>
+                        </div>
+
+                        <div [style.flex]="setFlex(37, '%')" class="flex-item">
+                          <mat-form-field appearance="outline">
+                            <mat-label>Distrito</mat-label>
+                            <mat-select formControlName="distritoSede">
+                              <mat-option
+                                *ngFor="let distri of distritos"
+                                [value]="distri.id_Ditrito"
+                                >{{ distri.nombre }}</mat-option
+                              >
+                            </mat-select>
+                            <mat-error
+                              *ngIf="
+                                ubicacionGroup.get('distritoSede')?.invalid
+                              "
+                            >
+                              Obligatorio
+                            </mat-error>
+                          </mat-form-field>
+                        </div>
+                      </div>
+
+                      <div class="row-flex">
+                        <div [style.flex]="setFlex(99, '%')" class="flex-item">
+                          <mat-form-field appearance="outline">
+                            <mat-label>Dirección de la Sede</mat-label>
+                            <input
+                              matInput
+                              formControlName="direccionSede"
+                              maxlength="200"
+                            />
+                            <mat-error
+                              *ngIf="
+                                ubicacionGroup
+                                  .get('direccionSede')
+                                  ?.hasError('required')
+                              "
+                            >
+                              Dirección requerida
+                            </mat-error>
+                            <mat-error
+                              *ngIf="
+                                ubicacionGroup
+                                  .get('direccionSede')
+                                  ?.hasError('minlength')
+                              "
+                            >
+                              Mínimo 10 caracteres
+                            </mat-error>
+                          </mat-form-field>
+                        </div>
+                      </div>
+
+                      <!-- Referencias y coordenadas -->
+                      <div class="row-flex">
+                        <div [style.flex]="setFlex(49, '%')" class="flex-item">
+                          <mat-form-field appearance="outline">
+                            <mat-label>Referencias</mat-label>
+                            <input
+                              matInput
+                              formControlName="referenciasSede"
+                              maxlength="200"
+                              placeholder="Ej: Cerca al hospital, frente al parque..."
+                            />
+                          </mat-form-field>
+                        </div>
+
+                        <div [style.flex]="setFlex(49, '%')" class="flex-item">
+                          <mat-form-field appearance="outline">
+                            <mat-label
+                              >Coordenadas Maps (lat,lng) o URL</mat-label
+                            >
+                            <input
+                              matInput
+                              formControlName="coordenadasMaps"
+                              maxlength="500"
+                              placeholder="Ej: -12.046373,-77.042755 o URL de Google Maps"
+                            />
+                          </mat-form-field>
+                        </div>
+                      </div>
+
+                      <!-- Observaciones de la sede -->
+                      <div class="row-flex">
+                        <div [style.flex]="setFlex(99, '%')" class="flex-item">
+                          <mat-form-field appearance="outline">
+                            <mat-label>Observaciones de la Sede</mat-label>
+                            <textarea
+                              matInput
+                              formControlName="observacionesSede"
+                              rows="2"
+                              maxlength="300"
+                              placeholder="Información adicional sobre esta sede..."
+                            ></textarea>
+                            <mat-error
+                              *ngIf="
+                                ubicacionGroup
+                                  .get('observacionesSede')
+                                  ?.hasError('maxlength')
+                              "
+                            >
+                              Máximo 300 caracteres
+                            </mat-error>
+                          </mat-form-field>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            <div
-              *ngIf="!validarArrayContactos() && formSubmitted"
-              class="text-danger mt-2"
-              style="font-size: 14px; text-align: center"
-            >
-              Debe agregar al menos una persona de contacto
-            </div>
-          </fieldset>
-
-          <fieldset class="campo-fieldset mt-2 mb-3">
-            <legend>SEDES / UBICACIONES PARA EVALUACIÓN</legend>
-
-            <div class="row-flex mt-1">
-              <div
-                [style.flex]="setFlex(20, '%')"
-                class="flex-item text-center"
-              >
+              <div [style.flex]="setFlex(20, '%')" class="flex-item">
                 <button
                   mat-flat-button
                   color="accent"
@@ -435,292 +680,18 @@
                 </button>
               </div>
 
-              <div [style.flex]="setFlex(75, '%')" class="flex-item">
-                <div
-                  formArrayName="ubicacionesSedes"
-                  *ngFor="
-                    let ubicacionGroup of ubicacionesSedes.controls;
-                    let i = index
-                  "
-                >
-                  <div [formGroupName]="i" class="sede-container mb-3">
-                    <div class="sede-header">
-                      <h6>Sede {{ i + 1 }}</h6>
-                      <div class="sede-actions">
-                        <button
-                          mat-icon-button
-                          color="primary"
-                          type="button"
-                          (click)="
-                            abrirEnMaps(
-                              ubicacionGroup.get('direccionSede')?.value,
-                              ubicacionGroup.get('nombreSede')?.value
-                            )
-                          "
-                          matTooltip="Abrir en Google Maps"
-                          [disabled]="
-                            !ubicacionGroup.get('direccionSede')?.value
-                          "
-                        >
-                          <mat-icon>map</mat-icon>
-                        </button>
-                        <button
-                          mat-icon-button
-                          color="warn"
-                          type="button"
-                          (click)="eliminarUbicacion(i)"
-                        >
-                          <mat-icon>delete</mat-icon>
-                        </button>
-                      </div>
-                    </div>
-
-                    <!-- Información básica de la sede -->
-                    <div class="row-flex">
-                      <div [style.flex]="setFlex(30, '%')" class="flex-item">
-                        <mat-form-field appearance="outline">
-                          <mat-label>Nombre de la Sede</mat-label>
-                          <input
-                            matInput
-                            formControlName="nombreSede"
-                            maxlength="100"
-                          />
-                          <mat-error
-                            *ngIf="
-                              ubicacionGroup
-                                .get('nombreSede')
-                                ?.hasError('required')
-                            "
-                          >
-                            Nombre requerido
-                          </mat-error>
-                          <mat-error
-                            *ngIf="
-                              ubicacionGroup
-                                .get('nombreSede')
-                                ?.hasError('minlength')
-                            "
-                          >
-                            Mínimo 3 caracteres
-                          </mat-error>
-                        </mat-form-field>
-                      </div>
-
-                      <div [style.flex]="setFlex(50, '%')" class="flex-item">
-                        <mat-form-field appearance="outline">
-                          <mat-label>Dirección de la Sede</mat-label>
-                          <input
-                            matInput
-                            formControlName="direccionSede"
-                            maxlength="200"
-                          />
-                          <mat-error
-                            *ngIf="
-                              ubicacionGroup
-                                .get('direccionSede')
-                                ?.hasError('required')
-                            "
-                          >
-                            Dirección requerida
-                          </mat-error>
-                          <mat-error
-                            *ngIf="
-                              ubicacionGroup
-                                .get('direccionSede')
-                                ?.hasError('minlength')
-                            "
-                          >
-                            Mínimo 10 caracteres
-                          </mat-error>
-                        </mat-form-field>
-                      </div>
-
-                      <div [style.flex]="setFlex(16, '%')" class="flex-item">
-                        <mat-form-field appearance="outline">
-                          <mat-label>Estado</mat-label>
-                          <mat-select formControlName="activa">
-                            <mat-option [value]="true">Activa</mat-option>
-                            <mat-option [value]="false">Inactiva</mat-option>
-                          </mat-select>
-                        </mat-form-field>
-                      </div>
-                    </div>
-
-                    <!-- Ubicación geográfica -->
-                    <div class="row-flex">
-                      <div [style.flex]="setFlex(29, '%')" class="flex-item">
-                        <mat-form-field appearance="outline">
-                          <mat-label>Departamento</mat-label>
-                          <mat-select formControlName="departamentoSede">
-                            <mat-option
-                              *ngFor="let depart of departamentos"
-                              [value]="depart.id"
-                              >{{ depart.nombre }}</mat-option
-                            >
-                          </mat-select>
-                        </mat-form-field>
-                      </div>
-
-                      <div [style.flex]="setFlex(29, '%')" class="flex-item">
-                        <mat-form-field appearance="outline">
-                          <mat-label>Provincia</mat-label>
-                          <mat-select formControlName="provinciaSede">
-                            <mat-option
-                              *ngFor="let provin of provincias"
-                              [value]="provin.id_Prov"
-                              >{{ provin.nombre }}</mat-option
-                            >
-                          </mat-select>
-                        </mat-form-field>
-                      </div>
-
-                      <div [style.flex]="setFlex(38, '%')" class="flex-item">
-                        <mat-form-field appearance="outline">
-                          <mat-label>Distrito</mat-label>
-                          <mat-select formControlName="distritoSede">
-                            <mat-option
-                              *ngFor="let distri of distritos"
-                              [value]="distri.id_Ditrito"
-                              >{{ distri.nombre }}</mat-option
-                            >
-                          </mat-select>
-                          <mat-error
-                            *ngIf="ubicacionGroup.get('distritoSede')?.invalid"
-                          >
-                            Obligatorio
-                          </mat-error>
-                        </mat-form-field>
-                      </div>
-                    </div>
-
-                    <!-- Referencias y coordenadas -->
-                    <div class="row-flex">
-                      <div [style.flex]="setFlex(48, '%')" class="flex-item">
-                        <mat-form-field appearance="outline">
-                          <mat-label>Referencias</mat-label>
-                          <input
-                            matInput
-                            formControlName="referenciasSede"
-                            maxlength="200"
-                            placeholder="Ej: Cerca al hospital, frente al parque..."
-                          />
-                        </mat-form-field>
-                      </div>
-
-                      <div [style.flex]="setFlex(48, '%')" class="flex-item">
-                        <mat-form-field appearance="outline">
-                          <mat-label
-                            >Coordenadas Maps (lat,lng) o URL</mat-label
-                          >
-                          <input
-                            matInput
-                            formControlName="coordenadasMaps"
-                            maxlength="500"
-                            placeholder="Ej: -12.046373,-77.042755 o URL de Google Maps"
-                          />
-                        </mat-form-field>
-                      </div>
-                    </div>
-
-                    <!-- Contacto de la sede -->
-                    <div class="row-flex">
-                      <div [style.flex]="setFlex(20, '%')" class="flex-item">
-                        <mat-form-field appearance="outline">
-                          <mat-label>Teléfono Sede</mat-label>
-                          <input matInput formControlName="telefonoSede" />
-                          <mat-error
-                            *ngIf="
-                              ubicacionGroup
-                                .get('telefonoSede')
-                                ?.hasError('pattern')
-                            "
-                          >
-                            7-11 dígitos
-                          </mat-error>
-                        </mat-form-field>
-                      </div>
-
-                      <div [style.flex]="setFlex(24, '%')" class="flex-item">
-                        <mat-form-field appearance="outline">
-                          <mat-label>Email Sede</mat-label>
-                          <input
-                            matInput
-                            formControlName="emailSede"
-                            type="email"
-                          />
-                          <mat-error
-                            *ngIf="
-                              ubicacionGroup.get('emailSede')?.hasError('email')
-                            "
-                          >
-                            Email inválido
-                          </mat-error>
-                        </mat-form-field>
-                      </div>
-
-                      <div [style.flex]="setFlex(24, '%')" class="flex-item">
-                        <mat-form-field appearance="outline">
-                          <mat-label>Responsable</mat-label>
-                          <input
-                            matInput
-                            formControlName="responsableSede"
-                            maxlength="100"
-                          />
-                          <mat-error
-                            *ngIf="
-                              ubicacionGroup
-                                .get('responsableSede')
-                                ?.hasError('pattern')
-                            "
-                          >
-                            Solo letras y espacios
-                          </mat-error>
-                        </mat-form-field>
-                      </div>
-
-                      <div [style.flex]="setFlex(28, '%')" class="flex-item">
-                        <mat-form-field appearance="outline">
-                          <mat-label>Cargo del Responsable</mat-label>
-                          <input
-                            matInput
-                            formControlName="cargoResponsable"
-                            maxlength="50"
-                          />
-                        </mat-form-field>
-                      </div>
-                    </div>
-
-                    <!-- Observaciones de la sede -->
-                    <div class="row-flex">
-                      <div [style.flex]="setFlex(96, '%')" class="flex-item">
-                        <mat-form-field appearance="outline">
-                          <mat-label>Observaciones de la Sede</mat-label>
-                          <textarea
-                            matInput
-                            formControlName="observacionesSede"
-                            rows="2"
-                            maxlength="300"
-                            placeholder="Información adicional sobre esta sede..."
-                          ></textarea>
-                          <mat-error
-                            *ngIf="
-                              ubicacionGroup
-                                .get('observacionesSede')
-                                ?.hasError('maxlength')
-                            "
-                          >
-                            Máximo 300 caracteres
-                          </mat-error>
-                        </mat-form-field>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+              <div
+                *ngIf="!validarArrayUbicaciones() && formSubmitted"
+                class="text-danger mt-2"
+                style="font-size: 14px; text-align: center"
+              >
+                Debe agregar al menos una ubicación
               </div>
-            </div>
-          </fieldset>
+            </fieldset>
+          </div>
+
           <div class="row-flex">
-            <div [style.flex]="setFlex(96, '%')" class="flex-item">
+            <div [style.flex]="setFlex(97, '%')" class="flex-item">
               <mat-form-field appearance="outline">
                 <mat-label>Observaciones</mat-label>
                 <textarea

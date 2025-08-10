@@ -25,7 +25,11 @@ import { MatTableDataSource } from '@angular/material/table';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
-import { IEmpresa } from '../../../../models/Mantenimiento/empresa.models';
+import {
+  IEmpresa,
+  IPersonaContacto,
+  IUbicacionSede,
+} from '../../../../models/Mantenimiento/empresa.models';
 import { EmpresaService } from '../../../../services/mantenimiento/empresa/empresa.service';
 import { UbigeoService } from '../../../../services/utilitarios/ubigeo.service';
 import Swal from 'sweetalert2';
@@ -119,29 +123,16 @@ export class MantEmpresasComponent implements OnInit, AfterViewInit {
 
   public empresaForm: FormGroup = this._fb.group({
     _id: [null],
-    ruc: [
-      '',
-      [
-        Validators.required,
-        Validators.pattern(/^\d{11}$/), // RUC debe tener 11 dígitos
-      ],
-    ],
+    ruc: ['', [Validators.required, Validators.pattern(/^\d{11}$/)]], // RUC debe tener 11 dígitos
     razonSocial: [
       '',
-      [Validators.required, Validators.minLength(3), Validators.maxLength(200)],
+      [Validators.required, Validators.minLength(2), Validators.maxLength(200)],
     ],
     nombreComercial: [
-      '',
-      [Validators.required, Validators.minLength(3), Validators.maxLength(150)],
+      null,
+      [Validators.required, Validators.minLength(2), Validators.maxLength(150)],
     ],
-    direccionFiscal: [
-      '',
-      [
-        Validators.required,
-        Validators.minLength(10),
-        Validators.maxLength(200),
-      ],
-    ],
+    direccionFiscal: ['', [Validators.required, Validators.maxLength(200)]],
     departamento: ['15', Validators.required],
     provincia: ['01', Validators.required],
     distrito: ['', Validators.required],
@@ -149,11 +140,11 @@ export class MantEmpresasComponent implements OnInit, AfterViewInit {
       '',
       [Validators.required, Validators.min(1), Validators.max(10000)],
     ],
-    email: ['', [Validators.email]],
-    telefono: ['', [Validators.pattern(/^\d{7,11}$/)]],
+    email: [null, [Validators.email]],
+    telefono: [null, [Validators.pattern(/^\d{7,11}$/)]],
     tipoEmpresa: ['Privada'],
-    sector: ['Otros'],
-    observaciones: ['', [Validators.maxLength(500)]],
+    sector: [],
+    observaciones: [null, [Validators.maxLength(500)]],
     estado: [true],
     personasContacto: this._fb.array([]),
     ubicacionesSedes: this._fb.array([]),
@@ -166,9 +157,6 @@ export class MantEmpresasComponent implements OnInit, AfterViewInit {
   get ubicacionesSedes(): FormArray {
     return this.empresaForm.get('ubicacionesSedes') as FormArray;
   }
-
-  public addContacto: boolean = false;
-  public addUbicacion: boolean = false;
 
   agregarContacto() {
     const contactoForm = this._fb.group({
@@ -203,22 +191,8 @@ export class MantEmpresasComponent implements OnInit, AfterViewInit {
   // Métodos para gestionar ubicaciones/sedes
   agregarUbicacion() {
     const ubicacionForm = this._fb.group({
-      nombreSede: [
-        '',
-        [
-          Validators.required,
-          Validators.minLength(3),
-          Validators.maxLength(100),
-        ],
-      ],
-      direccionSede: [
-        '',
-        [
-          Validators.required,
-          Validators.minLength(10),
-          Validators.maxLength(200),
-        ],
-      ],
+      nombreSede: ['', [Validators.required, Validators.maxLength(100)]],
+      direccionSede: ['', [Validators.required, Validators.maxLength(200)]],
       departamentoSede: ['15', Validators.required],
       provinciaSede: ['01', Validators.required],
       distritoSede: ['', Validators.required],
@@ -226,16 +200,7 @@ export class MantEmpresasComponent implements OnInit, AfterViewInit {
       coordenadasMaps: ['', [Validators.maxLength(500)]],
       telefonoSede: ['', [Validators.pattern(/^\d{7,11}$/)]],
       emailSede: ['', [Validators.email]],
-      responsableSede: [
-        '',
-        [
-          Validators.pattern(/^[a-zA-ZÀ-ÿ\u00f1\u00d1\s]*$/),
-          Validators.maxLength(100),
-        ],
-      ],
-      cargoResponsable: ['', [Validators.maxLength(50)]],
       observacionesSede: ['', [Validators.maxLength(300)]],
-      activa: [true],
     });
 
     this.ubicacionesSedes.push(ubicacionForm);
@@ -245,20 +210,53 @@ export class MantEmpresasComponent implements OnInit, AfterViewInit {
     this.ubicacionesSedes.removeAt(index);
   }
 
-  // Método para abrir Google Maps con la dirección
-  abrirEnMaps(direccion: string, nombreSede: string) {
-    if (direccion) {
-      const query = encodeURIComponent(`${nombreSede} ${direccion}`);
-      const url = `https://www.google.com/maps/search/?api=1&query=${query}`;
-      window.open(url, '_blank');
+  // Método para abrir Google Maps con coordenadas
+  abrirEnMaps(coordenadas: string) {
+    console.log('Coordenadas recibidas:', coordenadas);
+    if (!coordenadas || !this.validarCoordenadas(coordenadas)) {
+      Swal.fire({
+        title: 'Coordenadas inválidas',
+        text: 'No hay coordenadas válidas para mostrar en el mapa. Formato requerido: latitud,longitud (ej: -12.0464,-77.0428)',
+        icon: 'warning',
+        confirmButtonText: 'Ok',
+      });
+      return;
     }
+
+    // Usar las coordenadas directamente
+    const [lat, lng] = coordenadas.split(',');
+    const url = `https://www.google.com/maps?q=${lat.trim()},${lng.trim()}`;
+    window.open(url, '_blank');
   }
 
   // Validar formato de coordenadas (lat,lng)
   validarCoordenadas(coordenadas: string): boolean {
     if (!coordenadas) return true; // Campo opcional
-    const regex = /^-?\d+\.?\d*,-?\d+\.?\d*$/;
-    return regex.test(coordenadas.trim());
+
+    const coordenadasLimpias = coordenadas.trim();
+    if (!coordenadasLimpias) return true; // Si está vacío después de trim
+
+    // Formato más flexible: permite espacios después de la coma y muchos decimales
+    // Acepta: -12.027221945765662, -77.1018516597838 o -12.0272,-77.1019
+    const regex = /^-?\d+(\.\d+)?\s*,\s*-?\d+(\.\d+)?$/;
+
+    if (!regex.test(coordenadasLimpias)) return false;
+
+    try {
+      // Validar rangos de latitud y longitud
+      const [lat, lng] = coordenadasLimpias.split(',');
+      const latNum = parseFloat(lat.trim());
+      const lngNum = parseFloat(lng.trim());
+
+      // Verificar que sean números válidos
+      if (isNaN(latNum) || isNaN(lngNum)) return false;
+
+      // Latitud debe estar entre -90 y 90
+      // Longitud debe estar entre -180 y 180
+      return latNum >= -90 && latNum <= 90 && lngNum >= -180 && lngNum <= 180;
+    } catch (error) {
+      return false;
+    }
   }
 
   @ViewChild(MatTable) table!: MatTable<any>;
@@ -278,33 +276,36 @@ export class MantEmpresasComponent implements OnInit, AfterViewInit {
   ];
   dataSourceEmpresas = new MatTableDataSource<IEmpresa>();
 
+  private todosLasEmpresas: IEmpresa[] = [];
+
   ultimasEmpresas(): void {
-    this._empresaService.getLastEmpresas(100).subscribe((empresas) => {
+    this._empresaService.getLastEmpresas(0).subscribe((empresas) => {
       this.dataSourceEmpresas.data = empresas;
+      this.todosLasEmpresas = empresas; // Guardar todos los datos
     });
   }
 
   terminoBusqueda = new FormControl('');
   timeoutBusqueda: any;
 
+  //Busca empresas en el frontend.... a futuro implementar búsqueda en el backend, cuando supere 1000 registros
   buscarEmpresas() {
-    clearTimeout(this.timeoutBusqueda);
+    const termino = this.terminoBusqueda?.value?.trim() ?? '';
 
-    this.timeoutBusqueda = setTimeout(() => {
-      const termino = this.terminoBusqueda.value?.trim() || '';
+    if (termino === '') {
+      // Si no hay término de búsqueda, mostrar todos los datos iniciales
+      this.dataSourceEmpresas.data = this.todosLasEmpresas;
+      this.dataSourceEmpresas.filter = '';
+    } else {
+      // Si hay término de búsqueda, aplicar filtro del dataSource
+      this.dataSourceEmpresas.data = this.todosLasEmpresas; // Asegurar que tiene todos los datos
+      this.dataSourceEmpresas.filter = termino.toLowerCase();
+    }
 
-      if (termino.length >= 3) {
-        this._empresaService
-          .getEmpresa(termino)
-          .subscribe((res: IEmpresa[]) => {
-            this.dataSourceEmpresas.data = res;
-          });
-      } else if (termino.length > 0) {
-        this.dataSourceEmpresas.data = [];
-      } else {
-        this.ultimasEmpresas();
-      }
-    }, 200);
+    // Si hay un paginador, ir a la primera página cuando se filtra
+    if (this.dataSourceEmpresas.paginator) {
+      this.dataSourceEmpresas.paginator.firstPage();
+    }
   }
 
   filaSeleccionadaIndex: number | null = null;
@@ -321,43 +322,40 @@ export class MantEmpresasComponent implements OnInit, AfterViewInit {
     this.empresaForm.get('ruc')?.disable();
 
     // Agregar cada persona de contacto al FormArray
-    empresa.personasContacto.forEach((contacto: any) => {
+    empresa.personasContacto.forEach((contacto: IPersonaContacto) => {
       this.personasContacto.push(this.crearContactoGroup(contacto));
     });
 
     // Agregar cada ubicación al FormArray
     if (empresa.ubicacionesSedes) {
-      empresa.ubicacionesSedes.forEach((ubicacion: any) => {
+      empresa.ubicacionesSedes.forEach((ubicacion: IUbicacionSede) => {
         this.ubicacionesSedes.push(this.crearUbicacionGroup(ubicacion));
       });
     }
   }
 
-  private crearContactoGroup(contacto: any): FormGroup {
+  private crearContactoGroup(contacto: IPersonaContacto): FormGroup {
     return this._fb.group({
       nombre: [contacto.nombre],
       cargo: [contacto.cargo],
       telefono: [contacto.telefono],
-      email: [contacto.email || ''],
+      email: [contacto.email || null],
       principal: [contacto.principal || false],
     });
   }
 
-  private crearUbicacionGroup(ubicacion: any): FormGroup {
+  private crearUbicacionGroup(ubicacion: IUbicacionSede): FormGroup {
     return this._fb.group({
       nombreSede: [ubicacion.nombreSede],
       direccionSede: [ubicacion.direccionSede],
       departamentoSede: [ubicacion.departamentoSede],
       provinciaSede: [ubicacion.provinciaSede],
       distritoSede: [ubicacion.distritoSede],
-      referenciasSede: [ubicacion.referenciasSede || ''],
-      coordenadasMaps: [ubicacion.coordenadasMaps || ''],
-      telefonoSede: [ubicacion.telefonoSede || ''],
-      emailSede: [ubicacion.emailSede || ''],
-      responsableSede: [ubicacion.responsableSede || ''],
-      cargoResponsable: [ubicacion.cargoResponsable || ''],
-      observacionesSede: [ubicacion.observacionesSede || ''],
-      activa: [ubicacion.activa !== undefined ? ubicacion.activa : true],
+      referenciasSede: [ubicacion.referenciasSede || null],
+      coordenadasMaps: [ubicacion.coordenadasMaps || null],
+      telefonoSede: [ubicacion.telefonoSede || null],
+      emailSede: [ubicacion.emailSede || null],
+      observacionesSede: [ubicacion.observacionesSede || null],
     });
   }
 
@@ -368,6 +366,11 @@ export class MantEmpresasComponent implements OnInit, AfterViewInit {
     return contactos.length > 0;
   }
 
+  validarArrayUbicaciones(): boolean {
+    const ubicaciones = this.empresaForm.get('ubicacionesSedes') as FormArray;
+    return ubicaciones.length > 0;
+  }
+
   registrarEmpresa() {
     this.formSubmitted = true;
 
@@ -376,7 +379,7 @@ export class MantEmpresasComponent implements OnInit, AfterViewInit {
       return;
     }
 
-    if (this.empresaForm.valid && this.validarArrayContactos()) {
+    if (this.empresaForm.valid) {
       Swal.fire({
         title: '¿Estás seguro?',
         text: '¿Deseas confirmar la creación de esta empresa?',
@@ -386,8 +389,7 @@ export class MantEmpresasComponent implements OnInit, AfterViewInit {
         cancelButtonText: 'Cancelar',
       }).then((result) => {
         if (result.isConfirmed) {
-          const empresa: IEmpresa = this.empresaForm.value;
-          empresa.fechaRegistro = new Date();
+          const empresa: IEmpresa = this.empresaForm.getRawValue();
 
           this._empresaService.registrarEmpresa(empresa).subscribe({
             next: () => {
@@ -400,10 +402,24 @@ export class MantEmpresasComponent implements OnInit, AfterViewInit {
               this.ultimasEmpresas();
             },
             error: (err) => {
-              const mensaje =
-                err?.error?.msg ||
-                err.message ||
+              // Extraer mensaje específico del campo que falló
+              let mensaje =
                 'No se pudo registrar la empresa. Intenta nuevamente.';
+
+              if (err?.error?.errors) {
+                // Si hay errores específicos de campos
+                const errores = err.error.errors;
+                const primerError = Object.keys(errores)[0]; // Tomar el primer error
+                if (primerError && errores[primerError]?.msg) {
+                  mensaje = errores[primerError].msg;
+                }
+              } else if (err?.error?.msg) {
+                // Si hay un mensaje general en error.msg
+                mensaje = err.error.msg;
+              } else if (err?.message) {
+                // Si hay un mensaje en la propiedad message
+                mensaje = err.message;
+              }
 
               Swal.fire({
                 title: 'Error',
@@ -426,8 +442,6 @@ export class MantEmpresasComponent implements OnInit, AfterViewInit {
     this.formSubmitted = false;
     this.personasContacto.clear();
     this.ubicacionesSedes.clear();
-    this.addContacto = false;
-    this.addUbicacion = false;
     this.empresaForm.patchValue({
       departamento: '15',
       provincia: '01',
@@ -438,6 +452,8 @@ export class MantEmpresasComponent implements OnInit, AfterViewInit {
     });
     this.filaSeleccionadaIndex = null;
     this.terminoBusqueda.setValue('');
+    this.dataSourceEmpresas.data = this.todosLasEmpresas;
+    this.dataSourceEmpresas.filter = ''; // Limpiar cualquier filtro aplicado
     this.empresaForm.get('ruc')?.enable();
   }
 
@@ -450,7 +466,7 @@ export class MantEmpresasComponent implements OnInit, AfterViewInit {
       return;
     }
 
-    if (this.empresaForm.valid && this.validarArrayContactos()) {
+    if (this.empresaForm.valid) {
       Swal.fire({
         title: '¿Estás seguro?',
         text: '¿Deseas confirmar la actualización de esta empresa?',
@@ -460,7 +476,7 @@ export class MantEmpresasComponent implements OnInit, AfterViewInit {
         cancelButtonText: 'Cancelar',
       }).then((result) => {
         if (result.isConfirmed) {
-          const body: IEmpresa = this.empresaForm.value;
+          const body: IEmpresa = this.empresaForm.getRawValue();
           this._empresaService.actualizarEmpresa(body).subscribe({
             next: () => {
               Swal.fire(
@@ -472,10 +488,26 @@ export class MantEmpresasComponent implements OnInit, AfterViewInit {
               this.ultimasEmpresas();
             },
             error: (err) => {
-              const mensaje =
-                err?.error?.msg ||
-                err.message ||
+              console.log('Error al actualizar la empresa:', err);
+
+              // Extraer mensaje específico del campo que falló
+              let mensaje =
                 'No se pudo actualizar la empresa. Intenta nuevamente.';
+
+              if (err?.error?.errors) {
+                // Si hay errores específicos de campos
+                const errores = err.error.errors;
+                const primerError = Object.keys(errores)[0]; // Tomar el primer error
+                if (primerError && errores[primerError]?.msg) {
+                  mensaje = errores[primerError].msg;
+                }
+              } else if (err?.error?.msg) {
+                // Si hay un mensaje general en error.msg
+                mensaje = err.error.msg;
+              } else if (err?.message) {
+                // Si hay un mensaje en la propiedad message
+                mensaje = err.message;
+              }
 
               Swal.fire({
                 title: 'Error',
