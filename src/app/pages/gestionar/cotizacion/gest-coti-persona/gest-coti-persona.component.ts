@@ -417,7 +417,7 @@ export class GestCotiPersonaComponent implements OnInit {
     this.timeoutBusqueda = setTimeout(() => {
       const termino = this.terminoBusquedaServicio.value?.trim() || '';
 
-      if (termino.length >= 3) {
+      if (termino.length >= 2) {
         this._servicioService
           .getServicio(termino)
           .subscribe((res: IServicio[]) => {

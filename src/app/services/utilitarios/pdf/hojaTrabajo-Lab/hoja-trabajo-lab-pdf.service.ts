@@ -226,14 +226,14 @@ export class HojaTrabajoLabPdfService {
         const unidad = item.unidadesRef || '';
         const valoresRef = item.valoresHojaTrabajo || '';
 
-        // Capitalizar solo la primera letra
-        const nombreCapitalizado =
-          nombreItem.charAt(0).toUpperCase() +
-          nombreItem.slice(1).toLowerCase();
+        // // Capitalizar solo la primera letra
+        // const nombreCapitalizado =
+        //   nombreItem.charAt(0).toUpperCase() +
+        //   nombreItem.slice(1).toLowerCase();
 
         doc.setFont('helvetica', 'bold'); // Negrita
         doc.setFontSize(11);
-        doc.text(`${numeroPrueba}. ${nombreCapitalizado}`, xActual, y);
+        doc.text(`${numeroPrueba}. ${nombreItem}`, xActual, y);
 
         // Línea para escribir resultado a mano (ajustada a la columna)
         const lineaInicio = xActual + 43;

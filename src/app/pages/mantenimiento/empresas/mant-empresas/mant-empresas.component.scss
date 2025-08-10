@@ -35,40 +35,41 @@ mat-option {
 .mat-mdc-row:hover .mat-mdc-cell,
 .mat-mdc-row:hover .mat-mdc-cell mat-icon {
   background-color: #dfe9f3;
-  // color: #ffffff;
-  // fill: #ffffff;
 }
 
 .mat-column-nro {
-  width: 5%;
+  width: 8%;
   text-align: center;
   padding-left: 3px;
   padding-right: 3px;
 }
 
-.mat-column-hc {
-  width: 20%;
+.mat-column-ruc {
+  width: 15%;
   text-align: center;
-  padding-left: 3px;
-  padding-right: 3px;
 }
 
-.mat-column-nombreCompleto {
-  width: 40%;
-  text-align: left;
-  padding-left: 3px;
-  padding-right: 3px;
+.mat-column-razonSocial {
+  width: 35%;
+  padding-left: 8px;
+  padding-right: 8px;
 }
 
-.mat-column-documento {
-  width: 25%;
+.mat-column-nombreComercial {
+  width: 30%;
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+.mat-column-cantidadTrabajadores {
+  width: 12%;
   text-align: center;
   padding-left: 3px;
   padding-right: 3px;
 }
 
 .campo-fieldset {
-  border: 1px solid #ddd;
+  border: 1px solid #8a8a8a;
   border-radius: 8px;
   padding: 1rem 1rem 0.5rem 1rem;
   position: relative;
@@ -92,15 +93,13 @@ mat-option {
   gap: 8px;
   align-items: flex-start;
 }
-//Aplicando flex al formulario
+
 .contenedor-formulario {
   flex: 0 0 60%;
-  //min-width: 300px;
 }
 
 .contenedor-tablaDerecha {
-  flex: 1 1 38%;
-  //min-width: 300px;
+  flex: 0 0 38%;
 }
 
 .row-flex {
@@ -118,33 +117,16 @@ mat-option {
 }
 
 .fila-seleccionada {
-  background-color: rgba(0, 102, 255, 0.15) !important;
+  background-color: #b3d4fc !important;
 }
 
-@media (max-width: 1430px) {
-  .contenedor-formulario,
-  .contenedor-tablaDerecha {
-    flex: 0 0 100%;
-  }
-}
-/* Tablets (2 columnas) */
-@media (max-width: 991px) {
-  .flex-item {
-    flex: 1 1 48% !important; /* Cada item ocupará 100% cuando sea pequeño */
-  }
-}
-/* Celulares (1 columna) */
-@media (max-width: 767px) {
-  .flex-item {
-    flex: 1 1 100% !important; /* Cada item ocupará 100% cuando sea pequeño */
-  }
-}
+.btn-nuevo {
+  background-color: #8d9097 !important; // azul moderno
+  color: white !important;
 
-.btn-telefono {
-  font-size: 0.75rem; // texto más pequeño
-  padding: 0.25rem 0.75rem; // menos padding
-  min-height: auto; // evita altura mínima
-  line-height: 1.2;
+  &:hover {
+    background-color: #b9b7b7 !important;
+  }
 }
 
 .btn-registrar {
@@ -165,11 +147,74 @@ mat-option {
   }
 }
 
-.btn-nuevo {
-  background-color: #8d9097 !important; // azul moderno
-  color: white !important;
+.btn-telefono {
+  margin-bottom: 1rem;
+}
 
-  &:hover {
-    background-color: #b9b7b7 !important;
+.btn-ubicacion {
+  margin-bottom: 1rem;
+}
+
+.sede-container {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 0.25rem 1rem 0.25rem 1rem;
+  background-color: #fafafa;
+}
+
+.sede-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.sede-header h6 {
+  margin: 0;
+  color: #0f3369;
+  font-weight: 500;
+  font-size: 16px;
+}
+
+.sede-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.contact-principal {
+  color: #ffc107 !important;
+}
+
+.contact-principal mat-icon {
+  color: #ffc107 !important;
+}
+
+.text-danger {
+  color: #dc3545;
+  font-weight: 500;
+}
+
+.clear-search-button {
+  color: rgba(0, 0, 0, 0.54);
+}
+
+// Responsive design
+@media (max-width: 1430px) {
+  .contenedor-formulario,
+  .contenedor-tablaDerecha {
+    flex: 0 0 100%;
+  }
+}
+/* Tablets (2 columnas) */
+@media (max-width: 991px) {
+  .flex-item {
+    flex: 1 1 48% !important; /* Cada item ocupará 100% cuando sea pequeño */
+  }
+}
+/* Celulares (1 columna) */
+@media (max-width: 767px) {
+  .flex-item {
+    flex: 1 1 100% !important; /* Cada item ocupará 100% cuando sea pequeño */
   }
 }
