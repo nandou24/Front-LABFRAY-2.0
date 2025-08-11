@@ -110,7 +110,7 @@ export const routes: Routes = [
         path: 'atencion-empresas',
         loadComponent: () =>
           import(
-            './pages/gestionar/atenciones-empresas/atenciones-empresas.component'
+            './pages/gestionar/atencionesEmpresas/atenciones-empresas/atenciones-empresas.component'
           ).then((m) => m.AtencionesEmpresasComponent),
       },
     ],
