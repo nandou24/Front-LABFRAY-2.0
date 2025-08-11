@@ -106,6 +106,13 @@ export const routes: Routes = [
             './pages/mantenimiento/empresas/mant-empresas/mant-empresas.component'
           ).then((m) => m.MantEmpresasComponent),
       },
+      {
+        path: 'atencion-empresas',
+        loadComponent: () =>
+          import(
+            './pages/gestionar/atencionesEmpresas/atenciones-empresas/atenciones-empresas.component'
+          ).then((m) => m.AtencionesEmpresasComponent),
+      },
     ],
   },
   {
