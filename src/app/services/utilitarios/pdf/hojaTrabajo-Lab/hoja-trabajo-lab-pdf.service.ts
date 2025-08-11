@@ -226,14 +226,23 @@ export class HojaTrabajoLabPdfService {
         const unidad = item.unidadesRef || '';
         const valoresRef = item.valoresHojaTrabajo || '';
 
-        // // Capitalizar solo la primera letra
-        // const nombreCapitalizado =
-        //   nombreItem.charAt(0).toUpperCase() +
-        //   nombreItem.slice(1).toLowerCase();
+        // Convertir a mayúsculas para mejor visibilidad
+        const nombreMayusculas = nombreItem.toUpperCase();
+
+        // Agregar fondo gris oscuro para destacar
+        doc.setFillColor(200, 200, 200); // Gris más oscuro (RGB)
+        doc.setFont('helvetica', 'bold'); // Negrita
+        doc.setFontSize(9.5);
+        const textWidth = doc.getTextWidth(
+          `${numeroPrueba}. ${nombreMayusculas}`,
+        );
+        console.log(`Ancho del texto: ${textWidth}`);
+        doc.rect(xActual - 1, y - 3.5, textWidth + 2, 6, 'F'); // Rectángulo relleno hasta la última letra
 
         doc.setFont('helvetica', 'bold'); // Negrita
-        doc.setFontSize(11);
-        doc.text(`${numeroPrueba}. ${nombreItem}`, xActual, y);
+        doc.setFontSize(9.5);
+        doc.setTextColor(0, 0, 0); // Asegurar texto negro
+        doc.text(`${numeroPrueba}. ${nombreMayusculas}`, xActual, y);
 
         // Línea para escribir resultado a mano (ajustada a la columna)
         const lineaInicio = xActual + 43;
@@ -257,13 +266,21 @@ export class HojaTrabajoLabPdfService {
       } else {
         // Si hay más de 1 item, mostrar encabezado numerado y items con viñeta
 
-        // Capitalizar solo la primera letra del nombre de la prueba
-        const nombrePruebaCapitalizado =
-          prueba.nombrePruebaLab.charAt(0).toUpperCase() +
-          prueba.nombrePruebaLab.slice(1).toLowerCase();
+        // Convertir a mayúsculas para mejor visibilidad
+        const nombrePruebaCapitalizado = prueba.nombrePruebaLab.toUpperCase();
+
+        // Agregar fondo gris oscuro para destacar el nombre de la prueba
+        doc.setFillColor(200, 200, 200); // Gris más oscuro (RGB)
+        doc.setFont('helvetica', 'bold'); // Negrita
+        doc.setFontSize(9.5);
+        const textWidth = doc.getTextWidth(
+          `${numeroPrueba}. ${nombrePruebaCapitalizado}`,
+        );
+        doc.rect(xActual - 1, y - 3.5, textWidth + 2, 6, 'F'); // Rectángulo relleno hasta la última letra
 
         doc.setFont('helvetica', 'bold'); // Negrita
-        doc.setFontSize(11);
+        doc.setFontSize(9.5);
+        doc.setTextColor(0, 0, 0); // Asegurar texto negro
         doc.text(`${numeroPrueba}. ${nombrePruebaCapitalizado}`, xActual, y);
         y += 7.5;
 
