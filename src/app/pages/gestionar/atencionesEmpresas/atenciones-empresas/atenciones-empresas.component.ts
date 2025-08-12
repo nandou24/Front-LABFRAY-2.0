@@ -21,7 +21,7 @@ export class AtencionesEmpresasComponent {
       data: {},
     });
     dialogRef.afterClosed().subscribe((pacienteSeleccionado) => {
-      console.log('Paciente seleccionado:', pacienteSeleccionado);
+      //console.log('Paciente seleccionado:', pacienteSeleccionado);
     });
 
     // const dlg = this.dialog.open(DialogCrearAtencionComponent, {

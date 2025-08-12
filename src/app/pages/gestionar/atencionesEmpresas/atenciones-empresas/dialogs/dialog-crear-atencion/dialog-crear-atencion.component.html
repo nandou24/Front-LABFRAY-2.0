@@ -8,59 +8,160 @@
       <form [formGroup]="groupEmpresa" class="mt-2">
         <ng-template matStepLabel>Empresa y Protocolo</ng-template>
         <div class="row-flex">
-          <div [style.flex]="setFlex(0, 40, '%')" class="flex-item">
+          <div [style.flex]="setFlex(100, '%')" class="flex-item">
             <mat-form-field appearance="outline">
               <mat-label>Empresa</mat-label>
-              <mat-select formControlName="empresa">
-                <!-- <mat-option
-                  *ngFor="let empresa of empresas"
-                  [value]="empresa._id"
-                >
-                  {{ empresa.ruc }} - {{ empresa.razonSocial }}
-                </mat-option> -->
-                <mat-option value="1"
-                  >Empresa Empresa Empresa Empresa Empresa Empresa Empresa
-                  1</mat-option
-                >
-              </mat-select>
-            </mat-form-field>
-            <mat-error *ngIf="groupEmpresa.get('empresa')?.hasError('required')"
-              >Selecciona una empresa
-            </mat-error>
-          </div>
-
-          <div [style.flex]="setFlex(0, 30, '%')" class="flex-item">
-            <mat-form-field appearance="outline">
-              <mat-label>Protocolo de análisis</mat-label>
               <input
+                #inputEmpresa
+                type="text"
+                placeholder="Selecciona uno"
                 matInput
-                [matAutocomplete]="prot"
-                formControlName="protocolo"
+                formControlName="empresa"
+                [matAutocomplete]="autoEmpresas"
+                (input)="filterEmpresas()"
+                (focus)="filterEmpresas()"
               />
               <mat-autocomplete
-                #prot="matAutocomplete"
-                [displayWith]="displayProtocolo"
+                requireSelection
+                #autoEmpresas="matAutocomplete"
+                [displayWith]="displayFnEmpresas"
               >
-                <mat-option
-                  *ngFor="let p of protocolosFiltrados$ | async"
-                  [value]="p"
-                >
-                  {{ p.nombreServicio }}
-                </mat-option>
+                @for (option of filteredOptionsEmpresas; track option) {
+                  <mat-option [value]="option"
+                    >{{ option.ruc }} - {{ option.razonSocial }}</mat-option
+                  >
+                }
               </mat-autocomplete>
-              <mat-error
-                *ngIf="groupEmpresa.get('protocolo')?.hasError('required')"
-                >Requerido</mat-error
-              >
             </mat-form-field>
           </div>
+        </div>
 
-          <div [style.flex]="setFlex(0, 30, '%')" class="flex-item">
+        <div class="row-flex mt-1">
+          <div [style.flex]="setFlex(25, '%')" class="flex-item text-center">
+            <button
+              mat-flat-button
+              color="primary"
+              class="btn-telefono"
+              type="button"
+              (click)="agregarServicio()"
+            >
+              <mat-icon class="me-1">add</mat-icon>
+              Agregar Servicio
+            </button>
+          </div>
+
+          <div [style.flex]="setFlex(75, '%')" class="flex-item">
+            <div
+              formArrayName="servicios"
+              *ngFor="let servicioGroup of servicios.controls; let i = index"
+            >
+              <div [formGroupName]="i" class="row align-items-center">
+                <div
+                  [style.flex]="setFlex(70, '%')"
+                  class="flex-item text-center"
+                >
+                  <!-- <mat-form-field appearance="outline">
+                    <mat-label>Nombre de Servicio</mat-label>
+                    <input matInput formControlName="nombreServicio" />
+                    <mat-error
+                      *ngIf="
+                        servicioGroup
+                          .get('nombreServicio')
+                          ?.hasError('required')
+                      "
+                    >
+                      Nombre requerido
+                    </mat-error>
+                  </mat-form-field> -->
+
+                  <mat-form-field appearance="outline">
+                    <mat-label>Servicio</mat-label>
+                    <input
+                      type="text"
+                      placeholder="Selecciona uno"
+                      matInput
+                      formControlName="nombreServicio"
+                      [matAutocomplete]="autoServicios"
+                      (input)="filterServiciosByIndex($event, i)"
+                      (focus)="initializeServicioFilter(i)"
+                    />
+                    <mat-autocomplete
+                      requireSelection
+                      #autoServicios="matAutocomplete"
+                      [displayWith]="displayFnServicios"
+                    >
+                      @for (option of getServiciosFiltrados(i); track option) {
+                        <mat-option [value]="option">{{
+                          option.nombreServicio
+                        }}</mat-option>
+                      }
+                    </mat-autocomplete>
+                    <mat-error
+                      *ngIf="
+                        servicioGroup
+                          .get('nombreServicio')
+                          ?.hasError('required')
+                      "
+                    >
+                      Servicio requerido
+                    </mat-error>
+                  </mat-form-field>
+                </div>
+
+                <div
+                  [style.flex]="setFlex(20, '%')"
+                  class="flex-item text-center"
+                >
+                  <mat-form-field appearance="outline">
+                    <mat-label>Cantidad</mat-label>
+                    <input
+                      matInput
+                      type="number"
+                      min="1"
+                      max="9999"
+                      formControlName="cantidad"
+                    />
+                    <mat-error
+                      *ngIf="
+                        servicioGroup.get('cantidad')?.hasError('required')
+                      "
+                    >
+                      Requerido
+                    </mat-error>
+                    <mat-error
+                      *ngIf="servicioGroup.get('cantidad')?.hasError('min')"
+                    >
+                      Mínimo 1
+                    </mat-error>
+                  </mat-form-field>
+                </div>
+
+                <div
+                  [style.flex]="setFlex(10, '%')"
+                  class="flex-item text-center"
+                >
+                  <button
+                    mat-icon-button
+                    class="mb-3"
+                    color="warn"
+                    type="button"
+                    (click)="eliminarServicios(i)"
+                  >
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row-flex">
+          <div [style.flex]="setFlex(100, '%')" class="flex-item">
             <mat-form-field appearance="outline">
               <mat-label>Observación</mat-label>
               <textarea
                 matInput
-                rows="2"
+                rows="3"
                 formControlName="observacion"
               ></textarea>
             </mat-form-field>
@@ -74,7 +175,7 @@
     </mat-step>
 
     <!-- Paso 2: Programación (multi-día) -->
-    <mat-step [stepControl]="groupProgramacion" label="Programación">
+    <!-- <mat-step [stepControl]="groupProgramacion" label="Programación">
       <form [formGroup]="groupProgramacion">
         <mat-form-field appearance="outline">
           <mat-label>Sede de la empresa</mat-label>
@@ -169,10 +270,10 @@
           Next
         </button>
       </form>
-    </mat-step>
+    </mat-step> -->
 
     <!-- Paso 3: Personal & Sede interna -->
-    <mat-step [stepControl]="groupEquipo" label="Personal y sede">
+    <!-- <mat-step [stepControl]="groupEquipo" label="Personal y sede">
       <form [formGroup]="groupEquipo" class="grid gap">
         <mat-form-field appearance="outline">
           <mat-label>Sede del policlínico</mat-label>
@@ -217,7 +318,7 @@
         </button>
         <button mat-button (click)="stepper.reset()">Reset</button>
       </form>
-    </mat-step>
+    </mat-step> -->
   </mat-stepper>
 </mat-dialog-content>
 

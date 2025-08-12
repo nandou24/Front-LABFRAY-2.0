@@ -1,4 +1,10 @@
-import { Component, inject, OnInit } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  inject,
+  OnInit,
+  ViewChild,
+} from '@angular/core';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
@@ -30,26 +36,8 @@ import {
   MAT_DATE_LOCALE,
   MatNativeDateModule,
 } from '@angular/material/core';
-
-// interface Empresa {
-//   _id: string;
-//   ruc: string;
-//   razonSocial: string;
-//   sedes: { _id: string; nombre: string; direccion?: string }[];
-// }
-
-// interface Protocolo {
-//   _id: string;
-//   nombre: string;
-// }
-// interface SedeInterna {
-//   _id: string;
-//   nombre: string;
-// }
-// interface Personal {
-//   _id: string;
-//   nombre: string;
-// }
+import { EmpresaService } from '../../../../../../services/mantenimiento/empresa/empresa.service';
+import { ServiciosService } from '../../../../../../services/mantenimiento/servicios/servicios.service';
 
 @Component({
   selector: 'app-dialog-crear-atencion',
@@ -74,14 +62,23 @@ import {
   styleUrl: './dialog-crear-atencion.component.scss',
 })
 export class DialogCrearAtencionComponent implements OnInit {
-  constructor() {}
+  constructor() {
+    this.filteredOptionsEmpresas = this.empresas.slice();
+    this.filteredOptionsServicios = this.serviciosdisponibles.slice();
+  }
 
   private _fb = inject(FormBuilder);
   private dialog = inject(MatDialogRef<DialogCrearAtencionComponent>);
+  private _empresaService = inject(EmpresaService); // Reemplaza con tu servicio real
+  private _servicioService = inject(ServiciosService);
   isEditable = false;
 
   ngOnInit(): void {
     this._adapter.setLocale('es-PE');
+    this.traerEmpresas();
+    this.traerServicios();
+    // Inicializar el filtro para el primer servicio
+    this.initializeServicioFilter(0);
   }
 
   private readonly _adapter =
@@ -128,22 +125,81 @@ export class DialogCrearAtencionComponent implements OnInit {
 
   // --- data sources (reemplaza por tus services) ---
   empresas: IEmpresa[] = []; // cargar desde API
-  protocolos: IServicio[] = []; // cargar desde API
+  serviciosdisponibles: IServicio[] = []; // cargar desde API
   sedesInternas: IUbicacionSede[] = []; // cargar desde API
   personal: IRecHumano[] = []; // cargar desde API
 
   empresasFiltradas$!: Observable<IEmpresa[]>;
-  protocolosFiltrados$!: Observable<IServicio[]>;
+  serviciosFiltrados$!: Observable<IServicio[]>;
   personalFiltrado$!: Observable<IRecHumano[]>;
 
   empresaSeleccionada?: IEmpresa;
 
+  // Arrays de filtrado independientes para cada servicio
+  serviciosFiltradosPorIndice: { [index: number]: IServicio[] } = {};
+
   // Step 1
   groupEmpresa = this._fb.group({
     empresa: [null, Validators.required], // guarda objeto; luego puedes mapear a empresaId
-    protocolo: [null, Validators.required],
+    servicios: this._fb.array([this.nuevoServicio()]), // Inicia con un servicio
     observacion: [''],
   });
+
+  get servicios(): FormArray {
+    return this.groupEmpresa.get('servicios') as FormArray;
+  }
+
+  @ViewChild('inputEmpresa') inputEmpresa!: ElementRef<HTMLInputElement>;
+  filteredOptionsEmpresas: IEmpresa[];
+
+  //Filtra las empresas por razón social o RUC.
+  filterEmpresas(): void {
+    const filterValue = this.inputEmpresa.nativeElement.value.toLowerCase();
+    this.filteredOptionsEmpresas = this.empresas.filter(
+      (o) =>
+        o.razonSocial.toLowerCase().includes(filterValue) ||
+        o.ruc.toLowerCase().includes(filterValue),
+    );
+  }
+
+  // Muestra la razón social y RUC de la empresa al momento de seleccionar
+  displayFnEmpresas(empresa: IEmpresa): string {
+    return empresa && empresa.razonSocial && empresa.ruc
+      ? empresa.ruc + ' - ' + empresa.razonSocial
+      : '';
+  }
+
+  @ViewChild('inputServicio') inputServicio!: ElementRef<HTMLInputElement>;
+  filteredOptionsServicios: IServicio[];
+
+  // Nuevo método: Filtra servicios para un campo específico por índice
+  filterServiciosByIndex(event: Event, index: number): void {
+    const target = event.target as HTMLInputElement;
+    const filterValue = target.value.toLowerCase();
+
+    this.serviciosFiltradosPorIndice[index] = this.serviciosdisponibles.filter(
+      (o) => o.nombreServicio.toLowerCase().includes(filterValue),
+    );
+  }
+
+  // Método para obtener servicios filtrados por índice
+  getServiciosFiltrados(index: number): IServicio[] {
+    if (!this.serviciosFiltradosPorIndice[index]) {
+      this.serviciosFiltradosPorIndice[index] =
+        this.serviciosdisponibles.slice();
+    }
+    return this.serviciosFiltradosPorIndice[index];
+  }
+
+  // Método para inicializar el filtro de un nuevo servicio
+  initializeServicioFilter(index: number): void {
+    this.serviciosFiltradosPorIndice[index] = this.serviciosdisponibles.slice();
+  }
+
+  // Muestra el nombre del servicio al momento de seleccionar
+  displayFnServicios(servicio: IServicio): string {
+    return servicio && servicio.nombreServicio ? servicio.nombreServicio : '';
+  }
 
   // Step 2
   groupProgramacion = this._fb.group({
@@ -165,17 +221,38 @@ export class DialogCrearAtencionComponent implements OnInit {
     notas: [''],
   });
 
-  setFlex(grow: number, valor: number, unidad: 'px' | '%' = 'px'): string {
-    if (grow > 0) {
-      return `${grow} 0 0`;
-    } else {
-      return `0 0 ${valor}${unidad}`;
-    }
+  setFlex(valor: number, unidad: 'px' | '%' = 'px'): string {
+    return `0 0 ${valor}${unidad}`;
   }
 
-  displayEmpresa = (e?: IEmpresa) => (e ? `${e.razonSocial} (${e.ruc})` : '');
-  displayProtocolo = (p?: IServicio) => (p ? p.nombreServicio : '');
   displayPersonal = (p?: IRecHumano) => (p ? p.nombreRecHumano : '');
+
+  agregarServicio() {
+    const servicio = this.nuevoServicio();
+    const nuevoIndice = this.servicios.length;
+    this.servicios.push(servicio);
+    // Inicializar el filtro para el nuevo servicio
+    this.initializeServicioFilter(nuevoIndice);
+  }
+
+  eliminarServicios(i: number) {
+    this.servicios.removeAt(i);
+    // Limpiar el filtro del índice eliminado
+    delete this.serviciosFiltradosPorIndice[i];
+    // Reorganizar los filtros restantes
+    const nuevosServiciosFiltrados: { [index: number]: IServicio[] } = {};
+    Object.keys(this.serviciosFiltradosPorIndice).forEach((key) => {
+      const index = parseInt(key);
+      if (index > i) {
+        nuevosServiciosFiltrados[index - 1] =
+          this.serviciosFiltradosPorIndice[index];
+      } else if (index < i) {
+        nuevosServiciosFiltrados[index] =
+          this.serviciosFiltradosPorIndice[index];
+      }
+    });
+    this.serviciosFiltradosPorIndice = nuevosServiciosFiltrados;
+  }
 
   onEmpresaSelected(e: IEmpresa) {
     this.empresaSeleccionada = e;
@@ -183,6 +260,14 @@ export class DialogCrearAtencionComponent implements OnInit {
     this.turnos.controls.forEach((ctrl) =>
       ctrl.get('sedeEmpresa')?.setValue(null),
     );
+  }
+
+  nuevoServicio(): FormGroup {
+    return this._fb.group({
+      //_id: [null, Validators.required],
+      nombreServicio: [null, Validators.required],
+      cantidad: [1, [Validators.required, Validators.min(1)]],
+    });
   }
 
   nuevaProg(): FormGroup {
@@ -204,6 +289,24 @@ export class DialogCrearAtencionComponent implements OnInit {
 
   cancelar() {
     this.dialog.close();
+  }
+
+  traerEmpresas() {
+    this._empresaService.getLastEmpresas(0).subscribe((empresas) => {
+      this.empresas = empresas;
+      console.log(empresas);
+    });
+  }
+
+  traerServicios() {
+    this._servicioService.getAllServicios().subscribe((servicios) => {
+      this.serviciosdisponibles = servicios;
+      // Inicializar filtros para servicios existentes
+      for (let i = 0; i < this.servicios.length; i++) {
+        this.initializeServicioFilter(i);
+      }
+      console.log(servicios);
+    });
   }
 
   crear() {
