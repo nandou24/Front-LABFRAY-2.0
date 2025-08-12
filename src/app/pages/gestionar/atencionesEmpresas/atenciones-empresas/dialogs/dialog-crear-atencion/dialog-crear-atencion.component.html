@@ -1,0 +1,236 @@
+<!-- dialog-crear-atencion.component.html -->
+<h2 mat-dialog-title>Nueva Atención a Empresa</h2>
+
+<mat-dialog-content class="scroll">
+  <mat-stepper linear #stepper>
+    <!-- Paso 1: Empresa & Protocolo -->
+    <mat-step [stepControl]="groupEmpresa" [editable]="isEditable">
+      <form [formGroup]="groupEmpresa" class="mt-2">
+        <ng-template matStepLabel>Empresa y Protocolo</ng-template>
+        <div class="row-flex">
+          <div [style.flex]="setFlex(0, 40, '%')" class="flex-item">
+            <mat-form-field appearance="outline">
+              <mat-label>Empresa</mat-label>
+              <mat-select formControlName="empresa">
+                <!-- <mat-option
+                  *ngFor="let empresa of empresas"
+                  [value]="empresa._id"
+                >
+                  {{ empresa.ruc }} - {{ empresa.razonSocial }}
+                </mat-option> -->
+                <mat-option value="1"
+                  >Empresa Empresa Empresa Empresa Empresa Empresa Empresa
+                  1</mat-option
+                >
+              </mat-select>
+            </mat-form-field>
+            <mat-error *ngIf="groupEmpresa.get('empresa')?.hasError('required')"
+              >Selecciona una empresa
+            </mat-error>
+          </div>
+
+          <div [style.flex]="setFlex(0, 30, '%')" class="flex-item">
+            <mat-form-field appearance="outline">
+              <mat-label>Protocolo de análisis</mat-label>
+              <input
+                matInput
+                [matAutocomplete]="prot"
+                formControlName="protocolo"
+              />
+              <mat-autocomplete
+                #prot="matAutocomplete"
+                [displayWith]="displayProtocolo"
+              >
+                <mat-option
+                  *ngFor="let p of protocolosFiltrados$ | async"
+                  [value]="p"
+                >
+                  {{ p.nombreServicio }}
+                </mat-option>
+              </mat-autocomplete>
+              <mat-error
+                *ngIf="groupEmpresa.get('protocolo')?.hasError('required')"
+                >Requerido</mat-error
+              >
+            </mat-form-field>
+          </div>
+
+          <div [style.flex]="setFlex(0, 30, '%')" class="flex-item">
+            <mat-form-field appearance="outline">
+              <mat-label>Observación</mat-label>
+              <textarea
+                matInput
+                rows="2"
+                formControlName="observacion"
+              ></textarea>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <button mat-button matStepperNext [disabled]="groupEmpresa.invalid">
+          Siguiente
+        </button>
+      </form>
+    </mat-step>
+
+    <!-- Paso 2: Programación (multi-día) -->
+    <mat-step [stepControl]="groupProgramacion" label="Programación">
+      <form [formGroup]="groupProgramacion">
+        <mat-form-field appearance="outline">
+          <mat-label>Sede de la empresa</mat-label>
+          <mat-select formControlName="sedeEmpresa">
+            <mat-option [value]="null">—</mat-option>
+            <mat-option
+              *ngFor="let s of empresaSeleccionada?.ubicacionesSedes || []"
+              [value]="s"
+            >
+              {{ s.nombreSede }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Dirección</mat-label>
+          <input matInput formControlName="direccion" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Link de ubicación (Maps)</mat-label>
+          <input
+            matInput
+            placeholder="https://maps.app.goo.gl/..."
+            formControlName="linkMaps"
+          />
+        </mat-form-field>
+
+        <div formArrayName="turnos">
+          <div *ngFor="let pg of turnos.controls; let i = index" class="card">
+            <div [formGroupName]="i">
+              <div class="card-head">
+                <b>Día {{ i + 1 }}</b>
+                <button
+                  mat-icon-button
+                  color="warn"
+                  *ngIf="turnos.length > 1"
+                  (click)="eliminarProg(i)"
+                >
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Fecha</mat-label>
+                <input matInput [matDatepicker]="dp" formControlName="fecha" />
+                <mat-datepicker-toggle
+                  matSuffix
+                  [for]="dp"
+                ></mat-datepicker-toggle>
+                <mat-datepicker #dp></mat-datepicker>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Hora inicio</mat-label>
+                <input
+                  matInput
+                  type="time"
+                  placeholder="08:00"
+                  formControlName="horaInicio"
+                />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Hora fin</mat-label>
+                <input
+                  matInput
+                  type="time"
+                  placeholder="12:00"
+                  formControlName="horaFin"
+                />
+              </mat-form-field>
+            </div>
+          </div>
+        </div>
+
+        <button
+          mat-stroked-button
+          color="primary"
+          type="button"
+          (click)="agregarProg()"
+        >
+          <mat-icon>add</mat-icon>&nbsp;Agregar día
+        </button>
+
+        <button mat-button matStepperPrevious>Back</button>
+        <button
+          mat-button
+          matStepperNext
+          [disabled]="groupProgramacion.invalid"
+        >
+          Next
+        </button>
+      </form>
+    </mat-step>
+
+    <!-- Paso 3: Personal & Sede interna -->
+    <mat-step [stepControl]="groupEquipo" label="Personal y sede">
+      <form [formGroup]="groupEquipo" class="grid gap">
+        <mat-form-field appearance="outline">
+          <mat-label>Sede del policlínico</mat-label>
+          <mat-select formControlName="sedeInterna">
+            <mat-option *ngFor="let s of sedesInternas" [value]="s">{{
+              s.nombreSede
+            }}</mat-option>
+          </mat-select>
+          <mat-error *ngIf="groupEquipo.get('sedeInterna')?.invalid"
+            >Requerido</mat-error
+          >
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Responsable</mat-label>
+          <mat-select formControlName="responsable">
+            <mat-option *ngFor="let p of personal" [value]="p">{{
+              p.nombreRecHumano
+            }}</mat-option>
+          </mat-select>
+          <mat-error *ngIf="groupEquipo.get('responsable')?.invalid"
+            >Requerido</mat-error
+          >
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="col-2">
+          <mat-label>Equipo (personal asignado)</mat-label>
+          <mat-select formControlName="equipo" multiple>
+            <mat-option *ngFor="let p of personal" [value]="p">{{
+              p.nombreRecHumano
+            }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="col-2">
+          <mat-label>Notas</mat-label>
+          <textarea matInput rows="2" formControlName="notas"></textarea>
+        </mat-form-field>
+
+        <button mat-button matStepperPrevious [disabled]="groupEquipo.invalid">
+          Back
+        </button>
+        <button mat-button (click)="stepper.reset()">Reset</button>
+      </form>
+    </mat-step>
+  </mat-stepper>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancelar()">Cancelar</button>
+  <button
+    mat-raised-button
+    color="primary"
+    (click)="crear()"
+    [disabled]="
+      groupEmpresa.invalid || groupProgramacion.invalid || groupEquipo.invalid
+    "
+  >
+    Crear Atención
+  </button>
+</mat-dialog-actions>

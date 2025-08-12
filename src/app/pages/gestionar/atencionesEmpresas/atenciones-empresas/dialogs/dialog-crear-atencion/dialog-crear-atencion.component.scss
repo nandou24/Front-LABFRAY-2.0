@@ -1,0 +1,60 @@
+/* dialog-crear-atencion.component.scss */
+// .scroll {
+//   max-height: 72vh;
+//   overflow: auto;
+// }
+// .grid {
+//   display: grid;
+//   grid-template-columns: repeat(2, minmax(0, 1fr));
+// }
+// .col-2 {
+//   grid-column: span 2;
+// }
+// .gap {
+//   gap: 12px;
+// }
+// @media (max-width: 768px) {
+//   .grid {
+//     grid-template-columns: 1fr;
+//   }
+//   .col-2 {
+//     grid-column: span 1;
+//   }
+// }
+// .card {
+//   border: 1px solid #e5e7eb;
+//   border-radius: 12px;
+//   padding: 12px;
+//   margin-bottom: 12px;
+// }
+// .card-head {
+//   display: flex;
+//   justify-content: space-between;
+//   align-items: center;
+//   margin-bottom: 8px;
+// }
+// .actions {
+//   margin-top: 12px;
+//   display: flex;
+//   justify-content: flex-end;
+//   gap: 8px;
+// }
+
+mat-form-field {
+  width: 100%;
+}
+
+.row-flex {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  //gap: 10px;
+  margin-bottom: 0px;
+}
+
+.flex-item {
+  justify-content: center;
+  padding: 5px;
+  min-width: 0;
+  text-align: center;
+}
