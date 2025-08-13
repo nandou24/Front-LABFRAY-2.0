@@ -21,18 +21,7 @@
 //     grid-column: span 1;
 //   }
 // }
-// .card {
-//   border: 1px solid #e5e7eb;
-//   border-radius: 12px;
-//   padding: 12px;
-//   margin-bottom: 12px;
-// }
-// .card-head {
-//   display: flex;
-//   justify-content: space-between;
-//   align-items: center;
-//   margin-bottom: 8px;
-// }
+
 // .actions {
 //   margin-top: 12px;
 //   display: flex;
@@ -57,4 +46,83 @@ mat-form-field {
   padding: 5px;
   min-width: 0;
   text-align: center;
+}
+
+// Estilos para información del personal
+.personal-info {
+  padding: 8px 12px;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+  border: 1px solid #e0e0e0;
+  min-height: 60px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+
+  h4 {
+    margin: 0 0 12px 0;
+    color: #1976d2;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .info-card {
+    background: white;
+    padding: 12px;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+    .info-item {
+      margin-bottom: 8px;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+
+      strong {
+        color: #333;
+        font-size: 14px;
+      }
+
+      span {
+        color: #666;
+        font-size: 13px;
+      }
+    }
+  }
+
+  .info-row {
+    margin-bottom: 4px;
+    font-size: 14px;
+    text-align: left;
+
+    strong {
+      color: #2196f3;
+      margin-right: 8px;
+    }
+  }
+}
+
+.personal-info-placeholder {
+  padding: 8px 12px;
+  background-color: #fafafa;
+  border-radius: 4px;
+  border: 1px dashed #e0e0e0;
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  small {
+    color: #999;
+    font-style: italic;
+  }
+}
+
+.text-muted {
+  color: #666 !important;
+}
+
+.mb-2 {
+  margin-bottom: 16px;
 }

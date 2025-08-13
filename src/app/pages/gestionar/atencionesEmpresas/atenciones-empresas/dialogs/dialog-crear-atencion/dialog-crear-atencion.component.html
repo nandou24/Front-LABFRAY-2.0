@@ -25,6 +25,7 @@
                 requireSelection
                 #autoEmpresas="matAutocomplete"
                 [displayWith]="displayFnEmpresas"
+                (optionSelected)="onEmpresaSeleccionada($event.option.value)"
               >
                 @for (option of filteredOptionsEmpresas; track option) {
                   <mat-option [value]="option"
@@ -60,20 +61,6 @@
                   [style.flex]="setFlex(70, '%')"
                   class="flex-item text-center"
                 >
-                  <!-- <mat-form-field appearance="outline">
-                    <mat-label>Nombre de Servicio</mat-label>
-                    <input matInput formControlName="nombreServicio" />
-                    <mat-error
-                      *ngIf="
-                        servicioGroup
-                          .get('nombreServicio')
-                          ?.hasError('required')
-                      "
-                    >
-                      Nombre requerido
-                    </mat-error>
-                  </mat-form-field> -->
-
                   <mat-form-field appearance="outline">
                     <mat-label>Servicio</mat-label>
                     <input
@@ -175,150 +162,336 @@
     </mat-step>
 
     <!-- Paso 2: Programación (multi-día) -->
-    <!-- <mat-step [stepControl]="groupProgramacion" label="Programación">
-      <form [formGroup]="groupProgramacion">
-        <mat-form-field appearance="outline">
-          <mat-label>Sede de la empresa</mat-label>
-          <mat-select formControlName="sedeEmpresa">
-            <mat-option [value]="null">—</mat-option>
-            <mat-option
-              *ngFor="let s of empresaSeleccionada?.ubicacionesSedes || []"
-              [value]="s"
+    <mat-step [stepControl]="groupProgramacion" label="Programación">
+      <form [formGroup]="groupProgramacion" class="mt-2">
+        <div class="row-flex">
+          <div [style.flex]="setFlex(100, '%')" class="flex-item">
+            <mat-form-field appearance="outline">
+              <mat-label>Sede de la empresa</mat-label>
+              <mat-select
+                formControlName="sedeEmpresa"
+                (selectionChange)="onSedeSeleccionada($event.value)"
+              >
+                <mat-option [value]="null">— Selecciona una sede —</mat-option>
+                <mat-option *ngFor="let sede of sedes" [value]="sede">
+                  {{ sede.nombreSede }}
+                  <small *ngIf="sede.direccionSede" class="text-muted">
+                    - {{ sede.direccionSede }}</small
+                  >
+                </mat-option>
+              </mat-select>
+              <mat-hint *ngIf="!empresaSeleccionada">
+                Primero selecciona una empresa en el paso anterior
+              </mat-hint>
+              <mat-error
+                *ngIf="
+                  groupProgramacion.get('sedeEmpresa')?.hasError('required')
+                "
+              >
+                Sede requerida
+              </mat-error>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <div class="row-flex">
+          <div [style.flex]="setFlex(100, '%')" class="flex-item">
+            <mat-form-field appearance="outline">
+              <mat-label>Dirección</mat-label>
+              <input matInput readonly="true" formControlName="direccion" />
+            </mat-form-field>
+          </div>
+        </div>
+
+        <div class="row-flex">
+          <div [style.flex]="setFlex(70, '%')" class="flex-item">
+            <mat-form-field appearance="outline">
+              <mat-label>Link de ubicación (Maps)</mat-label>
+              <input
+                readonly="true"
+                matInput
+                placeholder="https://maps.app.goo.gl/..."
+                formControlName="linkMaps"
+              />
+            </mat-form-field>
+          </div>
+
+          <div [style.flex]="setFlex(30, '%')" class="flex-item">
+            <button
+              mat-icon-button
+              matTooltip="Ver ubicación en Maps"
+              type="button"
+              [disabled]="!groupProgramacion.get('linkMaps')?.value"
+              (click)="abrirEnMaps()"
             >
-              {{ s.nombreSede }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Dirección</mat-label>
-          <input matInput formControlName="direccion" />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Link de ubicación (Maps)</mat-label>
-          <input
-            matInput
-            placeholder="https://maps.app.goo.gl/..."
-            formControlName="linkMaps"
-          />
-        </mat-form-field>
+              <mat-icon>location_on</mat-icon>
+            </button>
+          </div>
+        </div>
 
         <div formArrayName="turnos">
-          <div *ngFor="let pg of turnos.controls; let i = index" class="card">
+          <div *ngFor="let pg of turnos.controls; let i = index">
             <div [formGroupName]="i">
-              <div class="card-head">
-                <b>Día {{ i + 1 }}</b>
-                <button
-                  mat-icon-button
-                  color="warn"
-                  *ngIf="turnos.length > 1"
-                  (click)="eliminarProg(i)"
-                >
-                  <mat-icon>delete</mat-icon>
-                </button>
+              <div class="row-flex">
+                <div [style.flex]="setFlex(10, '%')" class="flex-item mt-2">
+                  <b>Día {{ i + 1 }}</b>
+                </div>
+
+                <div [style.flex]="setFlex(25, '%')" class="flex-item">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Fecha</mat-label>
+                    <input
+                      matInput
+                      [matDatepicker]="datepicker"
+                      readonly="true"
+                      formControlName="fecha"
+                    />
+                    <mat-datepicker-toggle
+                      matSuffix
+                      [for]="datepicker"
+                    ></mat-datepicker-toggle>
+                    <mat-datepicker
+                      #datepicker
+                      disabled="false"
+                    ></mat-datepicker>
+                  </mat-form-field>
+                </div>
+                <div [style.flex]="setFlex(25, '%')" class="flex-item">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Hora de inicio</mat-label>
+                    <input
+                      matInput
+                      formControlName="horaInicio"
+                      [matTimepicker]="pickerHoraInicio"
+                    />
+                    <mat-timepicker-toggle
+                      matIconSuffix
+                      [for]="pickerHoraInicio"
+                    />
+                    <mat-timepicker #pickerHoraInicio />
+                  </mat-form-field>
+                </div>
+                <div [style.flex]="setFlex(25, '%')" class="flex-item">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Hora de fin</mat-label>
+                    <input
+                      matInput
+                      formControlName="horaFin"
+                      [matTimepicker]="pickerHoraFin"
+                    />
+                    <mat-timepicker-toggle
+                      matIconSuffix
+                      [for]="pickerHoraFin"
+                    />
+                    <mat-timepicker #pickerHoraFin />
+                  </mat-form-field>
+                </div>
+
+                <div [style.flex]="setFlex(10, '%')" class="flex-item">
+                  <button
+                    mat-icon-button
+                    color="warn"
+                    *ngIf="turnos.length > 1"
+                    (click)="eliminarTurno(i)"
+                  >
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
               </div>
+            </div>
+          </div>
+        </div>
+        <div class="row-flex" style="justify-content: center">
+          <button
+            mat-stroked-button
+            color="primary"
+            type="button"
+            (click)="agregarTurno()"
+          >
+            <mat-icon>add</mat-icon>&nbsp;Agregar día
+          </button>
+        </div>
+        <div class="row-flex" style="justify-content: center">
+          <button mat-button matStepperPrevious>Atrás</button>
+          <button
+            mat-button
+            matStepperNext
+            [disabled]="groupProgramacion.invalid"
+          >
+            Siguiente
+          </button>
+        </div>
+      </form>
+    </mat-step>
 
-              <mat-form-field appearance="outline">
-                <mat-label>Fecha</mat-label>
-                <input matInput [matDatepicker]="dp" formControlName="fecha" />
-                <mat-datepicker-toggle
-                  matSuffix
-                  [for]="dp"
-                ></mat-datepicker-toggle>
-                <mat-datepicker #dp></mat-datepicker>
-              </mat-form-field>
+    <!-- Paso 3: Personal -->
+    <mat-step [stepControl]="groupEquipo" label="Personal">
+      <form [formGroup]="groupEquipo" class="mt-2">
+        <!-- Responsable -->
+        <div class="row-flex">
+          <div [style.flex]="setFlex(100, '%')" class="flex-item">
+            <mat-form-field appearance="outline">
+              <mat-label>Responsable</mat-label>
+              <mat-select formControlName="responsable">
+                <mat-option [value]="null"
+                  >— Selecciona un responsable —</mat-option
+                >
+                <mat-option *ngFor="let p of personal" [value]="p">
+                  {{ getPersonalInfo(p) }}
+                </mat-option>
+              </mat-select>
+              <mat-error
+                *ngIf="groupEquipo.get('responsable')?.hasError('required')"
+              >
+                Responsable requerido
+              </mat-error>
+            </mat-form-field>
+          </div>
+        </div>
 
-              <mat-form-field appearance="outline">
-                <mat-label>Hora inicio</mat-label>
-                <input
-                  matInput
-                  type="time"
-                  placeholder="08:00"
-                  formControlName="horaInicio"
-                />
-              </mat-form-field>
-
-              <mat-form-field appearance="outline">
-                <mat-label>Hora fin</mat-label>
-                <input
-                  matInput
-                  type="time"
-                  placeholder="12:00"
-                  formControlName="horaFin"
-                />
-              </mat-form-field>
+        <!-- Información del Responsable -->
+        <div class="personal-info" *ngIf="getResponsableInfo()">
+          <h4>Responsable Seleccionado</h4>
+          <div class="info-card">
+            <div class="info-item">
+              <strong
+                >{{ getResponsableInfo()?.nombreRecHumano }}
+                {{ getResponsableInfo()?.apePatRecHumano }}
+                {{ getResponsableInfo()?.apeMatRecHumano }}</strong
+              >
+            </div>
+            <div class="info-item">
+              <span
+                >{{ getResponsableInfo()?.tipoDoc || "No especificado" }}:
+                {{ getResponsableInfo()?.nroDoc || "No especificado" }}</span
+              >
+            </div>
+            <div class="info-item">
+              <span
+                >Teléfono:
+                {{
+                  getResponsableInfo()
+                    ? getPersonalTelefono(getResponsableInfo()!)
+                    : "No especificado"
+                }}</span
+              >
             </div>
           </div>
         </div>
 
-        <button
-          mat-stroked-button
-          color="primary"
-          type="button"
-          (click)="agregarProg()"
-        >
-          <mat-icon>add</mat-icon>&nbsp;Agregar día
-        </button>
+        <!-- Personal del equipo -->
+        <div class="row-flex mt-1">
+          <div [style.flex]="setFlex(100, '%')" class="flex-item">
+            <div
+              formArrayName="equipoPersonal"
+              *ngFor="
+                let personalGroup of equipoPersonal.controls;
+                let i = index
+              "
+            >
+              <div [formGroupName]="i" class="row align-items-center mb-2">
+                <!-- Select de personal -->
+                <div [style.flex]="setFlex(60, '%')" class="flex-item">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Personal #{{ i + 1 }}</mat-label>
+                    <mat-select formControlName="personal">
+                      <mat-option [value]="null"
+                        >— Selecciona personal —</mat-option
+                      >
+                      <mat-option
+                        *ngFor="let p of getPersonalDisponible(i)"
+                        [value]="p"
+                      >
+                        {{ getPersonalInfo(p) }}
+                      </mat-option>
+                    </mat-select>
+                    <mat-error
+                      *ngIf="
+                        personalGroup.get('personal')?.hasError('required')
+                      "
+                    >
+                      Personal requerido
+                    </mat-error>
+                  </mat-form-field>
+                </div>
 
-        <button mat-button matStepperPrevious>Back</button>
-        <button
-          mat-button
-          matStepperNext
-          [disabled]="groupProgramacion.invalid"
-        >
-          Next
-        </button>
+                <!-- Información del personal seleccionado -->
+                <div [style.flex]="setFlex(30, '%')" class="flex-item">
+                  <div
+                    *ngIf="
+                      personalGroup.get('personal')
+                        ?.value as personalSeleccionado
+                    "
+                    class="personal-info"
+                  >
+                    <div class="info-row">
+                      <strong>DNI:</strong> {{ personalSeleccionado.nroDoc }}
+                    </div>
+                    <div class="info-row">
+                      <strong>Teléfono:</strong>
+                      {{ getPersonalTelefono(personalSeleccionado) }}
+                    </div>
+                  </div>
+                  <div
+                    *ngIf="!personalGroup.get('personal')?.value"
+                    class="personal-info-placeholder"
+                  >
+                    <small class="text-muted"
+                      >Selecciona personal para ver información</small
+                    >
+                  </div>
+                </div>
+
+                <!-- Botón eliminar -->
+                <div
+                  [style.flex]="setFlex(10, '%')"
+                  class="flex-item text-center"
+                >
+                  <button
+                    mat-icon-button
+                    color="warn"
+                    type="button"
+                    (click)="eliminarPersonal(i)"
+                    [disabled]="equipoPersonal.length <= 1"
+                    matTooltip="Eliminar personal"
+                  >
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div [style.flex]="setFlex(100, '%')" class="flex-item text-center">
+            <button
+              mat-flat-button
+              color="primary"
+              type="button"
+              (click)="agregarPersonal()"
+            >
+              <mat-icon class="me-1">add</mat-icon>
+              Agregar Personal
+            </button>
+          </div>
+        </div>
+
+        <!-- Notas -->
+        <div class="row-flex">
+          <div [style.flex]="setFlex(100, '%')" class="flex-item">
+            <mat-form-field appearance="outline">
+              <mat-label>Notas</mat-label>
+              <textarea matInput rows="3" formControlName="notas"></textarea>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <!-- Botones de navegación -->
+        <div class="row-flex" style="justify-content: center">
+          <button mat-button matStepperPrevious>Atrás</button>
+          <button mat-button (click)="stepper.reset()">Reset</button>
+        </div>
       </form>
-    </mat-step> -->
-
-    <!-- Paso 3: Personal & Sede interna -->
-    <!-- <mat-step [stepControl]="groupEquipo" label="Personal y sede">
-      <form [formGroup]="groupEquipo" class="grid gap">
-        <mat-form-field appearance="outline">
-          <mat-label>Sede del policlínico</mat-label>
-          <mat-select formControlName="sedeInterna">
-            <mat-option *ngFor="let s of sedesInternas" [value]="s">{{
-              s.nombreSede
-            }}</mat-option>
-          </mat-select>
-          <mat-error *ngIf="groupEquipo.get('sedeInterna')?.invalid"
-            >Requerido</mat-error
-          >
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Responsable</mat-label>
-          <mat-select formControlName="responsable">
-            <mat-option *ngFor="let p of personal" [value]="p">{{
-              p.nombreRecHumano
-            }}</mat-option>
-          </mat-select>
-          <mat-error *ngIf="groupEquipo.get('responsable')?.invalid"
-            >Requerido</mat-error
-          >
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" class="col-2">
-          <mat-label>Equipo (personal asignado)</mat-label>
-          <mat-select formControlName="equipo" multiple>
-            <mat-option *ngFor="let p of personal" [value]="p">{{
-              p.nombreRecHumano
-            }}</mat-option>
-          </mat-select>
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" class="col-2">
-          <mat-label>Notas</mat-label>
-          <textarea matInput rows="2" formControlName="notas"></textarea>
-        </mat-form-field>
-
-        <button mat-button matStepperPrevious [disabled]="groupEquipo.invalid">
-          Back
-        </button>
-        <button mat-button (click)="stepper.reset()">Reset</button>
-      </form>
-    </mat-step> -->
+    </mat-step>
   </mat-stepper>
 </mat-dialog-content>
 

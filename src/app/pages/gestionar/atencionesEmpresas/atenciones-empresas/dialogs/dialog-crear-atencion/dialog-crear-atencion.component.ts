@@ -13,6 +13,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatStepperModule } from '@angular/material/stepper';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatTimepickerModule } from '@angular/material/timepicker';
 import {
   FormArray,
   FormBuilder,
@@ -21,7 +22,7 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { map, Observable, of, startWith } from 'rxjs';
+import { Observable } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
@@ -32,12 +33,14 @@ import {
 import { IServicio } from '../../../../../../models/Mantenimiento/servicios.models';
 import { IRecHumano } from '../../../../../../models/Mantenimiento/recursoHumano.models';
 import {
-  DateAdapter,
   MAT_DATE_LOCALE,
   MatNativeDateModule,
+  provideNativeDateAdapter,
 } from '@angular/material/core';
 import { EmpresaService } from '../../../../../../services/mantenimiento/empresa/empresa.service';
 import { ServiciosService } from '../../../../../../services/mantenimiento/servicios/servicios.service';
+import Swal from 'sweetalert2';
+import { RecursoHumanoService } from '../../../../../../services/mantenimiento/recursoHumano/recurso-humano.service';
 
 @Component({
   selector: 'app-dialog-crear-atencion',
@@ -57,6 +60,11 @@ import { ServiciosService } from '../../../../../../services/mantenimiento/servi
     MatSlideToggleModule,
     MatStepperModule,
     MatAutocompleteModule,
+    MatTimepickerModule,
+  ],
+  providers: [
+    provideNativeDateAdapter(),
+    { provide: MAT_DATE_LOCALE, useValue: 'es-PE' },
   ],
   templateUrl: './dialog-crear-atencion.component.html',
   styleUrl: './dialog-crear-atencion.component.scss',
@@ -71,18 +79,16 @@ export class DialogCrearAtencionComponent implements OnInit {
   private dialog = inject(MatDialogRef<DialogCrearAtencionComponent>);
   private _empresaService = inject(EmpresaService); // Reemplaza con tu servicio real
   private _servicioService = inject(ServiciosService);
+  private _personalService = inject(RecursoHumanoService);
   isEditable = false;
 
   ngOnInit(): void {
-    this._adapter.setLocale('es-PE');
     this.traerEmpresas();
     this.traerServicios();
+    this.traerPersonal();
     // Inicializar el filtro para el primer servicio
     this.initializeServicioFilter(0);
   }
-
-  private readonly _adapter =
-    inject<DateAdapter<unknown, unknown>>(DateAdapter);
 
   // formProgramacion = this._fb.group({
   //   empresa: this._fb.group({
@@ -126,7 +132,7 @@ export class DialogCrearAtencionComponent implements OnInit {
   // --- data sources (reemplaza por tus services) ---
   empresas: IEmpresa[] = []; // cargar desde API
   serviciosdisponibles: IServicio[] = []; // cargar desde API
-  sedesInternas: IUbicacionSede[] = []; // cargar desde API
+  sedes: IUbicacionSede[] = []; // cargar desde API
   personal: IRecHumano[] = []; // cargar desde API
 
   empresasFiltradas$!: Observable<IEmpresa[]>;
@@ -169,6 +175,38 @@ export class DialogCrearAtencionComponent implements OnInit {
       : '';
   }
 
+  onEmpresaSeleccionada(empresa: IEmpresa | null) {
+    if (empresa) {
+      this.empresaSeleccionada = empresa;
+      this.sedes = empresa.ubicacionesSedes || [];
+      // Resetear la sede seleccionada cuando cambie la empresa
+      this.groupProgramacion.get('sedeEmpresa')?.setValue(null);
+      console.log('Empresa seleccionada:', empresa);
+      console.log('Sedes disponibles:', this.sedes);
+    } else {
+      this.empresaSeleccionada = undefined;
+      this.sedes = [];
+      this.groupProgramacion.get('sedeEmpresa')?.setValue(null);
+    }
+  }
+
+  onSedeSeleccionada(sede: IUbicacionSede | null) {
+    if (sede) {
+      // Auto-completar dirección si está disponible en la sede
+      if (sede.direccionSede) {
+        this.groupProgramacion.get('direccion')?.setValue(sede.direccionSede);
+      }
+      // Auto-completar link de Maps si está disponible
+      if (sede.coordenadasMaps) {
+        this.groupProgramacion.get('linkMaps')?.setValue(sede.coordenadasMaps);
+      }
+      console.log('Sede seleccionada:', sede);
+    } else {
+      this.groupProgramacion.get('direccion')?.setValue(null);
+      this.groupProgramacion.get('linkMaps')?.setValue(null);
+    }
+  }
+
   @ViewChild('inputServicio') inputServicio!: ElementRef<HTMLInputElement>;
   filteredOptionsServicios: IServicio[];
 
@@ -203,10 +241,10 @@ export class DialogCrearAtencionComponent implements OnInit {
 
   // Step 2
   groupProgramacion = this._fb.group({
-    sedeEmpresa: [null, Validators.required],
-    direccion: [null, Validators.required],
-    linkMaps: [null, Validators.required],
-    turnos: this._fb.array([this.nuevaProg()]),
+    sedeEmpresa: [null as IUbicacionSede | null, Validators.required],
+    direccion: [null as string | null, Validators.required],
+    linkMaps: [null as string | null, Validators.required],
+    turnos: this._fb.array([this.nuevosTurnos()]),
   });
 
   get turnos(): FormArray {
@@ -215,11 +253,17 @@ export class DialogCrearAtencionComponent implements OnInit {
 
   // Step 3
   groupEquipo = this._fb.group({
-    sedeInterna: [null, Validators.required],
-    responsable: [null, Validators.required], // 1 responsable
-    equipo: [[]], // array (chips)
+    responsable: [null as IRecHumano | null, Validators.required],
+    equipoPersonal: this._fb.array(
+      [this.nuevoPersonal()],
+      [Validators.minLength(1)],
+    ),
     notas: [''],
   });
+
+  get equipoPersonal(): FormArray {
+    return this.groupEquipo.get('equipoPersonal') as FormArray;
+  }
 
   setFlex(valor: number, unidad: 'px' | '%' = 'px'): string {
     return `0 0 ${valor}${unidad}`;
@@ -253,15 +297,6 @@ export class DialogCrearAtencionComponent implements OnInit {
     });
     this.serviciosFiltradosPorIndice = nuevosServiciosFiltrados;
   }
-
-  onEmpresaSelected(e: IEmpresa) {
-    this.empresaSeleccionada = e;
-    // opcional: autoseleccionar su primera sede para cada programación
-    this.turnos.controls.forEach((ctrl) =>
-      ctrl.get('sedeEmpresa')?.setValue(null),
-    );
-  }
-
   nuevoServicio(): FormGroup {
     return this._fb.group({
       //_id: [null, Validators.required],
@@ -270,21 +305,111 @@ export class DialogCrearAtencionComponent implements OnInit {
     });
   }
 
-  nuevaProg(): FormGroup {
+  nuevosTurnos(): FormGroup {
     return this._fb.group({
       fecha: [null, Validators.required],
       horaInicio: ['', Validators.required],
       horaFin: ['', Validators.required],
-      sedeEmpresa: [null], // una de las sedes de la empresa
-      direccion: [''],
-      linkMaps: [''],
     });
   }
-  agregarProg() {
-    this.turnos.push(this.nuevaProg());
+
+  nuevoPersonal(): FormGroup {
+    return this._fb.group({
+      personal: [null as IRecHumano | null, Validators.required],
+    });
   }
-  eliminarProg(i: number) {
+
+  agregarTurno() {
+    this.turnos.push(this.nuevosTurnos());
+  }
+
+  eliminarTurno(i: number) {
     this.turnos.removeAt(i);
+  }
+
+  agregarPersonal() {
+    const nuevoPersonalForm = this.nuevoPersonal();
+    this.equipoPersonal.push(nuevoPersonalForm);
+  }
+
+  eliminarPersonal(i: number) {
+    if (this.equipoPersonal.length > 1) {
+      this.equipoPersonal.removeAt(i);
+    }
+  }
+
+  // Validar que no se repita el personal
+  isPersonalYaSeleccionado(
+    personal: IRecHumano,
+    currentIndex: number,
+  ): boolean {
+    return this.equipoPersonal.controls.some((control, index) => {
+      if (index === currentIndex) return false; // No comparar con sí mismo
+      const personalSeleccionado = control.get('personal')?.value;
+      return personalSeleccionado && personalSeleccionado._id === personal._id;
+    });
+  }
+
+  // Obtener personal disponible para un índice específico
+  getPersonalDisponible(currentIndex: number): IRecHumano[] {
+    const responsable = this.groupEquipo.get('responsable')?.value;
+
+    return this.personal.filter((p) => {
+      // No mostrar personal ya seleccionado en otros índices
+      const yaSeleccionado = this.isPersonalYaSeleccionado(p, currentIndex);
+
+      // No mostrar al responsable en la lista de personal del equipo
+      const esResponsable = responsable && responsable._id === p._id;
+
+      return !yaSeleccionado && !esResponsable;
+    });
+  }
+
+  // Método para mostrar información del personal
+  getPersonalInfo(personal: IRecHumano): string {
+    return `${personal.tipoDoc} ${personal.nroDoc} ${personal.apePatRecHumano} ${personal.apeMatRecHumano}, ${personal.nombreRecHumano}`;
+  }
+
+  // Método para obtener el teléfono del personal
+  getPersonalTelefono(personal: IRecHumano): string {
+    if (personal.phones && personal.phones.length > 0) {
+      // Buscar el primer teléfono que no esté vacío
+      for (const phone of personal.phones) {
+        if (
+          phone &&
+          (phone as any).phoneNumber &&
+          (phone as any).phoneNumber.trim()
+        ) {
+          // Si hay descripción, mostrarla junto al número
+          const phoneObj = phone as any;
+          const description = phoneObj.descriptionPhone
+            ? ` (${phoneObj.descriptionPhone})`
+            : '';
+          return `${phoneObj.phoneNumber.trim()}${description}`;
+        }
+      }
+    }
+    return 'No disponible';
+  }
+
+  // Método para abrir Google Maps con coordenadas
+  abrirEnMaps() {
+    const coordenadas = this.groupProgramacion.get('linkMaps')?.value;
+    console.log('Coordenadas recibidas:', coordenadas);
+    if (!coordenadas) {
+      Swal.fire({
+        title: 'Coordenadas inválidas',
+        text: 'No hay coordenadas válidas para mostrar en el mapa. Formato requerido: latitud,longitud (ej: -12.0464,-77.0428)',
+        icon: 'warning',
+        confirmButtonText: 'Ok',
+      });
+      return;
+    }
+
+    // Usar las coordenadas directamente
+    const [lat, lng] = coordenadas.split(',');
+    const url = `https://www.google.com/maps?q=${lat.trim()},${lng.trim()}`;
+    window.open(url, '_blank');
   }
 
   cancelar() {
@@ -294,7 +419,7 @@ export class DialogCrearAtencionComponent implements OnInit {
   traerEmpresas() {
     this._empresaService.getLastEmpresas(0).subscribe((empresas) => {
       this.empresas = empresas;
-      console.log(empresas);
+      //console.log(empresas);
     });
   }
 
@@ -305,7 +430,14 @@ export class DialogCrearAtencionComponent implements OnInit {
       for (let i = 0; i < this.servicios.length; i++) {
         this.initializeServicioFilter(i);
       }
-      console.log(servicios);
+      //console.log(servicios);
+    });
+  }
+
+  traerPersonal() {
+    this._personalService.getLastRecHumanos(100).subscribe((rrhh) => {
+      this.personal = rrhh;
+      console.log(rrhh);
     });
   }
 
@@ -338,5 +470,37 @@ export class DialogCrearAtencionComponent implements OnInit {
     //   notas: this.fgEquipo.value.notas || null,
     // };
     // this.dialog.close(dto); // el padre llama a tu service para persistir
+  }
+
+  // Obtener la información del responsable
+  getResponsableInfo(): IRecHumano | null {
+    const responsable = this.groupEquipo.get('responsable')?.value;
+    return responsable || null;
+  }
+
+  // Validación personalizada para evitar duplicados
+  validarPersonalUnico(): { [key: string]: any } | null {
+    const personalArray = this.equipoPersonal;
+    const responsable = this.groupEquipo.get('responsable')?.value;
+
+    if (!personalArray || !personalArray.value) {
+      return null;
+    }
+
+    // Verificar duplicados en el array de personal
+    const personalIds = personalArray.value.map((p: IRecHumano) => p._id);
+    const duplicados = personalIds.filter(
+      (id: string, index: number) => personalIds.indexOf(id) !== index,
+    );
+
+    // Verificar si el responsable está en el array de personal
+    const responsableEnPersonal =
+      responsable && personalIds.includes(responsable._id);
+
+    if (duplicados.length > 0 || responsableEnPersonal) {
+      return { personalDuplicado: true };
+    }
+
+    return null;
   }
 }
