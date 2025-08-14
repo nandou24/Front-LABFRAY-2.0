@@ -113,6 +113,13 @@ export const routes: Routes = [
             './pages/gestionar/atencionesEmpresas/atenciones-empresas/atenciones-empresas.component'
           ).then((m) => m.AtencionesEmpresasComponent),
       },
+      {
+        path: 'cotiEmpresa',
+        loadComponent: () =>
+          import(
+            './pages/gestionar/cotizacion/gest-coti-empresa/gest-coti-empresa.component'
+          ).then((m) => m.GestCotiEmpresaComponent),
+      },
     ],
   },
   {

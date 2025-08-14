@@ -1,0 +1,634 @@
+<!-- Cotización Paciente - Angular Material Adaptación -->
+<form [formGroup]="myFormCotizacion">
+  <div class="contenedor-flex">
+    <div class="contenedor-formulario">
+      <div class="row-flex" style="align-items: center">
+        <div
+          [style.flex]="setFlex(35, '%')"
+          class="flex-item quicksand-totales"
+        >
+          <h5 class="text-center mb-3" style="font-weight: 700">
+            COTIZACIÓN EMPRESA
+          </h5>
+        </div>
+
+        <div [style.flex]="setFlex(13, '%')" class="flex-item">
+          <mat-form-field appearance="outline">
+            <mat-label>N° Cotización</mat-label>
+            <input matInput formControlName="codCotizacion" readonly />
+          </mat-form-field>
+        </div>
+
+        <div [style.flex]="setFlex(17, '%')" class="flex-item">
+          <mat-form-field appearance="outline">
+            <mat-label>Fecha</mat-label>
+            <input matInput formControlName="fechaModificacion" readonly />
+          </mat-form-field>
+        </div>
+
+        <div [style.flex]="setFlex(10, '%')" class="flex-item">
+          <mat-form-field appearance="outline">
+            <mat-label>Versión</mat-label>
+            <input matInput formControlName="version" readonly />
+          </mat-form-field>
+        </div>
+
+        <div [style.flex]="setFlex(17, '%')" class="flex-item">
+          <button
+            mat-icon-button
+            (click)="cambiarVersion(-1)"
+            *ngIf="!tienePagos"
+          >
+            <mat-icon>chevron_left</mat-icon>
+          </button>
+          <button
+            mat-icon-button
+            (click)="cambiarVersion(1)"
+            *ngIf="!tienePagos"
+          >
+            <mat-icon>chevron_right</mat-icon>
+          </button>
+          <button
+            class="mb-3"
+            mat-button
+            matSuffix
+            (click)="irUltimaVersion()"
+            *ngIf="!tienePagos"
+          >
+            Vigente
+          </button>
+        </div>
+      </div>
+
+      <fieldset class="campo-fieldset">
+        <legend>Empresa</legend>
+
+        <div class="row-flex">
+          <div [style.flex]="setFlex(9, '%')" class="flex-item mb-3">
+            <button
+              mat-mini-fab
+              color="primary"
+              id="buscarEmpresaModalBtn"
+              (click)="abrirDialogoBuscarEmpresa()"
+            >
+              <mat-icon>search</mat-icon>
+            </button>
+          </div>
+
+          <div [style.flex]="setFlex(48, '%')" class="flex-item">
+            <mat-form-field appearance="outline">
+              <mat-label>Nombre de Empresa</mat-label>
+              <!-- <input matInput formControlName="nombreCompleto" /> -->
+
+              <input
+                matInput
+                [value]="myFormCotizacion.get('razonSocial')?.value || ''"
+                disabled
+                readonly
+              />
+            </mat-form-field>
+          </div>
+          <div [style.flex]="setFlex(20, '%')" class="flex-item">
+            <mat-form-field appearance="outline">
+              <mat-label>RUC</mat-label>
+
+              <input
+                matInput
+                [value]="myFormCotizacion.get('ruc')?.value || ''"
+                disabled
+                readonly
+              />
+            </mat-form-field>
+          </div>
+        </div>
+      </fieldset>
+
+      <mat-card class="mt-2">
+        <mat-card-title> Servicios Cotizados </mat-card-title>
+
+        <mat-card-content>
+          <table mat-table [dataSource]="dataSourceServiciosCotizados">
+            <ng-container matColumnDef="accion">
+              <th mat-header-cell *matHeaderCellDef class="text-center">
+                Acción
+              </th>
+              <td
+                mat-cell
+                *matCellDef="let row; let i = index"
+                class="text-center"
+              >
+                <button
+                  mat-icon-button
+                  (click)="removerServicio(i)"
+                  [disabled]="tienePagos"
+                >
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="codigo">
+              <th mat-header-cell *matHeaderCellDef class="text-center">
+                Código
+              </th>
+              <td mat-cell *matCellDef="let row" class="text-center">
+                {{ row.get("codServicio")?.value }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="tipo">
+              <th mat-header-cell *matHeaderCellDef class="text-center">
+                Tipo
+              </th>
+              <td mat-cell *matCellDef="let row" class="text-center">
+                {{ row.get("tipoServicio")?.value }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="nombre">
+              <th mat-header-cell *matHeaderCellDef class="text-center">
+                Nombre
+              </th>
+              <td mat-cell *matCellDef="let row">
+                {{ row.get("nombreServicio")?.value }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="cantidad">
+              <th mat-header-cell *matHeaderCellDef class="text-center">
+                Cantidad
+              </th>
+              <td
+                mat-cell
+                *matCellDef="let row; let i = index"
+                class="text-center"
+              >
+                <ng-container [formGroup]="row">
+                  <input
+                    matInput
+                    type="number"
+                    formControlName="cantidad"
+                    min="1"
+                    (keydown)="validarEntero($event)"
+                    (input)="calcularTotalUnitario(i)"
+                    class="input-centrado"
+                    style="width: 50px"
+                  />
+                </ng-container>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="precioLista">
+              <th mat-header-cell *matHeaderCellDef class="text-center">
+                Precio Lista
+              </th>
+              <td mat-cell *matCellDef="let row" class="text-center">
+                S/ {{ row.get("precioLista")?.value }}
+              </td>
+            </ng-container>
+
+            <!-- <ng-container matColumnDef="diferencia">
+              <th mat-header-cell *matHeaderCellDef class="text-center">
+                Desc o Aum.
+              </th>
+              <td mat-cell *matCellDef="let row" class="text-center">
+                S/ {{ row.get("diferencia")?.value }}
+              </td>
+            </ng-container> -->
+
+            <ng-container matColumnDef="precioVenta">
+              <th mat-header-cell *matHeaderCellDef class="text-center">
+                Ajuste Precio
+              </th>
+              <td
+                mat-cell
+                *matCellDef="let row; let i = index"
+                class="text-center"
+              >
+                <ng-container [formGroup]="row">
+                  <input
+                    matInput
+                    type="number"
+                    formControlName="precioVenta"
+                    min="0"
+                    (keydown)="validarEntero($event)"
+                    (input)="calcularTotalUnitario(i)"
+                    class="input-centrado"
+                    style="width: 50px"
+                  />
+                </ng-container>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="descuentoPorcentaje">
+              <th mat-header-cell *matHeaderCellDef class="text-center">
+                Descuento (%)
+              </th>
+              <td
+                mat-cell
+                *matCellDef="let row; let i = index"
+                class="text-center"
+              >
+                <ng-container [formGroup]="row">
+                  <input
+                    matInput
+                    type="number"
+                    formControlName="descuentoPorcentaje"
+                    min="0"
+                    max="100"
+                    (keydown)="validarEntero($event)"
+                    (input)="calcularTotalUnitario(i)"
+                    class="input-centrado"
+                    style="width: 50px"
+                  />
+                </ng-container>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="nuevoPrecioVenta">
+              <th mat-header-cell *matHeaderCellDef class="text-center">
+                Precio Venta
+              </th>
+              <td mat-cell *matCellDef="let row" class="text-center">
+                S/ {{ row.get("nuevoPrecioVenta")?.value }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="totalUnitario">
+              <th mat-header-cell *matHeaderCellDef class="text-center">
+                Total Unitario
+              </th>
+              <td mat-cell *matCellDef="let row" class="text-center">
+                S/ {{ row.get("totalUnitario")?.value }}
+              </td>
+            </ng-container>
+
+            <tr
+              mat-header-row
+              *matHeaderRowDef="columnasTablaServiciosCotizados"
+            ></tr>
+            <tr
+              mat-row
+              *matRowDef="
+                let row;
+                let i = index;
+                columns: columnasTablaServiciosCotizados
+              "
+              [formGroup]="row"
+            ></tr>
+          </table>
+
+          <div
+            *ngIf="serviciosCotizacion.controls.length === 0"
+            class="text-center mt-2"
+          >
+            Agregue servicios para cotizar.
+          </div>
+          <mat-error
+            class="text-center"
+            *ngIf="
+              myFormCotizacion
+                .get('serviciosCotizacion')
+                ?.hasError('required') && formSubmitted
+            "
+          >
+            Es necesario agregar al menos un servicio.
+          </mat-error>
+
+          <div class="totales-cotizacion-container mb-2">
+            <div class="totales-cotizacion">
+              <div class="fila quicksand-subtotal">
+                <span>Total Precio Lista: S/</span>
+                <span>{{
+                  myFormCotizacion.get("sumaTotalesPrecioLista")?.value
+                    | number: "1.2-2"
+                }}</span>
+              </div>
+
+              <div class="fila quicksand-subtotal">
+                <span>Diferencia Total: S/</span>
+                <span>{{
+                  myFormCotizacion.get("descuentoTotal")?.value
+                    | number: "1.2-2"
+                }}</span>
+              </div>
+
+              <div class="fila quicksand-subtotal">
+                <span>Aplicar Precio Total</span>
+                <span>
+                  <mat-slide-toggle
+                    formControlName="aplicarPrecioGlobal"
+                    (change)="cambioEstadoPrecioGlobal()"
+                  ></mat-slide-toggle>
+                  <input
+                    matInput
+                    #inputPrecioGlobal
+                    style="width: 60px"
+                    type="number"
+                    min="0"
+                    formControlName="precioConDescGlobal"
+                    class="text-center"
+                    (keydown)="validarEntero($event)"
+                    (input)="calcularTotalGeneral()"
+                  />
+                </span>
+              </div>
+
+              <div class="fila quicksand-subtotal">
+                <span>Aplicar Descuento %</span>
+                <span>
+                  <mat-slide-toggle
+                    formControlName="aplicarDescuentoPorcentGlobal"
+                    (change)="cambioEstadoDescuentoPorcentGlobal()"
+                  ></mat-slide-toggle>
+                  <input
+                    matInput
+                    #inputPorcentajeGlobal
+                    style="width: 60px"
+                    type="number"
+                    min="0"
+                    max="100"
+                    formControlName="descuentoPorcentaje"
+                    class="text-center"
+                    (keydown)="validarEntero($event)"
+                    (input)="calcularTotalGeneral()"
+                  />
+                </span>
+              </div>
+
+              <div class="fila quicksand-subtotal">
+                <span>Sub Total</span>
+                <span>{{
+                  myFormCotizacion.get("subTotal")?.value | number: "1.2-2"
+                }}</span>
+              </div>
+
+              <div class="fila quicksand-subtotal">
+                <span>IGV (18%)</span>
+                <span>{{
+                  myFormCotizacion.get("igv")?.value | number: "1.2-2"
+                }}</span>
+              </div>
+
+              <div class="fila quicksand-totales">
+                <span>Total a pagar</span>
+                <span>{{
+                  myFormCotizacion.get("total")?.value | number: "1.2-2"
+                }}</span>
+              </div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <div class="row-flex-btn mt-4">
+        <button
+          type="button"
+          class="btn-nuevo"
+          mat-raised-button
+          (click)="nuevaCotizacionPersona()"
+        >
+          NUEVA COTIZACIÓN
+        </button>
+        <button
+          type="button"
+          class="btn-registrar"
+          mat-raised-button
+          *ngIf="!seSeleccionoCotizacion"
+          (click)="generarCotizacion()"
+        >
+          GENERAR COTIZACIÓN
+        </button>
+        <button
+          type="button"
+          class="btn-actualizar"
+          mat-raised-button
+          *ngIf="!tienePagos"
+          (click)="generarVersionCotizacionPersona()"
+        >
+          GENERAR NUEVA VERSIÓN
+        </button>
+        <button type="button" mat-raised-button (click)="generarPDF(true)">
+          VISTA PREVIA
+        </button>
+      </div>
+    </div>
+
+    <div class="contenedor-tablaDerecha">
+      <mat-card>
+        <mat-card-title> Últimas Cotizaciones Empresas </mat-card-title>
+
+        <mat-card-content>
+          <div class="row-flex" style="background-color: #faf9fe">
+            <div [style.flex]="setFlex(50, '%')" class="flex-item">
+              <mat-form-field appearance="outline">
+                <mat-label>Buscar Cotización</mat-label>
+                <input
+                  matInput
+                  [formControl]="terminoBusquedaCotizacion"
+                  (focus)="seleccionarTexto($event)"
+                />
+                @if (terminoBusquedaCotizacion.value) {
+                  <button
+                    matSuffix
+                    mat-icon-button
+                    class="clear-search-button"
+                    aria-label="Clear"
+                    (click)="terminoBusquedaCotizacion.setValue('')"
+                  >
+                    <mat-icon>close</mat-icon>
+                  </button>
+                }
+              </mat-form-field>
+            </div>
+            <div [style.flex]="setFlex(45, '%')" class="flex-item">
+              <mat-paginator
+                #MatPaginatorCotizaciones
+                [pageSizeOptions]="[5, 10, 25]"
+                [pageSize]="6"
+                [hidePageSize]="true"
+                showFirstLastButtons
+              ></mat-paginator>
+            </div>
+          </div>
+
+          <table mat-table [dataSource]="dataSourceCotizaciones">
+            |
+            <ng-container matColumnDef="codCotizacion">
+              <th mat-header-cell *matHeaderCellDef>Cod Coti</th>
+              <td mat-cell *matCellDef="let cotizacion">
+                {{ cotizacion.codCotizacion }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="paciente">
+              <th mat-header-cell *matHeaderCellDef>Paciente</th>
+              <td mat-cell *matCellDef="let cotizacion">
+                {{
+                  cotizacion.historial[cotizacion.historial.length - 1].tipoDoc
+                }}
+                {{
+                  cotizacion.historial[cotizacion.historial.length - 1].nroDoc
+                }}
+                --
+                {{
+                  cotizacion.historial[cotizacion.historial.length - 1]
+                    .apePatCliente
+                }}
+                {{
+                  cotizacion.historial[cotizacion.historial.length - 1]
+                    .apeMatCliente
+                }}
+                {{
+                  cotizacion.historial[cotizacion.historial.length - 1]
+                    .nombreCliente
+                }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="fecha">
+              <th mat-header-cell *matHeaderCellDef>Fecha</th>
+              <td mat-cell *matCellDef="let cotizacion">
+                {{
+                  cotizacion.historial[cotizacion.historial.length - 1]
+                    .fechaModificacion | date: "dd/MM/yyyy"
+                }}
+              </td>
+            </ng-container>
+
+            <!-- <ng-container matColumnDef="versiones">
+              <th mat-header-cell *matHeaderCellDef>Vers.</th>
+              <td mat-cell *matCellDef="let cotizacion">
+                {{ cotizacion.historial.length }}
+              </td>
+            </ng-container> -->
+
+            <ng-container matColumnDef="estado">
+              <th mat-header-cell *matHeaderCellDef>Estado</th>
+              <td mat-cell *matCellDef="let cotizacion">
+                {{ cotizacion.estadoCotizacion }}
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="columnasCotizaciones"></tr>
+            <tr
+              mat-row
+              *matRowDef="let row; let i = index; columns: columnasCotizaciones"
+              (click)="cargarCotizacion(row, i)"
+              [class.fila-seleccionada]="i === filaSeleccionadaIndex"
+            ></tr>
+          </table>
+
+          <div
+            *ngIf="dataSourceCotizaciones.data.length === 0"
+            class="text-center mt-2"
+          >
+            No se encontraron cotizaciones.
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="mt-2">
+        <mat-card-title> Servicios Disponibles </mat-card-title>
+
+        <mat-card-content>
+          <div class="row-flex" style="background-color: #faf9fe">
+            <div [style.flex]="setFlex(50, '%')" class="flex-item">
+              <mat-form-field appearance="outline">
+                <mat-label>Buscar Servicio</mat-label>
+                <input
+                  matInput
+                  [formControl]="terminoBusquedaServicio"
+                  (input)="buscarServicio()"
+                />
+                @if (terminoBusquedaServicio.value) {
+                  <button
+                    matSuffix
+                    class="clear-search-button"
+                    mat-icon-button
+                    aria-label="Clear"
+                    (click)="
+                      terminoBusquedaServicio.setValue(''); buscarServicio()
+                    "
+                  >
+                    <mat-icon>close</mat-icon>
+                  </button>
+                }
+              </mat-form-field>
+            </div>
+            <div [style.flex]="setFlex(45, '%')" class="flex-item">
+              <mat-paginator
+                #MatPaginatorServicios
+                [pageSizeOptions]="[5, 10, 25]"
+                [pageSize]="6"
+                [hidePageSize]="true"
+                showFirstLastButtons
+              ></mat-paginator>
+            </div>
+          </div>
+
+          <table mat-table [dataSource]="dataSourceServicios">
+            <ng-container matColumnDef="codigo">
+              <th mat-header-cell *matHeaderCellDef>Código</th>
+              <td mat-cell *matCellDef="let servicio">
+                {{ servicio.codServicio }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="nombre">
+              <th mat-header-cell *matHeaderCellDef>Nombre</th>
+              <td mat-cell *matCellDef="let servicio">
+                {{ servicio.nombreServicio }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="tipo">
+              <th mat-header-cell *matHeaderCellDef>Tipo</th>
+              <td mat-cell *matCellDef="let servicio">
+                {{ servicio.tipoServicio }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="accion">
+              <th mat-header-cell *matHeaderCellDef>Acción</th>
+              <td mat-cell *matCellDef="let servicio">
+                <button mat-icon-button (click)="verDetalle(servicio)">
+                  <mat-icon>visibility</mat-icon>
+                </button>
+                <button mat-icon-button (click)="seleccionarServicio(servicio)">
+                  <mat-icon>add</mat-icon>
+                </button>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="columnasServicios"></tr>
+            <tr mat-row *matRowDef="let row; columns: columnasServicios"></tr>
+          </table>
+
+          <div
+            *ngIf="dataSourceServicios.data.length === 0"
+            class="text-center mt-2"
+          >
+            No se encontraron servicios.
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="mt-2">
+        <mat-card-title> Servicios Frecuentes </mat-card-title>
+
+        <mat-card-content>
+          <div class="d-flex flex-wrap gap-2 mt-2 mb-2">
+            <button
+              mat-flat-button
+              *ngFor="let servicio of dataSourceServiciosFrecuentes.data"
+              (click)="seleccionarServicio(servicio)"
+            >
+              {{ servicio.nombreServicio }}
+            </button>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+</form>

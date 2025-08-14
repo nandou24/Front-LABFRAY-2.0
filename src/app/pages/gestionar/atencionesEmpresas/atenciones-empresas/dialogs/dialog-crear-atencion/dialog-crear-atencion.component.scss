@@ -33,6 +33,32 @@ mat-form-field {
   width: 100%;
 }
 
+// Estilos para las opciones del coordinador
+.coordinator-option {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 4px 0;
+}
+
+.coordinator-name {
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 1.2;
+}
+
+.coordinator-details {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+
+  small {
+    font-size: 12px;
+    line-height: 1.1;
+  }
+}
+
 .row-flex {
   display: flex;
   flex-wrap: wrap;

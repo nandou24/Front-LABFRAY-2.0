@@ -29,6 +29,7 @@ import { MatButtonModule } from '@angular/material/button';
 import {
   IEmpresa,
   IUbicacionSede,
+  IPersonaContacto,
 } from '../../../../../../models/Mantenimiento/empresa.models';
 import { IServicio } from '../../../../../../models/Mantenimiento/servicios.models';
 import { IRecHumano } from '../../../../../../models/Mantenimiento/recursoHumano.models';
@@ -134,6 +135,7 @@ export class DialogCrearAtencionComponent implements OnInit {
   serviciosdisponibles: IServicio[] = []; // cargar desde API
   sedes: IUbicacionSede[] = []; // cargar desde API
   personal: IRecHumano[] = []; // cargar desde API
+  personasContactoEmpresa: IPersonaContacto[] = []; // personas de contacto de la empresa seleccionada
 
   empresasFiltradas$!: Observable<IEmpresa[]>;
   serviciosFiltrados$!: Observable<IServicio[]>;
@@ -147,6 +149,7 @@ export class DialogCrearAtencionComponent implements OnInit {
   // Step 1
   groupEmpresa = this._fb.group({
     empresa: [null, Validators.required], // guarda objeto; luego puedes mapear a empresaId
+    personaContacto: [null, Validators.required], // persona de contacto/coordinador
     servicios: this._fb.array([this.nuevoServicio()]), // Inicia con un servicio
     observacion: [''],
   });
@@ -179,14 +182,28 @@ export class DialogCrearAtencionComponent implements OnInit {
     if (empresa) {
       this.empresaSeleccionada = empresa;
       this.sedes = empresa.ubicacionesSedes || [];
+
+      // Cargar las personas de contacto de la empresa seleccionada
+      this.personasContactoEmpresa = empresa.personasContacto || [];
+
       // Resetear la sede seleccionada cuando cambie la empresa
       this.groupProgramacion.get('sedeEmpresa')?.setValue(null);
+
+      // Resetear la persona de contacto seleccionada cuando cambie la empresa
+      this.groupEmpresa.get('personaContacto')?.setValue(null);
+
       console.log('Empresa seleccionada:', empresa);
       console.log('Sedes disponibles:', this.sedes);
+      console.log(
+        'Personas de contacto disponibles:',
+        this.personasContactoEmpresa,
+      );
     } else {
       this.empresaSeleccionada = undefined;
       this.sedes = [];
+      this.personasContactoEmpresa = [];
       this.groupProgramacion.get('sedeEmpresa')?.setValue(null);
+      this.groupEmpresa.get('personaContacto')?.setValue(null);
     }
   }
 
@@ -442,37 +459,80 @@ export class DialogCrearAtencionComponent implements OnInit {
   }
 
   crear() {
-    // if (
-    //   this.fgEmpresa.invalid ||
-    //   this.fgProgramacion.invalid ||
-    //   this.fgEquipo.invalid
-    // )
-    //   return;
-    // const empresaObj: IEmpresa = this.fgEmpresa.value.empresa;
-    // const protocoloObj: IServicio = this.fgEmpresa.value.protocolo;
-    // const dto = {
-    //   empresaId: empresaObj._id,
-    //   protocoloId: protocoloObj._id,
-    //   observacion: this.fgEmpresa.value.observacion,
-    //   programaciones: this.programaciones.value.map((p: any) => ({
-    //     fecha: p.fecha,
-    //     horaInicio: p.horaInicio,
-    //     horaFin: p.horaFin,
-    //     sedeEmpresaId: p.sedeEmpresa?._id || null,
-    //     direccion: p.direccion || null,
-    //     linkMaps: p.linkMaps || null,
-    //   })),
-    //   sedeInternaId: this.fgEquipo.value.sedeInterna._id,
-    //   responsableId: this.fgEquipo.value.responsable._id,
-    //   equipoIds: (this.fgEquipo.value.equipo || []).map(
-    //     (x: IRecHumano) => x._id,
-    //   ),
-    //   notas: this.fgEquipo.value.notas || null,
-    // };
-    // this.dialog.close(dto); // el padre llama a tu service para persistir
+    if (
+      this.groupEmpresa.invalid ||
+      this.groupProgramacion.invalid ||
+      this.groupEquipo.invalid
+    ) {
+      console.log('Formulario inválido');
+      return;
+    }
+
+    const empresaControl = this.groupEmpresa.get('empresa');
+    const personaContactoControl = this.groupEmpresa.get('personaContacto');
+
+    if (!empresaControl?.value || !personaContactoControl?.value) {
+      console.log('Empresa o persona de contacto no seleccionada');
+      return;
+    }
+
+    const empresaObj = empresaControl.value as IEmpresa;
+    const personaContactoObj = personaContactoControl.value as IPersonaContacto;
+
+    const dto = {
+      empresaId: empresaObj._id,
+      personaContacto: {
+        nombre: personaContactoObj.nombre,
+        cargo: personaContactoObj.cargo,
+        telefono: personaContactoObj.telefono,
+        email: personaContactoObj.email || null,
+        principal: personaContactoObj.principal || false,
+      },
+      servicios:
+        this.servicios.value?.map((servicio: any) => ({
+          nombreServicio:
+            servicio.nombreServicio?.nombreServicio || servicio.nombreServicio,
+          cantidad: servicio.cantidad,
+        })) || [],
+      observacion: this.groupEmpresa.get('observacion')?.value || null,
+      programacion: {
+        sedeEmpresa: this.groupProgramacion.get('sedeEmpresa')?.value || null,
+        direccion: this.groupProgramacion.get('direccion')?.value || null,
+        linkMaps: this.groupProgramacion.get('linkMaps')?.value || null,
+        turnos:
+          this.turnos.value?.map((turno: any) => ({
+            fecha: turno.fecha,
+            horaInicio: turno.horaInicio,
+            horaFin: turno.horaFin,
+          })) || [],
+      },
+      equipo: {
+        responsableId: this.groupEquipo.get('responsable')?.value?._id || null,
+        equipoPersonalIds:
+          this.equipoPersonal.value
+            ?.map((ep: any) => ep.personal?._id)
+            .filter((id: any) => id) || [],
+        notas: this.groupEquipo.get('notas')?.value || null,
+      },
+    };
+
+    console.log('DTO a enviar:', dto);
+    this.dialog.close(dto);
   }
 
-  // Obtener la información del responsable
+  // Método para mostrar información de la persona de contacto
+  getPersonaContactoInfo(personaContacto: IPersonaContacto): string {
+    let info = personaContacto.nombre;
+    if (personaContacto.cargo) {
+      info += ` - ${personaContacto.cargo}`;
+    }
+    if (personaContacto.telefono) {
+      info += ` (📞 ${personaContacto.telefono})`;
+    }
+    return info;
+  }
+
+  // Método para obtener información del responsable
   getResponsableInfo(): IRecHumano | null {
     const responsable = this.groupEquipo.get('responsable')?.value;
     return responsable || null;
