@@ -1,6 +1,6 @@
 import { Component, Inject, OnInit, ViewChild } from '@angular/core';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { PacienteService } from '../../../../../../services/mantenimiento/paciente/paciente.service';
+import { EmpresaService } from '../../../../../../../services/mantenimiento/empresa/empresa.service';
 import { CommonModule } from '@angular/common';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -14,13 +14,13 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { FormsModule, ReactiveFormsModule, FormControl } from '@angular/forms';
-import { IPaciente } from '../../../../../../models/Mantenimiento/paciente.models';
+
 import { MatPaginator } from '@angular/material/paginator';
 import { debounceTime, distinctUntilChanged, filter, tap } from 'rxjs';
+import { IEmpresa } from '../../../../../../../models/Mantenimiento/empresa.models';
 
 @Component({
-  selector: 'app-dialog-buscar-paciente',
-  standalone: true,
+  selector: 'app-dialog-buscar-empresa',
   imports: [
     CommonModule,
     MatDialogModule,
@@ -34,43 +34,38 @@ import { debounceTime, distinctUntilChanged, filter, tap } from 'rxjs';
     FormsModule,
     ReactiveFormsModule,
   ],
-  templateUrl: './dialog-buscar-paciente.component.html',
-  styleUrls: ['./dialog-buscar-paciente.component.scss'],
+  templateUrl: './dialog-buscar-empresa.component.html',
+  styleUrl: './dialog-buscar-empresa.component.scss',
 })
-export class DialogBuscarPacienteComponent implements OnInit {
+export class DialogBuscarEmpresaComponent {
   cargando = false;
-  terminoBusquedaPaciente = new FormControl();
+  terminoBusquedaEmpresa = new FormControl();
 
   constructor(
-    public dialogRef: MatDialogRef<DialogBuscarPacienteComponent>,
-    private _pacienteService: PacienteService,
+    public dialogRef: MatDialogRef<DialogBuscarEmpresaComponent>,
+    private _empresaService: EmpresaService,
     @Inject(MAT_DIALOG_DATA) public data: any,
   ) {}
 
   ngOnInit(): void {
-    this.ultimosPacientes(25);
-    this.configurarBusquedaPacientes();
+    this.ultimosEmpresas(25);
+    this.configurarBusquedaEmpresas();
   }
 
   @ViewChild(MatTable) table!: MatTable<any>;
-  @ViewChild('MatPaginatorPacientes') paginatorPacientes!: MatPaginator;
+  @ViewChild('MatPaginatorEmpresas') paginatorEmpresas!: MatPaginator;
 
   ngAfterViewInit() {
-    this.dataSourcePacientes.paginator = this.paginatorPacientes;
+    this.dataSourceEmpresas.paginator = this.paginatorEmpresas;
   }
 
   //Tabla rrhh
-  columnasTablaPacientes: string[] = [
-    'nro',
-    'documento',
-    'nombreCompleto',
-    'acciones',
-  ];
-  dataSourcePacientes = new MatTableDataSource<IPaciente>();
+  columnasTablaEmpresas: string[] = ['nro', 'ruc', 'razonSocial', 'acciones'];
+  dataSourceEmpresas = new MatTableDataSource<IEmpresa>();
   timeoutBusqueda: any;
 
-  configurarBusquedaPacientes(): void {
-    this.terminoBusquedaPaciente.valueChanges
+  configurarBusquedaEmpresas(): void {
+    this.terminoBusquedaEmpresa.valueChanges
       .pipe(
         filter((termino): termino is string => termino !== null),
         debounceTime(300),
@@ -79,39 +74,39 @@ export class DialogBuscarPacienteComponent implements OnInit {
           termino = termino?.trim() || '';
 
           if (termino.length >= 3) {
-            this._pacienteService.getPatientCotizacion(termino).subscribe({
-              next: (res: IPaciente[]) => {
-                this.dataSourcePacientes.data = res;
+            this._empresaService.getEmpresa(termino).subscribe({
+              next: (res: IEmpresa[]) => {
+                this.dataSourceEmpresas.data = res;
               },
               error: () => {
-                this.dataSourcePacientes.data = [];
+                this.dataSourceEmpresas.data = [];
               },
             });
           } else if (termino.length > 0) {
-            this.dataSourcePacientes.data = [];
+            this.dataSourceEmpresas.data = [];
           } else {
-            this.ultimosPacientes(25); // ← carga los pacientes recientes
+            this.ultimosEmpresas(25); // ← carga los pacientes recientes
           }
         }),
       )
       .subscribe();
   }
 
-  ultimosPacientes(cantidad: number): void {
-    console.log('Cargando últimos pacientes de dialog');
+  ultimosEmpresas(cantidad: number): void {
+    console.log('Cargando últimos empresas de dialog');
 
-    this._pacienteService.getLastPatientsCotizacion(cantidad).subscribe({
-      next: (res: IPaciente[]) => {
-        this.dataSourcePacientes.data = res;
+    this._empresaService.getLastEmpresas(cantidad).subscribe({
+      next: (res: IEmpresa[]) => {
+        this.dataSourceEmpresas.data = res;
       },
       error: (err: any) => {
-        this.dataSourcePacientes.data = [];
+        this.dataSourceEmpresas.data = [];
       },
     });
   }
 
-  seleccionarPaciente(paciente: any) {
-    this.dialogRef.close(paciente);
+  seleccionarEmpresa(empresa: IEmpresa) {
+    this.dialogRef.close(empresa);
   }
 
   cerrar() {

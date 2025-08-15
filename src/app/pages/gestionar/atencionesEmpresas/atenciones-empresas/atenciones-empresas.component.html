@@ -1,1 +1,28 @@
-<p>atenciones-empresas works!</p>
+<!-- Encabezado de la página -->
+<div class="page-header">
+  <div class="header-content">
+    <div class="title-section">
+      <h1 class="page-title">
+        <mat-icon class="title-icon">business</mat-icon>
+        Atenciones a Empresas
+      </h1>
+      <p class="page-subtitle">
+        Gestión y programación de evaluaciones médicas empresariales
+      </p>
+    </div>
+
+    <div class="actions-section">
+      <button
+        mat-raised-button
+        color="primary"
+        class="add-button"
+        (click)="abrirDialogCrearAtencion()"
+      >
+        <mat-icon>add</mat-icon>
+        Nueva Programación
+      </button>
+    </div>
+  </div>
+</div>
+
+<mat-divider></mat-divider>

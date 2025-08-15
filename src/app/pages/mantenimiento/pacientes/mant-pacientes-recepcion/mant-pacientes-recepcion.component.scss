@@ -106,15 +106,13 @@ mat-option {
 .row-flex {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: flex-start;
+  //align-items: center;
   gap: 10px; /* Separación entre campos */
-  margin-bottom: 0px;
 }
 
 .flex-item {
-  justify-content: center;
-  min-width: 0;
-  text-align: center;
+  flex: 1 1 100%;
 }
 
 .fila-seleccionada {
