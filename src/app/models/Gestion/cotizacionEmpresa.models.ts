@@ -1,20 +1,20 @@
-import { IProfesionEspecialidad } from '../Mantenimiento/servicios.models';
-
-export interface ICotizacion {
+export interface ICotizacionEmpresa {
   _id?: string;
   codCotizacion: string;
-  historial: IHistorialCotizacion[];
+  historial: IHistorialCotizacionEmpresa[];
   estadoCotizacion: string;
 }
 
 // 🔥 Estructura del historial de cotización
-export interface IHistorialCotizacion {
+export interface IHistorialCotizacionEmpresa {
   version: number;
   fechaModificacion: Date | null;
-  estadoRegistroPaciente: boolean;
   empresaId: string;
-  razonSocial: string;
   ruc: string;
+  razonSocial: string;
+  formaPago: string;
+  diasCredito: number;
+  entregaResultados: number;
   aplicarPrecioGlobal: boolean;
   aplicarDescuentoPorcentGlobal: boolean;
   sumaTotalesPrecioLista: number;
@@ -24,10 +24,10 @@ export interface IHistorialCotizacion {
   subTotal: number;
   igv: number;
   total: number;
-  serviciosCotizacion: IServicioCotizacion[];
+  serviciosCotizacion: IServicioCotizacionEmpresa[];
 }
 
-export interface IServicioCotizacion {
+export interface IServicioCotizacionEmpresa {
   servicioId: string;
   codServicio: string;
   tipoServicio: string;
@@ -50,5 +50,5 @@ export interface ICotizacionPostDTO {
 export interface IGetLastCotizacion {
   ok: boolean;
   search: String;
-  cotizaciones: ICotizacion[];
+  cotizaciones: ICotizacionEmpresa[];
 }

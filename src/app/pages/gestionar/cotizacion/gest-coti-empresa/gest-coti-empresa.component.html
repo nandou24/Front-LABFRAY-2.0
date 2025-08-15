@@ -12,14 +12,14 @@
           </h5>
         </div>
 
-        <div [style.flex]="setFlex(13, '%')" class="flex-item">
+        <div [style.flex]="setFlex(15, '%')" class="flex-item">
           <mat-form-field appearance="outline">
             <mat-label>N° Cotización</mat-label>
             <input matInput formControlName="codCotizacion" readonly />
           </mat-form-field>
         </div>
 
-        <div [style.flex]="setFlex(17, '%')" class="flex-item">
+        <div [style.flex]="setFlex(20, '%')" class="flex-item">
           <mat-form-field appearance="outline">
             <mat-label>Fecha</mat-label>
             <input matInput formControlName="fechaModificacion" readonly />
@@ -33,7 +33,7 @@
           </mat-form-field>
         </div>
 
-        <div [style.flex]="setFlex(17, '%')" class="flex-item">
+        <div [style.flex]="setFlex(20, '%')" class="flex-item">
           <button
             mat-icon-button
             (click)="cambiarVersion(-1)"
@@ -64,7 +64,7 @@
         <legend>Empresa</legend>
 
         <div class="row-flex">
-          <div [style.flex]="setFlex(9, '%')" class="flex-item mb-3">
+          <div [style.flex]="setFlex(10, '%')" class="flex-item mb-3">
             <button
               mat-mini-fab
               color="primary"
@@ -75,7 +75,20 @@
             </button>
           </div>
 
-          <div [style.flex]="setFlex(48, '%')" class="flex-item">
+          <div [style.flex]="setFlex(25, '%')" class="flex-item">
+            <mat-form-field appearance="outline">
+              <mat-label>RUC</mat-label>
+
+              <input
+                matInput
+                [value]="myFormCotizacion.get('ruc')?.value || ''"
+                disabled
+                readonly
+              />
+            </mat-form-field>
+          </div>
+
+          <div [style.flex]="setFlex(65, '%')" class="flex-item">
             <mat-form-field appearance="outline">
               <mat-label>Nombre de Empresa</mat-label>
               <!-- <input matInput formControlName="nombreCompleto" /> -->
@@ -88,15 +101,47 @@
               />
             </mat-form-field>
           </div>
-          <div [style.flex]="setFlex(20, '%')" class="flex-item">
-            <mat-form-field appearance="outline">
-              <mat-label>RUC</mat-label>
+        </div>
+      </fieldset>
 
+      <fieldset class="campo-fieldset mt-3">
+        <legend>Condiciones</legend>
+
+        <div class="row-flex">
+          <div [style.flex]="setFlex(40, '%')" class="flex-item">
+            <mat-form-field appearance="outline">
+              <mat-label>Forma de pago</mat-label>
+              <mat-select formControlName="formaPago">
+                <mat-option value="Contado">Contado</mat-option>
+                <mat-option value="Crédito">Crédito</mat-option>
+                <mat-option value="A tratar">A tratar</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+
+          <div [style.flex]="setFlex(30, '%')" class="flex-item">
+            <mat-form-field appearance="outline">
+              <mat-label>Días de crédito</mat-label>
               <input
                 matInput
-                [value]="myFormCotizacion.get('ruc')?.value || ''"
-                disabled
-                readonly
+                type="number"
+                min="1"
+                formControlName="diasCredito"
+                (keydown)="validarEntero($event)"
+              />
+            </mat-form-field>
+          </div>
+
+          <div [style.flex]="setFlex(30, '%')" class="flex-item">
+            <mat-form-field appearance="outline">
+              <mat-label>Entrega de resultados</mat-label>
+              <input
+                matInput
+                type="number"
+                min="1"
+                max="10"
+                formControlName="entregaResultados"
+                (keydown)="validarEntero($event)"
               />
             </mat-form-field>
           </div>
@@ -180,7 +225,7 @@
 
             <ng-container matColumnDef="precioLista">
               <th mat-header-cell *matHeaderCellDef class="text-center">
-                Precio Lista
+                Valor Lista
               </th>
               <td mat-cell *matCellDef="let row" class="text-center">
                 S/ {{ row.get("precioLista")?.value }}
@@ -208,11 +253,15 @@
                 <ng-container [formGroup]="row">
                   <input
                     matInput
-                    type="number"
+                    inputmode="decimal"
+                    autocomplete="off"
+                    type="text"
                     formControlName="precioVenta"
                     min="0"
-                    (keydown)="validarEntero($event)"
-                    (input)="calcularTotalUnitario(i)"
+                    (keydown)="validarDouble($event)"
+                    (input)="
+                      calcularTotalUnitario(i); sanitizarDoubleInput($event)
+                    "
                     class="input-centrado"
                     style="width: 50px"
                   />
@@ -247,7 +296,7 @@
 
             <ng-container matColumnDef="nuevoPrecioVenta">
               <th mat-header-cell *matHeaderCellDef class="text-center">
-                Precio Venta
+                Valor Venta
               </th>
               <td mat-cell *matCellDef="let row" class="text-center">
                 S/ {{ row.get("nuevoPrecioVenta")?.value }}
@@ -256,7 +305,7 @@
 
             <ng-container matColumnDef="totalUnitario">
               <th mat-header-cell *matHeaderCellDef class="text-center">
-                Total Unitario
+                Valor Total Unitario
               </th>
               <td mat-cell *matCellDef="let row" class="text-center">
                 S/ {{ row.get("totalUnitario")?.value }}
@@ -298,7 +347,7 @@
           <div class="totales-cotizacion-container mb-2">
             <div class="totales-cotizacion">
               <div class="fila quicksand-subtotal">
-                <span>Total Precio Lista: S/</span>
+                <span>Valor Total Lista: S/</span>
                 <span>{{
                   myFormCotizacion.get("sumaTotalesPrecioLista")?.value
                     | number: "1.2-2"
@@ -306,7 +355,7 @@
               </div>
 
               <div class="fila quicksand-subtotal">
-                <span>Diferencia Total: S/</span>
+                <span>Diferencia Valor: S/</span>
                 <span>{{
                   myFormCotizacion.get("descuentoTotal")?.value
                     | number: "1.2-2"
@@ -314,7 +363,7 @@
               </div>
 
               <div class="fila quicksand-subtotal">
-                <span>Aplicar Precio Total</span>
+                <span>Aplicar Valor Total</span>
                 <span>
                   <mat-slide-toggle
                     formControlName="aplicarPrecioGlobal"
@@ -328,8 +377,10 @@
                     min="0"
                     formControlName="precioConDescGlobal"
                     class="text-center"
-                    (keydown)="validarEntero($event)"
-                    (input)="calcularTotalGeneral()"
+                    (keydown)="validarDouble($event)"
+                    (input)="
+                      calcularTotalGeneral(); sanitizarDoubleInput($event)
+                    "
                   />
                 </span>
               </div>
@@ -371,7 +422,7 @@
               </div>
 
               <div class="fila quicksand-totales">
-                <span>Total a pagar</span>
+                <span>Precio Venta</span>
                 <span>{{
                   myFormCotizacion.get("total")?.value | number: "1.2-2"
                 }}</span>
@@ -441,7 +492,7 @@
                 }
               </mat-form-field>
             </div>
-            <div [style.flex]="setFlex(45, '%')" class="flex-item">
+            <div [style.flex]="setFlex(50, '%')" class="flex-item">
               <mat-paginator
                 #MatPaginatorCotizaciones
                 [pageSizeOptions]="[5, 10, 25]"
@@ -556,7 +607,7 @@
                 }
               </mat-form-field>
             </div>
-            <div [style.flex]="setFlex(45, '%')" class="flex-item">
+            <div [style.flex]="setFlex(50, '%')" class="flex-item">
               <mat-paginator
                 #MatPaginatorServicios
                 [pageSizeOptions]="[5, 10, 25]"

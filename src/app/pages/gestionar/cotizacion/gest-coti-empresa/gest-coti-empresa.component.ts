@@ -13,7 +13,6 @@ import {
   FormControl,
 } from '@angular/forms';
 import { ServiciosService } from '../../../../services/mantenimiento/servicios/servicios.service';
-import { CotizacionPersonalService } from '../../../../services/gestion/cotizaciones/cotizacion-personal.service';
 import { IServicio } from '../../../../models/Mantenimiento/servicios.models';
 import Swal from 'sweetalert2';
 import { CommonModule, formatDate } from '@angular/common';
@@ -33,24 +32,20 @@ import {
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatDialog } from '@angular/material/dialog';
-// import { DialogBuscarPacienteComponent } from './dialogs/dialog-paciente/dialog-buscar-paciente.component';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
-// import { DialogBuscarSolicitanteComponent } from './dialogs/dialog-solicitante/dialog-buscar-solicitante.component';
-import {
-  ICotizacion,
-  IHistorialCotizacion,
-} from '../../../../models/Gestion/cotizacionPersona.models';
 import { CotiPersonaPdfServiceService } from '../../../../services/utilitarios/pdf/cotizacion/coti-persona-pdf.service.service';
 // import { DialogPdfCotiPersonaComponent } from './dialogs/dialog-pdf/dialog-pdf-coti-persona/dialog-pdf-coti-persona.component';
-import { IPersonalSaludParaConsultas } from '../../../../models/Mantenimiento/recursoHumano.models';
-// import { DialogMedicoComponent } from './dialogs/dialog-medico/dialog-medico.component';
 import { MatPaginator } from '@angular/material/paginator';
 import { debounceTime, distinctUntilChanged, filter, tap } from 'rxjs';
-import { IRefMedico } from '../../../../models/Mantenimiento/referenciaMedico.models';
 import { Router } from '@angular/router';
 import { NumberValidatorService } from '../../../../services/utilitarios/validators/numberValidator/number-validator.service';
 import { DialogBuscarEmpresaComponent } from './dialogs/dialog-empresa/dialog-buscar-empresa/dialog-buscar-empresa.component';
 import { IEmpresa } from '../../../../models/Mantenimiento/empresa.models';
+import { CotizacionEmpresaService } from '../../../../services/gestion/cotizaciones/cotizacionEmpresa/cotizacion-empresa.service';
+import {
+  ICotizacionEmpresa,
+  IHistorialCotizacionEmpresa,
+} from '../../../../models/Gestion/cotizacionEmpresa.models';
 
 @Component({
   selector: 'app-gest-coti-empresa',
@@ -77,7 +72,7 @@ import { IEmpresa } from '../../../../models/Mantenimiento/empresa.models';
 export class GestCotiEmpresaComponent {
   private _fb = inject(FormBuilder);
   private _servicioService = inject(ServiciosService);
-  private _cotizacionService = inject(CotizacionPersonalService);
+  private _cotizacionService = inject(CotizacionEmpresaService);
   private dialog = inject(MatDialog);
   private _pdfService = inject(CotiPersonaPdfServiceService);
   private _router = inject(Router);
@@ -95,8 +90,11 @@ export class GestCotiEmpresaComponent {
     fechaModificacion: [{ value: '', disabled: true }],
     version: [{ value: '', disabled: true }],
     empresaId: [{ value: '', required: true }],
-    ruc: [{ value: '', disabled: true }],
-    razonSocial: [{ value: '', disabled: true }],
+    ruc: [{ value: null, disabled: true }],
+    razonSocial: [{ value: null, disabled: true }],
+    formaPago: [{ value: null, required: true }],
+    diasCredito: [null],
+    entregaResultados: [null],
     aplicarPrecioGlobal: false,
     aplicarDescuentoPorcentGlobal: false,
     sumaTotalesPrecioLista: 0,
@@ -179,14 +177,14 @@ export class GestCotiEmpresaComponent {
     'fecha',
     'estado',
   ];
-  dataSourceCotizaciones = new MatTableDataSource<ICotizacion>();
+  dataSourceCotizaciones = new MatTableDataSource<ICotizacionEmpresa>();
 
   terminoBusquedaCotizacion = new FormControl('');
   cotizaciones: any[] = [];
 
   ultimasCotizaciones(): void {
-    this._cotizacionService.getLastCotizacion().subscribe({
-      next: (res: ICotizacion[]) => {
+    this._cotizacionService.getUltimasCotizacionesEmpresa().subscribe({
+      next: (res: ICotizacionEmpresa[]) => {
         this.dataSourceCotizaciones.data = res;
       },
       error: (err: any) => {
@@ -205,14 +203,16 @@ export class GestCotiEmpresaComponent {
           termino = termino?.trim() || '';
 
           if (termino.length >= 3) {
-            this._cotizacionService.getCotizacion(termino).subscribe({
-              next: (res: ICotizacion[]) => {
-                this.dataSourceCotizaciones.data = res;
-              },
-              error: () => {
-                this.dataSourceCotizaciones.data = [];
-              },
-            });
+            this._cotizacionService
+              .buscarCotizacionesEmpresa(termino)
+              .subscribe({
+                next: (res: ICotizacionEmpresa[]) => {
+                  this.dataSourceCotizaciones.data = res;
+                },
+                error: () => {
+                  this.dataSourceCotizaciones.data = [];
+                },
+              });
           } else if (termino.length > 0) {
             this.dataSourceCotizaciones.data = [];
           } else {
@@ -299,19 +299,17 @@ export class GestCotiEmpresaComponent {
       codServicio: [servicio.codServicio, Validators.required],
       tipoServicio: [servicio.tipoServicio, Validators.required],
       nombreServicio: [servicio.nombreServicio, Validators.required],
-      medicoAtiende: [servicio.medicoAtiende || null],
       cantidad: [1, [Validators.required, Validators.min(1)]],
       precioLista: [
-        servicio.precioServicio,
+        Math.round((servicio.precioServicio / 1.18) * 100) / 100,
         [Validators.required, Validators.min(0)],
       ],
       diferencia: [0],
       precioVenta: [
-        servicio.precioServicio,
+        Math.round((servicio.precioServicio / 1.18) * 100) / 100,
         [
           Validators.required,
-          Validators.min(0),
-          Validators.pattern(/^[0-9]+(\.[0-9]{1,2})?$/),
+          this._numeroValidatorService.twoDecimalsValidator(2),
         ],
       ],
       descuentoPorcentaje: [0, [Validators.min(0), Validators.max(100)]],
@@ -341,8 +339,9 @@ export class GestCotiEmpresaComponent {
     let precioListaTotal = cantidad * precioLista;
     let montoDescuento =
       Math.round(precioVenta * (descuentoPorcentual / 100) * 100) / 100;
-    let nuevoPrecioVenta = precioVenta - montoDescuento;
-    let totalUnitario = cantidad * nuevoPrecioVenta;
+    let nuevoPrecioVenta =
+      Math.round((precioVenta - montoDescuento) * 100) / 100;
+    let totalUnitario = Math.round(cantidad * nuevoPrecioVenta * 100) / 100;
     let diferencia = Math.round((totalUnitario - precioListaTotal) * 100) / 100;
     servicio.get('diferencia')?.setValue(diferencia);
     servicio.get('nuevoPrecioVenta')?.setValue(nuevoPrecioVenta);
@@ -497,22 +496,22 @@ export class GestCotiEmpresaComponent {
     const descuentoPorcentaje =
       parseFloat(this.myFormCotizacion.get('descuentoPorcentaje')?.value) || 0;
 
-    // 4️⃣ Calcular el total a pagar aplicando el descuento
-    let totalAPagar =
+    // calcular subTotal
+    let calSubTotal =
       Math.round(precioGlobal * (1 - descuentoPorcentaje / 100) * 100) / 100;
 
-    // 5️⃣ Calcular la diferencia total
+    // calcular IGV
+    let calIgv = Math.round(((calSubTotal * 18) / 100) * 100) / 100;
+
+    // 5️⃣ Calcular el total a pagar aplicando el descuento
+    let totalAPagar = Math.round((calSubTotal + calIgv) * 100) / 100;
+
+    // 4️⃣ Calcular la diferencia total
     let diferenciaTotal =
-      Math.round((totalAPagar - totalPrecioLista) * 100) / 100;
+      Math.round((calSubTotal - totalPrecioLista) * 100) / 100;
 
     let diferenciaConNuevoPrecio =
-      Math.round((totalAPagar - sumaTotalUnitarios) * 100) / 100;
-
-    // calcular subTotal
-    let calSubTotal = Math.round((totalAPagar / 1.18) * 100) / 100;
-
-    // calcular IGV
-    let calIgv = Math.round((totalAPagar - calSubTotal) * 100) / 100;
+      Math.round((calSubTotal - sumaTotalUnitarios) * 100) / 100;
 
     // 6️⃣ Actualizar los valores en el formulario
     this.myFormCotizacion.patchValue({
@@ -520,7 +519,6 @@ export class GestCotiEmpresaComponent {
       descuentoTotal: Math.round(diferenciaTotal * 100) / 100,
       descTotalMenosNuevoPrecio:
         Math.round(diferenciaConNuevoPrecio * 100) / 100,
-      precioConDescGlobal: Math.round(precioGlobal * 100) / 100,
       subTotal: calSubTotal,
       igv: calIgv,
       total: Math.round(totalAPagar * 100) / 100,
@@ -589,30 +587,19 @@ export class GestCotiEmpresaComponent {
         console.log('Procede registro coti');
         const formValue = this.myFormCotizacion.getRawValue();
 
-        const body: ICotizacion = {
+        const body: ICotizacionEmpresa = {
           codCotizacion: '',
           estadoCotizacion: 'GENERADA',
           historial: [
             {
               version: 1,
               fechaModificacion: new Date(),
-              estadoRegistroPaciente: !!formValue.estadoRegistroPaciente,
-              clienteId: formValue.clienteId,
-              nombreCliente: formValue.nombreCliente,
-              apePatCliente: formValue.apePatCliente,
-              apeMatCliente: formValue.apeMatCliente,
-              hc: formValue.hc,
-              tipoDoc: formValue.tipoDoc,
-              nroDoc: formValue.nroDoc,
-              estadoRegistroSolicitante: !!formValue.estadoRegistroSolicitante,
-              codSolicitante: formValue.codSolicitante,
-              solicitanteId: formValue.solicitanteId,
-              apePatRefMedico: formValue.apePatRefMedico,
-              apeMatRefMedico: formValue.apeMatRefMedico,
-              nombreRefMedico: formValue.nombreRefMedico,
-              profesionSolicitante: formValue.profesionSolicitante,
-              colegiatura: formValue.colegiatura,
-              especialidadSolicitante: formValue.especialidadSolicitante,
+              empresaId: formValue.empresaId,
+              ruc: formValue.ruc,
+              razonSocial: formValue.razonSocial,
+              formaPago: formValue.formaPago,
+              diasCredito: formValue.diasCredito,
+              entregaResultados: formValue.entregaResultados,
               aplicarPrecioGlobal: !!formValue.aplicarPrecioGlobal,
               aplicarDescuentoPorcentGlobal:
                 !!formValue.aplicarDescuentoPorcentGlobal,
@@ -630,7 +617,7 @@ export class GestCotiEmpresaComponent {
 
         console.log('📌 **Body antes de enviar**:', body);
 
-        this._cotizacionService.generarCotizacion(body).subscribe({
+        this._cotizacionService.crearCotizacionEmpresa(body).subscribe({
           next: (res) => {
             if (res.ok) {
               this.mostrarAlertaExito('Cotización registrada');
@@ -708,26 +695,15 @@ export class GestCotiEmpresaComponent {
             this.cotizacionCargada.historial.length - 1
           ];
 
-        const nuevaVersion: IHistorialCotizacion = {
+        const nuevaVersion: IHistorialCotizacionEmpresa = {
           version: ultimaVersion + 1,
           fechaModificacion: new Date(),
-          estadoRegistroPaciente: !!formValue.estadoRegistroPaciente,
-          clienteId: formValue.clienteId,
-          nombreCliente: formValue.nombreCliente,
-          apePatCliente: formValue.apePatCliente,
-          apeMatCliente: formValue.apeMatCliente,
-          hc: formValue.hc,
-          tipoDoc: formValue.tipoDoc,
-          nroDoc: formValue.nroDoc,
-          estadoRegistroSolicitante: !!formValue.estadoRegistroSolicitante,
-          codSolicitante: formValue.codSolicitante,
-          solicitanteId: formValue.solicitanteId,
-          apePatRefMedico: formValue.apePatRefMedico,
-          apeMatRefMedico: formValue.apeMatRefMedico,
-          nombreRefMedico: formValue.nombreRefMedico,
-          profesionSolicitante: formValue.profesionSolicitante,
-          colegiatura: formValue.colegiatura,
-          especialidadSolicitante: formValue.especialidadSolicitante,
+          empresaId: formValue.empresaId,
+          ruc: formValue.ruc,
+          razonSocial: formValue.razonSocial,
+          formaPago: formValue.formaPago,
+          diasCredito: formValue.diasCredito,
+          entregaResultados: formValue.entregaResultados,
           aplicarPrecioGlobal: !!formValue.aplicarPrecioGlobal,
           aplicarDescuentoPorcentGlobal:
             !!formValue.aplicarDescuentoPorcentGlobal,
@@ -742,45 +718,47 @@ export class GestCotiEmpresaComponent {
         };
 
         // Crear el objeto de la nueva cotización con los datos del paciente y la nueva versión
-        const nuevaCotizacion: ICotizacion = {
+        const nuevaCotizacion: ICotizacionEmpresa = {
           codCotizacion: this.cotizacionCargada.codCotizacion, // Mismo código
           estadoCotizacion: 'MODIFICADA',
           // Historial con la nueva versión agregada
           historial: [nuevaVersion],
         };
 
-        this._cotizacionService.generarNuevaVersion(nuevaCotizacion).subscribe({
-          next: (res) => {
-            if (res.ok) {
-              this.mostrarAlertaExito('Nueva versión generada');
-              this.ultimasCotizaciones();
-              this.nuevaCotizacionPersona();
-            } else {
-              const mensaje = res.msg || 'Ocurrió un error inesperado.';
+        this._cotizacionService
+          .crearNuevaVersionCotizacionEmpresa(nuevaCotizacion)
+          .subscribe({
+            next: (res) => {
+              if (res.ok) {
+                this.mostrarAlertaExito('Nueva versión generada');
+                this.ultimasCotizaciones();
+                this.nuevaCotizacionPersona();
+              } else {
+                const mensaje = res.msg || 'Ocurrió un error inesperado.';
+                this.mostrarAlertaError(mensaje);
+              }
+            },
+            error: (error) => {
+              const mensaje =
+                error?.error?.msg || 'Error inesperado al generar la versión.';
               this.mostrarAlertaError(mensaje);
-            }
-          },
-          error: (error) => {
-            const mensaje =
-              error?.error?.msg || 'Error inesperado al generar la versión.';
-            this.mostrarAlertaError(mensaje);
-          },
-        });
+            },
+          });
       }
     });
   }
 
   validarformulario(): boolean {
-    const nomClienteControl = this.myFormCotizacion.get('nombreCliente');
-    const nomClienteValor = nomClienteControl
-      ? nomClienteControl.getRawValue()
+    const razonSocialControl = this.myFormCotizacion.get('razonSocial');
+    const razonSocialValor = razonSocialControl
+      ? razonSocialControl.getRawValue()
       : '';
 
-    if (!nomClienteValor || nomClienteValor.trim() === '') {
+    if (!razonSocialValor || razonSocialValor.trim() === '') {
       Swal.fire({
         icon: 'warning',
-        title: 'Falta paciente',
-        text: 'Debe ingresar o seleccionar el nombre del paciente.',
+        title: 'Falta razón social',
+        text: 'Debe ingresar o seleccionar la razón social.',
         confirmButtonColor: '#3085d6',
         confirmButtonText: 'Entendido',
       });
@@ -965,8 +943,6 @@ export class GestCotiEmpresaComponent {
             codServicio: [servicio.codServicio, Validators.required],
             tipoServicio: [servicio.tipoServicio, Validators.required],
             nombreServicio: [servicio.nombreServicio, Validators.required],
-            profesionesAsociadas: [servicio.profesionesAsociadas || null],
-            medicoAtiende: [servicio.medicoAtiende || null],
             cantidad: [
               { value: servicio.cantidad, disabled: true },
               [Validators.required, Validators.min(1)],
@@ -1023,8 +999,6 @@ export class GestCotiEmpresaComponent {
             codServicio: [servicio.codServicio, Validators.required],
             tipoServicio: [servicio.tipoServicio, Validators.required],
             nombreServicio: [servicio.nombreServicio, Validators.required],
-            profesionesAsociadas: [servicio.profesionesAsociadas || null],
-            medicoAtiende: [servicio.medicoAtiende || null],
             cantidad: [
               servicio.cantidad,
               [Validators.required, Validators.min(1)],
@@ -1114,5 +1088,16 @@ export class GestCotiEmpresaComponent {
 
   validarEntero(event: KeyboardEvent) {
     return this._numeroValidatorService.validarNumeroEntero(event);
+  }
+
+  validarDouble(event: KeyboardEvent) {
+    return this._numeroValidatorService.validarTeclaDoublePositivo(event);
+  }
+
+  sanitizarDoubleInput(e: Event) {
+    this._numeroValidatorService.onInputSanitize(e, 2, 9);
+  }
+  sanitizarDoublePaste(e: ClipboardEvent) {
+    this._numeroValidatorService.onPasteSanitize(e, 2);
   }
 }
