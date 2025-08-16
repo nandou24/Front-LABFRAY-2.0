@@ -512,27 +512,14 @@
               </td>
             </ng-container>
 
-            <ng-container matColumnDef="paciente">
-              <th mat-header-cell *matHeaderCellDef>Paciente</th>
+            <ng-container matColumnDef="empresa">
+              <th mat-header-cell *matHeaderCellDef>Empresa</th>
               <td mat-cell *matCellDef="let cotizacion">
-                {{
-                  cotizacion.historial[cotizacion.historial.length - 1].tipoDoc
-                }}
-                {{
-                  cotizacion.historial[cotizacion.historial.length - 1].nroDoc
-                }}
+                {{ cotizacion.historial[cotizacion.historial.length - 1].ruc }}
                 --
                 {{
                   cotizacion.historial[cotizacion.historial.length - 1]
-                    .apePatCliente
-                }}
-                {{
-                  cotizacion.historial[cotizacion.historial.length - 1]
-                    .apeMatCliente
-                }}
-                {{
-                  cotizacion.historial[cotizacion.historial.length - 1]
-                    .nombreCliente
+                    .razonSocial
                 }}
               </td>
             </ng-container>
@@ -546,13 +533,6 @@
                 }}
               </td>
             </ng-container>
-
-            <!-- <ng-container matColumnDef="versiones">
-              <th mat-header-cell *matHeaderCellDef>Vers.</th>
-              <td mat-cell *matCellDef="let cotizacion">
-                {{ cotizacion.historial.length }}
-              </td>
-            </ng-container> -->
 
             <ng-container matColumnDef="estado">
               <th mat-header-cell *matHeaderCellDef>Estado</th>

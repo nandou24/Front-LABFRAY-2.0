@@ -33,7 +33,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatDialog } from '@angular/material/dialog';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
-import { CotiPersonaPdfServiceService } from '../../../../services/utilitarios/pdf/cotizacion/coti-persona-pdf.service.service';
+import { CotiPersonaPdfServiceService } from '../../../../services/utilitarios/pdf/cotizacion/coti-paciente/coti-persona-pdf.service.service';
 // import { DialogPdfCotiPersonaComponent } from './dialogs/dialog-pdf/dialog-pdf-coti-persona/dialog-pdf-coti-persona.component';
 import { MatPaginator } from '@angular/material/paginator';
 import { debounceTime, distinctUntilChanged, filter, tap } from 'rxjs';
@@ -173,7 +173,7 @@ export class GestCotiEmpresaComponent {
 
   columnasCotizaciones: string[] = [
     'codCotizacion',
-    'paciente',
+    'empresa',
     'fecha',
     'estado',
   ];
@@ -242,7 +242,7 @@ export class GestCotiEmpresaComponent {
   }
 
   listarServiciosFrecuentes() {
-    this._servicioService.getAllFavoritesServicios().subscribe({
+    this._servicioService.getAllFavoritesServiciosEmpresa().subscribe({
       next: (res: IServicio[]) => {
         this.dataSourceServiciosFrecuentes.data = res;
       },

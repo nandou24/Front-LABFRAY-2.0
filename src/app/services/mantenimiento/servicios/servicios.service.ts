@@ -65,6 +65,18 @@ export class ServiciosService {
       );
   }
 
+  getAllFavoritesServiciosEmpresa(): Observable<IServicio[]> {
+    return this._http
+      .get<IGetLastServicio>(
+        `${environment.baseUrl}/api/servicio/latestFavoritesEmpresa`,
+      )
+      .pipe(
+        map((data) => {
+          return data.servicios;
+        }),
+      );
+  }
+
   getAllServicios(): Observable<IServicio[]> {
     return this._http
       .get<IGetLastServicio>(`${environment.baseUrl}/api/servicio/latest`)

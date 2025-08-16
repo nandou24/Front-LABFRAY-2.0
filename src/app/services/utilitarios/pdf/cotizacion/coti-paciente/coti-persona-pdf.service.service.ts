@@ -2,9 +2,9 @@ import { Injectable } from '@angular/core';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { IPaciente } from '../../../../models/Mantenimiento/paciente.models';
+import { IPaciente } from '../../../../../models/Mantenimiento/paciente.models';
 import { firstValueFrom } from 'rxjs';
-import { PacienteService } from '../../../mantenimiento/paciente/paciente.service';
+import { PacienteService } from '../../../../mantenimiento/paciente/paciente.service';
 
 @Injectable({
   providedIn: 'root',

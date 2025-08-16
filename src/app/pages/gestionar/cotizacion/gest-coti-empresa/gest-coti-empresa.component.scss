@@ -62,13 +62,6 @@ mat-option {
   height: 18px !important; /* Aumenta el tamaño del área de toque */
 }
 
-.flex-item {
-  justify-content: center;
-  padding: 5px;
-  min-width: 0;
-  text-align: center;
-}
-
 .campo-fieldset {
   border: 1px solid #ddd;
   border-radius: 8px;
@@ -108,6 +101,13 @@ mat-option {
   flex-wrap: wrap;
   align-items: flex-start;
   margin-bottom: 0px;
+}
+
+.flex-item {
+  justify-content: center;
+  padding: 5px;
+  min-width: 0;
+  text-align: center;
 }
 
 .flex-row-container {
