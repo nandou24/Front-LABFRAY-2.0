@@ -1,0 +1,289 @@
+<div class="contenedor-flex">
+  <div class="contenedor-formulario">
+    <h4>Reporte de Pagos</h4>
+
+    <div [formGroup]="myGroupBusqueda">
+      <div class="row-flex">
+        <div [style.flex]="setFlex(25, '%')" class="flex-item">
+          <mat-form-field appearance="outline">
+            <mat-label>Buscar por nombre o documento</mat-label>
+            <input
+              matInput
+              placeholder="Ej. Juan, SOL24060001"
+              formControlName="terminoBusqueda"
+            />
+            <mat-icon matSuffix>search</mat-icon>
+          </mat-form-field>
+        </div>
+
+        <div [style.flex]="setFlex(10, '%')" class="flex-item">
+          <mat-form-field appearance="outline">
+            <mat-label>Fecha Inicio</mat-label>
+            <input
+              matInput
+              [matDatepicker]="pickerInicio"
+              readonly="true"
+              formControlName="fechaInicio"
+            />
+            <mat-datepicker-toggle
+              matSuffix
+              [for]="pickerInicio"
+            ></mat-datepicker-toggle>
+            <mat-datepicker #pickerInicio disabled="false"></mat-datepicker>
+          </mat-form-field>
+        </div>
+
+        <div [style.flex]="setFlex(10, '%')" class="flex-item">
+          <mat-form-field appearance="outline">
+            <mat-label>Fecha Fin</mat-label>
+            <input
+              matInput
+              [matDatepicker]="pickerFin"
+              readonly="true"
+              formControlName="fechaFin"
+            />
+            <mat-datepicker-toggle
+              matSuffix
+              [for]="pickerFin"
+            ></mat-datepicker-toggle>
+            <mat-datepicker #pickerFin disabled="false"></mat-datepicker>
+          </mat-form-field>
+        </div>
+
+        <div [style.flex]="setFlex(8, '%')" class="flex-item">
+          <button
+            mat-flat-button
+            type="button"
+            (click)="buscarPagos()"
+            class="mb-3"
+          >
+            Buscar
+          </button>
+        </div>
+
+        <div [style.flex]="setFlex(15, '%')" class="flex-item">
+          <mat-form-field appearance="outline">
+            <mat-label>Filtrar resultados</mat-label>
+            <input
+              matInput
+              (keyup)="filtrar($event)"
+              placeholder="Ej. Juan, SOL24060001"
+              formControlName="filtroBusqueda"
+            />
+            <mat-icon matSuffix>search</mat-icon>
+          </mat-form-field>
+        </div>
+
+        <div [style.flex]="setFlex(8, '%')" class="flex-item mb-3">
+          <button
+            mat-raised-button
+            color="accent"
+            type="button"
+            (click)="exportarReporte()"
+            [disabled]="dataSourceReporte.data.length === 0"
+          >
+            <mat-icon>file_download</mat-icon>
+            Exportar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel de Estadísticas -->
+    <div class="estadisticas-panel" *ngIf="estadisticas.totalPagos > 0">
+      <h5>Resumen del Reporte</h5>
+      <div class="estadisticas-grid">
+        <div class="estadistica-item">
+          <span class="estadistica-valor">{{ estadisticas.totalPagos }}</span>
+          <span class="estadistica-label">Total Pagos</span>
+        </div>
+        <div class="estadistica-item">
+          <span class="estadistica-valor"
+            >S/ {{ estadisticas.montoTotal | number: "1.2-2" }}</span
+          >
+          <span class="estadistica-label">Monto Total</span>
+        </div>
+        <div class="estadistica-item">
+          <span class="estadistica-valor text-success"
+            >S/ {{ estadisticas.montoPagado | number: "1.2-2" }}</span
+          >
+          <span class="estadistica-label">Monto Pagado</span>
+        </div>
+        <div class="estadistica-item">
+          <span class="estadistica-valor text-danger"
+            >S/ {{ estadisticas.montoFaltante | number: "1.2-2" }}</span
+          >
+          <span class="estadistica-label">Monto Faltante</span>
+        </div>
+        <div class="estadistica-item">
+          <span class="estadistica-valor text-success">{{
+            estadisticas.pagosCompletos
+          }}</span>
+          <span class="estadistica-label">Pagos Completos</span>
+        </div>
+        <div class="estadistica-item">
+          <span class="estadistica-valor text-warning">{{
+            estadisticas.pagosPendientes
+          }}</span>
+          <span class="estadistica-label">Pagos Pendientes</span>
+        </div>
+      </div>
+
+      <!-- Sección de Ingresos por Medio de Pago -->
+      <div class="ingresos-medios-pago" *ngIf="getMediosPagoList().length > 0">
+        <h6>Ingresos por Medio de Pago</h6>
+        <div class="medios-pago-grid">
+          <div
+            class="medio-pago-item"
+            *ngFor="let medioPago of getMediosPagoList()"
+          >
+            <span class="medio-pago-nombre">{{ medioPago }}:</span>
+            <span class="medio-pago-monto text-primary">
+              S/ {{ getIngresosPorMedio(medioPago) | number: "1.2-2" }}
+            </span>
+          </div>
+          <div class="medio-pago-item total-medios">
+            <span class="medio-pago-nombre"
+              ><strong>Total Ingresos:</strong></span
+            >
+            <span class="medio-pago-monto text-success">
+              <strong
+                >S/
+                {{ getTotalIngresosPorMediosPago() | number: "1.2-2" }}</strong
+              >
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabla de Pagos -->
+    <div class="table-container">
+      <table
+        mat-table
+        [dataSource]="dataSourceReporte"
+        multiTemplateDataRows
+        class="mat-elevation-z8"
+      >
+        <!-- Código Solicitud -->
+        <ng-container matColumnDef="cotizacionId">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>
+            Cod. Cotización
+          </th>
+          <td mat-cell *matCellDef="let row">{{ row.codCotizacion }}</td>
+        </ng-container>
+
+        <!-- Código Solicitud -->
+        <ng-container matColumnDef="codigoPago">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Cod. Pago</th>
+          <td mat-cell *matCellDef="let row">{{ row.codPago }}</td>
+        </ng-container>
+
+        <!-- Nombre del paciente -->
+        <ng-container matColumnDef="nombreCompleto">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Paciente</th>
+          <td mat-cell *matCellDef="let row">
+            {{ row.tipoDoc }} {{ row.nroDoc }} -- {{ row.apePatCliente }}
+            {{ row.apeMatCliente }}
+            {{ row.nombreCliente }}
+          </td>
+        </ng-container>
+
+        <!-- Monto Total -->
+        <ng-container matColumnDef="montoTotal">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Monto Total</th>
+          <td mat-cell *matCellDef="let row">
+            S/ {{ row.totalFacturar | number: "1.2-2" }}
+          </td>
+        </ng-container>
+
+        <!-- Falta Pagar -->
+        <ng-container matColumnDef="faltaPagar">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Falta Pagar</th>
+          <td mat-cell *matCellDef="let row">
+            <span [class]="row.faltaPagar > 0 ? 'text-danger' : 'text-success'">
+              S/ {{ row.faltaPagar | number: "1.2-2" }}
+            </span>
+          </td>
+        </ng-container>
+
+        <!-- Medio de Pago -->
+        <ng-container matColumnDef="medioPago">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>
+            Medios de Pago
+          </th>
+          <td mat-cell *matCellDef="let row">
+            <div
+              *ngIf="
+                row.detallePagos && row.detallePagos.length > 0;
+                else sinPagos
+              "
+            >
+              <div
+                *ngFor="let detalle of row.detallePagos; let i = index"
+                class="detalle-pago"
+              >
+                <small>
+                  {{ detalle.medioPago }} - S/
+                  {{ detalle.monto + (detalle.recargo || 0) | number: "1.2-2" }}
+                  <br />
+                  <em>{{ detalle.fechaPago | date: "dd/MM/yyyy HH:mm" }}</em>
+                  <span *ngIf="detalle.numOperacion">
+                    - Op: {{ detalle.numOperacion }}</span
+                  >
+                </small>
+              </div>
+            </div>
+            <ng-template #sinPagos>
+              <span class="text-muted">Sin pagos registrados</span>
+            </ng-template>
+          </td>
+        </ng-container>
+
+        <!-- Estado -->
+        <ng-container matColumnDef="estado">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Estado</th>
+          <td mat-cell *matCellDef="let row">
+            <span [class]="getEstadoClass(row.estadoPago)">
+              {{ row.estadoPago }}
+            </span>
+          </td>
+        </ng-container>
+
+        <!-- Acciones -->
+        <ng-container matColumnDef="acciones">
+          <th mat-header-cell *matHeaderCellDef>Acciones</th>
+          <td mat-cell *matCellDef="let row">
+            <button
+              mat-icon-button
+              color="primary"
+              [title]="'Ver detalle completo'"
+              (click)="verDetallePago(row)"
+            >
+              <mat-icon>visibility</mat-icon>
+            </button>
+            <!-- <button
+              mat-icon-button
+              color="accent"
+              [title]="'Exportar'"
+              (click)="exportarPago(row)"
+            >
+              <mat-icon>file_download</mat-icon>
+            </button> -->
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="columnasTablaReporte"></tr>
+        <tr
+          mat-row
+          *matRowDef="let element; columns: columnasTablaReporte"
+          class="example-element-row"
+        ></tr>
+      </table>
+      <!-- Paginador -->
+      <mat-paginator [pageSizeOptions]="[25, 50, 100]" [pageSize]="25">
+        showFirstLastButtons ></mat-paginator
+      >
+    </div>
+  </div>
+</div>

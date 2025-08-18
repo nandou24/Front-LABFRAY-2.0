@@ -13,7 +13,6 @@ import {
   FormControl,
 } from '@angular/forms';
 import { ServiciosService } from '../../../../services/mantenimiento/servicios/servicios.service';
-import { CotizacionPersonalService } from '../../../../services/gestion/cotizaciones/cotizacion-personal.service';
 import { IServicio } from '../../../../models/Mantenimiento/servicios.models';
 import Swal from 'sweetalert2';
 import { CommonModule, formatDate } from '@angular/common';
@@ -33,27 +32,23 @@ import {
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatDialog } from '@angular/material/dialog';
-import { DialogBuscarPacienteComponent } from './dialogs/dialog-paciente/dialog-buscar-paciente.component';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
-import { DialogBuscarSolicitanteComponent } from './dialogs/dialog-solicitante/dialog-buscar-solicitante.component';
-import {
-  ICotizacion,
-  IHistorialCotizacion,
-} from '../../../../models/Gestion/cotizacionPersona.models';
 import { CotiPersonaPdfServiceService } from '../../../../services/utilitarios/pdf/cotizacion/coti-persona-pdf.service.service';
-import { DialogPdfCotiPersonaComponent } from './dialogs/dialog-pdf/dialog-pdf-coti-persona/dialog-pdf-coti-persona.component';
-import { IPersonalSaludParaConsultas } from '../../../../models/Mantenimiento/recursoHumano.models';
-import { DialogMedicoComponent } from './dialogs/dialog-medico/dialog-medico.component';
+// import { DialogPdfCotiPersonaComponent } from './dialogs/dialog-pdf/dialog-pdf-coti-persona/dialog-pdf-coti-persona.component';
 import { MatPaginator } from '@angular/material/paginator';
 import { debounceTime, distinctUntilChanged, filter, tap } from 'rxjs';
-import { IPaciente } from '../../../../models/Mantenimiento/paciente.models';
-import { IRefMedico } from '../../../../models/Mantenimiento/referenciaMedico.models';
 import { Router } from '@angular/router';
 import { NumberValidatorService } from '../../../../services/utilitarios/validators/numberValidator/number-validator.service';
+import { DialogBuscarEmpresaComponent } from './dialogs/dialog-empresa/dialog-buscar-empresa/dialog-buscar-empresa.component';
+import { IEmpresa } from '../../../../models/Mantenimiento/empresa.models';
+import { CotizacionEmpresaService } from '../../../../services/gestion/cotizaciones/cotizacionEmpresa/cotizacion-empresa.service';
+import {
+  ICotizacionEmpresa,
+  IHistorialCotizacionEmpresa,
+} from '../../../../models/Gestion/cotizacionEmpresa.models';
 
 @Component({
-  selector: 'app-gest-coti-persona',
-  standalone: true,
+  selector: 'app-gest-coti-empresa',
   imports: [
     CommonModule,
     FormsModule,
@@ -71,14 +66,13 @@ import { NumberValidatorService } from '../../../../services/utilitarios/validat
     MatDialogModule,
     MatButtonToggleModule,
   ],
-  providers: [{ provide: MAT_DATE_LOCALE, useValue: 'es-PE' }],
-  templateUrl: './gest-coti-persona.component.html',
-  styleUrl: './gest-coti-persona.component.scss',
+  templateUrl: './gest-coti-empresa.component.html',
+  styleUrl: './gest-coti-empresa.component.scss',
 })
-export class GestCotiPersonaComponent implements OnInit {
+export class GestCotiEmpresaComponent {
   private _fb = inject(FormBuilder);
   private _servicioService = inject(ServiciosService);
-  private _cotizacionService = inject(CotizacionPersonalService);
+  private _cotizacionService = inject(CotizacionEmpresaService);
   private dialog = inject(MatDialog);
   private _pdfService = inject(CotiPersonaPdfServiceService);
   private _router = inject(Router);
@@ -95,23 +89,12 @@ export class GestCotiPersonaComponent implements OnInit {
     codCotizacion: [{ value: '', disabled: true }],
     fechaModificacion: [{ value: '', disabled: true }],
     version: [{ value: '', disabled: true }],
-    estadoRegistroPaciente: true,
-    clienteId: [{ value: '', required: true }],
-    apePatCliente: [{ value: '', disabled: true }],
-    apeMatCliente: [{ value: '', disabled: true }],
-    nombreCliente: [{ value: '', disabled: true }],
-    hc: [''],
-    tipoDoc: [{ value: '', disabled: true }],
-    nroDoc: [{ value: '', disabled: true }],
-    estadoRegistroSolicitante: true,
-    codSolicitante: [{ value: '', disabled: true }],
-    solicitanteId: [],
-    apePatRefMedico: [{ value: '', disabled: true }],
-    apeMatRefMedico: [{ value: '', disabled: true }],
-    nombreRefMedico: [{ value: '', disabled: true }],
-    profesionSolicitante: [{ value: '', disabled: true }],
-    colegiatura: [''],
-    especialidadSolicitante: [{ value: '', disabled: true }],
+    empresaId: [{ value: '', required: true }],
+    ruc: [{ value: null, disabled: true }],
+    razonSocial: [{ value: null, disabled: true }],
+    formaPago: [{ value: null, required: true }],
+    diasCredito: [null],
+    entregaResultados: [null],
     aplicarPrecioGlobal: false,
     aplicarDescuentoPorcentGlobal: false,
     sumaTotalesPrecioLista: 0,
@@ -139,7 +122,6 @@ export class GestCotiPersonaComponent implements OnInit {
     'codigo',
     'tipo',
     'nombre',
-    'medicoAtiende',
     'cantidad',
     'precioLista',
     // 'diferencia',
@@ -150,75 +132,27 @@ export class GestCotiPersonaComponent implements OnInit {
   ];
   dataSourceServiciosCotizados = new MatTableDataSource<FormGroup>([]);
 
-  // PACIENTES
+  // EPRESAS
   timeoutBusqueda: any;
 
-  abrirDialogoBuscarPaciente() {
-    const dialogRef = this.dialog.open(DialogBuscarPacienteComponent, {
+  abrirDialogoBuscarEmpresa() {
+    const dialogRef = this.dialog.open(DialogBuscarEmpresaComponent, {
       maxWidth: '1000px',
       data: {},
     });
-    dialogRef.afterClosed().subscribe((pacienteSeleccionado) => {
-      if (pacienteSeleccionado) {
-        this.setPacienteSeleccionado(pacienteSeleccionado);
+    dialogRef.afterClosed().subscribe((empresaSeleccionada) => {
+      if (empresaSeleccionada) {
+        this.setEmpresaSeleccionada(empresaSeleccionada);
       }
     });
   }
 
-  setPacienteSeleccionado(paciente: IPaciente) {
-    // Asigna los datos del paciente seleccionado al formulario
+  setEmpresaSeleccionada(empresa: IEmpresa) {
+    // Asigna los datos de la empresa seleccionada al formulario
     this.myFormCotizacion.patchValue({
-      clienteId: paciente._id,
-      apePatCliente: paciente.apePatCliente,
-      apeMatCliente: paciente.apeMatCliente,
-      nombreCliente: paciente.nombreCliente,
-      hc: paciente.hc,
-      tipoDoc: paciente.tipoDoc,
-      nroDoc: paciente.nroDoc,
-    });
-  }
-
-  abrirDialogoBuscarSolicitante() {
-    const dialogRef = this.dialog.open(DialogBuscarSolicitanteComponent, {
-      maxWidth: '1000px',
-      data: {},
-    });
-    dialogRef.afterClosed().subscribe((solicitanteSeleccionado) => {
-      if (solicitanteSeleccionado) {
-        this.setSolicitanteSeleccionado(solicitanteSeleccionado);
-      }
-    });
-  }
-
-  setSolicitanteSeleccionado(solicitante: IRefMedico) {
-    // Asigna los datos del paciente seleccionado al formulario
-    //console.log('Solicitante seleccionado:', solicitante);
-    this.myFormCotizacion.patchValue({
-      solicitanteId: solicitante._id,
-      codSolicitante: solicitante.codRefMedico,
-      apePatRefMedico: solicitante.apePatRefMedico,
-      apeMatRefMedico: solicitante.apeMatRefMedico,
-      nombreRefMedico: solicitante.nombreRefMedico,
-      profesionSolicitante:
-        solicitante.profesionesRefMedico[0]?.profesionRef?.nombreProfesion ??
-        '',
-      colegiatura: solicitante.profesionesRefMedico[0]?.nroColegiatura ?? '',
-      especialidadSolicitante:
-        solicitante.profesionesRefMedico[0]?.especialidades[0]?.especialidadRef
-          ?.nombreEspecialidad ?? '',
-    });
-  }
-
-  quitarSolicitante() {
-    this.myFormCotizacion.patchValue({
-      solicitanteId: null,
-      codSolicitante: null,
-      apePatRefMedico: null,
-      apeMatRefMedico: null,
-      nombreRefMedico: null,
-      profesionSolicitante: null,
-      colegiatura: null,
-      especialidadSolicitante: null,
+      empresaId: empresa._id,
+      ruc: empresa.ruc,
+      razonSocial: empresa.razonSocial,
     });
   }
 
@@ -243,14 +177,14 @@ export class GestCotiPersonaComponent implements OnInit {
     'fecha',
     'estado',
   ];
-  dataSourceCotizaciones = new MatTableDataSource<ICotizacion>();
+  dataSourceCotizaciones = new MatTableDataSource<ICotizacionEmpresa>();
 
   terminoBusquedaCotizacion = new FormControl('');
   cotizaciones: any[] = [];
 
   ultimasCotizaciones(): void {
-    this._cotizacionService.getLastCotizacion().subscribe({
-      next: (res: ICotizacion[]) => {
+    this._cotizacionService.getUltimasCotizacionesEmpresa().subscribe({
+      next: (res: ICotizacionEmpresa[]) => {
         this.dataSourceCotizaciones.data = res;
       },
       error: (err: any) => {
@@ -269,14 +203,16 @@ export class GestCotiPersonaComponent implements OnInit {
           termino = termino?.trim() || '';
 
           if (termino.length >= 3) {
-            this._cotizacionService.getCotizacion(termino).subscribe({
-              next: (res: ICotizacion[]) => {
-                this.dataSourceCotizaciones.data = res;
-              },
-              error: () => {
-                this.dataSourceCotizaciones.data = [];
-              },
-            });
+            this._cotizacionService
+              .buscarCotizacionesEmpresa(termino)
+              .subscribe({
+                next: (res: ICotizacionEmpresa[]) => {
+                  this.dataSourceCotizaciones.data = res;
+                },
+                error: () => {
+                  this.dataSourceCotizaciones.data = [];
+                },
+              });
           } else if (termino.length > 0) {
             this.dataSourceCotizaciones.data = [];
           } else {
@@ -363,19 +299,17 @@ export class GestCotiPersonaComponent implements OnInit {
       codServicio: [servicio.codServicio, Validators.required],
       tipoServicio: [servicio.tipoServicio, Validators.required],
       nombreServicio: [servicio.nombreServicio, Validators.required],
-      medicoAtiende: [servicio.medicoAtiende || null],
       cantidad: [1, [Validators.required, Validators.min(1)]],
       precioLista: [
-        servicio.precioServicio,
+        Math.round((servicio.precioServicio / 1.18) * 100) / 100,
         [Validators.required, Validators.min(0)],
       ],
       diferencia: [0],
       precioVenta: [
-        servicio.precioServicio,
+        Math.round((servicio.precioServicio / 1.18) * 100) / 100,
         [
           Validators.required,
-          Validators.min(0),
-          Validators.pattern(/^[0-9]+(\.[0-9]{1,2})?$/),
+          this._numeroValidatorService.twoDecimalsValidator(2),
         ],
       ],
       descuentoPorcentaje: [0, [Validators.min(0), Validators.max(100)]],
@@ -405,8 +339,9 @@ export class GestCotiPersonaComponent implements OnInit {
     let precioListaTotal = cantidad * precioLista;
     let montoDescuento =
       Math.round(precioVenta * (descuentoPorcentual / 100) * 100) / 100;
-    let nuevoPrecioVenta = precioVenta - montoDescuento;
-    let totalUnitario = cantidad * nuevoPrecioVenta;
+    let nuevoPrecioVenta =
+      Math.round((precioVenta - montoDescuento) * 100) / 100;
+    let totalUnitario = Math.round(cantidad * nuevoPrecioVenta * 100) / 100;
     let diferencia = Math.round((totalUnitario - precioListaTotal) * 100) / 100;
     servicio.get('diferencia')?.setValue(diferencia);
     servicio.get('nuevoPrecioVenta')?.setValue(nuevoPrecioVenta);
@@ -561,22 +496,22 @@ export class GestCotiPersonaComponent implements OnInit {
     const descuentoPorcentaje =
       parseFloat(this.myFormCotizacion.get('descuentoPorcentaje')?.value) || 0;
 
-    // 4️⃣ Calcular el total a pagar aplicando el descuento
-    let totalAPagar =
+    // calcular subTotal
+    let calSubTotal =
       Math.round(precioGlobal * (1 - descuentoPorcentaje / 100) * 100) / 100;
 
-    // 5️⃣ Calcular la diferencia total
+    // calcular IGV
+    let calIgv = Math.round(((calSubTotal * 18) / 100) * 100) / 100;
+
+    // 5️⃣ Calcular el total a pagar aplicando el descuento
+    let totalAPagar = Math.round((calSubTotal + calIgv) * 100) / 100;
+
+    // 4️⃣ Calcular la diferencia total
     let diferenciaTotal =
-      Math.round((totalAPagar - totalPrecioLista) * 100) / 100;
+      Math.round((calSubTotal - totalPrecioLista) * 100) / 100;
 
     let diferenciaConNuevoPrecio =
-      Math.round((totalAPagar - sumaTotalUnitarios) * 100) / 100;
-
-    // calcular subTotal
-    let calSubTotal = Math.round((totalAPagar / 1.18) * 100) / 100;
-
-    // calcular IGV
-    let calIgv = Math.round((totalAPagar - calSubTotal) * 100) / 100;
+      Math.round((calSubTotal - sumaTotalUnitarios) * 100) / 100;
 
     // 6️⃣ Actualizar los valores en el formulario
     this.myFormCotizacion.patchValue({
@@ -584,7 +519,6 @@ export class GestCotiPersonaComponent implements OnInit {
       descuentoTotal: Math.round(diferenciaTotal * 100) / 100,
       descTotalMenosNuevoPrecio:
         Math.round(diferenciaConNuevoPrecio * 100) / 100,
-      precioConDescGlobal: Math.round(precioGlobal * 100) / 100,
       subTotal: calSubTotal,
       igv: calIgv,
       total: Math.round(totalAPagar * 100) / 100,
@@ -634,27 +568,6 @@ export class GestCotiPersonaComponent implements OnInit {
     this.filaSeleccionadaIndex = null;
   }
 
-  private validarServiciosMedicoAtiende(): boolean {
-    for (const control of this.serviciosCotizacion.controls) {
-      const tipoServicio = control.get('tipoServicio')?.value;
-      const medicoAtiende = control.get('medicoAtiende')?.value;
-      if (
-        (tipoServicio === 'Consulta' || tipoServicio === 'Ecografía') &&
-        (!medicoAtiende || Object.keys(medicoAtiende).length === 0)
-      ) {
-        Swal.fire({
-          icon: 'warning',
-          title: 'Falta médico',
-          text: `Debe seleccionar el médico que atiende para el servicio de tipo ${tipoServicio}.`,
-          confirmButtonColor: '#3085d6',
-          confirmButtonText: 'Entendido',
-        });
-        return false;
-      }
-    }
-    return true;
-  }
-
   public formSubmitted: boolean = false;
 
   generarCotizacion() {
@@ -674,30 +587,19 @@ export class GestCotiPersonaComponent implements OnInit {
         console.log('Procede registro coti');
         const formValue = this.myFormCotizacion.getRawValue();
 
-        const body: ICotizacion = {
+        const body: ICotizacionEmpresa = {
           codCotizacion: '',
           estadoCotizacion: 'GENERADA',
           historial: [
             {
               version: 1,
               fechaModificacion: new Date(),
-              estadoRegistroPaciente: !!formValue.estadoRegistroPaciente,
-              clienteId: formValue.clienteId,
-              nombreCliente: formValue.nombreCliente,
-              apePatCliente: formValue.apePatCliente,
-              apeMatCliente: formValue.apeMatCliente,
-              hc: formValue.hc,
-              tipoDoc: formValue.tipoDoc,
-              nroDoc: formValue.nroDoc,
-              estadoRegistroSolicitante: !!formValue.estadoRegistroSolicitante,
-              codSolicitante: formValue.codSolicitante,
-              solicitanteId: formValue.solicitanteId,
-              apePatRefMedico: formValue.apePatRefMedico,
-              apeMatRefMedico: formValue.apeMatRefMedico,
-              nombreRefMedico: formValue.nombreRefMedico,
-              profesionSolicitante: formValue.profesionSolicitante,
-              colegiatura: formValue.colegiatura,
-              especialidadSolicitante: formValue.especialidadSolicitante,
+              empresaId: formValue.empresaId,
+              ruc: formValue.ruc,
+              razonSocial: formValue.razonSocial,
+              formaPago: formValue.formaPago,
+              diasCredito: formValue.diasCredito,
+              entregaResultados: formValue.entregaResultados,
               aplicarPrecioGlobal: !!formValue.aplicarPrecioGlobal,
               aplicarDescuentoPorcentGlobal:
                 !!formValue.aplicarDescuentoPorcentGlobal,
@@ -715,7 +617,7 @@ export class GestCotiPersonaComponent implements OnInit {
 
         console.log('📌 **Body antes de enviar**:', body);
 
-        this._cotizacionService.generarCotizacion(body).subscribe({
+        this._cotizacionService.crearCotizacionEmpresa(body).subscribe({
           next: (res) => {
             if (res.ok) {
               this.mostrarAlertaExito('Cotización registrada');
@@ -793,26 +695,15 @@ export class GestCotiPersonaComponent implements OnInit {
             this.cotizacionCargada.historial.length - 1
           ];
 
-        const nuevaVersion: IHistorialCotizacion = {
+        const nuevaVersion: IHistorialCotizacionEmpresa = {
           version: ultimaVersion + 1,
           fechaModificacion: new Date(),
-          estadoRegistroPaciente: !!formValue.estadoRegistroPaciente,
-          clienteId: formValue.clienteId,
-          nombreCliente: formValue.nombreCliente,
-          apePatCliente: formValue.apePatCliente,
-          apeMatCliente: formValue.apeMatCliente,
-          hc: formValue.hc,
-          tipoDoc: formValue.tipoDoc,
-          nroDoc: formValue.nroDoc,
-          estadoRegistroSolicitante: !!formValue.estadoRegistroSolicitante,
-          codSolicitante: formValue.codSolicitante,
-          solicitanteId: formValue.solicitanteId,
-          apePatRefMedico: formValue.apePatRefMedico,
-          apeMatRefMedico: formValue.apeMatRefMedico,
-          nombreRefMedico: formValue.nombreRefMedico,
-          profesionSolicitante: formValue.profesionSolicitante,
-          colegiatura: formValue.colegiatura,
-          especialidadSolicitante: formValue.especialidadSolicitante,
+          empresaId: formValue.empresaId,
+          ruc: formValue.ruc,
+          razonSocial: formValue.razonSocial,
+          formaPago: formValue.formaPago,
+          diasCredito: formValue.diasCredito,
+          entregaResultados: formValue.entregaResultados,
           aplicarPrecioGlobal: !!formValue.aplicarPrecioGlobal,
           aplicarDescuentoPorcentGlobal:
             !!formValue.aplicarDescuentoPorcentGlobal,
@@ -827,45 +718,47 @@ export class GestCotiPersonaComponent implements OnInit {
         };
 
         // Crear el objeto de la nueva cotización con los datos del paciente y la nueva versión
-        const nuevaCotizacion: ICotizacion = {
+        const nuevaCotizacion: ICotizacionEmpresa = {
           codCotizacion: this.cotizacionCargada.codCotizacion, // Mismo código
           estadoCotizacion: 'MODIFICADA',
           // Historial con la nueva versión agregada
           historial: [nuevaVersion],
         };
 
-        this._cotizacionService.generarNuevaVersion(nuevaCotizacion).subscribe({
-          next: (res) => {
-            if (res.ok) {
-              this.mostrarAlertaExito('Nueva versión generada');
-              this.ultimasCotizaciones();
-              this.nuevaCotizacionPersona();
-            } else {
-              const mensaje = res.msg || 'Ocurrió un error inesperado.';
+        this._cotizacionService
+          .crearNuevaVersionCotizacionEmpresa(nuevaCotizacion)
+          .subscribe({
+            next: (res) => {
+              if (res.ok) {
+                this.mostrarAlertaExito('Nueva versión generada');
+                this.ultimasCotizaciones();
+                this.nuevaCotizacionPersona();
+              } else {
+                const mensaje = res.msg || 'Ocurrió un error inesperado.';
+                this.mostrarAlertaError(mensaje);
+              }
+            },
+            error: (error) => {
+              const mensaje =
+                error?.error?.msg || 'Error inesperado al generar la versión.';
               this.mostrarAlertaError(mensaje);
-            }
-          },
-          error: (error) => {
-            const mensaje =
-              error?.error?.msg || 'Error inesperado al generar la versión.';
-            this.mostrarAlertaError(mensaje);
-          },
-        });
+            },
+          });
       }
     });
   }
 
   validarformulario(): boolean {
-    const nomClienteControl = this.myFormCotizacion.get('nombreCliente');
-    const nomClienteValor = nomClienteControl
-      ? nomClienteControl.getRawValue()
+    const razonSocialControl = this.myFormCotizacion.get('razonSocial');
+    const razonSocialValor = razonSocialControl
+      ? razonSocialControl.getRawValue()
       : '';
 
-    if (!nomClienteValor || nomClienteValor.trim() === '') {
+    if (!razonSocialValor || razonSocialValor.trim() === '') {
       Swal.fire({
         icon: 'warning',
-        title: 'Falta paciente',
-        text: 'Debe ingresar o seleccionar el nombre del paciente.',
+        title: 'Falta razón social',
+        text: 'Debe ingresar o seleccionar la razón social.',
         confirmButtonColor: '#3085d6',
         confirmButtonText: 'Entendido',
       });
@@ -889,10 +782,6 @@ export class GestCotiPersonaComponent implements OnInit {
 
       // Mostrar errores específicos
       this.mostrarErroresFormulario();
-      return false;
-    }
-
-    if (!this.validarServiciosMedicoAtiende()) {
       return false;
     }
 
@@ -941,11 +830,11 @@ export class GestCotiPersonaComponent implements OnInit {
         icon: 'error',
         title: 'Errores en el formulario',
         html: `<div style="text-align: left;">
-          <p>Se encontraron los siguientes errores:</p>
-          <ul>
-            ${errores.map((error) => `<li>${error}</li>`).join('')}
-          </ul>
-        </div>`,
+            <p>Se encontraron los siguientes errores:</p>
+            <ul>
+              ${errores.map((error) => `<li>${error}</li>`).join('')}
+            </ul>
+          </div>`,
         confirmButtonColor: '#3085d6',
         confirmButtonText: 'Entendido',
       });
@@ -1054,8 +943,6 @@ export class GestCotiPersonaComponent implements OnInit {
             codServicio: [servicio.codServicio, Validators.required],
             tipoServicio: [servicio.tipoServicio, Validators.required],
             nombreServicio: [servicio.nombreServicio, Validators.required],
-            profesionesAsociadas: [servicio.profesionesAsociadas || null],
-            medicoAtiende: [servicio.medicoAtiende || null],
             cantidad: [
               { value: servicio.cantidad, disabled: true },
               [Validators.required, Validators.min(1)],
@@ -1112,8 +999,6 @@ export class GestCotiPersonaComponent implements OnInit {
             codServicio: [servicio.codServicio, Validators.required],
             tipoServicio: [servicio.tipoServicio, Validators.required],
             nombreServicio: [servicio.nombreServicio, Validators.required],
-            profesionesAsociadas: [servicio.profesionesAsociadas || null],
-            medicoAtiende: [servicio.medicoAtiende || null],
             cantidad: [
               servicio.cantidad,
               [Validators.required, Validators.min(1)],
@@ -1190,46 +1075,29 @@ export class GestCotiPersonaComponent implements OnInit {
       preview,
     );
 
-    if (preview && pdfSrc) {
-      this.dialog.open(DialogPdfCotiPersonaComponent, {
-        data: { pdfSrc, cotizacionData: this.cotizacionParaImprimir },
-        width: '70vw',
-        height: '95vh',
-        maxWidth: '95vw',
-        panelClass: 'custom-dialog-container',
-      });
-    }
-  }
-
-  abrirDialogoMedicoAtiende(index: any): void {
-    const servicio = this.serviciosCotizacion.at(index);
-    const profesionesAsociadas = servicio.value.profesionesAsociadas || [];
-    const dialogRef = this.dialog.open(DialogMedicoComponent, {
-      width: '500px',
-      data: {
-        profesionesAsociadas,
-      },
-    });
-
-    dialogRef
-      .afterClosed()
-      .subscribe((medico: IPersonalSaludParaConsultas | undefined) => {
-        if (medico) {
-          servicio.get('medicoAtiende')?.setValue({
-            codRecHumano: medico.codRecHumano,
-            medicoId: medico._id,
-            nombreRecHumano: medico.nombreRecHumano,
-            apePatRecHumano: medico.apePatRecHumano,
-            apeMatRecHumano: medico.apeMatRecHumano,
-            nroColegiatura: medico.nroColegiatura,
-            rne: medico.rne,
-          });
-        }
-        //console.log('Medico atiende:', servicio.get('medicoAtiende')?.value);
-      });
+    // if (preview && pdfSrc) {
+    //   this.dialog.open(DialogPdfCotiPersonaComponent, {
+    //     data: { pdfSrc, cotizacionData: this.cotizacionParaImprimir },
+    //     width: '70vw',
+    //     height: '95vh',
+    //     maxWidth: '95vw',
+    //     panelClass: 'custom-dialog-container',
+    //   });
+    // }
   }
 
   validarEntero(event: KeyboardEvent) {
     return this._numeroValidatorService.validarNumeroEntero(event);
+  }
+
+  validarDouble(event: KeyboardEvent) {
+    return this._numeroValidatorService.validarTeclaDoublePositivo(event);
+  }
+
+  sanitizarDoubleInput(e: Event) {
+    this._numeroValidatorService.onInputSanitize(e, 2, 9);
+  }
+  sanitizarDoublePaste(e: ClipboardEvent) {
+    this._numeroValidatorService.onPasteSanitize(e, 2);
   }
 }

@@ -1,0 +1,559 @@
+<!-- dialog-crear-atencion.component.html -->
+<h2 mat-dialog-title>Nueva Atención a Empresa</h2>
+
+<mat-dialog-content class="scroll">
+  <mat-stepper linear #stepper>
+    <!-- Paso 1: Empresa & Protocolo -->
+    <mat-step [stepControl]="groupEmpresa" [editable]="isEditable">
+      <form [formGroup]="groupEmpresa" class="mt-2">
+        <ng-template matStepLabel>Empresa y Protocolo</ng-template>
+        <div class="row-flex">
+          <div [style.flex]="setFlex(100, '%')" class="flex-item">
+            <mat-form-field appearance="outline">
+              <mat-label>Empresa</mat-label>
+              <input
+                #inputEmpresa
+                type="text"
+                placeholder="Selecciona uno"
+                matInput
+                formControlName="empresa"
+                [matAutocomplete]="autoEmpresas"
+                (input)="filterEmpresas()"
+                (focus)="filterEmpresas()"
+              />
+              <mat-autocomplete
+                requireSelection
+                #autoEmpresas="matAutocomplete"
+                [displayWith]="displayFnEmpresas"
+                (optionSelected)="onEmpresaSeleccionada($event.option.value)"
+              >
+                @for (option of filteredOptionsEmpresas; track option) {
+                  <mat-option [value]="option"
+                    >{{ option.ruc }} - {{ option.razonSocial }}</mat-option
+                  >
+                }
+              </mat-autocomplete>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <div class="row-flex">
+          <div [style.flex]="setFlex(100, '%')" class="flex-item">
+            <mat-form-field appearance="outline">
+              <mat-label>Coordinador de la empresa</mat-label>
+              <mat-select formControlName="personaContacto">
+                <mat-option [value]="null"
+                  >— Selecciona un coordinador —</mat-option
+                >
+                <mat-option
+                  *ngFor="let coord of personasContactoEmpresa"
+                  [value]="coord"
+                >
+                  <div class="coordinator-option">
+                    <div class="coordinator-name">{{ coord.nombre }}</div>
+                    <div class="coordinator-details">
+                      <small *ngIf="coord.cargo" class="text-muted">
+                        {{ coord.cargo }}
+                      </small>
+                      <small *ngIf="coord.telefono" class="text-muted ms-2">
+                        📞 {{ coord.telefono }}
+                      </small>
+                    </div>
+                  </div>
+                </mat-option>
+              </mat-select>
+
+              <mat-error
+                *ngIf="
+                  groupEmpresa.get('personaContacto')?.hasError('required')
+                "
+              >
+                Coordinador requerido
+              </mat-error>
+
+              <mat-hint *ngIf="!empresaSeleccionada">
+                Primero selecciona una empresa
+              </mat-hint>
+
+              <mat-hint
+                *ngIf="
+                  empresaSeleccionada && personasContactoEmpresa.length === 0
+                "
+              >
+                Esta empresa no tiene personas de contacto registradas
+              </mat-hint>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <div class="row-flex mt-1">
+          <div [style.flex]="setFlex(25, '%')" class="flex-item text-center">
+            <button
+              mat-flat-button
+              color="primary"
+              class="btn-telefono"
+              type="button"
+              (click)="agregarServicio()"
+            >
+              <mat-icon class="me-1">add</mat-icon>
+              Agregar Servicio
+            </button>
+          </div>
+
+          <div [style.flex]="setFlex(75, '%')" class="flex-item">
+            <div
+              formArrayName="servicios"
+              *ngFor="let servicioGroup of servicios.controls; let i = index"
+            >
+              <div [formGroupName]="i" class="row align-items-center">
+                <div
+                  [style.flex]="setFlex(70, '%')"
+                  class="flex-item text-center"
+                >
+                  <mat-form-field appearance="outline">
+                    <mat-label>Servicio</mat-label>
+                    <input
+                      type="text"
+                      placeholder="Selecciona uno"
+                      matInput
+                      formControlName="nombreServicio"
+                      [matAutocomplete]="autoServicios"
+                      (input)="filterServiciosByIndex($event, i)"
+                      (focus)="initializeServicioFilter(i)"
+                    />
+                    <mat-autocomplete
+                      requireSelection
+                      #autoServicios="matAutocomplete"
+                      [displayWith]="displayFnServicios"
+                    >
+                      @for (option of getServiciosFiltrados(i); track option) {
+                        <mat-option [value]="option">{{
+                          option.nombreServicio
+                        }}</mat-option>
+                      }
+                    </mat-autocomplete>
+                    <mat-error
+                      *ngIf="
+                        servicioGroup
+                          .get('nombreServicio')
+                          ?.hasError('required')
+                      "
+                    >
+                      Servicio requerido
+                    </mat-error>
+                  </mat-form-field>
+                </div>
+
+                <div
+                  [style.flex]="setFlex(20, '%')"
+                  class="flex-item text-center"
+                >
+                  <mat-form-field appearance="outline">
+                    <mat-label>Cantidad</mat-label>
+                    <input
+                      matInput
+                      type="number"
+                      min="1"
+                      max="9999"
+                      formControlName="cantidad"
+                    />
+                    <mat-error
+                      *ngIf="
+                        servicioGroup.get('cantidad')?.hasError('required')
+                      "
+                    >
+                      Requerido
+                    </mat-error>
+                    <mat-error
+                      *ngIf="servicioGroup.get('cantidad')?.hasError('min')"
+                    >
+                      Mínimo 1
+                    </mat-error>
+                  </mat-form-field>
+                </div>
+
+                <div
+                  [style.flex]="setFlex(10, '%')"
+                  class="flex-item text-center"
+                >
+                  <button
+                    mat-icon-button
+                    class="mb-3"
+                    color="warn"
+                    type="button"
+                    (click)="eliminarServicios(i)"
+                  >
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row-flex">
+          <div [style.flex]="setFlex(100, '%')" class="flex-item">
+            <mat-form-field appearance="outline">
+              <mat-label>Observación</mat-label>
+              <textarea
+                matInput
+                rows="3"
+                formControlName="observacion"
+              ></textarea>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <button mat-button matStepperNext [disabled]="groupEmpresa.invalid">
+          Siguiente
+        </button>
+      </form>
+    </mat-step>
+
+    <!-- Paso 2: Programación (multi-día) -->
+    <mat-step [stepControl]="groupProgramacion" label="Programación">
+      <form [formGroup]="groupProgramacion" class="mt-2">
+        <div class="row-flex">
+          <div [style.flex]="setFlex(100, '%')" class="flex-item">
+            <mat-form-field appearance="outline">
+              <mat-label>Sede de la empresa</mat-label>
+              <mat-select
+                formControlName="sedeEmpresa"
+                (selectionChange)="onSedeSeleccionada($event.value)"
+              >
+                <mat-option [value]="null">— Selecciona una sede —</mat-option>
+                <mat-option *ngFor="let sede of sedes" [value]="sede">
+                  {{ sede.nombreSede }}
+                  <small *ngIf="sede.direccionSede" class="text-muted">
+                    - {{ sede.direccionSede }}</small
+                  >
+                </mat-option>
+              </mat-select>
+              <mat-hint *ngIf="!empresaSeleccionada">
+                Primero selecciona una empresa en el paso anterior
+              </mat-hint>
+              <mat-error
+                *ngIf="
+                  groupProgramacion.get('sedeEmpresa')?.hasError('required')
+                "
+              >
+                Sede requerida
+              </mat-error>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <div class="row-flex">
+          <div [style.flex]="setFlex(100, '%')" class="flex-item">
+            <mat-form-field appearance="outline">
+              <mat-label>Dirección</mat-label>
+              <input matInput readonly="true" formControlName="direccion" />
+            </mat-form-field>
+          </div>
+        </div>
+
+        <div class="row-flex">
+          <div [style.flex]="setFlex(70, '%')" class="flex-item">
+            <mat-form-field appearance="outline">
+              <mat-label>Link de ubicación (Maps)</mat-label>
+              <input
+                readonly="true"
+                matInput
+                placeholder="https://maps.app.goo.gl/..."
+                formControlName="linkMaps"
+              />
+            </mat-form-field>
+          </div>
+
+          <div [style.flex]="setFlex(30, '%')" class="flex-item">
+            <button
+              mat-icon-button
+              matTooltip="Ver ubicación en Maps"
+              type="button"
+              [disabled]="!groupProgramacion.get('linkMaps')?.value"
+              (click)="abrirEnMaps()"
+            >
+              <mat-icon>location_on</mat-icon>
+            </button>
+          </div>
+        </div>
+
+        <div formArrayName="turnos">
+          <div *ngFor="let pg of turnos.controls; let i = index">
+            <div [formGroupName]="i">
+              <div class="row-flex">
+                <div [style.flex]="setFlex(10, '%')" class="flex-item mt-2">
+                  <b>Día {{ i + 1 }}</b>
+                </div>
+
+                <div [style.flex]="setFlex(25, '%')" class="flex-item">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Fecha</mat-label>
+                    <input
+                      matInput
+                      [matDatepicker]="datepicker"
+                      readonly="true"
+                      formControlName="fecha"
+                    />
+                    <mat-datepicker-toggle
+                      matSuffix
+                      [for]="datepicker"
+                    ></mat-datepicker-toggle>
+                    <mat-datepicker
+                      #datepicker
+                      disabled="false"
+                    ></mat-datepicker>
+                  </mat-form-field>
+                </div>
+                <div [style.flex]="setFlex(25, '%')" class="flex-item">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Hora de inicio</mat-label>
+                    <input
+                      matInput
+                      formControlName="horaInicio"
+                      [matTimepicker]="pickerHoraInicio"
+                    />
+                    <mat-timepicker-toggle
+                      matIconSuffix
+                      [for]="pickerHoraInicio"
+                    />
+                    <mat-timepicker #pickerHoraInicio />
+                  </mat-form-field>
+                </div>
+                <div [style.flex]="setFlex(25, '%')" class="flex-item">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Hora de fin</mat-label>
+                    <input
+                      matInput
+                      formControlName="horaFin"
+                      [matTimepicker]="pickerHoraFin"
+                    />
+                    <mat-timepicker-toggle
+                      matIconSuffix
+                      [for]="pickerHoraFin"
+                    />
+                    <mat-timepicker #pickerHoraFin />
+                  </mat-form-field>
+                </div>
+
+                <div [style.flex]="setFlex(10, '%')" class="flex-item">
+                  <button
+                    mat-icon-button
+                    color="warn"
+                    *ngIf="turnos.length > 1"
+                    (click)="eliminarTurno(i)"
+                  >
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row-flex" style="justify-content: center">
+          <button
+            mat-stroked-button
+            color="primary"
+            type="button"
+            (click)="agregarTurno()"
+          >
+            <mat-icon>add</mat-icon>&nbsp;Agregar día
+          </button>
+        </div>
+        <div class="row-flex" style="justify-content: center">
+          <button mat-button matStepperPrevious>Atrás</button>
+          <button
+            mat-button
+            matStepperNext
+            [disabled]="groupProgramacion.invalid"
+          >
+            Siguiente
+          </button>
+        </div>
+      </form>
+    </mat-step>
+
+    <!-- Paso 3: Personal -->
+    <mat-step [stepControl]="groupEquipo" label="Personal">
+      <form [formGroup]="groupEquipo" class="mt-2">
+        <!-- Responsable -->
+        <div class="row-flex">
+          <div [style.flex]="setFlex(100, '%')" class="flex-item">
+            <mat-form-field appearance="outline">
+              <mat-label>Responsable</mat-label>
+              <mat-select formControlName="responsable">
+                <mat-option [value]="null"
+                  >— Selecciona un responsable —</mat-option
+                >
+                <mat-option *ngFor="let p of personal" [value]="p">
+                  {{ getPersonalInfo(p) }}
+                </mat-option>
+              </mat-select>
+              <mat-error
+                *ngIf="groupEquipo.get('responsable')?.hasError('required')"
+              >
+                Responsable requerido
+              </mat-error>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <!-- Información del Responsable -->
+        <div class="personal-info" *ngIf="getResponsableInfo()">
+          <h4>Responsable Seleccionado</h4>
+          <div class="info-card">
+            <div class="info-item">
+              <strong
+                >{{ getResponsableInfo()?.nombreRecHumano }}
+                {{ getResponsableInfo()?.apePatRecHumano }}
+                {{ getResponsableInfo()?.apeMatRecHumano }}</strong
+              >
+            </div>
+            <div class="info-item">
+              <span
+                >{{ getResponsableInfo()?.tipoDoc || "No especificado" }}:
+                {{ getResponsableInfo()?.nroDoc || "No especificado" }}</span
+              >
+            </div>
+            <div class="info-item">
+              <span
+                >Teléfono:
+                {{
+                  getResponsableInfo()
+                    ? getPersonalTelefono(getResponsableInfo()!)
+                    : "No especificado"
+                }}</span
+              >
+            </div>
+          </div>
+        </div>
+
+        <!-- Personal del equipo -->
+        <div class="row-flex mt-1">
+          <div [style.flex]="setFlex(100, '%')" class="flex-item">
+            <div
+              formArrayName="equipoPersonal"
+              *ngFor="
+                let personalGroup of equipoPersonal.controls;
+                let i = index
+              "
+            >
+              <div [formGroupName]="i" class="row align-items-center mb-2">
+                <!-- Select de personal -->
+                <div [style.flex]="setFlex(60, '%')" class="flex-item">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Personal #{{ i + 1 }}</mat-label>
+                    <mat-select formControlName="personal">
+                      <mat-option [value]="null"
+                        >— Selecciona personal —</mat-option
+                      >
+                      <mat-option
+                        *ngFor="let p of getPersonalDisponible(i)"
+                        [value]="p"
+                      >
+                        {{ getPersonalInfo(p) }}
+                      </mat-option>
+                    </mat-select>
+                    <mat-error
+                      *ngIf="
+                        personalGroup.get('personal')?.hasError('required')
+                      "
+                    >
+                      Personal requerido
+                    </mat-error>
+                  </mat-form-field>
+                </div>
+
+                <!-- Información del personal seleccionado -->
+                <div [style.flex]="setFlex(30, '%')" class="flex-item">
+                  <div
+                    *ngIf="
+                      personalGroup.get('personal')
+                        ?.value as personalSeleccionado
+                    "
+                    class="personal-info"
+                  >
+                    <div class="info-row">
+                      <strong>DNI:</strong> {{ personalSeleccionado.nroDoc }}
+                    </div>
+                    <div class="info-row">
+                      <strong>Teléfono:</strong>
+                      {{ getPersonalTelefono(personalSeleccionado) }}
+                    </div>
+                  </div>
+                  <div
+                    *ngIf="!personalGroup.get('personal')?.value"
+                    class="personal-info-placeholder"
+                  >
+                    <small class="text-muted"
+                      >Selecciona personal para ver información</small
+                    >
+                  </div>
+                </div>
+
+                <!-- Botón eliminar -->
+                <div
+                  [style.flex]="setFlex(10, '%')"
+                  class="flex-item text-center"
+                >
+                  <button
+                    mat-icon-button
+                    color="warn"
+                    type="button"
+                    (click)="eliminarPersonal(i)"
+                    [disabled]="equipoPersonal.length <= 1"
+                    matTooltip="Eliminar personal"
+                  >
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div [style.flex]="setFlex(100, '%')" class="flex-item text-center">
+            <button
+              mat-flat-button
+              color="primary"
+              type="button"
+              (click)="agregarPersonal()"
+            >
+              <mat-icon class="me-1">add</mat-icon>
+              Agregar Personal
+            </button>
+          </div>
+        </div>
+
+        <!-- Notas -->
+        <div class="row-flex">
+          <div [style.flex]="setFlex(100, '%')" class="flex-item">
+            <mat-form-field appearance="outline">
+              <mat-label>Notas</mat-label>
+              <textarea matInput rows="3" formControlName="notas"></textarea>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <!-- Botones de navegación -->
+        <div class="row-flex" style="justify-content: center">
+          <button mat-button matStepperPrevious>Atrás</button>
+          <button mat-button (click)="stepper.reset()">Reset</button>
+        </div>
+      </form>
+    </mat-step>
+  </mat-stepper>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancelar()">Cancelar</button>
+  <button
+    mat-raised-button
+    color="primary"
+    (click)="crear()"
+    [disabled]="
+      groupEmpresa.invalid || groupProgramacion.invalid || groupEquipo.invalid
+    "
+  >
+    Crear Atención
+  </button>
+</mat-dialog-actions>

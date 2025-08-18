@@ -5,7 +5,7 @@ mat-form-field {
 
 //Inicio CARD-----------
 mat-card-title {
-  background-color: #0f3369;
+  background-color: #088026;
   color: white;
   padding-left: 1.5rem;
   padding-top: 0.1rem;
@@ -64,6 +64,7 @@ mat-option {
 
 .flex-item {
   justify-content: center;
+  padding: 5px;
   min-width: 0;
   text-align: center;
 }
@@ -105,8 +106,7 @@ mat-option {
 .row-flex {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  gap: 10px;
+  align-items: flex-start;
   margin-bottom: 0px;
 }
 
@@ -224,7 +224,7 @@ mat-option {
   font-weight: 800;
   font-style: normal;
   font-size: 1.3rem;
-  color: #0128a7;
+  color: #088026;
 }
 
 .quicksand-subtotal {

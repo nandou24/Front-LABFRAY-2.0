@@ -1,0 +1,106 @@
+// Estilos para el encabezado de la página
+.page-header {
+  padding: 10px 20px 10px 20px;
+  background: #fafafa;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+}
+
+.title-section {
+  flex: 1;
+
+  .page-title {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 500;
+    color: #2c3e50;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    .title-icon {
+      font-size: 30px;
+      width: 30px;
+      height: 30px;
+      color: #3f51b5;
+    }
+  }
+
+  .page-subtitle {
+    margin: 4px 0 0 0;
+    font-size: 14px;
+    color: #546e7a;
+    font-weight: 400;
+  }
+}
+
+.actions-section {
+  display: flex;
+  gap: 12px;
+
+  .add-button {
+    height: 48px;
+    padding: 0 24px;
+    font-size: 16px;
+    font-weight: 500;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(63, 81, 181, 0.2);
+    transition: all 0.3s ease;
+
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(63, 81, 181, 0.3);
+    }
+
+    mat-icon {
+      margin-right: 8px;
+    }
+  }
+}
+
+// Estilos responsivos
+@media (max-width: 768px) {
+  .page-header {
+    padding: 16px;
+    margin-bottom: 10px;
+  }
+
+  .title-section {
+    .page-title {
+      font-size: 18px;
+
+      .title-icon {
+        font-size: 24px;
+        width: 24px;
+        height: 24px;
+      }
+    }
+
+    .page-subtitle {
+      font-size: 12px;
+    }
+  }
+
+  .actions-section {
+    width: 100%;
+
+    .add-button {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+}

@@ -92,6 +92,34 @@ export const routes: Routes = [
             './pages/mantenimiento/profesiones/profesiones.component'
           ).then((m) => m.ProfesionesComponent),
       },
+      {
+        path: 'reportePagosRecepcion',
+        loadComponent: () =>
+          import(
+            './pages/reports/report-pagos-recepcion/report-pagos-recepcion.component'
+          ).then((m) => m.ReportPagosRecepcionComponent),
+      },
+      {
+        path: 'empresas',
+        loadComponent: () =>
+          import(
+            './pages/mantenimiento/empresas/mant-empresas/mant-empresas.component'
+          ).then((m) => m.MantEmpresasComponent),
+      },
+      {
+        path: 'atencion-empresas',
+        loadComponent: () =>
+          import(
+            './pages/gestionar/atencionesEmpresas/atenciones-empresas/atenciones-empresas.component'
+          ).then((m) => m.AtencionesEmpresasComponent),
+      },
+      {
+        path: 'cotiEmpresa',
+        loadComponent: () =>
+          import(
+            './pages/gestionar/cotizacion/gest-coti-empresa/gest-coti-empresa.component'
+          ).then((m) => m.GestCotiEmpresaComponent),
+      },
     ],
   },
   {

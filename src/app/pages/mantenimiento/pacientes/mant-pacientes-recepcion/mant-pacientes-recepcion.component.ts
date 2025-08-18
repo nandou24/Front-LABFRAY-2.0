@@ -148,8 +148,6 @@ export class MantPacientesRecepcionComponent implements OnInit {
     return this.pacienteForm.get('phones') as FormArray;
   }
 
-  public addPhone: boolean = false;
-
   agregarTelefono() {
     const telefonoForm = this._fb.group({
       phoneNumber: [
@@ -312,7 +310,6 @@ export class MantPacientesRecepcionComponent implements OnInit {
     this.pacienteForm.reset(); // Reinicia todos los campos del formulario
     this.formSubmitted = false; // Restablece el estado de validación del formulario
     this.phones.clear(); // Limpia el FormArray de teléfonos, si es necesario
-    this.addPhone = false;
     this.pacienteForm.patchValue({
       tipoDoc: 'DNI',
       departamentoCliente: '15',

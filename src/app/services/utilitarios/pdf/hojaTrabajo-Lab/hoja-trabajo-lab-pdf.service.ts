@@ -21,6 +21,7 @@ export class HojaTrabajoLabPdfService {
 
   datoPaciente = {} as IPaciente;
   edad = '';
+  sexo = '';
   datoSolicitante = {} as IRefMedico;
 
   async generarHojaTrabajoLabPDF(
@@ -65,6 +66,8 @@ export class HojaTrabajoLabPdfService {
     } catch (error) {
       console.error('Error al obtener los datos del solicitante:', error);
     }
+
+    this.sexo = this.datoPaciente?.sexoCliente ?? '';
 
     const doc = new jsPDF({
       orientation: 'portrait',
@@ -148,11 +151,7 @@ export class HojaTrabajoLabPdfService {
       xValueDatosPaciente + 130, // Ajustado
       yValueDatosPaciente,
     );
-    doc.text(
-      `${this.datoPaciente.sexoCliente}`,
-      xValueDatosPaciente,
-      yValueDatosPaciente + 6,
-    );
+    doc.text(`${this.sexo}`, xValueDatosPaciente, yValueDatosPaciente + 6);
     doc.text(`${this.edad}`, xValueDatosPaciente + 40, yValueDatosPaciente + 6); // Ajustado
     const phoneNumber =
       this.datoPaciente.phones && this.datoPaciente.phones.length > 0
@@ -227,14 +226,23 @@ export class HojaTrabajoLabPdfService {
         const unidad = item.unidadesRef || '';
         const valoresRef = item.valoresHojaTrabajo || '';
 
-        // Capitalizar solo la primera letra
-        const nombreCapitalizado =
-          nombreItem.charAt(0).toUpperCase() +
-          nombreItem.slice(1).toLowerCase();
+        // Convertir a mayúsculas para mejor visibilidad
+        const nombreMayusculas = nombreItem.toUpperCase();
+
+        // Agregar fondo gris oscuro para destacar
+        doc.setFillColor(200, 200, 200); // Gris más oscuro (RGB)
+        doc.setFont('helvetica', 'bold'); // Negrita
+        doc.setFontSize(9.5);
+        const textWidth = doc.getTextWidth(
+          `${numeroPrueba}. ${nombreMayusculas}`,
+        );
+        console.log(`Ancho del texto: ${textWidth}`);
+        doc.rect(xActual - 1, y - 3.5, textWidth + 2, 6, 'F'); // Rectángulo relleno hasta la última letra
 
         doc.setFont('helvetica', 'bold'); // Negrita
-        doc.setFontSize(11);
-        doc.text(`${numeroPrueba}. ${nombreCapitalizado}`, xActual, y);
+        doc.setFontSize(9.5);
+        doc.setTextColor(0, 0, 0); // Asegurar texto negro
+        doc.text(`${numeroPrueba}. ${nombreMayusculas}`, xActual, y);
 
         // Línea para escribir resultado a mano (ajustada a la columna)
         const lineaInicio = xActual + 43;
@@ -258,13 +266,21 @@ export class HojaTrabajoLabPdfService {
       } else {
         // Si hay más de 1 item, mostrar encabezado numerado y items con viñeta
 
-        // Capitalizar solo la primera letra del nombre de la prueba
-        const nombrePruebaCapitalizado =
-          prueba.nombrePruebaLab.charAt(0).toUpperCase() +
-          prueba.nombrePruebaLab.slice(1).toLowerCase();
+        // Convertir a mayúsculas para mejor visibilidad
+        const nombrePruebaCapitalizado = prueba.nombrePruebaLab.toUpperCase();
+
+        // Agregar fondo gris oscuro para destacar el nombre de la prueba
+        doc.setFillColor(200, 200, 200); // Gris más oscuro (RGB)
+        doc.setFont('helvetica', 'bold'); // Negrita
+        doc.setFontSize(9.5);
+        const textWidth = doc.getTextWidth(
+          `${numeroPrueba}. ${nombrePruebaCapitalizado}`,
+        );
+        doc.rect(xActual - 1, y - 3.5, textWidth + 2, 6, 'F'); // Rectángulo relleno hasta la última letra
 
         doc.setFont('helvetica', 'bold'); // Negrita
-        doc.setFontSize(11);
+        doc.setFontSize(9.5);
+        doc.setTextColor(0, 0, 0); // Asegurar texto negro
         doc.text(`${numeroPrueba}. ${nombrePruebaCapitalizado}`, xActual, y);
         y += 7.5;
 
@@ -334,7 +350,7 @@ export class HojaTrabajoLabPdfService {
           const itemsDelGrupo = gruposMap.get(nombreGrupo);
 
           // Solo mostrar encabezado de grupo si hay más de 1 item
-          if (itemsDelGrupo.length > 1) {
+          if (itemsDelGrupo.length >= 1) {
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(10);
             doc.text(nombreGrupo, xActual + 3, y);
@@ -356,7 +372,7 @@ export class HojaTrabajoLabPdfService {
 
             // Si hay más de 1 item en el grupo, indentar más
             const indentacion =
-              itemsDelGrupo.length > 1 ? xActual + 6 : xActual + 1;
+              itemsDelGrupo.length >= 1 ? xActual + 6 : xActual + 1;
             doc.text(`• ${nombreItem}`, indentacion, y);
 
             // Línea para escribir resultado a mano (ajustada a la columna)
