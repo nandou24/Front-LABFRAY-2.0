@@ -12,9 +12,11 @@ export interface IHistorialCotizacionEmpresa {
   empresaId: string;
   ruc: string;
   razonSocial: string;
+  dirigidoA_Id: string;
   formaPago: string;
   diasCredito: number;
   entregaResultados: number;
+  validez: number;
   aplicarPrecioGlobal: boolean;
   aplicarDescuentoPorcentGlobal: boolean;
   sumaTotalesPrecioLista: number;

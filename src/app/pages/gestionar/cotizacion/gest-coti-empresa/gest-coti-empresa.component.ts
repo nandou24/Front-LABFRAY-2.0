@@ -1,10 +1,4 @@
-import {
-  Component,
-  ElementRef,
-  OnInit,
-  ViewChild,
-  inject,
-} from '@angular/core';
+import { Component, ElementRef, ViewChild, inject } from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
@@ -21,7 +15,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatCardModule } from '@angular/material/card';
 import { MatSelectModule } from '@angular/material/select';
-import { MAT_DATE_LOCALE, MatOptionModule } from '@angular/material/core';
+import { MatOptionModule } from '@angular/material/core';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatIconModule } from '@angular/material/icon';
 import {
@@ -33,19 +27,22 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatDialog } from '@angular/material/dialog';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
-import { CotiPersonaPdfServiceService } from '../../../../services/utilitarios/pdf/cotizacion/coti-paciente/coti-persona-pdf.service.service';
-// import { DialogPdfCotiPersonaComponent } from './dialogs/dialog-pdf/dialog-pdf-coti-persona/dialog-pdf-coti-persona.component';
 import { MatPaginator } from '@angular/material/paginator';
 import { debounceTime, distinctUntilChanged, filter, tap } from 'rxjs';
 import { Router } from '@angular/router';
 import { NumberValidatorService } from '../../../../services/utilitarios/validators/numberValidator/number-validator.service';
-import { DialogBuscarEmpresaComponent } from './dialogs/dialog-empresa/dialog-buscar-empresa/dialog-buscar-empresa.component';
-import { IEmpresa } from '../../../../models/Mantenimiento/empresa.models';
+import { DialogBuscarEmpresaComponent } from './dialogs/dialog-empresa/dialog-buscar-empresa.component';
+import {
+  IEmpresa,
+  IPersonaContacto,
+} from '../../../../models/Mantenimiento/empresa.models';
 import { CotizacionEmpresaService } from '../../../../services/gestion/cotizaciones/cotizacionEmpresa/cotizacion-empresa.service';
 import {
   ICotizacionEmpresa,
   IHistorialCotizacionEmpresa,
 } from '../../../../models/Gestion/cotizacionEmpresa.models';
+import { DialogPdfCotiEmpresaComponent } from './dialogs/dialog-pdf/dialog-pdf-coti-empresa/dialog-pdf-coti-empresa.component';
+import { CotiEmpresaPdfService } from '../../../../services/utilitarios/pdf/cotizacion/coti-empresas/coti-empresa-pdf.service';
 
 @Component({
   selector: 'app-gest-coti-empresa',
@@ -74,7 +71,7 @@ export class GestCotiEmpresaComponent {
   private _servicioService = inject(ServiciosService);
   private _cotizacionService = inject(CotizacionEmpresaService);
   private dialog = inject(MatDialog);
-  private _pdfService = inject(CotiPersonaPdfServiceService);
+  private _pdfService = inject(CotiEmpresaPdfService);
   private _router = inject(Router);
   private _numeroValidatorService = inject(NumberValidatorService);
 
@@ -92,9 +89,11 @@ export class GestCotiEmpresaComponent {
     empresaId: [{ value: '', required: true }],
     ruc: [{ value: null, disabled: true }],
     razonSocial: [{ value: null, disabled: true }],
+    dirigidoA_Id: [{ value: null, required: true }],
     formaPago: [{ value: null, required: true }],
     diasCredito: [null],
     entregaResultados: [null],
+    validez: [null],
     aplicarPrecioGlobal: false,
     aplicarDescuentoPorcentGlobal: false,
     sumaTotalesPrecioLista: 0,
@@ -126,8 +125,8 @@ export class GestCotiEmpresaComponent {
     'precioLista',
     // 'diferencia',
     'precioVenta',
-    'descuentoPorcentaje',
-    'nuevoPrecioVenta',
+    // 'descuentoPorcentaje',
+    // 'nuevoPrecioVenta',
     'totalUnitario',
   ];
   dataSourceServiciosCotizados = new MatTableDataSource<FormGroup>([]);
@@ -154,7 +153,12 @@ export class GestCotiEmpresaComponent {
       ruc: empresa.ruc,
       razonSocial: empresa.razonSocial,
     });
+    this.contactos = empresa.personasContacto;
   }
+
+  //CONTACTOS DE EMPRESA
+
+  contactos: IPersonaContacto[] = [];
 
   seleccionarTexto(event: FocusEvent): void {
     const input = event.target as HTMLInputElement;
@@ -597,9 +601,11 @@ export class GestCotiEmpresaComponent {
               empresaId: formValue.empresaId,
               ruc: formValue.ruc,
               razonSocial: formValue.razonSocial,
+              dirigidoA_Id: formValue.dirigidoA_Id,
               formaPago: formValue.formaPago,
               diasCredito: formValue.diasCredito,
               entregaResultados: formValue.entregaResultados,
+              validez: formValue.validez,
               aplicarPrecioGlobal: !!formValue.aplicarPrecioGlobal,
               aplicarDescuentoPorcentGlobal:
                 !!formValue.aplicarDescuentoPorcentGlobal,
@@ -701,9 +707,11 @@ export class GestCotiEmpresaComponent {
           empresaId: formValue.empresaId,
           ruc: formValue.ruc,
           razonSocial: formValue.razonSocial,
+          dirigidoA_Id: formValue.dirigidoA_Id,
           formaPago: formValue.formaPago,
           diasCredito: formValue.diasCredito,
           entregaResultados: formValue.entregaResultados,
+          validez: formValue.validez,
           aplicarPrecioGlobal: !!formValue.aplicarPrecioGlobal,
           aplicarDescuentoPorcentGlobal:
             !!formValue.aplicarDescuentoPorcentGlobal,
@@ -903,6 +911,8 @@ export class GestCotiEmpresaComponent {
 
     if (!historialVersion) return;
 
+    this.contactos = historialVersion.empresaId.personasContacto;
+
     this.cotizacionParaImprimir = {
       ...this.cotizacionCargada,
       historial: [historialVersion], // Sobrescribimos solo con la versión activa
@@ -1075,15 +1085,15 @@ export class GestCotiEmpresaComponent {
       preview,
     );
 
-    // if (preview && pdfSrc) {
-    //   this.dialog.open(DialogPdfCotiPersonaComponent, {
-    //     data: { pdfSrc, cotizacionData: this.cotizacionParaImprimir },
-    //     width: '70vw',
-    //     height: '95vh',
-    //     maxWidth: '95vw',
-    //     panelClass: 'custom-dialog-container',
-    //   });
-    // }
+    if (preview && pdfSrc) {
+      this.dialog.open(DialogPdfCotiEmpresaComponent, {
+        data: { pdfSrc, cotizacionData: this.cotizacionParaImprimir },
+        width: '70vw',
+        height: '95vh',
+        maxWidth: '95vw',
+        panelClass: 'custom-dialog-container',
+      });
+    }
   }
 
   validarEntero(event: KeyboardEvent) {

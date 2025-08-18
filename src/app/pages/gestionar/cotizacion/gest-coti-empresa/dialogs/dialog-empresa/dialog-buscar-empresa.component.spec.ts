@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { DialogBuscarEmpresaComponent } from './dialog-buscar-empresa.component';
+import { DialogBuscarEmpresaComponent } from './dialog-buscar-empresa/dialog-buscar-empresa.component';
 
 describe('DialogBuscarEmpresaComponent', () => {
   let component: DialogBuscarEmpresaComponent;
@@ -8,9 +8,8 @@ describe('DialogBuscarEmpresaComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [DialogBuscarEmpresaComponent]
-    })
-    .compileComponents();
+      imports: [DialogBuscarEmpresaComponent],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(DialogBuscarEmpresaComponent);
     component = fixture.componentInstance;
