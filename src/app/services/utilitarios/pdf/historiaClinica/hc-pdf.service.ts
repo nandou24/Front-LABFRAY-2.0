@@ -55,7 +55,7 @@ export class HcPdfService {
     const imagenBase64 = '/images/logo labfray.png';
     let logoHeight = 16; // Alto de la imagen (escalado)
     let logoWidth = logoHeight * 0.896; // Ancho de la imagen
-    doc.addImage(imagenBase64, 'PNG', 12, 8.5, logoWidth, logoHeight); // (x, y, width, height)
+    doc.addImage(imagenBase64, 'PNG', 12, 18.5, logoWidth, logoHeight); // (x, y, width, height)
 
     //constantes (ajustadas para A4 landscape)
     const margin = 7; // Margen del documento (aumentado)
@@ -66,67 +66,76 @@ export class HcPdfService {
     // Encabezado
     doc.setDrawColor(0, 70, 175); // RGB azul oscuro
     //doc.setFillColor(0, 70, 175); // RGB azul oscuro
-    doc.rect(margin, margin, 283, 196, 'S'); // Escalado para A4 (297-14=283, 210-14=196)
+    doc.rect(margin, margin + 10, 283, 186, 'S'); // Escalado para A4 (297-14=283, 210-24=193)
 
-    doc.line(7, headerHeight, 290, headerHeight); // Línea horizontal encabezado (escalada)
+    doc.line(7, headerHeight + 10, 290, headerHeight + 10); // Línea horizontal encabezado (escalada)
     for (let i = 1; i < 23; i++) {
       doc.line(
         7,
-        headerHeight + i * altofila,
+        headerHeight + 10 + i * altofila,
         290,
-        headerHeight + i * altofila,
+        headerHeight + 10 + i * altofila,
       );
     }
-    doc.line(150, 7, 150, 27); // Línea vertical central (escalada)
-    doc.line(150, 20, 290, 20); // Línea horizontal superior derecha (escalada)
-    doc.line(150, 131.5, 150, 203); // Línea vertical derecha (escalada)
-    doc.line(
-      7,
-      headerHeight + 23 * altofila,
-      150,
-      headerHeight + 23 * altofila,
-    );
-    doc.line(
-      7,
-      headerHeight + 24 * altofila,
-      150,
-      headerHeight + 24 * altofila,
-    );
+    doc.line(150, 17, 150, 37); // Línea vertical central (escalada)
+    doc.line(150, 30, 290, 30); // Línea horizontal superior derecha (escalada)
+    doc.line(150, 141.5, 150, 203); // Línea vertical derecha (escalada)
+
+    for (let i = 23; i < 28; i++) {
+      doc.line(
+        7,
+        headerHeight + 10 + i * altofila,
+        150,
+        headerHeight + 10 + i * altofila,
+      );
+    }
+    // doc.line(
+    //   7,
+    //   headerHeight + 10 + 23 * altofila,
+    //   150,
+    //   headerHeight + 10 + 23 * altofila,
+    // );
+    // doc.line(
+    //   7,
+    //   headerHeight + 10 + 24 * altofila,
+    //   150,
+    //   headerHeight + 10 + 24 * altofila,
+    // );
 
     //AGREGANDO TEXTO (escalado para A4)
     doc.setTextColor(0, 70, 175);
     doc.setFontSize(16); // Aumentado para A4
-    doc.text('EVOLUCIÓN AMBULATORIA', 51, 14.5); // Reposicionado
+    doc.text('EVOLUCIÓN AMBULATORIA', 51, 24.5); // Reposicionado
     doc.setFontSize(14); // Aumentado para A4
-    doc.text(`Nro HC:`, 60, 22); // Reposicionado
-    doc.text(`${data.hc}`, 80, 22); // Reposicionado
+    doc.text(`Nro HC:`, 60, 32); // Reposicionado
+    doc.text(`${data.hc}`, 80, 32); // Reposicionado
 
     // Paciente y doctor (escalado)
     doc.setFontSize(11); // Aumentado para A4
     doc.setFont('helvetica', 'bold');
-    doc.text(`Documento`, 155, 11.5); // Reposicionado para A4
-    doc.text(`Fecha:`, 242, 11.5); // Reposicionado para A4
-    doc.text(`Paciente`, 155, 17.5); // Reposicionado para A4
-    doc.text(`Médico`, 155, 25); // Reposicionado para A4
+    doc.text(`Documento`, 155, 21.5); // Reposicionado para A4
+    doc.text(`Fecha:`, 242, 21.5); // Reposicionado para A4
+    doc.text(`Paciente`, 155, 27.5); // Reposicionado para A4
+    doc.text(`Médico`, 155, 35); // Reposicionado para A4
     doc.setFont('helvetica', 'normal');
-    doc.text(`${data.tipoDoc} ${data.nroDoc}`, 180, 11.5); // Reposicionado
+    doc.text(`${data.tipoDoc} ${data.nroDoc}`, 180, 21.5); // Reposicionado
     //Formateando fecha
     const fecha = new Date(data.fechaEmision);
     const fechaFormateada = `${fecha.getDate().toString().padStart(2, '0')}/${(fecha.getMonth() + 1).toString().padStart(2, '0')}/${fecha.getFullYear()}`;
-    doc.text(`${fechaFormateada}`, 260, 11.5); // Reposicionado para A4
+    doc.text(`${fechaFormateada}`, 260, 21.5); // Reposicionado para A4
     doc.text(
       `${data.apePatCliente} ${data.apeMatCliente} ${data.nombreCliente}`,
       180,
-      17.5, // Reposicionado
+      27.5, // Reposicionado
     );
     doc.text(
       `${data.servicios[0].medicoAtiende?.apePatRecHumano} ${data.servicios[0].medicoAtiende?.apeMatRecHumano} ${data.servicios[0]?.medicoAtiende?.nombreRecHumano}`,
       180,
-      25, // Reposicionado
+      35, // Reposicionado
     );
 
     //primera fila Sexo, Talla, Peso, Edad (escalada para A4)
-    const fila1Y = 31.5;
+    const fila1Y = 31.5 + 10;
     doc.setFont('helvetica', 'bold');
     doc.text(`Sexo:`, 12, fila1Y);
     doc.text(`Talla:`, 70, fila1Y); // Más espacio
