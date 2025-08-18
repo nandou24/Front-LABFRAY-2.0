@@ -95,12 +95,11 @@ export class GestCotiEmpresaComponent {
     entregaResultados: [null],
     validez: [null],
     aplicarPrecioGlobal: false,
-    aplicarDescuentoPorcentGlobal: false,
     sumaTotalesPrecioLista: 0,
     descuentoTotal: 0,
     descTotalMenosNuevoPrecio: 0,
     precioConDescGlobal: [{ value: '', disabled: true }],
-    descuentoPorcentaje: [{ value: '', disabled: true }],
+    cantidadGlobal: [{ value: '', disabled: true }],
     subTotal: 0,
     igv: 0,
     total: 0,
@@ -125,7 +124,6 @@ export class GestCotiEmpresaComponent {
     'precioLista',
     // 'diferencia',
     'precioVenta',
-    // 'descuentoPorcentaje',
     // 'nuevoPrecioVenta',
     'totalUnitario',
   ];
@@ -296,7 +294,6 @@ export class GestCotiEmpresaComponent {
     }
 
     this.myFormCotizacion.get('aplicarPrecioGlobal')?.setValue(false);
-    this.myFormCotizacion.get('aplicarDescuentoPorcentGlobal')?.setValue(false);
 
     const servicioForm = this._fb.group({
       servicioId: [servicio._id, Validators.required],
@@ -305,18 +302,17 @@ export class GestCotiEmpresaComponent {
       nombreServicio: [servicio.nombreServicio, Validators.required],
       cantidad: [1, [Validators.required, Validators.min(1)]],
       precioLista: [
-        Math.round((servicio.precioServicio / 1.18) * 100) / 100,
+        this.redondear(servicio.precioServicio / 1.18),
         [Validators.required, Validators.min(0)],
       ],
       diferencia: [0],
       precioVenta: [
-        Math.round((servicio.precioServicio / 1.18) * 100) / 100,
+        this.redondear(servicio.precioServicio / 1.18),
         [
           Validators.required,
           this._numeroValidatorService.twoDecimalsValidator(2),
         ],
       ],
-      descuentoPorcentaje: [0, [Validators.min(0), Validators.max(100)]],
       nuevoPrecioVenta: [
         servicio.precioServicio,
         [Validators.required, Validators.min(0)],
@@ -334,21 +330,19 @@ export class GestCotiEmpresaComponent {
     this.calcularTotalUnitario(this.serviciosCotizacion.length - 1);
   }
 
+  redondear(numero: number): number {
+    return Math.round((numero + Number.EPSILON) * 1000) / 1000;
+  }
+
   calcularTotalUnitario(index: number) {
     const servicio = this.serviciosCotizacion.at(index);
     const cantidad = servicio.get('cantidad')?.value || 0;
     const precioLista = servicio.get('precioLista')?.value || 0;
     let precioVenta = servicio.get('precioVenta')?.value || 0;
-    let descuentoPorcentual = servicio.get('descuentoPorcentaje')?.value || 0;
     let precioListaTotal = cantidad * precioLista;
-    let montoDescuento =
-      Math.round(precioVenta * (descuentoPorcentual / 100) * 100) / 100;
-    let nuevoPrecioVenta =
-      Math.round((precioVenta - montoDescuento) * 100) / 100;
-    let totalUnitario = Math.round(cantidad * nuevoPrecioVenta * 100) / 100;
-    let diferencia = Math.round((totalUnitario - precioListaTotal) * 100) / 100;
+    let totalUnitario = this.redondear(cantidad * precioVenta);
+    let diferencia = this.redondear(totalUnitario - precioListaTotal);
     servicio.get('diferencia')?.setValue(diferencia);
-    servicio.get('nuevoPrecioVenta')?.setValue(nuevoPrecioVenta);
 
     if (totalUnitario < 0) {
       servicio.get('totalUnitario')?.setValue(0);
@@ -373,20 +367,13 @@ export class GestCotiEmpresaComponent {
     this.calcularTotalGeneral();
   }
 
-  @ViewChild('inputPrecioGlobal')
-  inputPrecioGlobal!: ElementRef<HTMLInputElement>;
-  @ViewChild('inputPorcentajeGlobal')
-  inputPorcentajeGlobal!: ElementRef<HTMLInputElement>;
-
   deshabilitarCamposServicios() {
     this.serviciosCotizacion.controls.forEach((control, index) => {
       const precioLista = parseFloat(control.get('precioLista')?.value) || 0;
       control.get('precioVenta')?.setValue(precioLista);
-      control.get('descuentoPorcentaje')?.setValue(0);
       control.get('nuevoPrecioVenta')?.setValue(precioLista);
       control.get('diferencia')?.setValue(0);
       control.get('precioVenta')?.disable();
-      control.get('descuentoPorcentaje')?.disable();
       this.calcularTotalUnitario(index);
     });
   }
@@ -394,7 +381,6 @@ export class GestCotiEmpresaComponent {
   habilitarCamposServicios() {
     this.serviciosCotizacion.controls.forEach((control, index) => {
       control.get('precioVenta')?.enable();
-      control.get('descuentoPorcentaje')?.enable();
       this.calcularTotalUnitario(index);
     });
   }
@@ -404,48 +390,25 @@ export class GestCotiEmpresaComponent {
       'aplicarPrecioGlobal',
     )?.value;
 
+    this.resetDescuentoGlobal();
+
     if (estadoPrecioGlobal) {
-      // Si se activa precio global, desactivar descuento porcentual
-      this.myFormCotizacion
-        .get('aplicarDescuentoPorcentGlobal')
-        ?.setValue(false, { emitEvent: false });
-    }
-    this.resetDescuentoGlobal();
-    this.myFormCotizacion.get('precioConDescGlobal')?.enable();
-    this.myFormCotizacion.get('descuentoPorcentaje')?.disable();
-    this.cambioEstadoDescuentosGlobal();
-  }
+      this.myFormCotizacion.get('precioConDescGlobal')?.enable();
+      this.myFormCotizacion.get('cantidadGlobal')?.enable?.();
 
-  cambioEstadoDescuentoPorcentGlobal() {
-    const estadoPorcentGlobal = this.myFormCotizacion.get(
-      'aplicarDescuentoPorcentGlobal',
-    )?.value;
-
-    if (estadoPorcentGlobal) {
-      // Si se activa descuento porcentual, desactivar precio global
-      this.myFormCotizacion
-        .get('aplicarPrecioGlobal')
-        ?.setValue(false, { emitEvent: false });
-    }
-    this.resetDescuentoGlobal();
-    this.myFormCotizacion.get('precioConDescGlobal')?.disable();
-    this.myFormCotizacion.get('descuentoPorcentaje')?.enable();
-    this.cambioEstadoDescuentosGlobal();
-  }
-
-  cambioEstadoDescuentosGlobal() {
-    const estadoPrecioGlobal = this.myFormCotizacion.get(
-      'aplicarPrecioGlobal',
-    )?.value;
-
-    const estadoPorcentGlobal = this.myFormCotizacion.get(
-      'aplicarDescuentoPorcentGlobal',
-    )?.value;
-
-    if (estadoPrecioGlobal === false && estadoPorcentGlobal === false) {
-      this.habilitarCamposServicios();
+      this.serviciosCotizacion.controls.forEach((control) => {
+        control.get('cantidad')?.disable();
+        control.get('cantidad')?.setValue(1);
+        control.get('precioVenta')?.disable();
+      });
     } else {
-      this.deshabilitarCamposServicios();
+      this.myFormCotizacion.get('precioConDescGlobal')?.disable();
+      this.myFormCotizacion.get('cantidadGlobal')?.disable?.();
+
+      this.serviciosCotizacion.controls.forEach((control) => {
+        control.get('cantidad')?.enable();
+        control.get('precioVenta')?.enable();
+      });
     }
   }
 
@@ -456,12 +419,6 @@ export class GestCotiEmpresaComponent {
     this.myFormCotizacion
       .get('precioConDescGlobal')
       ?.setValue(totalPrecioLista);
-    this.myFormCotizacion.get('descuentoPorcentaje')?.setValue(0);
-  }
-
-  resetCamposDescuentosGlobales() {
-    this.myFormCotizacion.get('precioConDescGlobal')?.reset();
-    this.myFormCotizacion.get('descuentoPorcentaje')?.reset();
   }
 
   calcularTotalGeneral() {
@@ -483,8 +440,8 @@ export class GestCotiEmpresaComponent {
         parseFloat(control.get('totalUnitario')?.value) || 0; // Obtener el total unitario
       const cantidad = parseFloat(control.get('cantidad')?.value) || 0; // Obtener la cantidad
 
-      totalPrecioLista += precioLista * cantidad; // Sumar el precio de lista por la cantidad
-      sumaTotalUnitarios += totalUnitario; // Sumar el total unitario
+      totalPrecioLista += this.redondear(precioLista * cantidad); // Sumar el precio de lista por la cantidad
+      sumaTotalUnitarios += this.redondear(totalUnitario); // Sumar el total unitario
     });
 
     // 2️⃣ Obtener el precio global (si el usuario lo especificó, lo usa, sino, usa la suma de totales unitarios)
@@ -496,36 +453,30 @@ export class GestCotiEmpresaComponent {
       precioGlobal = sumaTotalUnitarios;
     }
 
-    // 3️⃣ Obtener el descuento en porcentaje
-    const descuentoPorcentaje =
-      parseFloat(this.myFormCotizacion.get('descuentoPorcentaje')?.value) || 0;
-
     // calcular subTotal
-    let calSubTotal =
-      Math.round(precioGlobal * (1 - descuentoPorcentaje / 100) * 100) / 100;
+    let calSubTotal = precioGlobal;
 
     // calcular IGV
-    let calIgv = Math.round(((calSubTotal * 18) / 100) * 100) / 100;
+    let calIgv = this.redondear((calSubTotal * 180) / 1000);
 
     // 5️⃣ Calcular el total a pagar aplicando el descuento
-    let totalAPagar = Math.round((calSubTotal + calIgv) * 100) / 100;
+    let totalAPagar = this.redondear(calSubTotal + calIgv);
 
     // 4️⃣ Calcular la diferencia total
-    let diferenciaTotal =
-      Math.round((calSubTotal - totalPrecioLista) * 100) / 100;
+    let diferenciaTotal = this.redondear(calSubTotal - totalPrecioLista);
 
-    let diferenciaConNuevoPrecio =
-      Math.round((calSubTotal - sumaTotalUnitarios) * 100) / 100;
+    let diferenciaConNuevoPrecio = this.redondear(
+      calSubTotal - sumaTotalUnitarios,
+    );
 
     // 6️⃣ Actualizar los valores en el formulario
     this.myFormCotizacion.patchValue({
-      sumaTotalesPrecioLista: Math.round(totalPrecioLista * 100) / 100,
-      descuentoTotal: Math.round(diferenciaTotal * 100) / 100,
-      descTotalMenosNuevoPrecio:
-        Math.round(diferenciaConNuevoPrecio * 100) / 100,
-      subTotal: calSubTotal,
-      igv: calIgv,
-      total: Math.round(totalAPagar * 100) / 100,
+      sumaTotalesPrecioLista: this.redondear(totalPrecioLista),
+      descuentoTotal: this.redondear(diferenciaTotal),
+      descTotalMenosNuevoPrecio: this.redondear(diferenciaConNuevoPrecio),
+      subTotal: this.redondear(calSubTotal),
+      igv: this.redondear(calIgv),
+      total: this.redondear(totalAPagar),
     });
   }
 
@@ -533,9 +484,7 @@ export class GestCotiEmpresaComponent {
     this.myFormCotizacion.reset();
     this.serviciosCotizacion.clear();
     this.myFormCotizacion.get('aplicarPrecioGlobal')?.enable();
-    this.myFormCotizacion.get('aplicarDescuentoPorcentGlobal')?.enable();
     this.myFormCotizacion.get('precioConDescGlobal')?.disable();
-    this.myFormCotizacion.get('descuentoPorcentaje')?.disable();
 
     document
       .getElementById('buscarPacienteModalBtn')
@@ -607,12 +556,9 @@ export class GestCotiEmpresaComponent {
               entregaResultados: formValue.entregaResultados,
               validez: formValue.validez,
               aplicarPrecioGlobal: !!formValue.aplicarPrecioGlobal,
-              aplicarDescuentoPorcentGlobal:
-                !!formValue.aplicarDescuentoPorcentGlobal,
               sumaTotalesPrecioLista: formValue.sumaTotalesPrecioLista,
               descuentoTotal: formValue.descuentoTotal,
               precioConDescGlobal: formValue.precioConDescGlobal || 0,
-              descuentoPorcentaje: formValue.descuentoPorcentaje || 0,
               subTotal: formValue.subTotal,
               igv: formValue.igv,
               total: formValue.total,
@@ -713,12 +659,9 @@ export class GestCotiEmpresaComponent {
           entregaResultados: formValue.entregaResultados,
           validez: formValue.validez,
           aplicarPrecioGlobal: !!formValue.aplicarPrecioGlobal,
-          aplicarDescuentoPorcentGlobal:
-            !!formValue.aplicarDescuentoPorcentGlobal,
           sumaTotalesPrecioLista: formValue.sumaTotalesPrecioLista,
           descuentoTotal: formValue.descuentoTotal,
           precioConDescGlobal: formValue.precioConDescGlobal || 0,
-          descuentoPorcentaje: formValue.descuentoPorcentaje || 0,
           subTotal: formValue.subTotal,
           igv: formValue.igv,
           total: formValue.total,
@@ -931,19 +874,17 @@ export class GestCotiEmpresaComponent {
 
     if (this.tienePagos === true) {
       this.myFormCotizacion.get('aplicarPrecioGlobal')?.disable();
-      this.myFormCotizacion.get('aplicarDescuentoPorcentGlobal')?.disable();
       this.myFormCotizacion.get('precioConDescGlobal')?.disable();
-      this.myFormCotizacion.get('descuentoPorcentaje')?.disable();
 
       document
         .getElementById('buscarPacienteModalBtn')
         ?.setAttribute('disabled', 'true');
-      document
-        .getElementById('buscarSolicitanteModalBtn')
-        ?.setAttribute('disabled', 'true');
-      document
-        .getElementById('quitarSolicitanteBtn')
-        ?.setAttribute('disabled', 'true');
+      // document
+      //   .getElementById('buscarSolicitanteModalBtn')
+      //   ?.setAttribute('disabled', 'true');
+      // document
+      //   .getElementById('quitarSolicitanteBtn')
+      //   ?.setAttribute('disabled', 'true');
 
       this.serviciosCotizacion.clear(); // Limpiar antes de cargar
       historialVersion.serviciosCotizacion.forEach((servicio: any) => {
@@ -966,11 +907,6 @@ export class GestCotiEmpresaComponent {
               { value: servicio.precioVenta, disabled: true },
               [Validators.required, Validators.min(0)],
             ],
-
-            descuentoPorcentaje: [
-              { value: servicio.descuentoPorcentaje, disabled: true },
-              [Validators.min(0), Validators.max(100)],
-            ],
             nuevoPrecioVenta: [
               { value: servicio.nuevoPrecioVenta, disabled: true },
               [Validators.required, Validators.min(0)],
@@ -990,15 +926,14 @@ export class GestCotiEmpresaComponent {
         .getElementById('buscarPacienteModalBtn')
         ?.removeAttribute('disabled');
 
-      document
-        .getElementById('buscarSolicitanteModalBtn')
-        ?.removeAttribute('disabled');
-      document
-        .getElementById('quitarSolicitanteBtn')
-        ?.removeAttribute('disabled');
+      // document
+      //   .getElementById('buscarSolicitanteModalBtn')
+      //   ?.removeAttribute('disabled');
+      // document
+      //   .getElementById('quitarSolicitanteBtn')
+      //   ?.removeAttribute('disabled');
 
       this.myFormCotizacion.get('aplicarPrecioGlobal')?.enable();
-      this.myFormCotizacion.get('aplicarDescuentoPorcentGlobal')?.enable();
 
       // 📌 Cargar servicios
       this.serviciosCotizacion.clear(); // Limpiar antes de cargar
@@ -1022,10 +957,6 @@ export class GestCotiEmpresaComponent {
               servicio.precioVenta,
               [Validators.required, Validators.min(0)],
             ],
-            descuentoPorcentaje: [
-              servicio.descuentoPorcentaje,
-              [Validators.min(0), Validators.max(100)],
-            ],
             nuevoPrecioVenta: [
               { value: servicio.nuevoPrecioVenta, disabled: true },
               [Validators.required, Validators.min(0)],
@@ -1041,14 +972,9 @@ export class GestCotiEmpresaComponent {
         .controls as FormGroup[];
     }
 
-    this.cambioEstadoDescuentosGlobal();
     this.myFormCotizacion.get('precioConDescGlobal')?.disable();
-    this.myFormCotizacion.get('descuentoPorcentaje')?.disable();
     if (historialVersion.aplicarPrecioGlobal) {
       this.myFormCotizacion.get('precioConDescGlobal')?.enable();
-    }
-    if (historialVersion.aplicarDescuentoPorcentGlobal) {
-      this.myFormCotizacion.get('descuentoPorcentaje')?.enable();
     }
   }
 

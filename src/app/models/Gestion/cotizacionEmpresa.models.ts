@@ -18,11 +18,9 @@ export interface IHistorialCotizacionEmpresa {
   entregaResultados: number;
   validez: number;
   aplicarPrecioGlobal: boolean;
-  aplicarDescuentoPorcentGlobal: boolean;
   sumaTotalesPrecioLista: number;
   descuentoTotal: number;
   precioConDescGlobal?: number;
-  descuentoPorcentaje?: number;
   subTotal: number;
   igv: number;
   total: number;
@@ -38,8 +36,6 @@ export interface IServicioCotizacionEmpresa {
   precioLista: number;
   diferencia: number;
   precioVenta: number;
-  descuentoPorcentaje: number;
-  nuevoPrecioVenta: number;
   totalUnitario: number;
 }
 

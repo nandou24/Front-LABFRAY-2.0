@@ -3,12 +3,16 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { IEmpresa } from '../../../../../models/Mantenimiento/empresa.models';
+import { UbigeoService } from '../../../ubigeo.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class CotiEmpresaPdfService {
-  constructor(private _sanitizer: DomSanitizer) {}
+  constructor(
+    private _sanitizer: DomSanitizer,
+    private _ubigeoService: UbigeoService,
+  ) {}
 
   datoEmpresa = {} as IEmpresa;
   async generarPDFCotizacion(
@@ -25,8 +29,6 @@ export class CotiEmpresaPdfService {
       doc.internal.pageSize.getHeight(),
       'F',
     );
-
-    console.log('height', doc.internal.pageSize.getHeight() - 19.03);
 
     const logoFondo = '/images/logoFondo.jpg';
     doc.addImage(logoFondo, 'JPEG', 60, 80, 145.03, 175.13); // (x, y, width, height)
@@ -78,6 +80,36 @@ export class CotiEmpresaPdfService {
       'F',
     );
 
+    let distrito = ultimaVersion.empresaId.distrito;
+    let provincia = ultimaVersion.empresaId.provincia;
+    let departamento = ultimaVersion.empresaId.departamento;
+
+    if (distrito && provincia && departamento) {
+      try {
+        const [distritoData, provinciaData, departamentoData] =
+          await Promise.all([
+            Promise.resolve(
+              this._ubigeoService.getDistritoById?.(
+                departamento,
+                provincia,
+                distrito,
+              ),
+            ),
+            Promise.resolve(
+              this._ubigeoService.getProvinciaById?.(departamento, provincia),
+            ),
+            Promise.resolve(
+              this._ubigeoService.getDepartamentoById?.(departamento),
+            ),
+          ]);
+        distrito = distritoData?.nombre || distrito;
+        provincia = provinciaData?.nombre || provincia;
+        departamento = departamentoData?.nombre || departamento;
+      } catch (e) {
+        // Si falla, deja los códigos originales
+      }
+    }
+
     doc.setTextColor(colorTextoR, colorTextoG, colorTextoB);
     doc.setFontSize(10);
     doc.setFont('helvetica', 'bold');
@@ -108,7 +140,11 @@ export class CotiEmpresaPdfService {
     doc.setTextColor(colorTextoR, colorTextoG, colorTextoB);
     doc.setFont('helvetica', 'normal');
 
-    doc.text(`${ultimaVersion.direccion}`, x + 3, y + 3.5 + altoFila * 2);
+    doc.text(
+      `${ultimaVersion.empresaId.direccionFiscal} ${distrito ? '- ' + distrito : ''} ${provincia ? '- ' + provincia : ''} ${departamento ? '- ' + departamento : ''}`,
+      x + 3,
+      y + 3.5 + altoFila * 2,
+    );
 
     //texto tercer fila
     doc.setTextColor(colorTextoR, colorTextoG, colorTextoB);
@@ -117,7 +153,7 @@ export class CotiEmpresaPdfService {
     doc.setTextColor(colorTextoR, colorTextoG, colorTextoB);
     doc.setFont('helvetica', 'normal');
     doc.text(
-      `${ultimaVersion.dirigidoA || '-'}`,
+      `${ultimaVersion.dirigidoA.nombre || '-'}`,
       x + 3,
       y + 3.5 + altoFila * 3,
     );
@@ -274,12 +310,12 @@ export class CotiEmpresaPdfService {
       didParseCell: (data) => {
         // Estilo para sub-items de paquetes (filas que empiezan con "  - ")
         if (data.cell.text[0]?.startsWith('  - ')) {
-          data.cell.styles.fillColor = [248, 249, 250]; // Gris muy claro
+          //data.cell.styles.fillColor = [248, 249, 250]; // Gris muy claro
           data.cell.styles.fontStyle = 'italic';
           data.cell.styles.textColor = [100, 100, 100]; // Gris
         }
         // Estilo para servicios "in house"
-        if (data.cell.text[0]?.toLowerCase().includes('servicio in house')) {
+        if (data.cell.text[0]?.toLowerCase().includes('Servicio in house')) {
           data.cell.styles.fillColor = [173, 216, 230]; // Azul claro
           data.cell.styles.fontStyle = 'bold';
         }

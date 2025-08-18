@@ -279,7 +279,6 @@
                 <ng-container [formGroup]="row">
                   <input
                     matInput
-                    inputmode="decimal"
                     autocomplete="off"
                     type="text"
                     formControlName="precioVenta"
@@ -294,31 +293,6 @@
                 </ng-container>
               </td>
             </ng-container>
-
-            <!-- <ng-container matColumnDef="descuentoPorcentaje">
-              <th mat-header-cell *matHeaderCellDef class="text-center">
-                Descuento (%)
-              </th>
-              <td
-                mat-cell
-                *matCellDef="let row; let i = index"
-                class="text-center"
-              >
-                <ng-container [formGroup]="row">
-                  <input
-                    matInput
-                    type="number"
-                    formControlName="descuentoPorcentaje"
-                    min="0"
-                    max="100"
-                    (keydown)="validarEntero($event)"
-                    (input)="calcularTotalUnitario(i)"
-                    class="input-centrado"
-                    style="width: 50px"
-                  />
-                </ng-container>
-              </td>
-            </ng-container> -->
 
             <!-- <ng-container matColumnDef="nuevoPrecioVenta">
               <th mat-header-cell *matHeaderCellDef class="text-center">
@@ -372,65 +346,50 @@
 
           <div class="totales-cotizacion-container mb-2">
             <div class="totales-cotizacion">
-              <div class="fila quicksand-subtotal">
-                <span>Valor Total Lista: S/</span>
-                <span>{{
-                  myFormCotizacion.get("sumaTotalesPrecioLista")?.value
-                    | number: "1.2-2"
-                }}</span>
-              </div>
-
-              <div class="fila quicksand-subtotal">
+              <!-- <div class="fila quicksand-subtotal">
                 <span>Diferencia Valor: S/</span>
                 <span>{{
                   myFormCotizacion.get("descuentoTotal")?.value
                     | number: "1.2-2"
                 }}</span>
-              </div>
+              </div> -->
 
               <div class="fila quicksand-subtotal">
-                <span>Aplicar Valor Total</span>
+                <span>Aplicar precio paquete</span>
                 <span>
                   <mat-slide-toggle
                     formControlName="aplicarPrecioGlobal"
                     (change)="cambioEstadoPrecioGlobal()"
                   ></mat-slide-toggle>
-                  <input
-                    matInput
-                    #inputPrecioGlobal
-                    style="width: 60px"
-                    type="number"
-                    min="0"
-                    formControlName="precioConDescGlobal"
-                    class="text-center"
-                    (keydown)="validarDouble($event)"
-                    (input)="
-                      calcularTotalGeneral(); sanitizarDoubleInput($event)
-                    "
-                  />
                 </span>
               </div>
 
               <div class="fila quicksand-subtotal">
-                <span>Aplicar Descuento %</span>
-                <span>
-                  <mat-slide-toggle
-                    formControlName="aplicarDescuentoPorcentGlobal"
-                    (change)="cambioEstadoDescuentoPorcentGlobal()"
-                  ></mat-slide-toggle>
-                  <input
-                    matInput
-                    #inputPorcentajeGlobal
-                    style="width: 60px"
-                    type="number"
-                    min="0"
-                    max="100"
-                    formControlName="descuentoPorcentaje"
-                    class="text-center"
-                    (keydown)="validarEntero($event)"
-                    (input)="calcularTotalGeneral()"
-                  />
-                </span>
+                <span>Precio S/</span>
+                <input
+                  matInput
+                  style="width: 60px"
+                  type="number"
+                  min="0"
+                  formControlName="precioConDescGlobal"
+                  class="text-center"
+                  (keydown)="validarDouble($event)"
+                  (input)="calcularTotalGeneral(); sanitizarDoubleInput($event)"
+                />
+              </div>
+
+              <div class="fila quicksand-subtotal">
+                <span>Cantidad </span>
+                <input
+                  matInput
+                  style="width: 60px"
+                  type="number"
+                  min="0"
+                  formControlName="cantidadGlobal"
+                  class="text-center"
+                  (keydown)="validarEntero($event)"
+                  (input)="calcularTotalGeneral(); sanitizarDoubleInput($event)"
+                />
               </div>
 
               <div class="fila quicksand-subtotal">
