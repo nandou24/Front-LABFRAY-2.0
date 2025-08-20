@@ -18,9 +18,10 @@ export interface IHistorialCotizacionEmpresa {
   entregaResultados: number;
   validez: number;
   aplicarPrecioGlobal: boolean;
+  precioConDescGlobal: number | null;
+  cantidadGlobal?: number;
   sumaTotalesPrecioLista: number;
-  descuentoTotal: number;
-  precioConDescGlobal?: number;
+  sumaTotalesPrecioVenta: number;
   subTotal: number;
   igv: number;
   total: number;
