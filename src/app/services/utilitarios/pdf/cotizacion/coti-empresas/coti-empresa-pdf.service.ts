@@ -279,6 +279,7 @@ export class CotiEmpresaPdfService {
       // 🎯 MODO PAQUETE: Cuando está activado "Aplicar Valor Total"
       serviciosParaTabla = this.generarTablaPaquete(
         ultimaVersion.serviciosCotizacion,
+        ultimaVersion,
       );
     } else {
       // 🎯 MODO INDIVIDUAL: Servicios normales uno por uno
@@ -604,7 +605,7 @@ export class CotiEmpresaPdfService {
    * 🎯 Genera tabla en modo PAQUETE cuando está activado "Aplicar Valor Total"
    * Agrupa todos los servicios excepto "in house" bajo un paquete
    */
-  private generarTablaPaquete(servicios: any[]): any[] {
+  private generarTablaPaquete(servicios: any[], historial: any): any[] {
     const tablaPaquete: any[] = [];
 
     // Separar servicios normales de "in house"
@@ -614,20 +615,16 @@ export class CotiEmpresaPdfService {
     const serviciosInHouse = servicios.filter((s) => this.esServicioInHouse(s));
 
     if (serviciosNormales.length > 0) {
-      // 📦 Fila principal del paquete
-      const totalPaquete = serviciosNormales.reduce(
-        (sum, s) => sum + s.totalUnitario,
-        0,
-      );
-      const precioPromedio =
-        totalPaquete /
-        serviciosNormales.reduce((sum, s) => sum + s.cantidad, 0);
+      // 📦 Fila principal del paquete - usar precioConDescGlobal y cantidadGlobal
+      const precioPaquete = historial.precioConDescGlobal || 0;
+      const cantidadPaquete = historial.cantidadGlobal || 1;
+      const totalPaquete = precioPaquete * cantidadPaquete;
 
       tablaPaquete.push([
         '1',
         `Paquete exámenes ETA's`,
-        `S/ ${precioPromedio.toFixed(2)}`,
-        serviciosNormales.reduce((sum, s) => sum + s.cantidad, 0),
+        `S/ ${precioPaquete.toFixed(2)}`,
+        cantidadPaquete,
         `S/ ${totalPaquete.toFixed(2)}`,
       ]);
 
@@ -643,19 +640,19 @@ export class CotiEmpresaPdfService {
       tablaPaquete.push([
         contadorInHouse.toString(),
         servicio.nombreServicio,
-        `S/ ${servicio.nuevoPrecioVenta.toFixed(2)}`,
+        `S/ ${servicio.precioVenta.toFixed(2)}`,
         servicio.cantidad,
         `S/ ${servicio.totalUnitario.toFixed(2)}`,
       ]);
       contadorInHouse++;
     });
 
-    // 📊 Sub Total del paquete (si hay múltiples servicios)
+    // 📊 Sub Total del paquete (si hay múltiples servicios normales)
     if (serviciosNormales.length > 1) {
-      const totalPaquete = serviciosNormales.reduce(
-        (sum, s) => sum + s.totalUnitario,
-        0,
-      );
+      const precioPaquete = historial.precioConDescGlobal || 0;
+      const cantidadPaquete = historial.cantidadGlobal || 1;
+      const totalPaquete = precioPaquete * cantidadPaquete;
+
       tablaPaquete.push([
         '',
         'Sub Total',
@@ -676,7 +673,7 @@ export class CotiEmpresaPdfService {
     return servicios.map((servicio: any, index: number) => [
       `${index + 1}`,
       servicio.nombreServicio,
-      `S/ ${servicio.nuevoPrecioVenta.toFixed(2)}`,
+      `S/ ${servicio.precioVenta.toFixed(2)}`,
       servicio.cantidad,
       `S/ ${servicio.totalUnitario.toFixed(2)}`,
     ]);
@@ -693,15 +690,15 @@ export class CotiEmpresaPdfService {
     // - Nombre del servicio
     // - Tipo de servicio
 
-    const codigosInHouse = ['INHOUSE', 'ATE']; // Ajusta según tus códigos
-    const nombresInHouse = ['servicio in house', 'ate', 'atención empresarial'];
+    const codigosInHouse = ['PRO0001']; // Ajusta según tus códigos
+    const nombresInHouse = ['SERVICIO IN HOUSE'];
 
     const codigoMatch = codigosInHouse.some((codigo) =>
       servicio.codServicio?.toUpperCase().includes(codigo),
     );
 
     const nombreMatch = nombresInHouse.some((nombre) =>
-      servicio.nombreServicio?.toLowerCase().includes(nombre),
+      servicio.nombreServicio?.toUpperCase().includes(nombre),
     );
 
     return codigoMatch || nombreMatch;

@@ -283,7 +283,6 @@
                     type="text"
                     formControlName="precioVenta"
                     min="0"
-                    (keydown)="validarDouble($event)"
                     (input)="
                       calcularTotalUnitario(i); sanitizarDoubleInput($event)
                     "
@@ -373,7 +372,6 @@
                   min="0"
                   formControlName="precioConDescGlobal"
                   class="text-center"
-                  (keydown)="validarDouble($event)"
                   (input)="calcularTotalGeneral(); sanitizarDoubleInput($event)"
                 />
               </div>

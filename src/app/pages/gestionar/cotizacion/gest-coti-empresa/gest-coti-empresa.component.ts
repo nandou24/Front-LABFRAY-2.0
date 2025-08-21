@@ -364,6 +364,8 @@ export class GestCotiEmpresaComponent {
   deshabilitarCamposServicios() {
     this.serviciosCotizacion.controls.forEach((control, index) => {
       const precioLista = parseFloat(control.get('precioLista')?.value) || 0;
+      control.get('cantidad')?.setValue(1);
+      control.get('cantidad')?.disable();
       control.get('precioVenta')?.setValue(precioLista);
       control.get('nuevoPrecioVenta')?.setValue(precioLista);
       control.get('diferencia')?.setValue(0);
@@ -967,6 +969,7 @@ export class GestCotiEmpresaComponent {
     this.myFormCotizacion.get('precioConDescGlobal')?.disable();
     this.myFormCotizacion.get('cantidadGlobal')?.disable();
     if (historialVersion.aplicarPrecioGlobal) {
+      this.deshabilitarCamposServicios();
       this.myFormCotizacion.get('precioConDescGlobal')?.enable();
       this.myFormCotizacion.get('cantidadGlobal')?.enable();
     }
