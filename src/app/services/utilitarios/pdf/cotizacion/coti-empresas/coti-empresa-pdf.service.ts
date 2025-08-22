@@ -285,6 +285,7 @@ export class CotiEmpresaPdfService {
       // 🎯 MODO INDIVIDUAL: Servicios normales uno por uno
       serviciosParaTabla = this.generarTablaIndividual(
         ultimaVersion.serviciosCotizacion,
+        ultimaVersion,
       );
     }
 
@@ -315,16 +316,6 @@ export class CotiEmpresaPdfService {
           data.cell.styles.fontStyle = 'italic';
           data.cell.styles.textColor = [100, 100, 100]; // Gris
         }
-        // Estilo para servicios "in house"
-        if (data.cell.text[0]?.toLowerCase().includes('Servicio in house')) {
-          data.cell.styles.fillColor = [173, 216, 230]; // Azul claro
-          data.cell.styles.fontStyle = 'bold';
-        }
-        // Estilo para sub-totales
-        if (data.cell.text[0]?.includes('Sub Total')) {
-          data.cell.styles.fontStyle = 'bold';
-          data.cell.styles.fillColor = [255, 248, 220]; // Color crema
-        }
       },
     });
 
@@ -335,88 +326,34 @@ export class CotiEmpresaPdfService {
     doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
 
-    if (ultimaVersion.descuentoTotal < 0) {
-      doc.text(`Monto total:`, 165, finalY, { align: 'right' });
-      doc.text(
-        `S/ ${ultimaVersion.sumaTotalesPrecioLista.toFixed(2)}`,
-        195,
-        finalY,
-        { align: 'right' },
-      );
+    doc.text(`Subtotal:`, 165, finalY, {
+      align: 'right',
+    });
+    doc.text(`S/ ${ultimaVersion.subTotal.toFixed(2)}`, 195, finalY, {
+      align: 'right',
+    });
 
-      doc.text(`Descuento Total:`, 165, finalY + espaciadoResumenCostos, {
-        align: 'right',
-      });
-      doc.text(
-        `S/ ${ultimaVersion.descuentoTotal.toFixed(2)}`,
-        195,
-        finalY + espaciadoResumenCostos,
-        { align: 'right' },
-      );
+    doc.text(`IGV (18%):`, 165, finalY + espaciadoResumenCostos, {
+      align: 'right',
+    });
+    doc.text(
+      `S/ ${ultimaVersion.igv.toFixed(2)}`,
+      195,
+      finalY + espaciadoResumenCostos,
+      { align: 'right' },
+    );
 
-      doc.text(`Subtotal:`, 165, finalY + espaciadoResumenCostos * 2, {
-        align: 'right',
-      });
-      doc.text(
-        `S/ ${ultimaVersion.subTotal.toFixed(2)}`,
-        195,
-        finalY + espaciadoResumenCostos * 2,
-        {
-          align: 'right',
-        },
-      );
-
-      doc.text(`IGV (18%):`, 165, finalY + espaciadoResumenCostos * 3, {
-        align: 'right',
-      });
-      doc.text(
-        `S/ ${ultimaVersion.igv.toFixed(2)}`,
-        195,
-        finalY + espaciadoResumenCostos * 3,
-        { align: 'right' },
-      );
-
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      doc.text(`Total a Pagar:`, 165, finalY + espaciadoResumenCostos * 4 + 2, {
-        align: 'right',
-      });
-      doc.text(
-        `S/ ${ultimaVersion.total.toFixed(2)}`,
-        195,
-        finalY + espaciadoResumenCostos * 4 + 2,
-        { align: 'right' },
-      );
-    } else {
-      doc.text(`Subtotal:`, 165, finalY, {
-        align: 'right',
-      });
-      doc.text(`S/ ${ultimaVersion.subTotal.toFixed(2)}`, 195, finalY, {
-        align: 'right',
-      });
-
-      doc.text(`IGV (18%):`, 165, finalY + espaciadoResumenCostos, {
-        align: 'right',
-      });
-      doc.text(
-        `S/ ${ultimaVersion.igv.toFixed(2)}`,
-        195,
-        finalY + espaciadoResumenCostos,
-        { align: 'right' },
-      );
-
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      doc.text(`Total a Pagar:`, 165, finalY + espaciadoResumenCostos * 2 + 2, {
-        align: 'right',
-      });
-      doc.text(
-        `S/ ${ultimaVersion.total.toFixed(2)}`,
-        195,
-        finalY + espaciadoResumenCostos * 2 + 2,
-        { align: 'right' },
-      );
-    }
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`Total a Pagar:`, 165, finalY + espaciadoResumenCostos * 2 + 2, {
+      align: 'right',
+    });
+    doc.text(
+      `S/ ${ultimaVersion.total.toFixed(2)}`,
+      195,
+      finalY + espaciadoResumenCostos * 2 + 2,
+      { align: 'right' },
+    );
 
     // 📌 Números de cuenta
     const puntoRefMediosPago = finalY + 40;
@@ -603,18 +540,22 @@ export class CotiEmpresaPdfService {
 
   /**
    * 🎯 Genera tabla en modo PAQUETE cuando está activado "Aplicar Valor Total"
-   * Agrupa todos los servicios excepto "in house" bajo un paquete
+   * Todos los servicios van bajo un paquete, más el servicio in house como atributo separado
    */
   private generarTablaPaquete(servicios: any[], historial: any): any[] {
     const tablaPaquete: any[] = [];
 
-    // Separar servicios normales de "in house"
-    const serviciosNormales = servicios.filter(
-      (s) => !this.esServicioInHouse(s),
-    );
-    const serviciosInHouse = servicios.filter((s) => this.esServicioInHouse(s));
+    // Debug: Logging para verificar datos recibidos
+    console.log('🎯 MODO PAQUETE - Datos recibidos:', {
+      serviciosLength: servicios.length,
+      servicioInHouse: historial.servicioInHouse,
+      servicios: servicios.map((s) => ({
+        codigo: s.codServicio,
+        nombre: s.nombreServicio,
+      })),
+    });
 
-    if (serviciosNormales.length > 0) {
+    if (servicios.length > 0) {
       // 📦 Fila principal del paquete - usar precioConDescGlobal y cantidadGlobal
       const precioPaquete = historial.precioConDescGlobal || 0;
       const cantidadPaquete = historial.cantidadGlobal || 1;
@@ -629,37 +570,32 @@ export class CotiEmpresaPdfService {
       ]);
 
       // 📋 Sub-items del paquete (detalles de cada examen)
-      serviciosNormales.forEach((servicio: any) => {
+      servicios.forEach((servicio: any) => {
         tablaPaquete.push(['', `  - ${servicio.nombreServicio}`, '', '', '']);
       });
     }
 
-    // ➕ Agregar servicios "in house" por separado
-    let contadorInHouse = 2;
-    serviciosInHouse.forEach((servicio: any) => {
-      tablaPaquete.push([
-        contadorInHouse.toString(),
-        servicio.nombreServicio,
-        `S/ ${servicio.precioVenta.toFixed(2)}`,
-        servicio.cantidad,
-        `S/ ${servicio.totalUnitario.toFixed(2)}`,
-      ]);
-      contadorInHouse++;
-    });
-
-    // 📊 Sub Total del paquete (si hay múltiples servicios normales)
-    if (serviciosNormales.length > 1) {
-      const precioPaquete = historial.precioConDescGlobal || 0;
-      const cantidadPaquete = historial.cantidadGlobal || 1;
-      const totalPaquete = precioPaquete * cantidadPaquete;
+    // ➕ Agregar servicio "in house" si está configurado como atributo
+    let contadorItems = 2;
+    if (historial.servicioInHouse && historial.servicioInHouse > 0) {
+      console.log('➕ Agregando servicio in house:', {
+        valor: historial.servicioInHouse,
+        numeroItem: contadorItems,
+      });
 
       tablaPaquete.push([
-        '',
-        'Sub Total',
-        '',
-        '',
-        `S/ ${totalPaquete.toFixed(2)}`,
+        contadorItems.toString(),
+        'SERVICIO IN HOUSE',
+        `S/ ${historial.servicioInHouse.toFixed(2)}`,
+        1,
+        `S/ ${historial.servicioInHouse.toFixed(2)}`,
       ]);
+      contadorItems++;
+    } else {
+      console.log('❌ No se agrega servicio in house:', {
+        servicioInHouse: historial.servicioInHouse,
+        esMayorQueCero: historial.servicioInHouse > 0,
+      });
     }
 
     return tablaPaquete;
@@ -667,40 +603,29 @@ export class CotiEmpresaPdfService {
 
   /**
    * 🎯 Genera tabla en modo INDIVIDUAL (modo normal)
-   * Cada servicio se muestra por separado
+   * Cada servicio se muestra por separado, más el servicio in house como atributo adicional
    */
-  private generarTablaIndividual(servicios: any[]): any[] {
-    return servicios.map((servicio: any, index: number) => [
+  private generarTablaIndividual(servicios: any[], historial: any): any[] {
+    // Crear tabla con todos los servicios cotizados
+    const tablaServicios = servicios.map((servicio: any, index: number) => [
       `${index + 1}`,
       servicio.nombreServicio,
       `S/ ${servicio.precioVenta.toFixed(2)}`,
       servicio.cantidad,
       `S/ ${servicio.totalUnitario.toFixed(2)}`,
     ]);
-  }
 
-  /**
-   * 🏠 Determina si un servicio es "in house" basándose en su código
-   * Puedes ajustar esta lógica según los códigos específicos que manejes
-   */
-  private esServicioInHouse(servicio: any): boolean {
-    // Lógica para identificar servicios "in house"
-    // Puedes basarte en:
-    // - Código del servicio
-    // - Nombre del servicio
-    // - Tipo de servicio
+    // ➕ Agregar servicio "in house" si está configurado como atributo
+    if (historial.servicioInHouse && historial.servicioInHouse > 0) {
+      tablaServicios.push([
+        `${servicios.length + 1}`,
+        'SERVICIO IN HOUSE',
+        `S/ ${historial.servicioInHouse.toFixed(2)}`,
+        1,
+        `S/ ${historial.servicioInHouse.toFixed(2)}`,
+      ]);
+    }
 
-    const codigosInHouse = ['PRO0001']; // Ajusta según tus códigos
-    const nombresInHouse = ['SERVICIO IN HOUSE'];
-
-    const codigoMatch = codigosInHouse.some((codigo) =>
-      servicio.codServicio?.toUpperCase().includes(codigo),
-    );
-
-    const nombreMatch = nombresInHouse.some((nombre) =>
-      servicio.nombreServicio?.toUpperCase().includes(nombre),
-    );
-
-    return codigoMatch || nombreMatch;
+    return tablaServicios;
   }
 }

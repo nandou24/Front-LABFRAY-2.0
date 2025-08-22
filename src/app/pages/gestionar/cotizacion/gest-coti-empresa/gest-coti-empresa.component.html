@@ -352,6 +352,19 @@
                     | number: "1.2-2"
                 }}</span>
               </div> -->
+              <div class="fila quicksand-subtotal">
+                <span>Servicio In House</span>
+                <input
+                  matInput
+                  style="width: 60px"
+                  type="number"
+                  min="0"
+                  formControlName="servicioInHouse"
+                  class="text-center"
+                  (keydown)="validarEntero($event)"
+                  (input)="calcularTotalGeneral(); sanitizarDoubleInput($event)"
+                />
+              </div>
 
               <div class="fila quicksand-subtotal">
                 <span>Aplicar precio paquete</span>

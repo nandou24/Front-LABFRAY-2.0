@@ -94,6 +94,7 @@ export class GestCotiEmpresaComponent {
     diasCredito: [null],
     entregaResultados: [null],
     validez: [null],
+    servicioInHouse: [null],
     aplicarPrecioGlobal: false,
     precioConDescGlobal: [{ value: '', disabled: true }],
     sumaTotalesPrecioLista: 0,
@@ -425,6 +426,9 @@ export class GestCotiEmpresaComponent {
       'aplicarPrecioGlobal',
     )?.value;
 
+    const servicioInHouse =
+      this.myFormCotizacion.get('servicioInHouse')?.value || false; // Obtener el estado del servicio in house
+
     if (estadoPrecioGlobal == false) {
       let totalPrecioLista = 0;
       let sumaTotalUnitarios = 0;
@@ -444,7 +448,7 @@ export class GestCotiEmpresaComponent {
         totalPrecioVenta += this.redondear(precioVenta * cantidad); // Sumar el precio de venta por la cantidad
       });
 
-      calSubTotal = totalPrecioVenta;
+      calSubTotal = totalPrecioVenta + servicioInHouse;
       calIgv = this.redondear((calSubTotal * 180) / 1000);
       totalAPagar = this.redondear(calSubTotal + calIgv);
 
@@ -466,7 +470,7 @@ export class GestCotiEmpresaComponent {
       );
       cantidad = parseInt(this.myFormCotizacion.get('cantidadGlobal')?.value);
 
-      calSubTotal = this.redondear(precioGlobal * cantidad);
+      calSubTotal = this.redondear(precioGlobal * cantidad + servicioInHouse);
       calIgv = this.redondear((calSubTotal * 180) / 1000);
       totalAPagar = this.redondear(calSubTotal + calIgv);
 
@@ -554,6 +558,7 @@ export class GestCotiEmpresaComponent {
               diasCredito: formValue.diasCredito,
               entregaResultados: formValue.entregaResultados,
               validez: formValue.validez,
+              servicioInHouse: formValue.servicioInHouse,
               aplicarPrecioGlobal: !!formValue.aplicarPrecioGlobal,
               precioConDescGlobal: formValue.precioConDescGlobal,
               cantidadGlobal: formValue.cantidadGlobal,
@@ -658,6 +663,7 @@ export class GestCotiEmpresaComponent {
           diasCredito: formValue.diasCredito,
           entregaResultados: formValue.entregaResultados,
           validez: formValue.validez,
+          servicioInHouse: formValue.servicioInHouse,
           aplicarPrecioGlobal: !!formValue.aplicarPrecioGlobal,
           precioConDescGlobal: formValue.precioConDescGlobal,
           cantidadGlobal: formValue.cantidadGlobal,

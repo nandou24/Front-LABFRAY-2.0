@@ -17,6 +17,7 @@ export interface IHistorialCotizacionEmpresa {
   diasCredito: number;
   entregaResultados: number;
   validez: number;
+  servicioInHouse: number;
   aplicarPrecioGlobal: boolean;
   precioConDescGlobal: number | null;
   cantidadGlobal?: number;
