@@ -506,10 +506,32 @@ export class CotiEmpresaPdfService {
       puntoRefMediosPago + 45 + alturaLineaCuentas * 5,
     );
 
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
     doc.text(
-      `Atentamente`,
+      `Atte.`,
       inicioX,
       puntoRefMediosPago + 45 + alturaLineaCuentas * 8,
+    );
+
+    doc.setFont('helvetica', 'bold');
+    doc.text(
+      `LAB FRAY`,
+      inicioX,
+      puntoRefMediosPago + 45 + alturaLineaCuentas * 9,
+    );
+
+    doc.setFont('helvetica', 'normal');
+    doc.text(
+      `Área Comercial`,
+      inicioX,
+      puntoRefMediosPago + 45 + alturaLineaCuentas * 10,
+    );
+
+    doc.text(
+      `Telf. 924870728`,
+      inicioX,
+      puntoRefMediosPago + 45 + alturaLineaCuentas * 11,
     );
 
     const pdfBlob = doc.output('blob');
