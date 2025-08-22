@@ -79,6 +79,7 @@ export class MantServicioComponent implements OnInit, AfterViewInit {
     precioServicio: ['', [Validators.required]],
     estadoServicio: [true],
     favoritoServicio: [false],
+    favoritoServicioEmpresa: [false],
     examenesServicio: this._fb.array([]),
     profesionesAsociadas: this._fb.array([]),
   });

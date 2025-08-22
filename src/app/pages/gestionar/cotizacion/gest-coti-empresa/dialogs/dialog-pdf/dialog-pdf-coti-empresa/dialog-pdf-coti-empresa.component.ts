@@ -1,19 +1,19 @@
+import { CommonModule } from '@angular/common';
 import { Component, Inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
-import { CotiPersonaPdfServiceService } from '../../../../../../../services/utilitarios/pdf/cotizacion/coti-paciente/coti-persona-pdf.service.service';
-import { CommonModule } from '@angular/common';
+import { CotiEmpresaPdfService } from '../../../../../../../services/utilitarios/pdf/cotizacion/coti-empresas/coti-empresa-pdf.service';
 
 @Component({
-  selector: 'app-dialog-pdf-coti-persona',
+  selector: 'app-dialog-pdf-coti-empresa',
   imports: [MatDialogModule, MatButtonModule, CommonModule],
-  templateUrl: './dialog-pdf-coti-persona.component.html',
-  styleUrl: './dialog-pdf-coti-persona.component.scss',
+  templateUrl: './dialog-pdf-coti-empresa.component.html',
+  styleUrl: './dialog-pdf-coti-empresa.component.scss',
 })
-export class DialogPdfCotiPersonaComponent {
+export class DialogPdfCotiEmpresaComponent {
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: { pdfSrc: any; cotizacionData: any },
-    private _pdfService: CotiPersonaPdfServiceService,
+    private _pdfService: CotiEmpresaPdfService,
   ) {}
 
   descargarPDF() {

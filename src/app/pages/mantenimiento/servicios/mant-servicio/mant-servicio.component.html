@@ -19,7 +19,7 @@
 
         <mat-card-content class="mb-2">
           <div class="row-flex mt-2">
-            <div [style.flex]="setFlex(20, '%')" class="flex-item">
+            <div [style.flex]="setFlex(16, '%')" class="flex-item">
               <mat-form-field appearance="outline">
                 <mat-label>Tipo de Servicio</mat-label>
                 <mat-select formControlName="tipoServicio">
@@ -66,15 +66,21 @@
               </mat-form-field>
             </div>
 
-            <div [style.flex]="setFlex(15, '%')" class="flex-item mb-3">
+            <div [style.flex]="setFlex(13, '%')" class="flex-item mb-3">
               <mat-slide-toggle formControlName="estadoServicio"
                 >Activo</mat-slide-toggle
               >
             </div>
 
-            <div [style.flex]="setFlex(15, '%')" class="flex-item mb-3">
+            <div [style.flex]="setFlex(13, '%')" class="flex-item mb-3">
               <mat-slide-toggle formControlName="favoritoServicio"
                 >Favorito</mat-slide-toggle
+              >
+            </div>
+
+            <div [style.flex]="setFlex(13, '%')" class="flex-item mb-3">
+              <mat-slide-toggle formControlName="favoritoServicioEmpresa"
+                >Favorito Empresa</mat-slide-toggle
               >
             </div>
           </div>

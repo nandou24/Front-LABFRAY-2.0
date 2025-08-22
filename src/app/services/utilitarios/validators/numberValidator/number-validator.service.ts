@@ -238,7 +238,7 @@ export class NumberValidatorService {
   }
 
   /** Validador para Reactive Forms: número positivo con hasta `dec` decimales */
-  twoDecimalsValidator(dec = 2) {
+  twoDecimalsValidator(dec = 3) {
     const regex = new RegExp(`^\\d+(\\.\\d{0,${dec}})?$`);
     return (ctrl: AbstractControl): ValidationErrors | null => {
       const v = (ctrl.value ?? '').toString().trim();

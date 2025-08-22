@@ -16,6 +16,7 @@ export interface IServicio {
   precioServicio: number;
   estadoServicio: string;
   favoritoServicio: boolean;
+  favoritoServicioEmpresa: boolean;
   examenesServicio: Array<any>[];
   profesionesAsociadas: IProfesionEspecialidad[];
 }

@@ -1,6 +1,6 @@
 import { Component, Inject, OnInit, ViewChild } from '@angular/core';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { EmpresaService } from '../../../../../../../services/mantenimiento/empresa/empresa.service';
+import { EmpresaService } from '../../../../../../services/mantenimiento/empresa/empresa.service';
 import { CommonModule } from '@angular/common';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -17,7 +17,7 @@ import { FormsModule, ReactiveFormsModule, FormControl } from '@angular/forms';
 
 import { MatPaginator } from '@angular/material/paginator';
 import { debounceTime, distinctUntilChanged, filter, tap } from 'rxjs';
-import { IEmpresa } from '../../../../../../../models/Mantenimiento/empresa.models';
+import { IEmpresa } from '../../../../../../models/Mantenimiento/empresa.models';
 
 @Component({
   selector: 'app-dialog-buscar-empresa',

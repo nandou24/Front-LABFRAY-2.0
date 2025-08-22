@@ -40,7 +40,7 @@ import {
   ICotizacion,
   IHistorialCotizacion,
 } from '../../../../models/Gestion/cotizacionPersona.models';
-import { CotiPersonaPdfServiceService } from '../../../../services/utilitarios/pdf/cotizacion/coti-persona-pdf.service.service';
+import { CotiPersonaPdfServiceService } from '../../../../services/utilitarios/pdf/cotizacion/coti-paciente/coti-persona-pdf.service.service';
 import { DialogPdfCotiPersonaComponent } from './dialogs/dialog-pdf/dialog-pdf-coti-persona/dialog-pdf-coti-persona.component';
 import { IPersonalSaludParaConsultas } from '../../../../models/Mantenimiento/recursoHumano.models';
 import { DialogMedicoComponent } from './dialogs/dialog-medico/dialog-medico.component';

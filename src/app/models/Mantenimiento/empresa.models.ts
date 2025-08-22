@@ -1,5 +1,6 @@
 //EMPRESA
 export interface IPersonaContacto {
+  _id?: string;
   nombre: string;
   cargo: string;
   telefono: string;

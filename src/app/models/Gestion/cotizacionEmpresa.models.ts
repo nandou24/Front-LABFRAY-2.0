@@ -12,15 +12,17 @@ export interface IHistorialCotizacionEmpresa {
   empresaId: string;
   ruc: string;
   razonSocial: string;
+  dirigidoA_Id: string;
   formaPago: string;
   diasCredito: number;
   entregaResultados: number;
+  validez: number;
+  servicioInHouse: number;
   aplicarPrecioGlobal: boolean;
-  aplicarDescuentoPorcentGlobal: boolean;
+  precioConDescGlobal: number | null;
+  cantidadGlobal?: number;
   sumaTotalesPrecioLista: number;
-  descuentoTotal: number;
-  precioConDescGlobal?: number;
-  descuentoPorcentaje?: number;
+  sumaTotalesPrecioVenta: number;
   subTotal: number;
   igv: number;
   total: number;
@@ -36,8 +38,6 @@ export interface IServicioCotizacionEmpresa {
   precioLista: number;
   diferencia: number;
   precioVenta: number;
-  descuentoPorcentaje: number;
-  nuevoPrecioVenta: number;
   totalUnitario: number;
 }
 
