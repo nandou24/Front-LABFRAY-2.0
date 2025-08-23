@@ -178,7 +178,42 @@ export class MantEmpresasComponent implements OnInit, AfterViewInit {
   }
 
   eliminarContacto(index: number) {
-    this.personasContacto.removeAt(index);
+    const contacto = this.personasContacto.at(index);
+    const contactoId = contacto.get('_id')?.value;
+    const ruc = this.empresaForm.get('ruc')?.value;
+
+    if (contactoId && ruc) {
+      this._empresaService.eliminarContactoEmpresa(ruc, contactoId).subscribe({
+        next: () => {
+          this.personasContacto.removeAt(index);
+        },
+        error: (err) => {
+          let mensaje = 'No se pudo eliminar el contacto. Intenta nuevamente.';
+
+          if (err?.error?.errors) {
+            // Si hay errores específicos de campos
+            const errores = err.error.errors;
+            const primerError = Object.keys(errores)[0]; // Tomar el primer error
+            if (primerError && errores[primerError]?.msg) {
+              mensaje = errores[primerError].msg;
+            }
+          } else if (err?.error?.msg) {
+            // Si hay un mensaje general en error.msg
+            mensaje = err.error.msg;
+          } else if (err?.message) {
+            // Si hay un mensaje en la propiedad message
+            mensaje = err.message;
+          }
+
+          Swal.fire({
+            title: 'Error',
+            text: mensaje,
+            icon: 'error',
+            confirmButtonText: 'Ok',
+          });
+        },
+      });
+    }
   }
 
   marcarContactoPrincipal(index: number) {
@@ -336,6 +371,7 @@ export class MantEmpresasComponent implements OnInit, AfterViewInit {
 
   private crearContactoGroup(contacto: IPersonaContacto): FormGroup {
     return this._fb.group({
+      _id: [contacto._id || null],
       nombre: [contacto.nombre],
       cargo: [contacto.cargo],
       telefono: [contacto.telefono],
@@ -346,6 +382,7 @@ export class MantEmpresasComponent implements OnInit, AfterViewInit {
 
   private crearUbicacionGroup(ubicacion: IUbicacionSede): FormGroup {
     return this._fb.group({
+      _id: [ubicacion._id || null],
       nombreSede: [ubicacion.nombreSede],
       direccionSede: [ubicacion.direccionSede],
       departamentoSede: [ubicacion.departamentoSede],
@@ -488,7 +525,7 @@ export class MantEmpresasComponent implements OnInit, AfterViewInit {
               this.ultimasEmpresas();
             },
             error: (err) => {
-              console.log('Error al actualizar la empresa:', err);
+              //console.log('Error al actualizar la empresa:', err);
 
               // Extraer mensaje específico del campo que falló
               let mensaje =
