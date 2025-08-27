@@ -1,0 +1,7 @@
+{
+  "root": "dist/front-labfray-2.0/browser",
+  "clean_urls": true,
+  "routes": {
+    "/**": "index.html"
+  }
+}
