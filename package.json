@@ -7,7 +7,7 @@
     "build": "ng build --configuration production",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "start:prod": "http-server dist/front-labfray-2.0/browser -p $PORT --gzip -c-1"
+    "start:prod": "http-server dist/front-labfray-2.0/browser -p $PORT --gzip -c-1 --spa"
   },
   "private": true,
   "dependencies": {
