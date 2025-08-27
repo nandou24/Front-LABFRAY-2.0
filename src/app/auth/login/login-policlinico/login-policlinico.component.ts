@@ -55,7 +55,7 @@ export class LoginPoliclinicoComponent {
     this._authService.login(nombreUsuario, password).subscribe({
       next: (resp) => {
         if (resp.ok && resp.token) {
-          console.log('Token recibido:', resp);
+          //console.log('Token recibido:', resp);
           this._authService.guardarToken(resp.token);
           Swal.fire({
             icon: 'success',
