@@ -7,7 +7,7 @@
     "build": "ng build --configuration production",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "start:prod": "http-server dist/front-labfray-2.0/browser -p $PORT --gzip -c-1 --spa"
+    "start:prod": "node start.js"
   },
   "private": true,
   "dependencies": {
@@ -22,11 +22,11 @@
     "@angular/router": "^19.2.0",
     "@types/xlsx": "^0.0.35",
     "bootstrap": "^5.3.5",
-    "http-server": "^14.1.1",
     "jspdf": "^3.0.1",
     "jspdf-autotable": "^5.0.2",
     "jwt-decode": "^4.0.0",
     "rxjs": "~7.8.0",
+    "serve": "^14.2.4",
     "sweetalert2": "^11.19.1",
     "tslib": "^2.3.0",
     "xlsx": "^0.18.5",
