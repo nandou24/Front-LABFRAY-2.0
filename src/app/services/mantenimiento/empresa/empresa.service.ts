@@ -65,6 +65,15 @@ export class EmpresaService {
       .pipe(map((data) => data.empresa));
   }
 
+  eliminarContactoEmpresa(ruc: string, contactoId: string): Observable<void> {
+    return this._http.delete<void>(
+      `${this.apiUrl}/contacto/${ruc}/${contactoId}`,
+      {
+        headers: this._auth.getAuthHeaders(),
+      },
+    );
+  }
+
   public actualizarEmpresa(body: IEmpresa): Observable<IEmpresaUpdateDTO> {
     console.log('Datos de la empresa a actualizar:', body);
     return this._http.put<IEmpresaUpdateDTO>(`${this.apiUrl}`, body, {

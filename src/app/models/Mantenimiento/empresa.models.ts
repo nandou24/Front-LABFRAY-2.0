@@ -9,6 +9,7 @@ export interface IPersonaContacto {
 }
 
 export interface IUbicacionSede {
+  _id?: string;
   nombreSede: string;
   direccionSede: string;
   departamentoSede: string;

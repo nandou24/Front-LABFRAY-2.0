@@ -90,6 +90,7 @@ export class ReportPagosRecepcionComponent implements OnInit {
     'cotizacionId',
     'codigoPago',
     'nombreCompleto',
+    'usuario',
     'montoTotal',
     'faltaPagar',
     'medioPago',

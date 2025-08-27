@@ -294,7 +294,7 @@ export class CotiEmpresaPdfService {
       head: [['N°', 'Exámenes', 'Precio unitario', 'Cantidad', 'Precio Total']],
       body: serviciosParaTabla,
       theme: 'grid',
-      styles: { fontSize: 8, cellPadding: 2, textColor: [0, 0, 0] },
+      styles: { fontSize: 8, cellPadding: 1.5, textColor: [0, 0, 0] },
       headStyles: {
         fillColor: [colorTextoR, colorTextoG, colorTextoB],
         textColor: [255, 255, 255], // Texto blanco
