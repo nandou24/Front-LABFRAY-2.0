@@ -28,6 +28,7 @@ import { HcPdfService } from '../../../services/utilitarios/pdf/historiaClinica/
 import { DialogPdfSolicitudAtencionComponent } from './dialogs/dialog-pdf-solicitud-atencion/dialog-pdf-solicitud-atencion.component';
 import { HojaTrabajoLabPdfService } from '../../../services/utilitarios/pdf/hojaTrabajo-Lab/hoja-trabajo-lab-pdf.service';
 import { ServiciosService } from '../../../services/mantenimiento/servicios/servicios.service';
+import { DialogServiciosSunatComponent } from './dialogs/dialog-servicios-sunat/dialog-servicios-sunat.component';
 
 @Component({
   selector: 'app-solicitud-atencion',
@@ -44,6 +45,7 @@ import { ServiciosService } from '../../../services/mantenimiento/servicios/serv
     MatChipsModule,
     MatDatepickerModule,
     MatNativeDateModule,
+  DialogServiciosSunatComponent,
   ],
   providers: [{ provide: MAT_DATE_LOCALE, useValue: 'es-PE' }],
   templateUrl: './solicitud-atencion.component.html',
@@ -66,6 +68,60 @@ export class SolicitudAtencionComponent implements OnInit {
     this.dataSourceSolicitud.sort = this.sort;
     this._adapter.setLocale('es-PE'); // Establecer el locale para el adaptador de fecha
   }
+
+    limpiarTextoSunat(texto: string): string {
+      // Reemplazar tildes y eñes, eliminar saltos de línea y caracteres especiales
+      return texto
+        .replace(/[áàäâ]/gi, 'a')
+        .replace(/[éèëê]/gi, 'e')
+        .replace(/[íìïî]/gi, 'i')
+        .replace(/[óòöô]/gi, 'o')
+        .replace(/[úùüû]/gi, 'u')
+        .replace(/ñ/gi, 'n')
+        .replace(/[\n\r]+/g, '; ')
+        .replace(/[^a-zA-Z0-9.,;:()\-\/ ]/g, '') // Solo permite letras, números y algunos signos básicos
+        .replace(/\s{2,}/g, ' ')
+        .trim();
+    }
+
+    mostrarTextoSunat(solicitud: any) {
+      if (!solicitud || !solicitud.servicios || solicitud.servicios.length === 0) {
+        this.snackBar.open('No hay servicios para mostrar', 'Cerrar', { duration: 3000 });
+        return;
+      }
+
+      let serviciosTexto = '';
+      if (solicitud.tipo && solicitud.tipo.toLowerCase().includes('consulta')) {
+        // Consulta médica: mostrar nombre del médico por cada servicio
+        serviciosTexto = solicitud.servicios.map((servicio: any, idx: number) => {
+          let medico = '';
+          if (servicio.medicoAtiende) {
+            medico = ` - DR. ${servicio.medicoAtiende.apePatRecHumano} ${servicio.medicoAtiende.apeMatRecHumano} ${servicio.medicoAtiende.nombreRecHumano}`;
+          }
+          return `${idx + 1}. ${servicio.nombreServicio}${medico}`;
+        }).join('\n');
+      } else {
+        // Otros servicios: mostrar nombre del solicitante de forma global (si existe y no es null)
+        serviciosTexto = solicitud.servicios.map((servicio: any, idx: number) => {
+          return `${idx + 1}. ${servicio.nombreServicio}`;
+        }).join('\n');
+        // Agregar nombre del solicitante si existe y no es null
+        let nombreSolicitante = '';
+        if (solicitud.solicitanteId && (solicitud.solicitanteId.apePatRefMedico || solicitud.solicitanteId.apeMatRefMedico || solicitud.solicitanteId.nombreRefMedico)) {
+          nombreSolicitante = `${solicitud.solicitanteId.apePatRefMedico || ''} ${solicitud.solicitanteId.apeMatRefMedico || ''} ${solicitud.solicitanteId.nombreRefMedico || ''}`.replace(/null|undefined/gi, '').trim();
+        }
+        if (nombreSolicitante) {
+          serviciosTexto += `\nSolicitante: ${nombreSolicitante}`;
+        }
+      }
+
+      // Limpiar el texto antes de mostrarlo
+      const serviciosTextoLimpio = this.limpiarTextoSunat(serviciosTexto);
+      this.dialog.open(DialogServiciosSunatComponent, {
+        data: { serviciosTexto: serviciosTextoLimpio },
+        width: '500px',
+      });
+    }
 
   solicitudForm: FormGroup = this._fb.group({
     cotizacionId: ['', Validators.required],
