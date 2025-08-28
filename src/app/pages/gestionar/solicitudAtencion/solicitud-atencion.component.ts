@@ -45,7 +45,7 @@ import { DialogServiciosSunatComponent } from './dialogs/dialog-servicios-sunat/
     MatChipsModule,
     MatDatepickerModule,
     MatNativeDateModule,
-  // DialogServiciosSunatComponent,
+    // DialogServiciosSunatComponent,
   ],
   providers: [{ provide: MAT_DATE_LOCALE, useValue: 'es-PE' }],
   templateUrl: './solicitud-atencion.component.html',
@@ -69,59 +69,81 @@ export class SolicitudAtencionComponent implements OnInit {
     this._adapter.setLocale('es-PE'); // Establecer el locale para el adaptador de fecha
   }
 
-    limpiarTextoSunat(texto: string): string {
-      // Reemplazar tildes y eñes, eliminar saltos de línea y caracteres especiales
-      return texto
-        .replace(/[áàäâ]/gi, 'a')
-        .replace(/[éèëê]/gi, 'e')
-        .replace(/[íìïî]/gi, 'i')
-        .replace(/[óòöô]/gi, 'o')
-        .replace(/[úùüû]/gi, 'u')
-        .replace(/ñ/gi, 'n')
-        .replace(/[\n\r]+/g, '; ')
-        .replace(/[^a-zA-Z0-9.,;:()\-\/ ]/g, '') // Solo permite letras, números y algunos signos básicos
-        .replace(/\s{2,}/g, ' ')
-        .trim();
+  limpiarTextoSunat(texto: string): string {
+    // Reemplazar tildes y eñes, eliminar saltos de línea y caracteres especiales
+    return texto
+      .replace(/[áàäâ]/gi, 'A')
+      .replace(/[éèëê]/gi, 'E')
+      .replace(/[íìïî]/gi, 'I')
+      .replace(/[óòöô]/gi, 'O')
+      .replace(/[úùüû]/gi, 'U')
+      .replace(/ñ/gi, 'N')
+      .replace(/[\n\r]+/g, '; ')
+      .replace(/[^a-zA-Z0-9.,;:()\-\/ ]/g, '') // Solo permite letras, números y algunos signos básicos
+      .replace(/\s{2,}/g, ' ')
+      .trim();
+  }
+
+  mostrarTextoSunat(solicitud: any) {
+    if (
+      !solicitud ||
+      !solicitud.servicios ||
+      solicitud.servicios.length === 0
+    ) {
+      this.snackBar.open('No hay servicios para mostrar', 'Cerrar', {
+        duration: 3000,
+      });
+      return;
     }
 
-    mostrarTextoSunat(solicitud: any) {
-      if (!solicitud || !solicitud.servicios || solicitud.servicios.length === 0) {
-        this.snackBar.open('No hay servicios para mostrar', 'Cerrar', { duration: 3000 });
-        return;
-      }
-
-      let serviciosTexto = '';
-      if (solicitud.tipo && solicitud.tipo.toLowerCase().includes('consulta')) {
-        // Consulta médica: mostrar nombre del médico por cada servicio
-        serviciosTexto = solicitud.servicios.map((servicio: any, idx: number) => {
+    let subtotal = 0;
+    let serviciosTexto = '';
+    if (solicitud.tipo && solicitud.tipo.toLowerCase().includes('consulta')) {
+      // Consulta médica: mostrar nombre del médico por cada servicio
+      serviciosTexto = solicitud.servicios
+        .map((servicio: any, idx: number) => {
           let medico = '';
           if (servicio.medicoAtiende) {
             medico = ` - DR. ${servicio.medicoAtiende.apePatRecHumano} ${servicio.medicoAtiende.apeMatRecHumano} ${servicio.medicoAtiende.nombreRecHumano}`;
           }
           return `${idx + 1}. ${servicio.nombreServicio}${medico}`;
-        }).join('\n');
-      } else {
-        // Otros servicios: mostrar nombre del solicitante de forma global (si existe y no es null)
-        serviciosTexto = solicitud.servicios.map((servicio: any, idx: number) => {
+        })
+        .join('\n');
+    } else {
+      // Otros servicios: mostrar nombre del solicitante de forma global (si existe y no es null)
+      serviciosTexto = solicitud.servicios
+        .map((servicio: any, idx: number) => {
           return `${idx + 1}. ${servicio.nombreServicio}`;
-        }).join('\n');
-        // Agregar nombre del solicitante si existe y no es null
-        let nombreSolicitante = '';
-        if (solicitud.solicitanteId && (solicitud.solicitanteId.apePatRefMedico || solicitud.solicitanteId.apeMatRefMedico || solicitud.solicitanteId.nombreRefMedico)) {
-          nombreSolicitante = `${solicitud.solicitanteId.apePatRefMedico || ''} ${solicitud.solicitanteId.apeMatRefMedico || ''} ${solicitud.solicitanteId.nombreRefMedico || ''}`.replace(/null|undefined/gi, '').trim();
-        }
-        if (nombreSolicitante) {
-          serviciosTexto += `\nSolicitante: ${nombreSolicitante}`;
-        }
+        })
+        .join('\n');
+      // Agregar nombre del solicitante si existe y no es null
+      let nombreSolicitante = '';
+      if (
+        solicitud.solicitanteId &&
+        (solicitud.solicitanteId.apePatRefMedico ||
+          solicitud.solicitanteId.apeMatRefMedico ||
+          solicitud.solicitanteId.nombreRefMedico)
+      ) {
+        nombreSolicitante =
+          `${solicitud.solicitanteId.apePatRefMedico || ''} ${solicitud.solicitanteId.apeMatRefMedico || ''} ${solicitud.solicitanteId.nombreRefMedico || ''}`
+            .replace(/null|undefined/gi, '')
+            .trim();
       }
-
-      // Limpiar el texto antes de mostrarlo
-      const serviciosTextoLimpio = this.limpiarTextoSunat(serviciosTexto);
-      this.dialog.open(DialogServiciosSunatComponent, {
-        data: { serviciosTexto: serviciosTextoLimpio },
-        width: '500px',
-      });
+      if (nombreSolicitante) {
+        serviciosTexto += `\nSolicitante: ${nombreSolicitante}`;
+      }
+      if (solicitud.pagoId && solicitud.pagoId.subTotalFacturar) {
+        subtotal = solicitud.pagoId.subTotalFacturar;
+      }
     }
+
+    // Limpiar el texto antes de mostrarlo
+    const serviciosTextoLimpio = this.limpiarTextoSunat(serviciosTexto);
+    this.dialog.open(DialogServiciosSunatComponent, {
+      data: { serviciosTexto: serviciosTextoLimpio, subtotal },
+      width: '500px',
+    });
+  }
 
   solicitudForm: FormGroup = this._fb.group({
     cotizacionId: ['', Validators.required],
