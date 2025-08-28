@@ -189,6 +189,14 @@
           </td>
         </ng-container>
 
+        <!-- Usuario -->
+        <ng-container matColumnDef="usuario">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Usuario</th>
+          <td mat-cell *matCellDef="let row">
+            {{ row.usuarioRegistro }}
+          </td>
+        </ng-container>
+
         <!-- Monto Total -->
         <ng-container matColumnDef="montoTotal">
           <th mat-header-cell *matHeaderCellDef mat-sort-header>Monto Total</th>
