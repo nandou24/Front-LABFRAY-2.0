@@ -45,7 +45,6 @@ import { DialogServiciosSunatComponent } from './dialogs/dialog-servicios-sunat/
     MatChipsModule,
     MatDatepickerModule,
     MatNativeDateModule,
-    // DialogServiciosSunatComponent,
   ],
   providers: [{ provide: MAT_DATE_LOCALE, useValue: 'es-PE' }],
   templateUrl: './solicitud-atencion.component.html',

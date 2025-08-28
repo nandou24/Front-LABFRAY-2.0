@@ -120,6 +120,13 @@ export const routes: Routes = [
             './pages/gestionar/cotizacion/gest-coti-empresa/gest-coti-empresa.component'
           ).then((m) => m.GestCotiEmpresaComponent),
       },
+      {
+        path: 'arqueo-caja',
+        loadComponent: () =>
+          import('./pages/caja/arqueo-caja/arqueo-caja.component').then(
+            (m) => m.ArqueoCajaComponent,
+          ),
+      },
     ],
   },
   {
