@@ -86,105 +86,80 @@
           </div>
         </div>
 
-        <div class="row-flex mt-1">
-          <div [style.flex]="setFlex(25, '%')" class="flex-item text-center">
-            <button
-              mat-flat-button
-              color="primary"
-              class="btn-telefono"
-              type="button"
-              (click)="agregarServicio()"
-            >
-              <mat-icon class="me-1">add</mat-icon>
-              Agregar Servicio
-            </button>
+        <div class="row-flex">
+          <div [style.flex]="setFlex(100, '%')" class="flex-item">
+            <mat-form-field appearance="outline">
+              <mat-label>Cotización aprobada</mat-label>
+              <mat-select
+                formControlName="cotizacionAprobada"
+                (selectionChange)="onCotizacionSeleccionada($event.value)"
+              >
+                <mat-option [value]="null"
+                  >— Selecciona una cotización —</mat-option
+                >
+                <mat-option
+                  *ngFor="let cot of cotizacionesAprobadas"
+                  [value]="cot"
+                >
+                  <div class="coordinator-option">
+                    <div class="coordinator-name">
+                      {{ cot.codCotizacion }} -
+                      {{
+                        cot.historial[0].fechaModificacion
+                          | date: "dd/MM/yyyy HH:mm"
+                      }}
+                    </div>
+                  </div>
+                </mat-option>
+              </mat-select>
+
+              <mat-error
+                *ngIf="
+                  groupEmpresa.get('cotizacionAprobada')?.hasError('required')
+                "
+              >
+                Cotización requerida
+              </mat-error>
+
+              <mat-hint *ngIf="!empresaSeleccionada">
+                Primero selecciona una empresa
+              </mat-hint>
+
+              <mat-hint
+                *ngIf="
+                  empresaSeleccionada && cotizacionesAprobadas.length === 0
+                "
+              >
+                Esta empresa no tiene cotizaciones aprobadas
+              </mat-hint>
+            </mat-form-field>
           </div>
+        </div>
 
-          <div [style.flex]="setFlex(75, '%')" class="flex-item">
-            <div
-              formArrayName="servicios"
-              *ngFor="let servicioGroup of servicios.controls; let i = index"
-            >
-              <div [formGroupName]="i" class="row align-items-center">
+        <!-- Servicios de la cotización seleccionada -->
+        <div
+          class="row-flex"
+          *ngIf="serviciosCotizacionSeleccionada.length > 0"
+        >
+          <div [style.flex]="setFlex(100, '%')" class="flex-item">
+            <div class="servicios-cotizacion-card">
+              <h4>Servicios de la Cotización</h4>
+              <div class="servicios-list">
                 <div
-                  [style.flex]="setFlex(70, '%')"
-                  class="flex-item text-center"
+                  *ngFor="let servicio of serviciosCotizacionSeleccionada"
+                  class="servicio-item"
                 >
-                  <mat-form-field appearance="outline">
-                    <mat-label>Servicio</mat-label>
-                    <input
-                      type="text"
-                      placeholder="Selecciona uno"
-                      matInput
-                      formControlName="nombreServicio"
-                      [matAutocomplete]="autoServicios"
-                      (input)="filterServiciosByIndex($event, i)"
-                      (focus)="initializeServicioFilter(i)"
-                    />
-                    <mat-autocomplete
-                      requireSelection
-                      #autoServicios="matAutocomplete"
-                      [displayWith]="displayFnServicios"
-                    >
-                      @for (option of getServiciosFiltrados(i); track option) {
-                        <mat-option [value]="option">{{
-                          option.nombreServicio
-                        }}</mat-option>
-                      }
-                    </mat-autocomplete>
-                    <mat-error
-                      *ngIf="
-                        servicioGroup
-                          .get('nombreServicio')
-                          ?.hasError('required')
-                      "
-                    >
-                      Servicio requerido
-                    </mat-error>
-                  </mat-form-field>
-                </div>
-
-                <div
-                  [style.flex]="setFlex(20, '%')"
-                  class="flex-item text-center"
-                >
-                  <mat-form-field appearance="outline">
-                    <mat-label>Cantidad</mat-label>
-                    <input
-                      matInput
-                      type="number"
-                      min="1"
-                      max="9999"
-                      formControlName="cantidad"
-                    />
-                    <mat-error
-                      *ngIf="
-                        servicioGroup.get('cantidad')?.hasError('required')
-                      "
-                    >
-                      Requerido
-                    </mat-error>
-                    <mat-error
-                      *ngIf="servicioGroup.get('cantidad')?.hasError('min')"
-                    >
-                      Mínimo 1
-                    </mat-error>
-                  </mat-form-field>
-                </div>
-
-                <div
-                  [style.flex]="setFlex(10, '%')"
-                  class="flex-item text-center"
-                >
-                  <button
-                    mat-icon-button
-                    class="mb-3"
-                    color="warn"
-                    type="button"
-                    (click)="eliminarServicios(i)"
-                  >
-                    <mat-icon>delete</mat-icon>
-                  </button>
+                  <div class="servicio-info">
+                    <div class="servicio-nombre">
+                      <strong>{{ servicio.nombreServicio }}</strong>
+                      <span class="servicio-codigo"
+                        >({{ servicio.codServicio }})</span
+                      >
+                      <span class="servicio-cantidad"
+                        >Cantidad: {{ servicio.cantidad }}</span
+                      >
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
