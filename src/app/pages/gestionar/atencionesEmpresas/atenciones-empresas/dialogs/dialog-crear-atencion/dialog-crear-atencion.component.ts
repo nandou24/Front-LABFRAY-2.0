@@ -23,7 +23,7 @@ import {
   Validators,
 } from '@angular/forms';
 import { Observable } from 'rxjs';
-import { CommonModule } from '@angular/common';
+import { CommonModule, formatDate } from '@angular/common';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import {
@@ -39,9 +39,13 @@ import {
   provideNativeDateAdapter,
 } from '@angular/material/core';
 import { EmpresaService } from '../../../../../../services/mantenimiento/empresa/empresa.service';
-import { ServiciosService } from '../../../../../../services/mantenimiento/servicios/servicios.service';
 import Swal from 'sweetalert2';
 import { RecursoHumanoService } from '../../../../../../services/mantenimiento/recursoHumano/recurso-humano.service';
+import { CotizacionEmpresaService } from '../../../../../../services/gestion/cotizaciones/cotizacionEmpresa/cotizacion-empresa.service';
+import {
+  ICotizacionEmpresa,
+  IServicioCotizacionEmpresa,
+} from '../../../../../../models/Gestion/cotizacionEmpresa.models';
 
 @Component({
   selector: 'app-dialog-crear-atencion',
@@ -73,22 +77,18 @@ import { RecursoHumanoService } from '../../../../../../services/mantenimiento/r
 export class DialogCrearAtencionComponent implements OnInit {
   constructor() {
     this.filteredOptionsEmpresas = this.empresas.slice();
-    this.filteredOptionsServicios = this.serviciosdisponibles.slice();
   }
 
   private _fb = inject(FormBuilder);
   private dialog = inject(MatDialogRef<DialogCrearAtencionComponent>);
   private _empresaService = inject(EmpresaService); // Reemplaza con tu servicio real
-  private _servicioService = inject(ServiciosService);
+  private _cotizacionService = inject(CotizacionEmpresaService);
   private _personalService = inject(RecursoHumanoService);
   isEditable = false;
 
   ngOnInit(): void {
     this.traerEmpresas();
-    this.traerServicios();
     this.traerPersonal();
-    // Inicializar el filtro para el primer servicio
-    this.initializeServicioFilter(0);
   }
 
   // formProgramacion = this._fb.group({
@@ -136,27 +136,21 @@ export class DialogCrearAtencionComponent implements OnInit {
   sedes: IUbicacionSede[] = []; // cargar desde API
   personal: IRecHumano[] = []; // cargar desde API
   personasContactoEmpresa: IPersonaContacto[] = []; // personas de contacto de la empresa seleccionada
+  cotizacionesAprobadas: ICotizacionEmpresa[] = []; // cotizaciones aprobadas de la empresa seleccionada
+  serviciosCotizacionSeleccionada: IServicioCotizacionEmpresa[] = []; // servicios de la cotización seleccionada
 
   empresasFiltradas$!: Observable<IEmpresa[]>;
-  serviciosFiltrados$!: Observable<IServicio[]>;
   personalFiltrado$!: Observable<IRecHumano[]>;
 
   empresaSeleccionada?: IEmpresa;
-
-  // Arrays de filtrado independientes para cada servicio
-  serviciosFiltradosPorIndice: { [index: number]: IServicio[] } = {};
 
   // Step 1
   groupEmpresa = this._fb.group({
     empresa: [null, Validators.required], // guarda objeto; luego puedes mapear a empresaId
     personaContacto: [null, Validators.required], // persona de contacto/coordinador
-    servicios: this._fb.array([this.nuevoServicio()]), // Inicia con un servicio
+    cotizacionAprobada: [null, Validators.required],
     observacion: [''],
   });
-
-  get servicios(): FormArray {
-    return this.groupEmpresa.get('servicios') as FormArray;
-  }
 
   @ViewChild('inputEmpresa') inputEmpresa!: ElementRef<HTMLInputElement>;
   filteredOptionsEmpresas: IEmpresa[];
@@ -192,6 +186,15 @@ export class DialogCrearAtencionComponent implements OnInit {
       // Resetear la persona de contacto seleccionada cuando cambie la empresa
       this.groupEmpresa.get('personaContacto')?.setValue(null);
 
+      this._cotizacionService.obtenerCotizacionPorRuc(empresa.ruc).subscribe({
+        next: (res) => {
+          this.cotizacionesAprobadas = res;
+        },
+        error: (error) => {
+          console.error('Error al obtener la cotización:', error);
+        },
+      });
+
       console.log('Empresa seleccionada:', empresa);
       console.log('Sedes disponibles:', this.sedes);
       console.log(
@@ -224,36 +227,23 @@ export class DialogCrearAtencionComponent implements OnInit {
     }
   }
 
-  @ViewChild('inputServicio') inputServicio!: ElementRef<HTMLInputElement>;
-  filteredOptionsServicios: IServicio[];
+  // Método para manejar la selección de cotización
+  onCotizacionSeleccionada(cotizacion: ICotizacionEmpresa | null) {
+    if (cotizacion) {
+      // Obtener la última versión del historial
+      const ultimaVersion =
+        cotizacion.historial[cotizacion.historial.length - 1];
+      this.serviciosCotizacionSeleccionada =
+        ultimaVersion.serviciosCotizacion || [];
 
-  // Nuevo método: Filtra servicios para un campo específico por índice
-  filterServiciosByIndex(event: Event, index: number): void {
-    const target = event.target as HTMLInputElement;
-    const filterValue = target.value.toLowerCase();
-
-    this.serviciosFiltradosPorIndice[index] = this.serviciosdisponibles.filter(
-      (o) => o.nombreServicio.toLowerCase().includes(filterValue),
-    );
-  }
-
-  // Método para obtener servicios filtrados por índice
-  getServiciosFiltrados(index: number): IServicio[] {
-    if (!this.serviciosFiltradosPorIndice[index]) {
-      this.serviciosFiltradosPorIndice[index] =
-        this.serviciosdisponibles.slice();
+      console.log('Cotización seleccionada:', cotizacion);
+      console.log(
+        'Servicios de la cotización:',
+        this.serviciosCotizacionSeleccionada,
+      );
+    } else {
+      this.serviciosCotizacionSeleccionada = [];
     }
-    return this.serviciosFiltradosPorIndice[index];
-  }
-
-  // Método para inicializar el filtro de un nuevo servicio
-  initializeServicioFilter(index: number): void {
-    this.serviciosFiltradosPorIndice[index] = this.serviciosdisponibles.slice();
-  }
-
-  // Muestra el nombre del servicio al momento de seleccionar
-  displayFnServicios(servicio: IServicio): string {
-    return servicio && servicio.nombreServicio ? servicio.nombreServicio : '';
   }
 
   // Step 2
@@ -287,40 +277,6 @@ export class DialogCrearAtencionComponent implements OnInit {
   }
 
   displayPersonal = (p?: IRecHumano) => (p ? p.nombreRecHumano : '');
-
-  agregarServicio() {
-    const servicio = this.nuevoServicio();
-    const nuevoIndice = this.servicios.length;
-    this.servicios.push(servicio);
-    // Inicializar el filtro para el nuevo servicio
-    this.initializeServicioFilter(nuevoIndice);
-  }
-
-  eliminarServicios(i: number) {
-    this.servicios.removeAt(i);
-    // Limpiar el filtro del índice eliminado
-    delete this.serviciosFiltradosPorIndice[i];
-    // Reorganizar los filtros restantes
-    const nuevosServiciosFiltrados: { [index: number]: IServicio[] } = {};
-    Object.keys(this.serviciosFiltradosPorIndice).forEach((key) => {
-      const index = parseInt(key);
-      if (index > i) {
-        nuevosServiciosFiltrados[index - 1] =
-          this.serviciosFiltradosPorIndice[index];
-      } else if (index < i) {
-        nuevosServiciosFiltrados[index] =
-          this.serviciosFiltradosPorIndice[index];
-      }
-    });
-    this.serviciosFiltradosPorIndice = nuevosServiciosFiltrados;
-  }
-  nuevoServicio(): FormGroup {
-    return this._fb.group({
-      //_id: [null, Validators.required],
-      nombreServicio: [null, Validators.required],
-      cantidad: [1, [Validators.required, Validators.min(1)]],
-    });
-  }
 
   nuevosTurnos(): FormGroup {
     return this._fb.group({
@@ -440,17 +396,6 @@ export class DialogCrearAtencionComponent implements OnInit {
     });
   }
 
-  traerServicios() {
-    this._servicioService.getAllServicios().subscribe((servicios) => {
-      this.serviciosdisponibles = servicios;
-      // Inicializar filtros para servicios existentes
-      for (let i = 0; i < this.servicios.length; i++) {
-        this.initializeServicioFilter(i);
-      }
-      //console.log(servicios);
-    });
-  }
-
   traerPersonal() {
     this._personalService.getLastRecHumanos(100).subscribe((rrhh) => {
       this.personal = rrhh;
@@ -488,12 +433,7 @@ export class DialogCrearAtencionComponent implements OnInit {
         email: personaContactoObj.email || null,
         principal: personaContactoObj.principal || false,
       },
-      servicios:
-        this.servicios.value?.map((servicio: any) => ({
-          nombreServicio:
-            servicio.nombreServicio?.nombreServicio || servicio.nombreServicio,
-          cantidad: servicio.cantidad,
-        })) || [],
+      cotizacionAprobada: this.groupEmpresa.get('cotizacionAprobada')?.value,
       observacion: this.groupEmpresa.get('observacion')?.value || null,
       programacion: {
         sedeEmpresa: this.groupProgramacion.get('sedeEmpresa')?.value || null,

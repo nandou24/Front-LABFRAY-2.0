@@ -126,4 +126,14 @@ export class CotizacionEmpresaService {
       },
     );
   }
+
+  public obtenerCotizacionPorRuc(
+    ruc: string,
+  ): Observable<ICotizacionEmpresa[]> {
+    return this._http
+      .get<IGetLastCotizacion>(`${this.apiUrl}/empresa/${ruc}`, {
+        headers: this._auth.getAuthHeaders(),
+      })
+      .pipe(map((data) => data.cotizaciones));
+  }
 }

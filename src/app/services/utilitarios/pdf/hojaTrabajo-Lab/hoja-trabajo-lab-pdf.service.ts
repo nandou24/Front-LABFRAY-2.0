@@ -60,7 +60,7 @@ export class HojaTrabajoLabPdfService {
     try {
       if (data.solicitanteId) {
         this.datoSolicitante = await firstValueFrom(
-          this._refMedicoService.getRefMedicobyId(data.solicitanteId),
+          this._refMedicoService.getRefMedicobyId(data.solicitanteId._id),
         );
       }
     } catch (error) {
