@@ -13,34 +13,111 @@
   color: white;
   font-weight: normal;
   gap: 0.5rem;
+  min-height: 64px;
+
+  mat-icon {
+    font-size: 32px;
+    width: 32px;
+    height: 32px;
+  }
 }
 
 .username {
   font-size: 1.2rem;
+  line-height: 1.4;
+  word-break: break-word;
 }
 
 .menu-list {
   flex-grow: 1; // Esto hace que la lista crezca ocupando el espacio disponible
-  padding: 0 0.5rem;
+  padding: 0.5rem 0;
   overflow-y: auto; // Por si hay muchas rutas
-}
-
-.logout-container {
-  padding: 1rem;
-  border-top: 1px solid #ccc;
-  background-color: #fafafa;
-  text-align: center;
-
-  button {
-    width: 100%;
-  }
 }
 
 .menu-item {
   cursor: pointer !important;
   transition: background-color 0.3s ease;
+  margin: 0.25rem 0.5rem;
+  border-radius: 8px;
+  min-height: 48px;
+
+  &:hover {
+    background-color: #dfe9f3;
+  }
+
+  // Estilos para el ícono
+  span[matListItemIcon] {
+    margin-right: 1rem;
+    font-size: 20px;
+  }
+
+  // Estilos para el texto
+  div[matListItemTitle] {
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+  }
 }
 
-.menu-item:hover {
-  background-color: #dfe9f3;
+.logout-container {
+  padding: 1rem;
+  border-top: 1px solid #e0e0e0;
+  background-color: #fafafa;
+
+  button {
+    width: 100%;
+    min-height: 44px;
+
+    mat-icon {
+      margin-right: 8px;
+    }
+  }
+}
+
+// Estilos responsive
+@media (max-width: 768px) {
+  .sidenav-header {
+    padding: 0.75rem;
+    min-height: 56px;
+
+    .username {
+      font-size: 1.1rem;
+    }
+  }
+
+  .menu-item {
+    min-height: 44px;
+    margin: 0.125rem 0.25rem;
+
+    div[matListItemTitle] {
+      font-size: 13px;
+    }
+  }
+
+  .logout-container {
+    padding: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .sidenav-header {
+    padding: 0.5rem;
+    min-height: 48px;
+
+    .username {
+      font-size: 1rem;
+    }
+  }
+
+  .menu-item {
+    min-height: 40px;
+
+    span[matListItemIcon] {
+      font-size: 18px;
+    }
+
+    div[matListItemTitle] {
+      font-size: 12px;
+    }
+  }
 }
