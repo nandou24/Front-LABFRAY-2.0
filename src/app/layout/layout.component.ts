@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { SidenavComponent } from './sidenav/sidenav.component';
 import { RouterModule } from '@angular/router';
 import {
@@ -7,42 +7,46 @@ import {
   MatSidenav,
   MatSidenavModule,
 } from '@angular/material/sidenav';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-layout',
-  imports: [CommonModule, RouterModule, SidenavComponent, MatSidenavModule],
+  imports: [
+    CommonModule,
+    RouterModule,
+    SidenavComponent,
+    MatSidenavModule,
+    MatButtonModule,
+    MatIconModule,
+  ],
   templateUrl: './layout.component.html',
   styleUrl: './layout.component.scss',
 })
-export class LayoutComponent {
-  edgeHoverZone = 15; // px desde el borde izquierdo
+export class LayoutComponent implements OnInit, OnDestroy {
+  isMobile = false;
+  private breakpointSubscription?: Subscription;
 
-  // checkEdgeHover(event: MouseEvent, drawer: MatSidenav) {
-  //   if (event.clientX < this.edgeHoverZone && !drawer.opened) {
-  //     drawer.open();
-  //   }
-  // }
+  constructor(private breakpointObserver: BreakpointObserver) {}
 
-  // openDrawer(drawer: MatDrawer) {
-  //   drawer.open();
-  // }
-
-  // closeDrawer(drawer: MatDrawer) {
-  //   drawer.close();
-  // }
-
-  openDrawer(sidenav: MatSidenav) {
-    sidenav.open();
+  ngOnInit() {
+    // Detectar si es dispositivo móvil/tablet
+    this.breakpointSubscription = this.breakpointObserver
+      .observe([Breakpoints.Handset, Breakpoints.Tablet])
+      .subscribe((result) => {
+        this.isMobile = result.matches;
+      });
   }
 
-  closeDrawer(sidenav: MatSidenav) {
-    sidenav.close();
-  }
-
-  checkEdgeHover(event: MouseEvent, sidenav: MatSidenav) {
-    const threshold = 10; // px desde el borde izquierdo
-    if (event.clientX <= threshold && !sidenav.opened) {
-      sidenav.open();
+  ngOnDestroy() {
+    if (this.breakpointSubscription) {
+      this.breakpointSubscription.unsubscribe();
     }
+  }
+
+  toggleSidenav(sidenav: MatSidenav) {
+    sidenav.toggle();
   }
 }

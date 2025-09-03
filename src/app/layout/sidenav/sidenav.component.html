@@ -8,7 +8,11 @@
 
   <mat-list class="menu-list">
     <ng-container *ngFor="let ruta of rutasPermitidas">
-      <mat-list-item class="menu-item" [routerLink]="ruta.urlRuta">
+      <mat-list-item
+        class="menu-item"
+        [routerLink]="ruta.urlRuta"
+        (click)="onMenuItemClick()"
+      >
         <span matListItemIcon class="material-symbols-outlined">
           {{ ruta.iconoRuta }}
         </span>

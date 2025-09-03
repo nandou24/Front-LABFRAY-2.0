@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, inject, Output, EventEmitter } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
@@ -24,6 +24,8 @@ import { MatMenuModule } from '@angular/material/menu';
   styleUrl: './sidenav.component.scss',
 })
 export class SidenavComponent {
+  @Output() closeSidenav = new EventEmitter<void>();
+
   private _authService = inject(AuthService);
   private router = inject(Router);
 
@@ -37,6 +39,11 @@ export class SidenavComponent {
   nombreUsuario: string = '';
   rol: string = '';
   public rutasPermitidas: any[] = [];
+
+  onMenuItemClick() {
+    // Emitir evento para cerrar el sidenav al hacer click en cualquier opción del menú
+    this.closeSidenav.emit();
+  }
 
   validarToken() {
     if (this._authService.isTokenExpirado()) {

@@ -2,16 +2,29 @@
   <!-- Sidebar -->
   <mat-sidenav
     #sidenav
-    mode="side"
+    mode="over"
     class="sidenav"
-    (mouseenter)="openDrawer(sidenav)"
-    (mouseleave)="closeDrawer(sidenav)"
+    [class.mobile-sidenav]="isMobile"
   >
-    <app-sidenav></app-sidenav>
+    <app-sidenav (closeSidenav)="sidenav.close()"></app-sidenav>
   </mat-sidenav>
 
   <!-- Contenido principal -->
-  <mat-sidenav-content (mousemove)="checkEdgeHover($event, sidenav)">
+  <mat-sidenav-content>
+    <!-- Botón hamburguesa flotante -->
+    <button
+      mat-fab
+      class="floating-menu-button"
+      [class.mobile-fab]="isMobile"
+      [class.desktop-fab]="!isMobile"
+      (click)="toggleSidenav(sidenav)"
+      [attr.aria-label]="sidenav.opened ? 'Cerrar menú' : 'Abrir menú'"
+    >
+      <mat-icon [class.rotate]="sidenav.opened">
+        {{ sidenav.opened ? "close" : "menu" }}
+      </mat-icon>
+    </button>
+
     <div class="main-content">
       <router-outlet></router-outlet>
     </div>
