@@ -147,13 +147,20 @@ export class DialogCrearAtencionComponent implements OnInit {
   // Step 1
   groupEmpresa = this._fb.group({
     empresa: [null, Validators.required], // guarda objeto; luego puedes mapear a empresaId
-    personaContacto: [null, Validators.required], // persona de contacto/coordinador
+    coordinadores: this._fb.array(
+      [this.nuevoCoordinador()],
+      [Validators.minLength(1)],
+    ), // array de coordinadores/personas de contacto
     cotizacionAprobada: [null, Validators.required],
     observacion: [''],
   });
 
   @ViewChild('inputEmpresa') inputEmpresa!: ElementRef<HTMLInputElement>;
   filteredOptionsEmpresas: IEmpresa[];
+
+  get coordinadores(): FormArray {
+    return this.groupEmpresa.get('coordinadores') as FormArray;
+  }
 
   //Filtra las empresas por razón social o RUC.
   filterEmpresas(): void {
@@ -183,8 +190,8 @@ export class DialogCrearAtencionComponent implements OnInit {
       // Resetear la sede seleccionada cuando cambie la empresa
       this.groupProgramacion.get('sedeEmpresa')?.setValue(null);
 
-      // Resetear la persona de contacto seleccionada cuando cambie la empresa
-      this.groupEmpresa.get('personaContacto')?.setValue(null);
+      // Resetear los coordinadores seleccionados cuando cambie la empresa
+      this.resetearCoordinadores();
 
       this._cotizacionService.obtenerCotizacionPorRuc(empresa.ruc).subscribe({
         next: (res) => {
@@ -206,7 +213,7 @@ export class DialogCrearAtencionComponent implements OnInit {
       this.sedes = [];
       this.personasContactoEmpresa = [];
       this.groupProgramacion.get('sedeEmpresa')?.setValue(null);
-      this.groupEmpresa.get('personaContacto')?.setValue(null);
+      this.resetearCoordinadores();
     }
   }
 
@@ -292,6 +299,12 @@ export class DialogCrearAtencionComponent implements OnInit {
     });
   }
 
+  nuevoCoordinador(): FormGroup {
+    return this._fb.group({
+      coordinador: [null as IPersonaContacto | null, Validators.required],
+    });
+  }
+
   agregarTurno() {
     this.turnos.push(this.nuevosTurnos());
   }
@@ -309,6 +322,51 @@ export class DialogCrearAtencionComponent implements OnInit {
     if (this.equipoPersonal.length > 1) {
       this.equipoPersonal.removeAt(i);
     }
+  }
+
+  agregarCoordinador() {
+    const nuevoCoordinadorForm = this.nuevoCoordinador();
+    this.coordinadores.push(nuevoCoordinadorForm);
+  }
+
+  eliminarCoordinador(i: number) {
+    if (this.coordinadores.length > 1) {
+      this.coordinadores.removeAt(i);
+    }
+  }
+
+  resetearCoordinadores() {
+    // Limpiar todos los coordinadores
+    while (this.coordinadores.length !== 0) {
+      this.coordinadores.removeAt(0);
+    }
+    // Agregar un coordinador vacío
+    this.coordinadores.push(this.nuevoCoordinador());
+  }
+
+  // Validar que no se repita el coordinador
+  isCoordinadorYaSeleccionado(
+    coordinador: IPersonaContacto,
+    currentIndex: number,
+  ): boolean {
+    return this.coordinadores.controls.some((control, index) => {
+      if (index === currentIndex) return false; // No comparar con sí mismo
+      const coordinadorSeleccionado = control.get('coordinador')?.value;
+      return (
+        coordinadorSeleccionado &&
+        coordinadorSeleccionado.nombre === coordinador.nombre &&
+        coordinadorSeleccionado.telefono === coordinador.telefono
+      );
+    });
+  }
+
+  // Obtener coordinadores disponibles para un índice específico
+  getCoordinadoresDisponibles(currentIndex: number): IPersonaContacto[] {
+    return this.personasContactoEmpresa.filter((c) => {
+      // No mostrar coordinadores ya seleccionados en otros índices
+      const yaSeleccionado = this.isCoordinadorYaSeleccionado(c, currentIndex);
+      return !yaSeleccionado;
+    });
   }
 
   // Validar que no se repita el personal
@@ -414,25 +472,31 @@ export class DialogCrearAtencionComponent implements OnInit {
     }
 
     const empresaControl = this.groupEmpresa.get('empresa');
-    const personaContactoControl = this.groupEmpresa.get('personaContacto');
+    const coordinadoresControl = this.groupEmpresa.get('coordinadores');
 
-    if (!empresaControl?.value || !personaContactoControl?.value) {
-      console.log('Empresa o persona de contacto no seleccionada');
+    if (
+      !empresaControl?.value ||
+      !coordinadoresControl?.value ||
+      coordinadoresControl.value.length === 0
+    ) {
+      console.log('Empresa o coordinadores no seleccionados');
       return;
     }
 
     const empresaObj = empresaControl.value as IEmpresa;
-    const personaContactoObj = personaContactoControl.value as IPersonaContacto;
+    const coordinadoresArray = coordinadoresControl.value
+      .map((c: any) => c.coordinador)
+      .filter((coord: any) => coord) as IPersonaContacto[];
 
     const dto = {
       empresaId: empresaObj._id,
-      personaContacto: {
-        nombre: personaContactoObj.nombre,
-        cargo: personaContactoObj.cargo,
-        telefono: personaContactoObj.telefono,
-        email: personaContactoObj.email || null,
-        principal: personaContactoObj.principal || false,
-      },
+      coordinadores: coordinadoresArray.map((coord) => ({
+        nombre: coord.nombre,
+        cargo: coord.cargo,
+        telefono: coord.telefono,
+        email: coord.email || null,
+        principal: coord.principal || false,
+      })),
       cotizacionAprobada: this.groupEmpresa.get('cotizacionAprobada')?.value,
       observacion: this.groupEmpresa.get('observacion')?.value || null,
       programacion: {
