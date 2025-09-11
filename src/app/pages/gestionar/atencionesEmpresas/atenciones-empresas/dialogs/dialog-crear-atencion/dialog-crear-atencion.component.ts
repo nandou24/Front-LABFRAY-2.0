@@ -1,3 +1,4 @@
+import { AtencionEmpresaService } from '../../../../../../services/gestion/atencionEmpresa/atencion-empresa.service';
 import {
   Component,
   ElementRef,
@@ -85,6 +86,7 @@ export class DialogCrearAtencionComponent implements OnInit {
   private _cotizacionService = inject(CotizacionEmpresaService);
   private _personalService = inject(RecursoHumanoService);
   isEditable = false;
+  private _atencionEmpresaService = inject(AtencionEmpresaService);
 
   ngOnInit(): void {
     this.traerEmpresas();
@@ -238,16 +240,18 @@ export class DialogCrearAtencionComponent implements OnInit {
   onCotizacionSeleccionada(cotizacion: ICotizacionEmpresa | null) {
     if (cotizacion) {
       // Obtener la última versión del historial
-      const ultimaVersion =
-        cotizacion.historial[cotizacion.historial.length - 1];
-      this.serviciosCotizacionSeleccionada =
-        ultimaVersion.serviciosCotizacion || [];
+      const ultimaVersion = cotizacion.historial[cotizacion.historial.length - 1];
+      let servicios = ultimaVersion.serviciosCotizacion || [];
+      if (ultimaVersion.aplicarPrecioGlobal && ultimaVersion.cantidadGlobal != null) {
+        servicios = servicios.map(servicio => ({
+          ...servicio,
+          cantidad: ultimaVersion.cantidadGlobal ?? 0
+        }));
+      }
+      this.serviciosCotizacionSeleccionada = servicios;
 
       console.log('Cotización seleccionada:', cotizacion);
-      console.log(
-        'Servicios de la cotización:',
-        this.serviciosCotizacionSeleccionada,
-      );
+      console.log('Servicios de la cotización:', this.serviciosCotizacionSeleccionada);
     } else {
       this.serviciosCotizacionSeleccionada = [];
     }
@@ -270,7 +274,6 @@ export class DialogCrearAtencionComponent implements OnInit {
     responsable: [null as IRecHumano | null, Validators.required],
     equipoPersonal: this._fb.array(
       [this.nuevoPersonal()],
-      [Validators.minLength(1)],
     ),
     notas: [''],
   });
@@ -295,7 +298,7 @@ export class DialogCrearAtencionComponent implements OnInit {
 
   nuevoPersonal(): FormGroup {
     return this._fb.group({
-      personal: [null as IRecHumano | null, Validators.required],
+      personal: [null as IRecHumano | null],
     });
   }
 
@@ -461,7 +464,7 @@ export class DialogCrearAtencionComponent implements OnInit {
     });
   }
 
-  crear() {
+  crearAtencion() {
     if (
       this.groupEmpresa.invalid ||
       this.groupProgramacion.invalid ||
@@ -488,40 +491,62 @@ export class DialogCrearAtencionComponent implements OnInit {
       .map((c: any) => c.coordinador)
       .filter((coord: any) => coord) as IPersonaContacto[];
 
-    const dto = {
+    // Construir el objeto según el modelo IAtencionEmp
+    const atencion: any = {
       empresaId: empresaObj._id,
-      coordinadores: coordinadoresArray.map((coord) => ({
+      servicioTipo: 'Otro', // Ajustar según lógica de tu app
+      fechaRegistro: new Date(),
+      programaciones: [
+        {
+          fechas: this.turnos.value.map((turno: any) => ({
+            fecha: turno.fecha,
+            horaInicio: turno.horaInicio,
+            horaFin: turno.horaFin,
+          })),
+          sedeEmpresa: this.groupProgramacion.get('sedeEmpresa')?.value || null,
+          direccion: this.groupProgramacion.get('direccion')?.value || null,
+          linkMaps: this.groupProgramacion.get('linkMaps')?.value || null,
+          personalAsignado: this.equipoPersonal.value
+            ?.map((ep: any) => ep.personal?._id)
+            .filter((id: any) => id) || [],
+          estado: 'PROGRAMADA',
+          observacion: this.groupEmpresa.get('observacion')?.value || null,
+          archivos: [],
+        },
+      ],
+      contactosEmpresa: coordinadoresArray.map((coord) => ({
         nombre: coord.nombre,
         cargo: coord.cargo,
         telefono: coord.telefono,
         email: coord.email || null,
-        principal: coord.principal || false,
       })),
-      cotizacionAprobada: this.groupEmpresa.get('cotizacionAprobada')?.value,
-      observacion: this.groupEmpresa.get('observacion')?.value || null,
-      programacion: {
-        sedeEmpresa: this.groupProgramacion.get('sedeEmpresa')?.value || null,
-        direccion: this.groupProgramacion.get('direccion')?.value || null,
-        linkMaps: this.groupProgramacion.get('linkMaps')?.value || null,
-        turnos:
-          this.turnos.value?.map((turno: any) => ({
-            fecha: turno.fecha,
-            horaInicio: turno.horaInicio,
-            horaFin: turno.horaFin,
-          })) || [],
-      },
-      equipo: {
-        responsableId: this.groupEquipo.get('responsable')?.value?._id || null,
-        equipoPersonalIds:
-          this.equipoPersonal.value
-            ?.map((ep: any) => ep.personal?._id)
-            .filter((id: any) => id) || [],
-        notas: this.groupEquipo.get('notas')?.value || null,
-      },
+      // Puedes agregar más campos aquí según el modelo
     };
 
-    console.log('DTO a enviar:', dto);
-    this.dialog.close(dto);
+    Swal.fire({
+          title: '¿Estás seguro?',
+          text: '¿Deseas confirmar la generación de esta atención?',
+          icon: 'question',
+          showCancelButton: true,
+          confirmButtonText: 'Sí, confirmar',
+          cancelButtonText: 'Cancelar',
+        }).then((result) => {
+          if (result.isConfirmed) {
+    this._atencionEmpresaService.crearAtencionEmpresa(atencion).subscribe({
+      next: (resp) => {
+        console.log('Atención creada:', resp);
+        this.dialog.close(resp);
+      },
+      error: (err) => {
+        console.error('Error al crear atención:', err);
+        Swal.fire('Error', 'No se pudo crear la atención', 'error');
+      },
+    });
+
+          }
+        });
+
+
   }
 
   // Método para mostrar información de la persona de contacto
