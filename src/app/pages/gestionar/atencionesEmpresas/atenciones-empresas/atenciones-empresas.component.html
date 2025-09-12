@@ -26,3 +26,93 @@
 </div>
 
 <mat-divider></mat-divider>
+
+<mat-tab-group mat-stretch-tabs="false" mat-align-tabs="start">
+  <mat-tab label="Atenciones vigentes">
+    <div class="tab-content">
+      <table
+        mat-table
+        [dataSource]="dataSourceAtencion"
+        multiTemplateDataRows
+        class="mat-elevation-z8 atenciones-table"
+      >
+        <!-- Código Atención -->
+        <ng-container matColumnDef="codAtencion">
+          <th mat-header-cell *matHeaderCellDef>Código Atención</th>
+          <td mat-cell *matCellDef="let row">
+            <span class="codigo-atencion">
+              {{ getCodigoAtencion(row) }}
+            </span>
+          </td>
+        </ng-container>
+
+        <!-- Fecha Programación -->
+        <ng-container matColumnDef="fechaProgramacion">
+          <th mat-header-cell *matHeaderCellDef>Fecha Programación</th>
+          <td mat-cell *matCellDef="let row">
+            {{ getFechaProgramacion(row) | date: "dd/MM/yyyy" }}
+          </td>
+        </ng-container>
+
+        <!-- Nombre Empresa -->
+        <ng-container matColumnDef="nombreEmpresa">
+          <th mat-header-cell *matHeaderCellDef>Empresa</th>
+          <td mat-cell *matCellDef="let row">
+            <div class="empresa-info">
+              <div class="empresa-nombre">{{ getNombreEmpresa(row) }}</div>
+              <div class="empresa-codigo">{{ row.empresaId }}</div>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Estado de Pago -->
+        <ng-container matColumnDef="estadoPago">
+          <th mat-header-cell *matHeaderCellDef>Estado Pago</th>
+          <td mat-cell *matCellDef="let row">
+            <mat-chip [color]="getColorEstadoPago(getEstadoPago(row))" selected>
+              {{ getEstadoPago(row) }}
+            </mat-chip>
+          </td>
+        </ng-container>
+
+        <!-- Estado de Evaluación -->
+        <ng-container matColumnDef="estadoEvaluacion">
+          <th mat-header-cell *matHeaderCellDef>Estado Evaluación</th>
+          <td mat-cell *matCellDef="let row">
+            <mat-chip
+              [color]="getColorEstadoEvaluacion(getEstadoEvaluacion(row))"
+              selected
+            >
+              {{ getEstadoEvaluacion(row) }}
+            </mat-chip>
+          </td>
+        </ng-container>
+
+        <!-- Filas de la tabla -->
+        <tr
+          mat-header-row
+          *matHeaderRowDef="columnasTablaAtencionEmpresas"
+        ></tr>
+        <tr
+          mat-row
+          *matRowDef="let row; columns: columnasTablaAtencionEmpresas"
+          class="atencion-row"
+        ></tr>
+      </table>
+
+      <!-- Paginador -->
+      <mat-paginator
+        [pageSizeOptions]="[10, 25, 50]"
+        [pageSize]="10"
+        showFirstLastButtons
+      >
+      </mat-paginator>
+    </div>
+  </mat-tab>
+
+  <mat-tab label="Atenciones antiguas">
+    <div class="tab-content">
+      <p>Contenido de atenciones antiguas...</p>
+    </div>
+  </mat-tab>
+</mat-tab-group>

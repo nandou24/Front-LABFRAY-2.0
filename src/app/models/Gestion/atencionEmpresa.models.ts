@@ -7,7 +7,7 @@ export type EstadoAtencion =
   | 'PAGADA'
   | 'ANULADA';
 
-export interface IAtencionEmp {
+export interface IAtencionEmpresas {
   _id?: string;
   empresaId: string;
   servicioTipo: 'ETAs' | 'Campaña' | 'Consulta' | 'Otro';
@@ -56,7 +56,6 @@ export interface IAtencionEmp {
     observacion?: string;
     archivos?: string[]; // capturas
   }>;
-
 
   totales?: {
     pagadoNeto: number;

@@ -204,12 +204,12 @@ export class DialogCrearAtencionComponent implements OnInit {
         },
       });
 
-      console.log('Empresa seleccionada:', empresa);
-      console.log('Sedes disponibles:', this.sedes);
-      console.log(
-        'Personas de contacto disponibles:',
-        this.personasContactoEmpresa,
-      );
+      // console.log('Empresa seleccionada:', empresa);
+      // console.log('Sedes disponibles:', this.sedes);
+      // console.log(
+      //   'Personas de contacto disponibles:',
+      //   this.personasContactoEmpresa,
+      // );
     } else {
       this.empresaSeleccionada = undefined;
       this.sedes = [];
@@ -229,7 +229,7 @@ export class DialogCrearAtencionComponent implements OnInit {
       if (sede.coordenadasMaps) {
         this.groupProgramacion.get('linkMaps')?.setValue(sede.coordenadasMaps);
       }
-      console.log('Sede seleccionada:', sede);
+      // console.log('Sede seleccionada:', sede);
     } else {
       this.groupProgramacion.get('direccion')?.setValue(null);
       this.groupProgramacion.get('linkMaps')?.setValue(null);
@@ -240,18 +240,25 @@ export class DialogCrearAtencionComponent implements OnInit {
   onCotizacionSeleccionada(cotizacion: ICotizacionEmpresa | null) {
     if (cotizacion) {
       // Obtener la última versión del historial
-      const ultimaVersion = cotizacion.historial[cotizacion.historial.length - 1];
+      const ultimaVersion =
+        cotizacion.historial[cotizacion.historial.length - 1];
       let servicios = ultimaVersion.serviciosCotizacion || [];
-      if (ultimaVersion.aplicarPrecioGlobal && ultimaVersion.cantidadGlobal != null) {
-        servicios = servicios.map(servicio => ({
+      if (
+        ultimaVersion.aplicarPrecioGlobal &&
+        ultimaVersion.cantidadGlobal != null
+      ) {
+        servicios = servicios.map((servicio) => ({
           ...servicio,
-          cantidad: ultimaVersion.cantidadGlobal ?? 0
+          cantidad: ultimaVersion.cantidadGlobal ?? 0,
         }));
       }
       this.serviciosCotizacionSeleccionada = servicios;
 
-      console.log('Cotización seleccionada:', cotizacion);
-      console.log('Servicios de la cotización:', this.serviciosCotizacionSeleccionada);
+      // console.log('Cotización seleccionada:', cotizacion);
+      // console.log(
+      //   'Servicios de la cotización:',
+      //   this.serviciosCotizacionSeleccionada,
+      // );
     } else {
       this.serviciosCotizacionSeleccionada = [];
     }
@@ -272,9 +279,7 @@ export class DialogCrearAtencionComponent implements OnInit {
   // Step 3
   groupEquipo = this._fb.group({
     responsable: [null as IRecHumano | null, Validators.required],
-    equipoPersonal: this._fb.array(
-      [this.nuevoPersonal()],
-    ),
+    equipoPersonal: this._fb.array([this.nuevoPersonal()]),
     notas: [''],
   });
 
@@ -460,7 +465,7 @@ export class DialogCrearAtencionComponent implements OnInit {
   traerPersonal() {
     this._personalService.getLastRecHumanos(100).subscribe((rrhh) => {
       this.personal = rrhh;
-      console.log(rrhh);
+      // console.log(rrhh);
     });
   }
 
@@ -470,7 +475,7 @@ export class DialogCrearAtencionComponent implements OnInit {
       this.groupProgramacion.invalid ||
       this.groupEquipo.invalid
     ) {
-      console.log('Formulario inválido');
+      // console.log('Formulario inválido');
       return;
     }
 
@@ -482,7 +487,7 @@ export class DialogCrearAtencionComponent implements OnInit {
       !coordinadoresControl?.value ||
       coordinadoresControl.value.length === 0
     ) {
-      console.log('Empresa o coordinadores no seleccionados');
+      // console.log('Empresa o coordinadores no seleccionados');
       return;
     }
 
@@ -506,9 +511,10 @@ export class DialogCrearAtencionComponent implements OnInit {
           sedeEmpresa: this.groupProgramacion.get('sedeEmpresa')?.value || null,
           direccion: this.groupProgramacion.get('direccion')?.value || null,
           linkMaps: this.groupProgramacion.get('linkMaps')?.value || null,
-          personalAsignado: this.equipoPersonal.value
-            ?.map((ep: any) => ep.personal?._id)
-            .filter((id: any) => id) || [],
+          personalAsignado:
+            this.equipoPersonal.value
+              ?.map((ep: any) => ep.personal?._id)
+              .filter((id: any) => id) || [],
           estado: 'PROGRAMADA',
           observacion: this.groupEmpresa.get('observacion')?.value || null,
           archivos: [],
@@ -524,29 +530,27 @@ export class DialogCrearAtencionComponent implements OnInit {
     };
 
     Swal.fire({
-          title: '¿Estás seguro?',
-          text: '¿Deseas confirmar la generación de esta atención?',
-          icon: 'question',
-          showCancelButton: true,
-          confirmButtonText: 'Sí, confirmar',
-          cancelButtonText: 'Cancelar',
-        }).then((result) => {
-          if (result.isConfirmed) {
-    this._atencionEmpresaService.crearAtencionEmpresa(atencion).subscribe({
-      next: (resp) => {
-        console.log('Atención creada:', resp);
-        this.dialog.close(resp);
-      },
-      error: (err) => {
-        console.error('Error al crear atención:', err);
-        Swal.fire('Error', 'No se pudo crear la atención', 'error');
-      },
-    });
-
-          }
+      title: '¿Estás seguro?',
+      text: '¿Deseas confirmar la generación de esta atención?',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, confirmar',
+      cancelButtonText: 'Cancelar',
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this._atencionEmpresaService.crearAtencionEmpresa(atencion).subscribe({
+          next: (resp) => {
+            //console.log('Atención creada:', resp);
+            Swal.fire('Éxito', 'Atención creada correctamente', 'success');
+            this.dialog.close(resp);
+          },
+          error: (err) => {
+            //console.error('Error al crear atención:', err);
+            Swal.fire('Error', 'No se pudo crear la atención', 'error');
+          },
         });
-
-
+      }
+    });
   }
 
   // Método para mostrar información de la persona de contacto

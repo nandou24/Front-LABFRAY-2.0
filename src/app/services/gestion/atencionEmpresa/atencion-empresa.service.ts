@@ -2,7 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { environment } from '../../../../environments/environment';
-import { IAtencionEmp } from '../../../models/Gestion/atencionEmpresa.models';
+import { IAtencionEmpresas } from '../../../models/Gestion/atencionEmpresa.models';
 import { AuthService } from '../../auth/auth.service';
 
 @Injectable({
@@ -19,7 +19,7 @@ export class AtencionEmpresaService {
    * Crear nueva atención empresarial
    * POST /api/atencionEmpresa
    */
-  public crearAtencionEmpresa(body: IAtencionEmp): Observable<any> {
+  public crearAtencionEmpresa(body: IAtencionEmpresas): Observable<any> {
     return this._http.post<any>(this.apiUrl, body, {
       headers: this._auth.getAuthHeaders(),
     });
@@ -29,9 +29,9 @@ export class AtencionEmpresaService {
    * Obtener atenciones empresariales recientes
    * GET /api/atencionEmpresa/ultimas
    */
-  public getUltimasAtencionesEmpresa(): Observable<IAtencionEmp[]> {
+  public getUltimasAtencionesEmpresa(): Observable<IAtencionEmpresas[]> {
     return this._http
-      .get<{ atenciones: IAtencionEmp[] }>(`${this.apiUrl}/ultimas`, {
+      .get<{ atenciones: IAtencionEmpresas[] }>(`${this.apiUrl}/ultimas`, {
         headers: this._auth.getAuthHeaders(),
       })
       .pipe(map((data) => data.atenciones));
@@ -41,10 +41,12 @@ export class AtencionEmpresaService {
    * Buscar atenciones empresariales por término
    * GET /api/atencionEmpresa/buscar
    */
-  public buscarAtencionesEmpresa(terminoBusqueda: string): Observable<IAtencionEmp[]> {
+  public buscarAtencionesEmpresa(
+    terminoBusqueda: string,
+  ): Observable<IAtencionEmpresas[]> {
     const params = new HttpParams().set('search', terminoBusqueda);
     return this._http
-      .get<{ atenciones: IAtencionEmp[] }>(`${this.apiUrl}/buscar`, {
+      .get<{ atenciones: IAtencionEmpresas[] }>(`${this.apiUrl}/buscar`, {
         params,
         headers: this._auth.getAuthHeaders(),
       })
@@ -55,8 +57,10 @@ export class AtencionEmpresaService {
    * Obtener atención empresarial por ID
    * GET /api/atencionEmpresa/:id
    */
-  public obtenerAtencionEmpresaPorId(id: string): Observable<IAtencionEmp> {
-    return this._http.get<IAtencionEmp>(`${this.apiUrl}/${id}`, {
+  public obtenerAtencionEmpresaPorId(
+    id: string,
+  ): Observable<IAtencionEmpresas> {
+    return this._http.get<IAtencionEmpresas>(`${this.apiUrl}/${id}`, {
       headers: this._auth.getAuthHeaders(),
     });
   }
@@ -65,7 +69,10 @@ export class AtencionEmpresaService {
    * Actualizar atención empresarial
    * PUT /api/atencionEmpresa/:id
    */
-  public actualizarAtencionEmpresa(id: string, body: IAtencionEmp): Observable<any> {
+  public actualizarAtencionEmpresa(
+    id: string,
+    body: IAtencionEmpresas,
+  ): Observable<any> {
     return this._http.put<any>(`${this.apiUrl}/${id}`, body, {
       headers: this._auth.getAuthHeaders(),
     });
