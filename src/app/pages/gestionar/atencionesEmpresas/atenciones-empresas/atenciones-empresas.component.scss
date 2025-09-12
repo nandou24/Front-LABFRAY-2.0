@@ -107,10 +107,7 @@
 
 //INICIO AGREGADOS PARA TABLA NORMAL SIN EXPAND---------
 
-// Estilos para las tabs
-.tab-content {
-  padding: 20px 0;
-}
+
 
 // Estilos para la tabla
 .atenciones-table {
@@ -121,12 +118,12 @@
     background-color: #f5f5f5;
     color: #333;
     font-weight: 600;
-    padding: 16px 12px;
+    padding: 10px 10px;
     font-size: 14px;
   }
 
   td {
-    padding: 16px 12px;
+    padding: 5px 5px;
   }
 
   .atencion-row {
@@ -135,33 +132,6 @@
     &:hover {
       background-color: #f8f9fa;
     }
-  }
-}
-
-// Estilos para el código de atención
-.codigo-atencion {
-  font-family: "Courier New", monospace;
-  font-weight: 600;
-  color: #333;
-  background: #f0f0f0;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-}
-
-// Estilos para información de empresa
-.empresa-info {
-  .empresa-nombre {
-    font-weight: 600;
-    color: #333;
-    font-size: 14px;
-    margin-bottom: 2px;
-  }
-
-  .empresa-codigo {
-    font-size: 12px;
-    color: #666;
-    font-family: "Courier New", monospace;
   }
 }
 

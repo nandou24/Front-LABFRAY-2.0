@@ -27,9 +27,8 @@
 
 <mat-divider></mat-divider>
 
-<mat-tab-group mat-stretch-tabs="false" mat-align-tabs="start">
+<mat-tab-group>
   <mat-tab label="Atenciones vigentes">
-    <div class="tab-content">
       <table
         mat-table
         [dataSource]="dataSourceAtencion"
@@ -40,7 +39,7 @@
         <ng-container matColumnDef="codAtencion">
           <th mat-header-cell *matHeaderCellDef>Código Atención</th>
           <td mat-cell *matCellDef="let row">
-            <span class="codigo-atencion">
+            <span>
               {{ getCodigoAtencion(row) }}
             </span>
           </td>
@@ -58,10 +57,9 @@
         <ng-container matColumnDef="nombreEmpresa">
           <th mat-header-cell *matHeaderCellDef>Empresa</th>
           <td mat-cell *matCellDef="let row">
-            <div class="empresa-info">
-              <div class="empresa-nombre">{{ getNombreEmpresa(row) }}</div>
-              <div class="empresa-codigo">{{ row.empresaId }}</div>
-            </div>
+
+              <div>{{ getNombreEmpresa(row).toUpperCase() }}</div>
+
           </td>
         </ng-container>
 
@@ -107,7 +105,6 @@
         showFirstLastButtons
       >
       </mat-paginator>
-    </div>
   </mat-tab>
 
   <mat-tab label="Atenciones antiguas">
