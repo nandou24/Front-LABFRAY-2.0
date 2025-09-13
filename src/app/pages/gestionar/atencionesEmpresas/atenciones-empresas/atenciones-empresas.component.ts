@@ -116,7 +116,21 @@ export class AtencionesEmpresasComponent {
     'nombreEmpresa',
     'estadoPago',
     'estadoEvaluacion',
+    'acciones',
   ];
+
+  columnsToDisplayWithExpand = [...this.columnasTablaAtencionEmpresas, 'expand'];
+  expandedElement: IAtencionEmpresas | null = null;
+
+    /** Checks whether an element is expanded. */
+  isExpanded(element: IAtencionEmpresas) {
+    return this.expandedElement === element;
+  }
+
+  /** Toggles the expanded state of an element. */
+  toggle(element: IAtencionEmpresas) {
+    this.expandedElement = this.isExpanded(element) ? null : element;
+  }
 
   // Métodos auxiliares para la tabla
   getCodigoAtencion(atencion: IAtencionEmpresas): string {

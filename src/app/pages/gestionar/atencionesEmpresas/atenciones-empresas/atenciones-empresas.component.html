@@ -29,82 +29,207 @@
 
 <mat-tab-group>
   <mat-tab label="Atenciones vigentes">
-      <table
-        mat-table
-        [dataSource]="dataSourceAtencion"
-        multiTemplateDataRows
-        class="mat-elevation-z8 atenciones-table"
-      >
-        <!-- Código Atención -->
-        <ng-container matColumnDef="codAtencion">
-          <th mat-header-cell *matHeaderCellDef>Código Atención</th>
-          <td mat-cell *matCellDef="let row">
-            <span>
-              {{ getCodigoAtencion(row) }}
-            </span>
-          </td>
-        </ng-container>
+    <table
+      mat-table
+      [dataSource]="dataSourceAtencion"
+      multiTemplateDataRows
+      class="mat-elevation-z8"
+    >
+      <!-- Código Atención -->
+      <ng-container matColumnDef="codAtencion">
+        <th mat-header-cell *matHeaderCellDef>Código Atención</th>
+        <td mat-cell *matCellDef="let row">
+          {{ getCodigoAtencion(row) }}
+        </td>
+      </ng-container>
 
-        <!-- Fecha Programación -->
-        <ng-container matColumnDef="fechaProgramacion">
-          <th mat-header-cell *matHeaderCellDef>Fecha Programación</th>
-          <td mat-cell *matCellDef="let row">
-            {{ getFechaProgramacion(row) | date: "dd/MM/yyyy" }}
-          </td>
-        </ng-container>
+      <!-- Fecha Programación -->
+      <ng-container matColumnDef="fechaProgramacion">
+        <th mat-header-cell *matHeaderCellDef>Fecha Programación</th>
+        <td mat-cell *matCellDef="let row">
+          {{ getFechaProgramacion(row) | date: "dd/MM/yyyy" }}
+        </td>
+      </ng-container>
 
-        <!-- Nombre Empresa -->
-        <ng-container matColumnDef="nombreEmpresa">
-          <th mat-header-cell *matHeaderCellDef>Empresa</th>
-          <td mat-cell *matCellDef="let row">
+      <!-- Nombre Empresa -->
+      <ng-container matColumnDef="nombreEmpresa">
+        <th mat-header-cell *matHeaderCellDef>Empresa</th>
+        <td mat-cell *matCellDef="let row">
+          {{ getNombreEmpresa(row).toUpperCase() }}
+        </td>
+      </ng-container>
 
-              <div>{{ getNombreEmpresa(row).toUpperCase() }}</div>
+      <!-- Estado de Pago -->
+      <ng-container matColumnDef="estadoPago">
+        <th mat-header-cell *matHeaderCellDef>Estado Pago</th>
+        <td mat-cell *matCellDef="let row">
+          <mat-chip [color]="getColorEstadoPago(getEstadoPago(row))" selected>
+            {{ getEstadoPago(row) }}
+          </mat-chip>
+        </td>
+      </ng-container>
 
-          </td>
-        </ng-container>
+      <!-- Estado de Evaluación -->
+      <ng-container matColumnDef="estadoEvaluacion">
+        <th mat-header-cell *matHeaderCellDef>Estado Evaluación</th>
+        <td mat-cell *matCellDef="let row">
+          <mat-chip
+            [color]="getColorEstadoEvaluacion(getEstadoEvaluacion(row))"
+            selected
+          >
+            {{ getEstadoEvaluacion(row) }}
+          </mat-chip>
+        </td>
+      </ng-container>
 
-        <!-- Estado de Pago -->
-        <ng-container matColumnDef="estadoPago">
-          <th mat-header-cell *matHeaderCellDef>Estado Pago</th>
-          <td mat-cell *matCellDef="let row">
-            <mat-chip [color]="getColorEstadoPago(getEstadoPago(row))" selected>
-              {{ getEstadoPago(row) }}
-            </mat-chip>
-          </td>
-        </ng-container>
+      <!-- Acciones -->
+      <ng-container matColumnDef="acciones">
+        <th mat-header-cell *matHeaderCellDef>Acciones</th>
+        <td mat-cell *matCellDef="let row"></td>
+      </ng-container>
 
-        <!-- Estado de Evaluación -->
-        <ng-container matColumnDef="estadoEvaluacion">
-          <th mat-header-cell *matHeaderCellDef>Estado Evaluación</th>
-          <td mat-cell *matCellDef="let row">
-            <mat-chip
-              [color]="getColorEstadoEvaluacion(getEstadoEvaluacion(row))"
-              selected
-            >
-              {{ getEstadoEvaluacion(row) }}
-            </mat-chip>
-          </td>
-        </ng-container>
+      <ng-container matColumnDef="expand">
+        <th mat-header-cell *matHeaderCellDef aria-label="row actions">
+          &nbsp;
+        </th>
+        <td mat-cell *matCellDef="let element">
+          <button
+            mat-icon-button
+            aria-label="expand row"
+            (click)="toggle(element); $event.stopPropagation()"
+            class="example-toggle-button"
+            [class.example-toggle-button-expanded]="isExpanded(element)"
+          >
+            <mat-icon>keyboard_arrow_down</mat-icon>
+          </button>
+        </td>
+      </ng-container>
 
-        <!-- Filas de la tabla -->
-        <tr
-          mat-header-row
-          *matHeaderRowDef="columnasTablaAtencionEmpresas"
-        ></tr>
-        <tr
-          mat-row
-          *matRowDef="let row; columns: columnasTablaAtencionEmpresas"
-          class="atencion-row"
-        ></tr>
-      </table>
+      <!-- Expanded Content Column - The detail row is made up of this one column that spans across all columns -->
+      <ng-container matColumnDef="expandedDetail">
+        <td
+          mat-cell
+          *matCellDef="let element"
+          [attr.colspan]="columnsToDisplayWithExpand.length"
+        >
+          <div
+            class="example-element-detail-wrapper"
+            [class.example-element-detail-wrapper-expanded]="
+              isExpanded(element)
+            "
+          >
+            <div class="example-element-detail">
+              <mat-card class="example-card" appearance="outlined">
+                <mat-card-header>
+                  <mat-card-title>Envío de frascos</mat-card-title>
+                </mat-card-header>
+                <mat-card-content>
+                  <p>Mostrar envíos de frascos</p>
+                </mat-card-content>
+                <mat-card-footer class="example-card-footer">
+                  <mat-chip-set aria-label="Envío de frascos">
+                    <mat-chip>Agregar envío</mat-chip>
+                  </mat-chip-set>
+                </mat-card-footer>
+              </mat-card>
 
-      <!-- Paginador -->
-      <mat-paginator
-        [pageSizeOptions]="[10, 25, 50]"
-        [pageSize]="10"
-        showFirstLastButtons
-      >
-      </mat-paginator>
+              <mat-card class="example-card" appearance="outlined">
+                <mat-card-header>
+                  <mat-card-title>Listado de personal</mat-card-title>
+                </mat-card-header>
+                <mat-card-content>
+                  <p>Mostrar listado de personal</p>
+                </mat-card-content>
+                <mat-card-footer class="example-card-footer">
+                  <mat-chip-set aria-label="Listado de personal">
+                    <mat-chip>Agregar listado</mat-chip>
+                  </mat-chip-set>
+                </mat-card-footer>
+              </mat-card>
+
+              <mat-card class="example-card" appearance="outlined">
+                <mat-card-header>
+                  <mat-card-title>Entrega de Resultados</mat-card-title>
+                </mat-card-header>
+                <mat-card-content>
+                  <p>Mostrar entrega</p>
+                </mat-card-content>
+                <mat-card-footer class="example-card-footer">
+                  <mat-chip-set aria-label="Facturación">
+                    <mat-chip>Agregar entrega</mat-chip>
+                  </mat-chip-set>
+                </mat-card-footer>
+              </mat-card>
+
+              <mat-card class="example-card" appearance="outlined">
+                <mat-card-header>
+                  <mat-card-title>Facturación</mat-card-title>
+                </mat-card-header>
+                <mat-card-content>
+                  <p>Mostrar facturas</p>
+                </mat-card-content>
+                <mat-card-footer class="example-card-footer">
+                  <mat-chip-set aria-label="Facturación">
+                    <mat-chip>Agregar factura</mat-chip>
+                  </mat-chip-set>
+                </mat-card-footer>
+              </mat-card>
+
+              <mat-card class="example-card" appearance="outlined">
+                <mat-card-header>
+                  <mat-card-title>Pagos</mat-card-title>
+                </mat-card-header>
+                <mat-card-content>
+                  <p>Mostrar pagos</p>
+                </mat-card-content>
+                <mat-card-footer class="example-card-footer">
+                  <mat-chip-set aria-label="Pagos">
+                    <mat-chip>Agregar pago</mat-chip>
+                  </mat-chip-set>
+                </mat-card-footer>
+              </mat-card>
+
+              <mat-card class="example-card" appearance="outlined">
+                <mat-card-header>
+                  <mat-card-title>Detracciones</mat-card-title>
+                </mat-card-header>
+                <mat-card-content>
+                  <p>Mostrar detracciones</p>
+                </mat-card-content>
+                <mat-card-footer class="example-card-footer">
+                  <mat-chip-set aria-label="Detracciones">
+                    <mat-chip>Agregar detracción</mat-chip>
+                  </mat-chip-set>
+                </mat-card-footer>
+              </mat-card>
+            </div>
+          </div>
+        </td>
+      </ng-container>
+
+      <!-- Filas de la tabla -->
+      <tr mat-header-row *matHeaderRowDef="columnsToDisplayWithExpand"></tr>
+      <tr
+        mat-row
+        *matRowDef="let row; columns: columnsToDisplayWithExpand"
+        class="example-element-row"
+        [class.example-expanded-row]="isExpanded(row)"
+        (click)="toggle(row)"
+      ></tr>
+      <tr
+        mat-row
+        *matRowDef="let row; columns: ['expandedDetail']"
+        class="example-detail-row"
+      ></tr>
+    </table>
+
+    <!-- Paginador -->
+    <mat-paginator
+      [pageSizeOptions]="[10, 25, 50]"
+      [pageSize]="10"
+      showFirstLastButtons
+    >
+    </mat-paginator>
   </mat-tab>
 
   <mat-tab label="Atenciones antiguas">
