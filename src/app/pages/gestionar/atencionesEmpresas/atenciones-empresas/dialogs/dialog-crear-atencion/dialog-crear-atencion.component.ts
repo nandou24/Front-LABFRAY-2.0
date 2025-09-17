@@ -1,3 +1,4 @@
+import { AtencionEmpresaService } from '../../../../../../services/gestion/atencionEmpresa/atencion-empresa.service';
 import {
   Component,
   ElementRef,
@@ -85,6 +86,7 @@ export class DialogCrearAtencionComponent implements OnInit {
   private _cotizacionService = inject(CotizacionEmpresaService);
   private _personalService = inject(RecursoHumanoService);
   isEditable = false;
+  private _atencionEmpresaService = inject(AtencionEmpresaService);
 
   ngOnInit(): void {
     this.traerEmpresas();
@@ -147,13 +149,20 @@ export class DialogCrearAtencionComponent implements OnInit {
   // Step 1
   groupEmpresa = this._fb.group({
     empresa: [null, Validators.required], // guarda objeto; luego puedes mapear a empresaId
-    personaContacto: [null, Validators.required], // persona de contacto/coordinador
+    coordinadores: this._fb.array(
+      [this.nuevoCoordinador()],
+      [Validators.minLength(1)],
+    ), // array de coordinadores/personas de contacto
     cotizacionAprobada: [null, Validators.required],
     observacion: [''],
   });
 
   @ViewChild('inputEmpresa') inputEmpresa!: ElementRef<HTMLInputElement>;
   filteredOptionsEmpresas: IEmpresa[];
+
+  get coordinadores(): FormArray {
+    return this.groupEmpresa.get('coordinadores') as FormArray;
+  }
 
   //Filtra las empresas por razón social o RUC.
   filterEmpresas(): void {
@@ -183,8 +192,8 @@ export class DialogCrearAtencionComponent implements OnInit {
       // Resetear la sede seleccionada cuando cambie la empresa
       this.groupProgramacion.get('sedeEmpresa')?.setValue(null);
 
-      // Resetear la persona de contacto seleccionada cuando cambie la empresa
-      this.groupEmpresa.get('personaContacto')?.setValue(null);
+      // Resetear los coordinadores seleccionados cuando cambie la empresa
+      this.resetearCoordinadores();
 
       this._cotizacionService.obtenerCotizacionPorRuc(empresa.ruc).subscribe({
         next: (res) => {
@@ -195,18 +204,18 @@ export class DialogCrearAtencionComponent implements OnInit {
         },
       });
 
-      console.log('Empresa seleccionada:', empresa);
-      console.log('Sedes disponibles:', this.sedes);
-      console.log(
-        'Personas de contacto disponibles:',
-        this.personasContactoEmpresa,
-      );
+      // console.log('Empresa seleccionada:', empresa);
+      // console.log('Sedes disponibles:', this.sedes);
+      // console.log(
+      //   'Personas de contacto disponibles:',
+      //   this.personasContactoEmpresa,
+      // );
     } else {
       this.empresaSeleccionada = undefined;
       this.sedes = [];
       this.personasContactoEmpresa = [];
       this.groupProgramacion.get('sedeEmpresa')?.setValue(null);
-      this.groupEmpresa.get('personaContacto')?.setValue(null);
+      this.resetearCoordinadores();
     }
   }
 
@@ -220,7 +229,7 @@ export class DialogCrearAtencionComponent implements OnInit {
       if (sede.coordenadasMaps) {
         this.groupProgramacion.get('linkMaps')?.setValue(sede.coordenadasMaps);
       }
-      console.log('Sede seleccionada:', sede);
+      // console.log('Sede seleccionada:', sede);
     } else {
       this.groupProgramacion.get('direccion')?.setValue(null);
       this.groupProgramacion.get('linkMaps')?.setValue(null);
@@ -233,14 +242,23 @@ export class DialogCrearAtencionComponent implements OnInit {
       // Obtener la última versión del historial
       const ultimaVersion =
         cotizacion.historial[cotizacion.historial.length - 1];
-      this.serviciosCotizacionSeleccionada =
-        ultimaVersion.serviciosCotizacion || [];
+      let servicios = ultimaVersion.serviciosCotizacion || [];
+      if (
+        ultimaVersion.aplicarPrecioGlobal &&
+        ultimaVersion.cantidadGlobal != null
+      ) {
+        servicios = servicios.map((servicio) => ({
+          ...servicio,
+          cantidad: ultimaVersion.cantidadGlobal ?? 0,
+        }));
+      }
+      this.serviciosCotizacionSeleccionada = servicios;
 
-      console.log('Cotización seleccionada:', cotizacion);
-      console.log(
-        'Servicios de la cotización:',
-        this.serviciosCotizacionSeleccionada,
-      );
+      // console.log('Cotización seleccionada:', cotizacion);
+      // console.log(
+      //   'Servicios de la cotización:',
+      //   this.serviciosCotizacionSeleccionada,
+      // );
     } else {
       this.serviciosCotizacionSeleccionada = [];
     }
@@ -261,10 +279,7 @@ export class DialogCrearAtencionComponent implements OnInit {
   // Step 3
   groupEquipo = this._fb.group({
     responsable: [null as IRecHumano | null, Validators.required],
-    equipoPersonal: this._fb.array(
-      [this.nuevoPersonal()],
-      [Validators.minLength(1)],
-    ),
+    equipoPersonal: this._fb.array([this.nuevoPersonal()]),
     notas: [''],
   });
 
@@ -288,7 +303,13 @@ export class DialogCrearAtencionComponent implements OnInit {
 
   nuevoPersonal(): FormGroup {
     return this._fb.group({
-      personal: [null as IRecHumano | null, Validators.required],
+      personal: [null as IRecHumano | null],
+    });
+  }
+
+  nuevoCoordinador(): FormGroup {
+    return this._fb.group({
+      coordinador: [null as IPersonaContacto | null, Validators.required],
     });
   }
 
@@ -309,6 +330,51 @@ export class DialogCrearAtencionComponent implements OnInit {
     if (this.equipoPersonal.length > 1) {
       this.equipoPersonal.removeAt(i);
     }
+  }
+
+  agregarCoordinador() {
+    const nuevoCoordinadorForm = this.nuevoCoordinador();
+    this.coordinadores.push(nuevoCoordinadorForm);
+  }
+
+  eliminarCoordinador(i: number) {
+    if (this.coordinadores.length > 1) {
+      this.coordinadores.removeAt(i);
+    }
+  }
+
+  resetearCoordinadores() {
+    // Limpiar todos los coordinadores
+    while (this.coordinadores.length !== 0) {
+      this.coordinadores.removeAt(0);
+    }
+    // Agregar un coordinador vacío
+    this.coordinadores.push(this.nuevoCoordinador());
+  }
+
+  // Validar que no se repita el coordinador
+  isCoordinadorYaSeleccionado(
+    coordinador: IPersonaContacto,
+    currentIndex: number,
+  ): boolean {
+    return this.coordinadores.controls.some((control, index) => {
+      if (index === currentIndex) return false; // No comparar con sí mismo
+      const coordinadorSeleccionado = control.get('coordinador')?.value;
+      return (
+        coordinadorSeleccionado &&
+        coordinadorSeleccionado.nombre === coordinador.nombre &&
+        coordinadorSeleccionado.telefono === coordinador.telefono
+      );
+    });
+  }
+
+  // Obtener coordinadores disponibles para un índice específico
+  getCoordinadoresDisponibles(currentIndex: number): IPersonaContacto[] {
+    return this.personasContactoEmpresa.filter((c) => {
+      // No mostrar coordinadores ya seleccionados en otros índices
+      const yaSeleccionado = this.isCoordinadorYaSeleccionado(c, currentIndex);
+      return !yaSeleccionado;
+    });
   }
 
   // Validar que no se repita el personal
@@ -399,65 +465,92 @@ export class DialogCrearAtencionComponent implements OnInit {
   traerPersonal() {
     this._personalService.getLastRecHumanos(100).subscribe((rrhh) => {
       this.personal = rrhh;
-      console.log(rrhh);
+      // console.log(rrhh);
     });
   }
 
-  crear() {
+  crearAtencion() {
     if (
       this.groupEmpresa.invalid ||
       this.groupProgramacion.invalid ||
       this.groupEquipo.invalid
     ) {
-      console.log('Formulario inválido');
+      // console.log('Formulario inválido');
       return;
     }
 
     const empresaControl = this.groupEmpresa.get('empresa');
-    const personaContactoControl = this.groupEmpresa.get('personaContacto');
+    const coordinadoresControl = this.groupEmpresa.get('coordinadores');
 
-    if (!empresaControl?.value || !personaContactoControl?.value) {
-      console.log('Empresa o persona de contacto no seleccionada');
+    if (
+      !empresaControl?.value ||
+      !coordinadoresControl?.value ||
+      coordinadoresControl.value.length === 0
+    ) {
+      // console.log('Empresa o coordinadores no seleccionados');
       return;
     }
 
     const empresaObj = empresaControl.value as IEmpresa;
-    const personaContactoObj = personaContactoControl.value as IPersonaContacto;
+    const coordinadoresArray = coordinadoresControl.value
+      .map((c: any) => c.coordinador)
+      .filter((coord: any) => coord) as IPersonaContacto[];
 
-    const dto = {
+    // Construir el objeto según el modelo IAtencionEmp
+    const atencion: any = {
       empresaId: empresaObj._id,
-      personaContacto: {
-        nombre: personaContactoObj.nombre,
-        cargo: personaContactoObj.cargo,
-        telefono: personaContactoObj.telefono,
-        email: personaContactoObj.email || null,
-        principal: personaContactoObj.principal || false,
-      },
-      cotizacionAprobada: this.groupEmpresa.get('cotizacionAprobada')?.value,
-      observacion: this.groupEmpresa.get('observacion')?.value || null,
-      programacion: {
-        sedeEmpresa: this.groupProgramacion.get('sedeEmpresa')?.value || null,
-        direccion: this.groupProgramacion.get('direccion')?.value || null,
-        linkMaps: this.groupProgramacion.get('linkMaps')?.value || null,
-        turnos:
-          this.turnos.value?.map((turno: any) => ({
+      servicioTipo: 'Otro', // Ajustar según lógica de tu app
+      fechaRegistro: new Date(),
+      programaciones: [
+        {
+          fechas: this.turnos.value.map((turno: any) => ({
             fecha: turno.fecha,
             horaInicio: turno.horaInicio,
             horaFin: turno.horaFin,
-          })) || [],
-      },
-      equipo: {
-        responsableId: this.groupEquipo.get('responsable')?.value?._id || null,
-        equipoPersonalIds:
-          this.equipoPersonal.value
-            ?.map((ep: any) => ep.personal?._id)
-            .filter((id: any) => id) || [],
-        notas: this.groupEquipo.get('notas')?.value || null,
-      },
+          })),
+          sedeEmpresa: this.groupProgramacion.get('sedeEmpresa')?.value || null,
+          direccion: this.groupProgramacion.get('direccion')?.value || null,
+          linkMaps: this.groupProgramacion.get('linkMaps')?.value || null,
+          personalAsignado:
+            this.equipoPersonal.value
+              ?.map((ep: any) => ep.personal?._id)
+              .filter((id: any) => id) || [],
+          estado: 'PROGRAMADA',
+          observacion: this.groupEmpresa.get('observacion')?.value || null,
+          archivos: [],
+        },
+      ],
+      contactosEmpresa: coordinadoresArray.map((coord) => ({
+        nombre: coord.nombre,
+        cargo: coord.cargo,
+        telefono: coord.telefono,
+        email: coord.email || null,
+      })),
+      // Puedes agregar más campos aquí según el modelo
     };
 
-    console.log('DTO a enviar:', dto);
-    this.dialog.close(dto);
+    Swal.fire({
+      title: '¿Estás seguro?',
+      text: '¿Deseas confirmar la generación de esta atención?',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, confirmar',
+      cancelButtonText: 'Cancelar',
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this._atencionEmpresaService.crearAtencionEmpresa(atencion).subscribe({
+          next: (resp) => {
+            //console.log('Atención creada:', resp);
+            Swal.fire('Éxito', 'Atención creada correctamente', 'success');
+            this.dialog.close(resp);
+          },
+          error: (err) => {
+            //console.error('Error al crear atención:', err);
+            Swal.fire('Error', 'No se pudo crear la atención', 'error');
+          },
+        });
+      }
+    });
   }
 
   // Método para mostrar información de la persona de contacto

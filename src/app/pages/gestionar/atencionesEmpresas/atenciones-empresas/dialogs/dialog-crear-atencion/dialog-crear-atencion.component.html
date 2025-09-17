@@ -37,52 +37,131 @@
           </div>
         </div>
 
-        <div class="row-flex">
+        <!-- Coordinadores de empresa -->
+        <div class="row-flex mt-1">
           <div [style.flex]="setFlex(100, '%')" class="flex-item">
-            <mat-form-field appearance="outline">
-              <mat-label>Coordinador de la empresa</mat-label>
-              <mat-select formControlName="personaContacto">
-                <mat-option [value]="null"
-                  >— Selecciona un coordinador —</mat-option
-                >
-                <mat-option
-                  *ngFor="let coord of personasContactoEmpresa"
-                  [value]="coord"
-                >
-                  <div class="coordinator-option">
-                    <div class="coordinator-name">{{ coord.nombre }}</div>
-                    <div class="coordinator-details">
-                      <small *ngIf="coord.cargo" class="text-muted">
-                        {{ coord.cargo }}
-                      </small>
-                      <small *ngIf="coord.telefono" class="text-muted ms-2">
-                        📞 {{ coord.telefono }}
-                      </small>
+            <h4>Coordinadores de la empresa</h4>
+            <div
+              formArrayName="coordinadores"
+              *ngFor="
+                let coordinadorGroup of coordinadores.controls;
+                let i = index
+              "
+            >
+              <div [formGroupName]="i" class="row align-items-center mb-2">
+                <!-- Select de coordinador -->
+                <div [style.flex]="setFlex(70, '%')" class="flex-item">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Coordinador {{ i + 1 }}</mat-label>
+                    <mat-select formControlName="coordinador">
+                      <mat-option [value]="null"
+                        >— Selecciona un coordinador —</mat-option
+                      >
+                      <mat-option
+                        *ngFor="let coord of getCoordinadoresDisponibles(i)"
+                        [value]="coord"
+                      >
+                        <div class="coordinator-option">
+                          <div class="coordinator-name">{{ coord.nombre }}</div>
+                          <div class="coordinator-details">
+                            <small *ngIf="coord.cargo" class="text-muted">
+                              {{ coord.cargo }}
+                            </small>
+                            <small
+                              *ngIf="coord.telefono"
+                              class="text-muted ms-2"
+                            >
+                              📞 {{ coord.telefono }}
+                            </small>
+                          </div>
+                        </div>
+                      </mat-option>
+                    </mat-select>
+                    <mat-error
+                      *ngIf="
+                        coordinadorGroup
+                          .get('coordinador')
+                          ?.hasError('required')
+                      "
+                    >
+                      Coordinador requerido
+                    </mat-error>
+                    <mat-hint *ngIf="!empresaSeleccionada">
+                      Primero selecciona una empresa
+                    </mat-hint>
+                    <mat-hint
+                      *ngIf="
+                        empresaSeleccionada &&
+                        personasContactoEmpresa.length === 0
+                      "
+                    >
+                      Esta empresa no tiene personas de contacto registradas
+                    </mat-hint>
+                  </mat-form-field>
+                </div>
+
+                <!-- Información del coordinador seleccionado -->
+                <div [style.flex]="setFlex(20, '%')" class="flex-item">
+                  <div
+                    *ngIf="
+                      coordinadorGroup.get('coordinador')
+                        ?.value as coordinadorSeleccionado
+                    "
+                    class="coordinator-info"
+                  >
+                    <div class="info-row" *ngIf="coordinadorSeleccionado.email">
+                      <strong>Email:</strong>
+                      {{ coordinadorSeleccionado.email }}
+                    </div>
+                    <div class="info-row">
+                      <strong>Principal:</strong>
+                      {{ coordinadorSeleccionado.principal ? "Sí" : "No" }}
                     </div>
                   </div>
-                </mat-option>
-              </mat-select>
+                  <div
+                    *ngIf="!coordinadorGroup.get('coordinador')?.value"
+                    class="coordinator-info-placeholder"
+                  >
+                    <small class="text-muted"
+                      >Selecciona coordinador para ver información</small
+                    >
+                  </div>
+                </div>
 
-              <mat-error
-                *ngIf="
-                  groupEmpresa.get('personaContacto')?.hasError('required')
+                <!-- Botón eliminar -->
+                <div
+                  [style.flex]="setFlex(10, '%')"
+                  class="flex-item text-center"
+                >
+                  <button
+                    mat-icon-button
+                    color="warn"
+                    type="button"
+                    (click)="eliminarCoordinador(i)"
+                    [disabled]="coordinadores.length <= 1"
+                    matTooltip="Eliminar coordinador"
+                  >
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Botón agregar coordinador -->
+            <div class="text-center mt-2">
+              <button
+                mat-stroked-button
+                color="primary"
+                type="button"
+                (click)="agregarCoordinador()"
+                [disabled]="
+                  !empresaSeleccionada || personasContactoEmpresa.length === 0
                 "
               >
-                Coordinador requerido
-              </mat-error>
-
-              <mat-hint *ngIf="!empresaSeleccionada">
-                Primero selecciona una empresa
-              </mat-hint>
-
-              <mat-hint
-                *ngIf="
-                  empresaSeleccionada && personasContactoEmpresa.length === 0
-                "
-              >
-                Esta empresa no tiene personas de contacto registradas
-              </mat-hint>
-            </mat-form-field>
+                <mat-icon>add</mat-icon>
+                Agregar Coordinador
+              </button>
+            </div>
           </div>
         </div>
 
@@ -524,7 +603,7 @@
   <button
     mat-raised-button
     color="primary"
-    (click)="crear()"
+    (click)="crearAtencion()"
     [disabled]="
       groupEmpresa.invalid || groupProgramacion.invalid || groupEquipo.invalid
     "

@@ -639,7 +639,9 @@ export class GestCotiPersonaComponent implements OnInit {
       const tipoServicio = control.get('tipoServicio')?.value;
       const medicoAtiende = control.get('medicoAtiende')?.value;
       if (
-        (tipoServicio === 'Consulta' || tipoServicio === 'Ecografía') &&
+        (tipoServicio === 'Consulta' ||
+          tipoServicio === 'Ecografía' ||
+          tipoServicio === 'Procedimiento') &&
         (!medicoAtiende || Object.keys(medicoAtiende).length === 0)
       ) {
         Swal.fire({

@@ -98,6 +98,45 @@ mat-form-field {
   }
 }
 
+// Estilos para información del coordinador
+.coordinator-info {
+  padding: 8px 12px;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+  border: 1px solid #e0e0e0;
+  min-height: 60px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+
+  .info-row {
+    margin-bottom: 4px;
+    font-size: 12px;
+    text-align: left;
+
+    strong {
+      color: #2196f3;
+      margin-right: 4px;
+    }
+  }
+}
+
+.coordinator-info-placeholder {
+  padding: 8px 12px;
+  background-color: #fafafa;
+  border-radius: 4px;
+  border: 1px dashed #e0e0e0;
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  small {
+    color: #999;
+    font-style: italic;
+  }
+}
+
 .personal-info-placeholder {
   padding: 8px 12px;
   background-color: #fafafa;
