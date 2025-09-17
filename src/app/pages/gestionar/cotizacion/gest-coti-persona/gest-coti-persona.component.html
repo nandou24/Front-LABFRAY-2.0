@@ -316,7 +316,8 @@
                   <ng-container
                     *ngIf="
                       row.get('tipoServicio')?.value === 'Consulta' ||
-                      row.get('tipoServicio')?.value === 'Ecografía'
+                      row.get('tipoServicio')?.value === 'Ecografía' ||
+                      row.get('tipoServicio')?.value === 'Procedimiento'
                     "
                   >
                     <div
