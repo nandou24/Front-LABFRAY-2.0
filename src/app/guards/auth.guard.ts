@@ -16,16 +16,24 @@ export const authGuard: CanActivateFn = (route, state) => {
   //Devuelve la ruta solicitada (ejemplo: /pages/cotizaciones)
   const rutaSolicitada = state.url;
 
+  // 🔥 SOLUCIÓN: Extraer solo la parte de la URL sin query parameters
+  const rutaBase = rutaSolicitada.split('?')[0]; // Elimina query parameters como ?codCotizacion=123
+
   // Obtiene las rutas permitidas desde el token
   const datosToken = authService.obtenerRutasPermitidas();
 
   //Busca si la ruta solicitada está en las rutas permitidas
   const tienePermiso = datosToken?.some(
-    (r) => r.urlRuta?.toLowerCase() === rutaSolicitada.toLowerCase(),
+    (r) => r.urlRuta?.toLowerCase() === rutaBase.toLowerCase(),
   );
 
   //Si no está en las rutas permitidas, redirige a una página de acceso denegado
   if (!tienePermiso) {
+    console.warn('❌ Acceso denegado a la ruta:', rutaBase);
+    console.log(
+      '📋 Rutas permitidas:',
+      datosToken?.map((r) => r.urlRuta),
+    );
     return router.parseUrl('/no-autorizado'); // Puedes crear un componente para mostrar acceso denegado
   }
 
