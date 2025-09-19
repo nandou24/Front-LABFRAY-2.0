@@ -68,6 +68,7 @@ export interface ICotizacionPostDTO {
   ok: boolean;
   msg?: string;
   errors?: string;
+  cotizacion?: ICotizacion;
 }
 
 export interface IGetLastCotizacion {
