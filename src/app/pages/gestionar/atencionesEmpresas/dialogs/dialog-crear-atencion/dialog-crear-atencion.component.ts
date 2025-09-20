@@ -1,4 +1,4 @@
-import { AtencionEmpresaService } from '../../../../../../services/gestion/atencionEmpresa/atencion-empresa.service';
+import { AtencionEmpresaService } from '../../../../../services/gestion/atencionEmpresa/atencion-empresa.service';
 import {
   Component,
   ElementRef,
@@ -31,22 +31,22 @@ import {
   IEmpresa,
   IUbicacionSede,
   IPersonaContacto,
-} from '../../../../../../models/Mantenimiento/empresa.models';
-import { IServicio } from '../../../../../../models/Mantenimiento/servicios.models';
-import { IRecHumano } from '../../../../../../models/Mantenimiento/recursoHumano.models';
+} from '../../../../../models/Mantenimiento/empresa.models';
+import { IServicio } from '../../../../../models/Mantenimiento/servicios.models';
+import { IRecHumano } from '../../../../../models/Mantenimiento/recursoHumano.models';
 import {
   MAT_DATE_LOCALE,
   MatNativeDateModule,
   provideNativeDateAdapter,
 } from '@angular/material/core';
-import { EmpresaService } from '../../../../../../services/mantenimiento/empresa/empresa.service';
+import { EmpresaService } from '../../../../../services/mantenimiento/empresa/empresa.service';
 import Swal from 'sweetalert2';
-import { RecursoHumanoService } from '../../../../../../services/mantenimiento/recursoHumano/recurso-humano.service';
-import { CotizacionEmpresaService } from '../../../../../../services/gestion/cotizaciones/cotizacionEmpresa/cotizacion-empresa.service';
+import { RecursoHumanoService } from '../../../../../services/mantenimiento/recursoHumano/recurso-humano.service';
+import { CotizacionEmpresaService } from '../../../../../services/gestion/cotizaciones/cotizacionEmpresa/cotizacion-empresa.service';
 import {
   ICotizacionEmpresa,
   IServicioCotizacionEmpresa,
-} from '../../../../../../models/Gestion/cotizacionEmpresa.models';
+} from '../../../../../models/Gestion/cotizacionEmpresa.models';
 
 @Component({
   selector: 'app-dialog-crear-atencion',
