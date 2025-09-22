@@ -31,9 +31,12 @@ export class AtencionEmpresaService {
    */
   public getUltimasAtencionesEmpresa(): Observable<IAtencionEmpresas[]> {
     return this._http
-      .get<{ atenciones: IAtencionEmpresas[] }>(`${this.apiUrl}/ultimas`, {
-        headers: this._auth.getAuthHeaders(),
-      })
+      .get<{ atenciones: IAtencionEmpresas[] }>(
+        `${this.apiUrl}/listar-vigentes`,
+        {
+          headers: this._auth.getAuthHeaders(),
+        },
+      )
       .pipe(map((data) => data.atenciones));
   }
 

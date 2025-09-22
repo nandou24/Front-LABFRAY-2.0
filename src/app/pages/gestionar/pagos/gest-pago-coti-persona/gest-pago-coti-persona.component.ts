@@ -31,7 +31,7 @@ import { DialogRegistroPacienteComponent } from './dialogs/dialog-registro-pacie
 import { MatDialog } from '@angular/material/dialog';
 import { DateAdapter, MAT_DATE_LOCALE } from '@angular/material/core';
 import { MatPaginator } from '@angular/material/paginator';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
 @Component({
   selector: 'app-gest-pago-coti-persona',
@@ -61,6 +61,7 @@ export class GestPagoCotiPersonaComponent implements OnInit {
   private _fb = inject(FormBuilder);
   private dialog = inject(MatDialog);
   private _router = inject(Router);
+  private _route = inject(ActivatedRoute);
   private readonly _adapter =
     inject<DateAdapter<unknown, unknown>>(DateAdapter);
 
@@ -69,6 +70,69 @@ export class GestPagoCotiPersonaComponent implements OnInit {
     this.ultimosPagos(20);
     this.escucharCambioMotivoAnulacion();
     this._adapter.setLocale('es-PE'); // Establecer el locale para el adaptador de fecha
+
+    // 🔥 Verificar si viene un código de cotización desde la navegación
+    this.verificarParametrosCotizacion();
+  }
+
+  /**
+   * Verifica si se recibió un código de cotización como query parameter
+   * y lo carga automáticamente si existe
+   */
+  private verificarParametrosCotizacion(): void {
+    this._route.queryParamMap.subscribe((params) => {
+      const codCotizacion = params.get('codCotizacion');
+      if (codCotizacion && codCotizacion.trim() !== '') {
+        console.log('📌 Código de cotización recibido:', codCotizacion);
+        this.buscarYCargarCotizacion(codCotizacion);
+      }
+    });
+  }
+
+  /**
+   * Busca y carga automáticamente una cotización por su código
+   */
+  private buscarYCargarCotizacion(codCotizacion: string): void {
+    this._cotizacionService.getCotizacion(codCotizacion).subscribe({
+      next: (cotizaciones: ICotizacion[]) => {
+        if (cotizaciones && cotizaciones.length > 0) {
+          const cotizacionEncontrada = cotizaciones[0];
+          console.log(
+            '✅ Cotización encontrada y cargada automáticamente:',
+            cotizacionEncontrada,
+          );
+
+          // Cargar la cotización encontrada (asumiendo que tienes un método para esto)
+          this.cargarCotizacion(cotizacionEncontrada, 0);
+
+          // Mostrar mensaje de éxito
+          // Swal.fire({
+          //   icon: 'success',
+          //   title: 'Cotización cargada',
+          //   text: `Se ha cargado automáticamente la cotización ${codCotizacion}`,
+          //   timer: 2000,
+          //   showConfirmButton: false,
+          // });
+        } else {
+          console.warn('⚠️ No se encontró la cotización:', codCotizacion);
+          Swal.fire({
+            icon: 'warning',
+            title: 'Cotización no encontrada',
+            text: `No se pudo encontrar la cotización ${codCotizacion}`,
+            confirmButtonText: 'Ok',
+          });
+        }
+      },
+      error: (error) => {
+        console.error('❌ Error al buscar la cotización:', error);
+        Swal.fire({
+          icon: 'error',
+          title: 'Error al cargar cotización',
+          text: 'Ocurrió un error al intentar cargar la cotización',
+          confirmButtonText: 'Ok',
+        });
+      },
+    });
   }
 
   public myFormPagoPersona: FormGroup = this._fb.group({

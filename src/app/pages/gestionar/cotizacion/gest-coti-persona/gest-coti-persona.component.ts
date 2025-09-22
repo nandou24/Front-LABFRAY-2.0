@@ -719,8 +719,10 @@ export class GestCotiPersonaComponent implements OnInit {
 
         this._cotizacionService.generarCotizacion(body).subscribe({
           next: (res) => {
+            console.log('📌 **Respuesta del servidor**:', res);
+            let codCoti = res.cotizacion?.codCotizacion || '';
             if (res.ok) {
-              this.mostrarAlertaExito('Cotización registrada');
+              this.mostrarAlertaExito('Cotización registrada', codCoti);
               this.ultimasCotizaciones();
               this.nuevaCotizacionPersona();
             } else {
@@ -738,7 +740,7 @@ export class GestCotiPersonaComponent implements OnInit {
     });
   }
 
-  private mostrarAlertaExito(tipo: string): void {
+  private mostrarAlertaExito(tipo: string, codCoti: string): void {
     Swal.fire({
       title: tipo + ' exitosamente',
       text: '¿Qué deseas hacer a continuación?',
@@ -751,7 +753,10 @@ export class GestCotiPersonaComponent implements OnInit {
       cancelButtonColor: '#6c757d',
     }).then((result) => {
       if (result.isConfirmed) {
-        this._router.navigate(['/pages/pagoCotiPersona']);
+        // Navegar a pagos con el código de cotización como query parameter
+        this._router.navigate(['/pages/pagoCotiPersona'], {
+          queryParams: { codCotizacion: codCoti },
+        });
       }
     });
   }
@@ -838,8 +843,9 @@ export class GestCotiPersonaComponent implements OnInit {
 
         this._cotizacionService.generarNuevaVersion(nuevaCotizacion).subscribe({
           next: (res) => {
+            let codCoti = res.cotizacion?.codCotizacion || '';
             if (res.ok) {
-              this.mostrarAlertaExito('Nueva versión generada');
+              this.mostrarAlertaExito('Nueva versión generada', codCoti);
               this.ultimasCotizaciones();
               this.nuevaCotizacionPersona();
             } else {
