@@ -68,53 +68,54 @@ export class DialogMedicoComponent implements OnInit {
     this.cargando = true;
     const profesionesAsociadas = this.data.profesionesAsociadas;
 
-    // Extraemos los IDs de especialidad del servicio asociado
+    // Separar filtros
     const especialidadesFiltro = profesionesAsociadas
-      .map((p) => p.especialidadId)
-      .filter((id): id is string => !!id);
-
-    // Extraer profesiones SIN especialidad asociada
-    const profesionesSinEspecialidad = profesionesAsociadas
+      .filter((p) => !!p.especialidadId)
+      .map((p) => p.especialidadId!); // sabemos que no es undefined
+    const profesionesFiltro = profesionesAsociadas
       .filter((p) => !p.especialidadId)
-      .map((p) => p.profesionId)
-      .filter((id): id is string => !!id);
-
-    //let personalAtiendeConsultas: IRecHumano[] = [];
+      .map((p) => p.profesionId);
     this._recursoHumanoService.getTodosPersonalSalud().subscribe({
       next: (medicos: IRecHumano[]) => {
-        console.log('Recursos humanos obtenidos:', medicos);
+        // Médicos que cumplen con alguna especialidad requerida
+        let medicosFiltrados: IRecHumano[] = [];
 
-        // === Paso 1: Filtrar por especialidades ===
-        const filtradosPorEspecialidad = medicos.filter((medico) =>
-          medico.profesionesRecurso?.some((prof) =>
-            prof.especialidades?.some((esp) =>
-              especialidadesFiltro.includes(esp.especialidadRef),
+        if (especialidadesFiltro.length > 0) {
+          medicosFiltrados = medicos.filter((medico) =>
+            medico.profesionesRecurso?.some((prof) =>
+              prof.especialidades?.some((esp) =>
+                especialidadesFiltro.includes(esp.especialidadRef),
+              ),
             ),
-          ),
-        );
+          );
+        }
 
-        // === Paso 2: Filtrar por profesiones SIN especialidad ===
-        const filtradosPorProfesionSinEsp = medicos.filter((medico) =>
-          medico.profesionesRecurso?.some(
-            (prof) =>
-              profesionesSinEspecialidad.includes(prof.profesionRef) &&
-              (!prof.especialidades || prof.especialidades.length === 0),
-          ),
-        );
-
-        // Unir ambos resultados, evitando duplicados
-        const idsFiltrados = new Set(
-          filtradosPorEspecialidad.map((m) => m._id),
-        );
-        for (const medico of filtradosPorProfesionSinEsp) {
-          if (!idsFiltrados.has(medico._id)) {
-            filtradosPorEspecialidad.push(medico);
-            idsFiltrados.add(medico._id);
+        // Médicos que cumplen con alguna profesión requerida (sin importar especialidades)
+        if (profesionesFiltro.length > 0) {
+          const medicosPorProfesion = medicos.filter((medico) =>
+            medico.profesionesRecurso?.some((prof) =>
+              profesionesFiltro.includes(prof.profesionRef),
+            ),
+          );
+          // Unir ambos resultados, evitando duplicados
+          const idsFiltrados = new Set(medicosFiltrados.map((m) => m._id));
+          for (const medico of medicosPorProfesion) {
+            if (!idsFiltrados.has(medico._id)) {
+              medicosFiltrados.push(medico);
+              idsFiltrados.add(medico._id);
+            }
           }
         }
 
-        console.log('Médicos filtrados:', filtradosPorEspecialidad);
-        this.dataSourcePersonal.data = filtradosPorEspecialidad;
+        // Si no hay filtros, no mostrar nada
+        if (
+          especialidadesFiltro.length === 0 &&
+          profesionesFiltro.length === 0
+        ) {
+          medicosFiltrados = [];
+        }
+
+        this.dataSourcePersonal.data = medicosFiltrados;
         this.cargando = false;
       },
       error: (err) => {

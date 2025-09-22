@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
@@ -6,11 +6,12 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { DialogCrearAtencionComponent } from './dialogs/dialog-crear-atencion/dialog-crear-atencion.component';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
-import { IAtencionEmpresas } from '../../../../models/Gestion/atencionEmpresa.models';
+import { IAtencionEmpresas } from '../../../models/Gestion/atencionEmpresa.models';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatPaginatorModule } from '@angular/material/paginator';
 import { CommonModule } from '@angular/common';
+import { AtencionEmpresaService } from '../../../services/gestion/atencionEmpresa/atencion-empresa.service';
 
 @Component({
   selector: 'app-atenciones-empresas',
@@ -29,8 +30,13 @@ import { CommonModule } from '@angular/common';
   templateUrl: './atenciones-empresas.component.html',
   styleUrl: './atenciones-empresas.component.scss',
 })
-export class AtencionesEmpresasComponent {
+export class AtencionesEmpresasComponent implements OnInit {
+  ngOnInit(): void {
+    this.listarAtencionesEmpresas();
+  }
+
   private dialog = inject(MatDialog);
+  private _atencionesService = inject(AtencionEmpresaService);
 
   abrirDialogCrearAtencion() {
     const dialogRef = this.dialog.open(DialogCrearAtencionComponent, {
@@ -105,9 +111,21 @@ export class AtencionesEmpresasComponent {
     },
   ];
 
-  dataSourceAtencion = new MatTableDataSource<IAtencionEmpresas>(
-    this.atencionesEjemplo,
-  );
+  dataSourceAtencion = new MatTableDataSource<IAtencionEmpresas>();
+
+  listarAtencionesEmpresas() {
+    // Aquí se llamaría al servicio para obtener las atenciones empresariales
+    // Por ahora, usamos datos de ejemplo
+    this._atencionesService.getUltimasAtencionesEmpresa().subscribe({
+      next: (res: IAtencionEmpresas[]) => {
+        console.log('Atenciones empresariales obtenidas:', res);
+        this.dataSourceAtencion.data = res;
+      },
+      error: (err: any) => {
+        this.dataSourceAtencion.data = [];
+      },
+    });
+  }
 
   // Tabla atenciones vigentes - columnas que se mostrarán
   columnasTablaAtencionEmpresas: string[] = [
@@ -119,10 +137,13 @@ export class AtencionesEmpresasComponent {
     'acciones',
   ];
 
-  columnsToDisplayWithExpand = [...this.columnasTablaAtencionEmpresas, 'expand'];
+  columnsToDisplayWithExpand = [
+    ...this.columnasTablaAtencionEmpresas,
+    'expand',
+  ];
   expandedElement: IAtencionEmpresas | null = null;
 
-    /** Checks whether an element is expanded. */
+  /** Checks whether an element is expanded. */
   isExpanded(element: IAtencionEmpresas) {
     return this.expandedElement === element;
   }
@@ -134,7 +155,7 @@ export class AtencionesEmpresasComponent {
 
   // Métodos auxiliares para la tabla
   getCodigoAtencion(atencion: IAtencionEmpresas): string {
-    return `ATE-${atencion._id?.padStart(6, '0') || '000000'}`;
+    return `${atencion.codAtencion}`;
   }
 
   getFechaProgramacion(atencion: IAtencionEmpresas): Date | null {
@@ -165,7 +186,7 @@ export class AtencionesEmpresasComponent {
   }
 
   getEstadoEvaluacion(atencion: IAtencionEmpresas): string {
-    return atencion.programaciones?.[0]?.estado || 'PENDIENTE';
+    return atencion.estado;
   }
 
   getColorEstadoPago(estado: string): string {
@@ -187,6 +208,8 @@ export class AtencionesEmpresasComponent {
 
   getColorEstadoEvaluacion(estado: string): string {
     switch (estado) {
+      case 'BORRADOR':
+        return 'primary';
       case 'PROGRAMADA':
         return 'accent';
       case 'ATENDIDA':

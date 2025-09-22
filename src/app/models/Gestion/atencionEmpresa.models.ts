@@ -9,6 +9,7 @@ export type EstadoAtencion =
 
 export interface IAtencionEmpresas {
   _id?: string;
+  codAtencion?: string; // código único, ej: ATE-0001
   empresaId: string;
   servicioTipo: 'ETAs' | 'Campaña' | 'Consulta' | 'Otro';
   fechaRegistro: Date;
