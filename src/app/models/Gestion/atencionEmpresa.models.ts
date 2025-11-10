@@ -1,10 +1,8 @@
 export type EstadoAtencion =
-  | 'PENDIENTE_PROGRAMAR'
+  | 'BORRADOR'
   | 'PROGRAMADA'
+  | 'EN ATENCION'
   | 'ATENDIDA'
-  | 'FACTURADA'
-  | 'PAGO_PARCIAL'
-  | 'PAGADA'
   | 'ANULADA';
 
 export interface IAtencionEmpresas {
@@ -12,6 +10,7 @@ export interface IAtencionEmpresas {
   codAtencion?: string; // código único, ej: ATE-0001
   empresaId: string;
   servicioTipo: 'ETAs' | 'Campaña' | 'Consulta' | 'Otro';
+  descripcionServicio?: string;
   fechaRegistro: Date;
 
   programaciones: Array<{
