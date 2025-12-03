@@ -32,6 +32,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { DateAdapter, MAT_DATE_LOCALE } from '@angular/material/core';
 import { MatPaginator } from '@angular/material/paginator';
 import { ActivatedRoute, Router } from '@angular/router';
+import { debounceTime, distinctUntilChanged, filter, tap } from 'rxjs';
 
 @Component({
   selector: 'app-gest-pago-coti-persona',
@@ -69,6 +70,8 @@ export class GestPagoCotiPersonaComponent implements OnInit {
     this.ultimasCotizaciones(20);
     this.ultimosPagos(20);
     this.escucharCambioMotivoAnulacion();
+    this.configurarBusquedaCotizaciones();
+    this.configurarBusquedaPagos();
     this._adapter.setLocale('es-PE'); // Establecer el locale para el adaptador de fecha
 
     // 🔥 Verificar si viene un código de cotización desde la navegación
@@ -332,6 +335,11 @@ export class GestPagoCotiPersonaComponent implements OnInit {
     });
   }
 
+  seleccionarTexto(event: FocusEvent): void {
+    const input = event.target as HTMLInputElement;
+    input.select();
+  }
+
   // COTIZACIONES
 
   @ViewChild('MatPaginatorCotizaciones') paginatorCotizaciones!: MatPaginator;
@@ -366,24 +374,32 @@ export class GestPagoCotiPersonaComponent implements OnInit {
     });
   }
 
-  buscarCotizaciones() {
-    clearTimeout(this.timeoutBusqueda);
+  configurarBusquedaCotizaciones(): void {
+    this.terminoBusquedaCotizacion.valueChanges
+      .pipe(
+        filter((termino): termino is string => termino !== null),
+        debounceTime(300),
+        distinctUntilChanged(),
+        tap((termino: string) => {
+          termino = termino?.trim() || '';
 
-    this.timeoutBusqueda = setTimeout(() => {
-      const termino = this.terminoBusquedaCotizacion.value?.trim() || '';
-
-      if (termino.length >= 3) {
-        this._cotizacionService
-          .getCotizacion(termino)
-          .subscribe((res: ICotizacion[]) => {
-            this.dataSourceCotizaciones.data = res;
-          });
-      } else if (termino.length > 0) {
-        this.dataSourceCotizaciones.data = [];
-      } else {
-        this.ultimasCotizaciones(10);
-      }
-    }, 200);
+          if (termino.length >= 3) {
+            this._cotizacionService.getCotizacion(termino).subscribe({
+              next: (res: ICotizacion[]) => {
+                this.dataSourceCotizaciones.data = res;
+              },
+              error: () => {
+                this.dataSourceCotizaciones.data = [];
+              },
+            });
+          } else if (termino.length > 0) {
+            this.dataSourceCotizaciones.data = [];
+          } else {
+            this.ultimasCotizaciones(10); // ← carga las cotizaciones recientes
+          }
+        }),
+      )
+      .subscribe();
   }
 
   seSeleccionoCotizacion: boolean = false;
@@ -498,6 +514,7 @@ export class GestPagoCotiPersonaComponent implements OnInit {
 
   // PAGOS
   dataSourcePagos = new MatTableDataSource<IPago>();
+  terminoBusquedaPagos = new FormControl('');
   pagos: IPago[] = [];
 
   columnasPagos: string[] = [
@@ -517,6 +534,34 @@ export class GestPagoCotiPersonaComponent implements OnInit {
         console.error('Error al obtener las cotizaciones:', err);
       },
     });
+  }
+
+  configurarBusquedaPagos(): void {
+    this.terminoBusquedaPagos.valueChanges
+      .pipe(
+        filter((termino): termino is string => termino !== null),
+        debounceTime(300),
+        distinctUntilChanged(),
+        tap((termino: string) => {
+          termino = termino?.trim() || '';
+
+          if (termino.length >= 3) {
+            this._pagoService.getPago(termino).subscribe({
+              next: (res: IPago[]) => {
+                this.dataSourcePagos.data = res;
+              },
+              error: () => {
+                this.dataSourcePagos.data = [];
+              },
+            });
+          } else if (termino.length > 0) {
+            this.dataSourcePagos.data = [];
+          } else {
+            this.ultimosPagos(10); // ← carga los pagos recientes
+          }
+        }),
+      )
+      .subscribe();
   }
 
   tienePagoTotal: boolean = false;

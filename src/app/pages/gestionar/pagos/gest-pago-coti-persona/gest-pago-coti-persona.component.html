@@ -744,7 +744,22 @@
         <mat-card-content>
           <mat-form-field appearance="outline">
             <mat-label>Buscar Pagos</mat-label>
-            <input matInput [formControl]="terminoBusquedaCotizacion" />
+            <input
+              matInput
+              [formControl]="terminoBusquedaPagos"
+              (focus)="seleccionarTexto($event)"
+            />
+            @if (terminoBusquedaPagos.value) {
+              <button
+                matSuffix
+                mat-icon-button
+                class="clear-search-button"
+                aria-label="Clear"
+                (click)="terminoBusquedaPagos.setValue('')"
+              >
+                <mat-icon>close</mat-icon>
+              </button>
+            }
           </mat-form-field>
 
           <table mat-table [dataSource]="dataSourcePagos">
