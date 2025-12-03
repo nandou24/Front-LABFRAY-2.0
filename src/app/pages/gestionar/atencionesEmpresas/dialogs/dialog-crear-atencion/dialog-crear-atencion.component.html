@@ -4,9 +4,9 @@
 <mat-dialog-content class="scroll">
   <mat-stepper linear #stepper>
     <!-- Paso 1: Empresa & Protocolo -->
-    <mat-step [stepControl]="groupEmpresa" [editable]="isEditable">
+    <mat-step [stepControl]="groupEmpresa" label="Empresa y Protocolo">
       <form [formGroup]="groupEmpresa" class="mt-2">
-        <ng-template matStepLabel>Empresa y Protocolo</ng-template>
+        <!--<ng-template matStepLabel>Empresa y Protocolo</ng-template>-->
         <div class="row-flex">
           <div [style.flex]="setFlex(100, '%')" class="flex-item">
             <mat-form-field appearance="outline">
@@ -50,7 +50,7 @@
             >
               <div [formGroupName]="i" class="row align-items-center mb-2">
                 <!-- Select de coordinador -->
-                <div [style.flex]="setFlex(70, '%')" class="flex-item">
+                <div [style.flex]="setFlex(60, '%')" class="flex-item">
                   <mat-form-field appearance="outline">
                     <mat-label>Coordinador {{ i + 1 }}</mat-label>
                     <mat-select formControlName="coordinador">
@@ -101,7 +101,7 @@
                 </div>
 
                 <!-- Información del coordinador seleccionado -->
-                <div [style.flex]="setFlex(20, '%')" class="flex-item">
+                <div [style.flex]="setFlex(30, '%')" class="flex-item">
                   <div
                     *ngIf="
                       coordinadorGroup.get('coordinador')

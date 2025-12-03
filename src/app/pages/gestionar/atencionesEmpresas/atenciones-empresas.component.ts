@@ -40,8 +40,9 @@ export class AtencionesEmpresasComponent implements OnInit {
 
   abrirDialogCrearAtencion() {
     const dialogRef = this.dialog.open(DialogCrearAtencionComponent, {
-      maxWidth: '1000px',
-      width: '900px',
+      maxWidth: '1300px',
+      width: '1100px',
+      height: '900px',
       data: {},
     });
     dialogRef.afterClosed().subscribe((pacienteSeleccionado) => {
@@ -70,7 +71,7 @@ export class AtencionesEmpresasComponent implements OnInit {
           estado: 'ATENDIDA',
         },
       ],
-      estado: 'PAGO_PARCIAL',
+      estado: 'BORRADOR',
       contactosEmpresa: [
         {
           nombre: 'Ana García Constructora SAC',
@@ -168,16 +169,9 @@ export class AtencionesEmpresasComponent implements OnInit {
 
   getEstadoPago(atencion: IAtencionEmpresas): string {
     switch (atencion.estado) {
-      case 'PENDIENTE_PROGRAMAR':
       case 'PROGRAMADA':
       case 'ATENDIDA':
         return 'PENDIENTE';
-      case 'FACTURADA':
-        return 'FACTURADO';
-      case 'PAGO_PARCIAL':
-        return 'PAGO PARCIAL';
-      case 'PAGADA':
-        return 'PAGADO';
       case 'ANULADA':
         return 'ANULADO';
       default:
@@ -212,9 +206,11 @@ export class AtencionesEmpresasComponent implements OnInit {
         return 'primary';
       case 'PROGRAMADA':
         return 'accent';
+      case 'EN ATENCION':
+        return 'accent';
       case 'ATENDIDA':
         return 'primary';
-      case 'NO_REALIZADA':
+      case 'ANULADA':
         return 'warn';
       default:
         return '';
