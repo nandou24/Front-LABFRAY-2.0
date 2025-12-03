@@ -367,22 +367,30 @@ export class CotiEmpresaPdfService {
     doc.text(
       'Números de cuenta para depositos',
       inicioX + 75,
-      puntoRefMediosPago + espaciadoCuentas,
+      puntoRefMediosPago + espaciadoCuentas - 13,
     );
     doc.text(
       'BBVA Continental: ',
       inicioX + 75,
-      puntoRefMediosPago + espaciado + espaciadoCuentas,
+      puntoRefMediosPago + espaciado + espaciadoCuentas - 13,
     );
     doc.text(
       'Cuenta',
       inicioX + 75,
-      puntoRefMediosPago + espaciado + alturaLineaCuentas + espaciadoCuentas,
+      puntoRefMediosPago +
+        espaciado +
+        alturaLineaCuentas +
+        espaciadoCuentas -
+        13,
     );
     doc.text(
       '0011-0252-0100004659',
       inicioX + 12 + 75,
-      puntoRefMediosPago + espaciado + alturaLineaCuentas + espaciadoCuentas,
+      puntoRefMediosPago +
+        espaciado +
+        alturaLineaCuentas +
+        espaciadoCuentas -
+        13,
     );
     doc.text(
       'CCI',
@@ -390,7 +398,8 @@ export class CotiEmpresaPdfService {
       puntoRefMediosPago +
         espaciado +
         alturaLineaCuentas * 2 +
-        espaciadoCuentas,
+        espaciadoCuentas -
+        13,
     );
     doc.text(
       '011-252-000100004659-47',
@@ -398,23 +407,32 @@ export class CotiEmpresaPdfService {
       puntoRefMediosPago +
         espaciado +
         alturaLineaCuentas * 2 +
-        espaciadoCuentas,
+        espaciadoCuentas -
+        13,
     );
 
     doc.text(
       'Banco de crédito (BCP): ',
       inicioX + 60 + 75,
-      puntoRefMediosPago + espaciado + espaciadoCuentas,
+      puntoRefMediosPago + espaciado + espaciadoCuentas - 13,
     );
     doc.text(
       'Cuenta',
       inicioX + 60 + 75,
-      puntoRefMediosPago + espaciado + alturaLineaCuentas + espaciadoCuentas,
+      puntoRefMediosPago +
+        espaciado +
+        alturaLineaCuentas +
+        espaciadoCuentas -
+        13,
     );
     doc.text(
       '1912408682020',
       inicioX + 60 + 12 + 75,
-      puntoRefMediosPago + espaciado + alturaLineaCuentas + espaciadoCuentas,
+      puntoRefMediosPago +
+        espaciado +
+        alturaLineaCuentas +
+        espaciadoCuentas -
+        13,
     );
     doc.text(
       'CCI',
@@ -422,7 +440,8 @@ export class CotiEmpresaPdfService {
       puntoRefMediosPago +
         espaciado +
         alturaLineaCuentas * 2 +
-        espaciadoCuentas,
+        espaciadoCuentas -
+        13,
     );
     doc.text(
       '00219100240868202056',
@@ -430,7 +449,37 @@ export class CotiEmpresaPdfService {
       puntoRefMediosPago +
         espaciado +
         alturaLineaCuentas * 2 +
-        espaciadoCuentas,
+        espaciadoCuentas -
+        13,
+    );
+
+    doc.text(
+      'Números de cuenta de detracciones',
+      inicioX + 75,
+      puntoRefMediosPago + espaciadoCuentas + 11,
+    );
+    doc.text(
+      'Banco de la Nación: ',
+      inicioX + 75,
+      puntoRefMediosPago + espaciado + espaciadoCuentas + 11,
+    );
+    doc.text(
+      'Cuenta',
+      inicioX + 75,
+      puntoRefMediosPago +
+        espaciado +
+        alturaLineaCuentas +
+        espaciadoCuentas +
+        11,
+    );
+    doc.text(
+      '00031033799',
+      inicioX + 12 + 75,
+      puntoRefMediosPago +
+        espaciado +
+        alturaLineaCuentas +
+        espaciadoCuentas +
+        11,
     );
 
     doc.text(
@@ -529,7 +578,7 @@ export class CotiEmpresaPdfService {
     );
 
     doc.text(
-      `Telf. 924870728`,
+      `Telf. 967 816 753`,
       inicioX,
       puntoRefMediosPago + 45 + alturaLineaCuentas * 11,
     );
