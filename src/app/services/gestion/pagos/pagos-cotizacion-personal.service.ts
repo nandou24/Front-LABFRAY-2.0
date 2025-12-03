@@ -54,6 +54,13 @@ export class PagosCotizacionPersonalService {
       );
   }
 
+  getPago(terminoBusqueda: any): Observable<IPago[]> {
+    const params = new HttpParams().set('search', terminoBusqueda);
+    return this._http
+      .get<IGetLastPagos>(`${this.apiUrl}/findTerm`, { params })
+      .pipe(map((data) => data.pagos));
+  }
+
   getAllByDateRange(
     start: string,
     end: string,
