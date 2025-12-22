@@ -127,6 +127,13 @@ export const routes: Routes = [
             (m) => m.ArqueoCajaComponent,
           ),
       },
+      {
+        path: 'programacion-paciente',
+        loadComponent: () =>
+          import(
+            './pages/gestionar/programacion-paciente/programacion-paciente.component'
+          ).then((m) => m.ProgramacionPacienteComponent),
+      },
     ],
   },
   {
