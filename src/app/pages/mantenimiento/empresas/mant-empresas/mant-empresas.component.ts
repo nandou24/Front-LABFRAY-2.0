@@ -61,6 +61,7 @@ export class MantEmpresasComponent implements OnInit, AfterViewInit {
   ) {}
 
   ngOnInit(): void {
+    // Inicializar ubigeo para dirección principal
     this.departamentos = this._ubigeoService.getDepartamento();
     this.provincias = this._ubigeoService.getProvincia('15');
     this.distritos = this._ubigeoService.getDistrito('15', '01');
@@ -69,9 +70,20 @@ export class MantEmpresasComponent implements OnInit, AfterViewInit {
     this.ultimasEmpresas();
   }
 
+  // Variables para la dirección principal de la empresa
   departamentos: any[] = [];
   provincias: any[] = [];
   distritos: any[] = [];
+
+  // Variables para gestionar sedes de forma independiente
+  sedesUbigeo: Map<
+    number,
+    {
+      departamentos: any[];
+      provincias: any[];
+      distritos: any[];
+    }
+  > = new Map();
 
   // Opciones para los campos select
   tiposEmpresa = [
@@ -117,6 +129,75 @@ export class MantEmpresasComponent implements OnInit, AfterViewInit {
       );
       this.empresaForm.get('distrito')?.setValue('01');
     });
+  }
+
+  // Métodos para manejar cambios de ubigeo en sedes específicas
+  onDepartamentoSedeChange(sedeIndex: number): void {
+    const ubicacionGroup = this.ubicacionesSedes.at(sedeIndex);
+    if (!ubicacionGroup) return;
+
+    ubicacionGroup
+      .get('departamentoSede')
+      ?.valueChanges.subscribe((departamentoId) => {
+        const provinciasSede = this._ubigeoService.getProvincia(departamentoId);
+        const distritosSede = this._ubigeoService.getDistrito(
+          departamentoId,
+          '01',
+        );
+
+        // Guardar en el mapa de ubigeo
+        this.sedesUbigeo.set(sedeIndex, {
+          departamentos: this.sedesUbigeo.get(sedeIndex)?.departamentos || [],
+          provincias: provinciasSede,
+          distritos: distritosSede,
+        });
+
+        ubicacionGroup
+          .get('provinciaSede')
+          ?.setValue('01', { emitEvent: false });
+      });
+  }
+
+  onProvinciaSedeChange(sedeIndex: number): void {
+    const ubicacionGroup = this.ubicacionesSedes.at(sedeIndex);
+    if (!ubicacionGroup) return;
+
+    ubicacionGroup
+      .get('provinciaSede')
+      ?.valueChanges.subscribe((provinciaId) => {
+        const departamentoId = ubicacionGroup.get('departamentoSede')?.value;
+        const distritosSede = this._ubigeoService.getDistrito(
+          departamentoId,
+          provinciaId,
+        );
+
+        // Actualizar el mapa de ubigeo
+        this.sedesUbigeo.set(sedeIndex, {
+          departamentos: this.sedesUbigeo.get(sedeIndex)?.departamentos || [],
+          provincias: this.sedesUbigeo.get(sedeIndex)?.provincias || [],
+          distritos: distritosSede,
+        });
+
+        ubicacionGroup
+          .get('distritoSede')
+          ?.setValue('01', { emitEvent: false });
+      });
+  }
+
+  // Método auxiliar para obtener provincias de una sede específica
+  getProvinciasSede(sedeIndex: number): any[] {
+    return (
+      this.sedesUbigeo.get(sedeIndex)?.provincias ||
+      this._ubigeoService.getProvincia('15')
+    );
+  }
+
+  // Método auxiliar para obtener distritos de una sede específica
+  getDistritosSede(sedeIndex: number): any[] {
+    return (
+      this.sedesUbigeo.get(sedeIndex)?.distritos ||
+      this._ubigeoService.getDistrito('15', '01')
+    );
   }
 
   private _fb = inject(FormBuilder);
@@ -238,11 +319,27 @@ export class MantEmpresasComponent implements OnInit, AfterViewInit {
       observacionesSede: ['', [Validators.maxLength(300)]],
     });
 
+    const sedeIndex = this.ubicacionesSedes.length;
     this.ubicacionesSedes.push(ubicacionForm);
+
+    // Inicializar ubigeo para esta sede
+    this.sedesUbigeo.set(sedeIndex, {
+      departamentos: this._ubigeoService.getDepartamento(),
+      provincias: this._ubigeoService.getProvincia('15'),
+      distritos: this._ubigeoService.getDistrito('15', '01'),
+    });
+
+    // Agregar listeners después de que el formulario esté en el DOM
+    setTimeout(() => {
+      this.onDepartamentoSedeChange(sedeIndex);
+      this.onProvinciaSedeChange(sedeIndex);
+    }, 100);
   }
 
   eliminarUbicacion(index: number) {
     this.ubicacionesSedes.removeAt(index);
+    // Limpiar datos de ubigeo de la sede eliminada
+    this.sedesUbigeo.delete(index);
   }
 
   // Método para abrir Google Maps con coordenadas
@@ -353,6 +450,7 @@ export class MantEmpresasComponent implements OnInit, AfterViewInit {
     // Limpiar los FormArrays antes de llenarlos
     this.personasContacto.clear();
     this.ubicacionesSedes.clear();
+    this.sedesUbigeo.clear(); // Limpiar el mapa de ubigeo
 
     this.empresaForm.get('ruc')?.disable();
 
@@ -363,9 +461,29 @@ export class MantEmpresasComponent implements OnInit, AfterViewInit {
 
     // Agregar cada ubicación al FormArray
     if (empresa.ubicacionesSedes) {
-      empresa.ubicacionesSedes.forEach((ubicacion: IUbicacionSede) => {
-        this.ubicacionesSedes.push(this.crearUbicacionGroup(ubicacion));
-      });
+      empresa.ubicacionesSedes.forEach(
+        (ubicacion: IUbicacionSede, ubicacionIndex: number) => {
+          this.ubicacionesSedes.push(this.crearUbicacionGroup(ubicacion));
+
+          // Inicializar ubigeo para cada sede cargada
+          this.sedesUbigeo.set(ubicacionIndex, {
+            departamentos: this._ubigeoService.getDepartamento(),
+            provincias: this._ubigeoService.getProvincia(
+              ubicacion.departamentoSede,
+            ),
+            distritos: this._ubigeoService.getDistrito(
+              ubicacion.departamentoSede,
+              ubicacion.provinciaSede,
+            ),
+          });
+
+          // Agregar listeners
+          setTimeout(() => {
+            this.onDepartamentoSedeChange(ubicacionIndex);
+            this.onProvinciaSedeChange(ubicacionIndex);
+          }, 100);
+        },
+      );
     }
   }
 
@@ -479,6 +597,7 @@ export class MantEmpresasComponent implements OnInit, AfterViewInit {
     this.formSubmitted = false;
     this.personasContacto.clear();
     this.ubicacionesSedes.clear();
+    this.sedesUbigeo.clear(); // Limpiar el mapa de ubigeo
     this.empresaForm.patchValue({
       departamento: '15',
       provincia: '01',
