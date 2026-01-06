@@ -94,6 +94,8 @@ export class GestCotiEmpresaComponent {
     diasCredito: [null],
     entregaResultados: [null],
     validez: [null],
+    estadoCotizacion: [{ value: '' }],
+    nombreProtocolo: [null],
     servicioInHouse: [null],
     aplicarPrecioGlobal: false,
     precioConDescGlobal: [{ value: '', disabled: true }],
@@ -104,7 +106,6 @@ export class GestCotiEmpresaComponent {
     igv: 0,
     total: 0,
     serviciosCotizacion: this._fb.array([], Validators.required),
-    estadoCotizacion: '',
   });
 
   get serviciosCotizacion(): FormArray {

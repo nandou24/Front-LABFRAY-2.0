@@ -536,7 +536,10 @@
                             <mat-label>Departamento</mat-label>
                             <mat-select formControlName="departamentoSede">
                               <mat-option
-                                *ngFor="let depart of departamentos"
+                                *ngFor="
+                                  let depart of sedesUbigeo.get(i)
+                                    ?.departamentos
+                                "
                                 [value]="depart.id"
                                 >{{ depart.nombre }}</mat-option
                               >
@@ -549,7 +552,7 @@
                             <mat-label>Provincia</mat-label>
                             <mat-select formControlName="provinciaSede">
                               <mat-option
-                                *ngFor="let provin of provincias"
+                                *ngFor="let provin of getProvinciasSede(i)"
                                 [value]="provin.id_Prov"
                                 >{{ provin.nombre }}</mat-option
                               >
@@ -562,7 +565,7 @@
                             <mat-label>Distrito</mat-label>
                             <mat-select formControlName="distritoSede">
                               <mat-option
-                                *ngFor="let distri of distritos"
+                                *ngFor="let distri of getDistritosSede(i)"
                                 [value]="distri.id_Ditrito"
                                 >{{ distri.nombre }}</mat-option
                               >

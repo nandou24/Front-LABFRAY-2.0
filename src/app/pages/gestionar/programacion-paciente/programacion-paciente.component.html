@@ -1,0 +1,196 @@
+<form [formGroup]="myFormProgramacion">
+  <div class="contenedor-flex">
+    <div class="contenedor-formulario">
+      <div class="row-flex mt-2" style="align-items: center">
+        <div [style.flex]="setFlex(65, '%')" class="flex-item">
+          <h5 class="text-center" style="font-weight: 500">
+            PROGRAMACIÓN DE ATENCIONES - EMPRESAS
+          </h5>
+        </div>
+        <div [style.flex]="setFlex(30, '%')" class="flex-item">
+          <h5>
+            Código: {{ myFormProgramacion.get("codProgramacion")?.value }}
+          </h5>
+        </div>
+      </div>
+    </div>
+
+    <mat-card>
+      <mat-card-title>
+        <div class="row-flex align-items-center">DATOS PERSONALES</div>
+      </mat-card-title>
+
+      <mat-card-content>
+        <div class="row-flex mt-2">
+          <div [style.flex]="setFlex(19, '%')" class="flex-item">
+            <mat-form-field appearance="outline">
+              <mat-label>Tipo Doc</mat-label>
+              <mat-select formControlName="tipoDoc">
+                <mat-option value="DNI">DNI</mat-option>
+                <mat-option value="CE">CE</mat-option>
+                <mat-option value="Pasaporte">Pasaporte</mat-option>
+              </mat-select>
+              <mat-icon
+                matSuffix
+                *ngIf="myFormProgramacion.get('tipoDoc')?.disabled"
+                >lock</mat-icon
+              >
+            </mat-form-field>
+          </div>
+
+          <div [style.flex]="setFlex(19, '%')" class="flex-item">
+            <mat-form-field appearance="outline">
+              <mat-label>Nro. Documento</mat-label>
+              <input matInput formControlName="nroDoc" />
+              <mat-icon
+                matSuffix
+                *ngIf="myFormProgramacion.get('nroDoc')?.disabled"
+                >lock</mat-icon
+              >
+              <mat-error
+                *ngIf="myFormProgramacion.get('nroDoc')?.hasError('required')"
+              >
+                Obligatorio
+              </mat-error>
+
+              <mat-error
+                *ngIf="myFormProgramacion.get('nroDoc')?.hasError('invalidDNI')"
+              >
+                DNI debe tener 8 números
+              </mat-error>
+
+              <mat-error
+                *ngIf="myFormProgramacion.get('nroDoc')?.hasError('invalidCE')"
+              >
+                CE tiene hasta 13 caracteres
+              </mat-error>
+
+              <mat-error
+                *ngIf="
+                  myFormProgramacion.get('nroDoc')?.hasError('invalidPasaporte')
+                "
+              >
+                Pasaporte tiene hasta 16 caracteres
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <div [style.flex]="setFlex(15, '%')" class="flex-item">
+            <mat-form-field appearance="outline">
+              <mat-label>Sexo</mat-label>
+              <mat-select formControlName="sexoCliente">
+                <mat-option value="Masculino">Masculino</mat-option>
+                <mat-option value="Femenino">Femenino</mat-option>
+              </mat-select>
+              <mat-error
+                *ngIf="
+                  myFormProgramacion.get('sexoCliente')?.hasError('required')
+                "
+              >
+                Obligatorio
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <div [style.flex]="setFlex(20, '%')" class="flex-item">
+            <mat-form-field appearance="outline">
+              <mat-label>Fecha Nacimiento</mat-label>
+              <input
+                matInput
+                [matDatepicker]="picker"
+                readonly="true"
+                formControlName="fechaNacimiento"
+                (dateChange)="actualizarEdad()"
+              />
+              <mat-datepicker-toggle
+                matSuffix
+                [for]="picker"
+              ></mat-datepicker-toggle>
+              <mat-datepicker #picker disabled="false"></mat-datepicker>
+              <mat-error
+                *ngIf="
+                  myFormProgramacion
+                    .get('fechaNacimiento')
+                    ?.hasError('required')
+                "
+              >
+                Obligatorio
+              </mat-error>
+              <mat-error
+                *ngIf="
+                  myFormProgramacion
+                    .get('fechaNacimiento')
+                    ?.hasError('fechaFutura')
+                "
+              >
+                Fecha no puede ser futura
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <div [style.flex]="setFlex(20, '%')" class="flex-item">
+            {{ myFormProgramacion.get("edad")?.value }}
+          </div>
+        </div>
+
+        <div class="row-flex">
+          <div [style.flex]="setFlex(29, '%')" class="flex-item">
+            <mat-form-field appearance="outline">
+              <mat-label>Apellido Paterno</mat-label>
+              <input matInput formControlName="apePatCliente" />
+              <mat-error
+                *ngIf="
+                  myFormProgramacion.get('apePatCliente')?.hasError('required')
+                "
+              >
+                Obligatorio
+              </mat-error>
+              <mat-error
+                *ngIf="
+                  myFormProgramacion.get('apePatCliente')?.hasError('pattern')
+                "
+              >
+                Solo letras
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <div [style.flex]="setFlex(29, '%')" class="flex-item">
+            <mat-form-field appearance="outline">
+              <mat-label>Apellido Materno</mat-label>
+              <input matInput formControlName="apeMatCliente" />
+              <mat-error
+                *ngIf="
+                  myFormProgramacion.get('apeMatCliente')?.hasError('pattern')
+                "
+              >
+                Solo letras
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <div [style.flex]="setFlex(38, '%')" class="flex-item">
+            <mat-form-field appearance="outline">
+              <mat-label>Nombres</mat-label>
+              <input matInput formControlName="nombreCliente" />
+              <mat-error
+                *ngIf="
+                  myFormProgramacion.get('nombreCliente')?.hasError('required')
+                "
+              >
+                Obligatorio
+              </mat-error>
+              <mat-error
+                *ngIf="
+                  myFormProgramacion.get('nombreCliente')?.hasError('pattern')
+                "
+              >
+                Solo letras
+              </mat-error>
+            </mat-form-field>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</form>
