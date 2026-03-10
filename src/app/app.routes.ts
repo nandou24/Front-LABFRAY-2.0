@@ -134,6 +134,13 @@ export const routes: Routes = [
             './pages/gestionar/programacion-paciente/programacion-paciente.component'
           ).then((m) => m.ProgramacionPacienteComponent),
       },
+      {
+        path: 'triaje-particular',
+        loadComponent: () =>
+          import(
+            './pages/gestionar/triaje/gest-triaje-particular/gest-triaje-particular.component'
+          ).then((m) => m.GestTriajeParticularComponent),
+      },
     ],
   },
   {

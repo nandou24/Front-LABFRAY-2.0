@@ -177,7 +177,6 @@ export class SolicitudAtencionComponent implements OnInit {
     return `0 0 ${valor}${unidad}`;
   }
 
-  //Tabla roles
   columnasTablaSolicitud: string[] = [
     'cotizacionId',
     'codigoPago',

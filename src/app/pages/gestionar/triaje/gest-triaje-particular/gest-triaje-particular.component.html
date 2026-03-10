@@ -1,0 +1,204 @@
+<form [formGroup]="myFormTriaje">
+  <div class="contenedor-flex">
+    <div class="contenedor-formulario">
+      <div class="row-flex mt-2" style="align-items: center">
+        <div [style.flex]="setFlex(40, '%')" class="flex-item">
+          <h5 class="text-center" style="font-weight: 500">
+            TÓPICO - TRIAJE - Particular
+          </h5>
+        </div>
+        <div [style.flex]="setFlex(20, '%')" class="flex-item">
+          <h5>HC: {{ myFormTriaje.get("codRecHumano")?.value }}</h5>
+        </div>
+        <div [style.flex]="setFlex(40, '%')" class="flex-item">
+          <h5>Fecha: {{ myFormTriaje.get("fecha")?.value }}</h5>
+        </div>
+      </div>
+
+      <fieldset class="campo-fieldset mt-2">
+        <legend>DATOS DE LA ATENCIÓN</legend>
+
+        <div class="row-flex">
+          <div [style.flex]="setFlex(50, '%')" class="flex-item">
+            <mat-form-field appearance="outline">
+              <mat-label>Nombre de Paciente</mat-label>
+              <input
+                matInput
+                [value]="
+                  (myFormTriaje.get('apePatCliente')?.value || '') +
+                  ' ' +
+                  (myFormTriaje.get('apeMatCliente')?.value || '') +
+                  ' ' +
+                  (myFormTriaje.get('nombreCliente')?.value || '')
+                "
+                disabled
+                readonly
+              />
+            </mat-form-field>
+          </div>
+
+          <div [style.flex]="setFlex(20, '%')" class="flex-item">
+            <mat-form-field appearance="outline">
+              <mat-label>Tipo de Documento</mat-label>
+              <input
+                matInput
+                [value]="myFormTriaje.get('tipoDoc')?.value || ''"
+                disabled
+                readonly
+              />
+            </mat-form-field>
+          </div>
+
+          <div [style.flex]="setFlex(27, '%')" class="flex-item">
+            <mat-form-field appearance="outline">
+              <mat-label>Nro de Documento</mat-label>
+              <input
+                matInput
+                [value]="myFormTriaje.get('nroDoc')?.value || ''"
+                disabled
+                readonly
+              />
+            </mat-form-field>
+          </div>
+        </div>
+
+        <div class="row-flex">
+          <div [style.flex]="setFlex(50, '%')" class="flex-item">
+            <mat-form-field appearance="outline">
+              <mat-label>Solicitante</mat-label>
+              <input
+                matInput
+                [value]="
+                  (myFormTriaje.get('apePatRefMedico')?.value || '') +
+                  ' ' +
+                  (myFormTriaje.get('apeMatRefMedico')?.value || '') +
+                  ' ' +
+                  (myFormTriaje.get('nombreRefMedico')?.value || '')
+                "
+                disabled
+                readonly
+              />
+            </mat-form-field>
+          </div>
+          <div [style.flex]="setFlex(27, '%')" class="flex-item">
+            <mat-form-field appearance="outline">
+              <mat-label>Profesión</mat-label>
+              <input
+                matInput
+                [value]="myFormTriaje.get('profesionSolicitante')?.value || ''"
+                disabled
+                readonly
+              />
+            </mat-form-field>
+          </div>
+          <div [style.flex]="setFlex(20, '%')" class="flex-item">
+            <mat-form-field appearance="outline">
+              <mat-label>Colegiatura</mat-label>
+              <input matInput formControlName="colegiatura" readonly />
+            </mat-form-field>
+          </div>
+        </div>
+      </fieldset>
+    </div>
+
+    <div class="contenedor-tablaDerecha">
+      <mat-card>
+        <mat-card-title> Atenciones Topico - Triaje </mat-card-title>
+
+        <mat-card-content>
+          <mat-form-field appearance="outline">
+            <mat-label>Buscar Paciente</mat-label>
+            <input matInput [formControl]="terminoBusquedaPaciente" />
+          </mat-form-field>
+
+          <table mat-table [dataSource]="dataSourceAtenciones">
+            <ng-container matColumnDef="solicitudId">
+              <th mat-header-cell *matHeaderCellDef>Cod Solicitud</th>
+              <td mat-cell *matCellDef="let cotizacion">
+                {{ cotizacion.codCotizacion }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="nombreCompleto">
+              <th mat-header-cell *matHeaderCellDef>Paciente</th>
+              <td mat-cell *matCellDef="let cotizacion">
+                {{
+                  cotizacion.historial[cotizacion.historial.length - 1].tipoDoc
+                }}
+                {{
+                  cotizacion.historial[cotizacion.historial.length - 1].nroDoc
+                }}
+                --
+
+                {{
+                  cotizacion.historial[cotizacion.historial.length - 1]
+                    .apePatCliente
+                }}
+                {{
+                  cotizacion.historial[cotizacion.historial.length - 1]
+                    .apeMatCliente
+                }}
+                {{
+                  cotizacion.historial[cotizacion.historial.length - 1]
+                    .nombreCliente
+                }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="fechaEmision">
+              <th mat-header-cell *matHeaderCellDef>Fecha</th>
+              <td mat-cell *matCellDef="let cotizacion">
+                {{
+                  cotizacion.historial[cotizacion.historial.length - 1]
+                    .fechaModificacion | date: "dd/MM/yyyy"
+                }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="tipo">
+              <th mat-header-cell *matHeaderCellDef>Tipo</th>
+              <td mat-cell *matCellDef="let cotizacion">
+                {{ cotizacion.tipoCotizacion }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="estado">
+              <th mat-header-cell *matHeaderCellDef>Estado</th>
+              <td mat-cell *matCellDef="let cotizacion">
+                {{ cotizacion.estadoCotizacion }}
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="columnasTablaSolicitudes"></tr>
+            <tr
+              mat-row
+              *matRowDef="
+                let row;
+                let i = index;
+                columns: columnasTablaSolicitudes
+              "
+              (click)="cargarAtencion(row, i)"
+              [class.fila-seleccionada]="i === filaSeleccionadaIndexAtencion"
+            ></tr>
+          </table>
+          <div>
+            <mat-paginator
+              #MatPaginatorCotizaciones
+              [pageSizeOptions]="[5, 10, 25]"
+              [pageSize]="6"
+              [hidePageSize]="true"
+              showFirstLastButtons
+            ></mat-paginator>
+          </div>
+
+          <div
+            *ngIf="dataSourceAtenciones.data.length === 0"
+            class="text-center mt-2"
+          >
+            No se encontraron atenciones.
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+</form>
