@@ -23,11 +23,11 @@ import {
   FormsModule,
   ReactiveFormsModule,
 } from '@angular/forms';
-import { EmpresaService } from '../../../../../../services/mantenimiento/empresa/empresa.service';
 import { IEmpresa } from '../../../../../../models/Mantenimiento/empresa.models';
-import { debounceTime, distinctUntilChanged, filter, tap } from 'rxjs';
 import { MatCardModule } from '@angular/material/card';
 import { MatSelectModule } from '@angular/material/select';
+import { CotizacionEmpresaService } from '../../../../../../services/gestion/cotizaciones/cotizacionEmpresa/cotizacion-empresa.service';
+import { ICotizacionEmpresa } from '../../../../../../models/Gestion/cotizacionEmpresa.models';
 
 @Component({
   selector: 'app-dialog-protocolo',
@@ -52,23 +52,22 @@ import { MatSelectModule } from '@angular/material/select';
 export class DialogProtocoloComponent {
   cargando = false;
   terminoBusquedaEmpresa = new FormControl();
+  private _cotizacionService = inject(CotizacionEmpresaService);
 
   constructor(
     public dialogRef: MatDialogRef<DialogProtocoloComponent>,
-    private _empresaService: EmpresaService,
     @Inject(MAT_DIALOG_DATA) public data: any,
   ) {}
 
   ngOnInit(): void {
-    this.ultimosEmpresas(25);
-    this.configurarBusquedaEmpresas();
+    this.ultimasCotizaciones();
   }
 
   @ViewChild(MatTable) table!: MatTable<any>;
   @ViewChild('MatPaginatorEmpresas') paginatorEmpresas!: MatPaginator;
 
   ngAfterViewInit() {
-    this.dataSourceEmpresas.paginator = this.paginatorEmpresas;
+    this.dataSourceCotizaciones.paginator = this.paginatorEmpresas;
   }
 
   private _fb = inject(FormBuilder);
@@ -79,36 +78,30 @@ export class DialogProtocoloComponent {
   });
 
   //Tabla rrhh
-  columnasTablaEmpresas: string[] = ['nro', 'ruc', 'razonSocial', 'acciones'];
-  dataSourceEmpresas = new MatTableDataSource<IEmpresa>();
-  timeoutBusqueda: any;
+  columnasTablaCotizaciones: string[] = [
+    'codCotizacion',
+    'empresa',
+    'fecha',
+    'accion',];
+  dataSourceCotizaciones = new MatTableDataSource<ICotizacionEmpresa>();
 
-  configurarBusquedaEmpresas(): void {
-    this.terminoBusquedaEmpresa.valueChanges
-      .pipe(
-        filter((termino): termino is string => termino !== null),
-        debounceTime(300),
-        distinctUntilChanged(),
-        tap((termino: string) => {
-          termino = termino?.trim() || '';
-
-          if (termino.length >= 3) {
-            this._empresaService.getEmpresa(termino).subscribe({
-              next: (res: IEmpresa[]) => {
-                this.dataSourceEmpresas.data = res;
-              },
-              error: () => {
-                this.dataSourceEmpresas.data = [];
-              },
-            });
-          } else if (termino.length > 0) {
-            this.dataSourceEmpresas.data = [];
-          } else {
-            this.ultimosEmpresas(25); // ← carga los pacientes recientes
-          }
-        }),
-      )
-      .subscribe();
+  ultimasCotizaciones(): void {
+    console.log('RUC recibido en el diálogo:', this.data.ruc);
+    if (!this.data.ruc) {
+      console.error('No se proporcionó un RUC válido.');
+      this.dataSourceCotizaciones.data = [];
+      return;
+    }else {
+    this._cotizacionService.obtenerCotizacionPorRuc(this.data.ruc).subscribe({
+      next: (res: ICotizacionEmpresa[]) => {
+        this.dataSourceCotizaciones.data = res;
+        console.log('Cotizaciones obtenidas:', res);
+      },
+      error: (err: any) => {
+        this.dataSourceCotizaciones.data = [];
+      },
+    });
+    }
   }
 
   //setear los anchos
@@ -116,21 +109,8 @@ export class DialogProtocoloComponent {
     return `0 0 ${valor}${unidad}`;
   }
 
-  ultimosEmpresas(cantidad: number): void {
-    console.log('Cargando últimos empresas de dialog');
-
-    this._empresaService.getLastEmpresas(cantidad).subscribe({
-      next: (res: IEmpresa[]) => {
-        this.dataSourceEmpresas.data = res;
-      },
-      error: (err: any) => {
-        this.dataSourceEmpresas.data = [];
-      },
-    });
-  }
-
-  seleccionarEmpresa(empresa: IEmpresa) {
-    this.dialogRef.close(empresa);
+  seleccionarCotizacion(cotizacion: ICotizacionEmpresa) {
+    this.dialogRef.close(cotizacion);
   }
 
   cerrar() {
