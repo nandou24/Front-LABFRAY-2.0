@@ -33,6 +33,9 @@ import {
 import { EmpresaService } from '../../../../services/mantenimiento/empresa/empresa.service';
 import { UbigeoService } from '../../../../services/utilitarios/ubigeo.service';
 import Swal from 'sweetalert2';
+import { MatTabsModule } from '@angular/material/tabs';
+import { MatDialog } from '@angular/material/dialog';
+import { DialogProtocoloComponent } from './dialogs/dialog-protocolo/dialog-protocolo.component';
 
 @Component({
   selector: 'app-mant-empresas',
@@ -47,6 +50,7 @@ import Swal from 'sweetalert2';
     ReactiveFormsModule,
     MatIconModule,
     MatTableModule,
+    MatTabsModule,
     MatPaginatorModule,
     CommonModule,
     MatButtonModule,
@@ -59,6 +63,8 @@ export class MantEmpresasComponent implements OnInit, AfterViewInit {
     private readonly _empresaService: EmpresaService,
     private _ubigeoService: UbigeoService,
   ) {}
+
+  private dialog = inject(MatDialog);
 
   ngOnInit(): void {
     // Inicializar ubigeo para dirección principal
@@ -389,6 +395,28 @@ export class MantEmpresasComponent implements OnInit, AfterViewInit {
     } catch (error) {
       return false;
     }
+  }
+
+  abrirDialogoAgregarProtocolo() {
+    const dialogRef = this.dialog.open(DialogProtocoloComponent, {
+      maxWidth: '1500px',
+      data: {},
+    });
+    dialogRef.afterClosed().subscribe((empresaSeleccionada) => {
+      if (empresaSeleccionada) {
+        this.setEmpresaSeleccionada(empresaSeleccionada);
+      }
+    });
+  }
+
+  setEmpresaSeleccionada(empresa: IEmpresa) {
+    // Asigna los datos de la empresa seleccionada al formulario
+    this.empresaForm.patchValue({
+      empresaId: empresa._id,
+      ruc: empresa.ruc,
+      razonSocial: empresa.razonSocial,
+    });
+    //this.contactos = empresa.personasContacto;
   }
 
   @ViewChild(MatTable) table!: MatTable<any>;

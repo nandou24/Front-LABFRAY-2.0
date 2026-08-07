@@ -1,0 +1,28 @@
+.contenedor-flex {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.contenedor-formulario {
+  flex: 0 0 60%;
+}
+
+.contenedor-tablaDerecha {
+  flex: 0 0 38%;
+}
+
+.row-flex {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  margin-bottom: 0px;
+}
+
+.flex-item {
+  justify-content: center;
+  min-width: 0;
+  text-align: center;
+  padding: 10px;
+}
