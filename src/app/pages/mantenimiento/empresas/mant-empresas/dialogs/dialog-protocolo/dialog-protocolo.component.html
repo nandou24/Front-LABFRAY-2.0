@@ -1,24 +1,34 @@
 <form [formGroup]="protocoloForm">
-  <h2 mat-dialog-title>Crear Protocolo</h2>
-
   <mat-dialog-content>
     <div class="contenedor-flex">
       <div class="contenedor-formulario">
         <mat-card class="mt-2">
           <mat-card-title>
-            <div class="row-flex">Servicios seleccionados</div>
+            <div class="row-flex">Crear Protocolo</div>
           </mat-card-title>
 
           <mat-card-content>
-            <div class="row-flex mt-2">
+            <div class="row-flex">
               <div [style.flex]="setFlex(50, '%')" class="flex-item">
                 <mat-form-field appearance="outline">
-                  <mat-label>RUC</mat-label>
-                  <input matInput formControlName="nroCoti" maxlength="11" />
+                  <mat-label>Nombre</mat-label>
+                  <input
+                    matInput
+                    formControlName="nombreProtocolo"
+                    maxlength="11"
+                  />
                 </mat-form-field>
               </div>
-
               <div [style.flex]="setFlex(50, '%')" class="flex-item">
+                <mat-form-field appearance="outline">
+                  <mat-label>Cotización de referencia</mat-label>
+                  <input matInput formControlName="nroCoti" maxlength="20" />
+                </mat-form-field>
+              </div>
+            </div>
+
+            <div class="row-flex">
+              <div [style.flex]="setFlex(100, '%')" class="flex-item">
                 <mat-form-field appearance="outline">
                   <mat-label>Estado</mat-label>
                   <mat-select formControlName="estado">
@@ -28,11 +38,68 @@
                 </mat-form-field>
               </div>
             </div>
+
+            <div class="fila-flex mt-1">
+              <div class="tabla-flex-50">
+                <mat-card>
+                  <mat-card-title> Servicios seleccionados </mat-card-title>
+
+                  <mat-card-content class="mb-2">
+                    <table
+                      mat-table
+                      [dataSource]="dataSourceServiciosSeleccionados"
+                    >
+                      <!-- Definir las columnas -->
+                      <ng-container matColumnDef="codigo">
+                        <th mat-header-cell *matHeaderCellDef>Código</th>
+                        <td mat-cell *matCellDef="let servicio">
+                          {{ servicio.codServicio }}
+                        </td>
+                      </ng-container>
+
+                      <ng-container matColumnDef="nombre">
+                        <th mat-header-cell *matHeaderCellDef>Nombre</th>
+                        <td mat-cell *matCellDef="let servicio">
+                          {{ servicio.nombreServicio }}
+                        </td>
+                      </ng-container>
+
+                      <ng-container matColumnDef="accion">
+                        <th mat-header-cell *matHeaderCellDef>Acción</th>
+                        <td mat-cell *matCellDef="let servicio">
+                          <button
+                            mat-icon-button
+                            color="primary"
+                            type="button"
+                            (click)="removerServicio(servicio)"
+                          >
+                            <mat-icon>delete</mat-icon>
+                          </button>
+                        </td>
+                      </ng-container>
+
+                      <tr
+                        mat-header-row
+                        *matHeaderRowDef="columnasTablaServiciosSeleccionados"
+                      ></tr>
+                      <tr
+                        mat-row
+                        *matRowDef="
+                          let row;
+                          columns: columnasTablaServiciosSeleccionados
+                        "
+                      ></tr>
+                    </table>
+                  </mat-card-content>
+                </mat-card>
+              </div>
+            </div>
+
+            <div class="row-flex"></div>
           </mat-card-content>
         </mat-card>
       </div>
       <div class="contenedor-tablaDerecha">
-
         <div *ngIf="cargando" class="text-center my-3">
           <mat-spinner diameter="30"></mat-spinner>
         </div>
@@ -43,34 +110,49 @@
           class="mat-elevation-z8 w-100"
           *ngIf="!cargando"
         >
-
           <ng-container matColumnDef="codCotizacion">
             <th mat-header-cell *matHeaderCellDef>Código</th>
-            <td mat-cell *matCellDef="let cotizacion">{{ cotizacion.codCotizacion }}</td>
+            <td mat-cell *matCellDef="let cotizacion">
+              {{ cotizacion.codCotizacion }}-V{{
+                cotizacion.historial[cotizacion.historial.length - 1].version
+              }}
+            </td>
           </ng-container>
           <ng-container matColumnDef="empresa">
             <th mat-header-cell *matHeaderCellDef>Razón social</th>
             <td mat-cell *matCellDef="let cotizacion">
-              {{ cotizacion.historial[cotizacion.historial.length - 1].razonSocial }}
+              {{
+                cotizacion.historial[cotizacion.historial.length - 1]
+                  .razonSocial
+              }}
             </td>
           </ng-container>
           <ng-container matColumnDef="fecha">
             <th mat-header-cell *matHeaderCellDef>Fecha</th>
             <td mat-cell *matCellDef="let cotizacion">
-              {{ cotizacion.historial[cotizacion.historial.length - 1].fechaModificacion | date: "dd/MM/yyyy" }}
+              {{
+                cotizacion.historial[cotizacion.historial.length - 1]
+                  .fechaModificacion | date: "dd/MM/yyyy"
+              }}
             </td>
           </ng-container>
           <ng-container matColumnDef="accion">
             <th mat-header-cell *matHeaderCellDef>Acción</th>
             <td mat-cell *matCellDef="let cotizacion">
-              <button mat-icon-button (click)="seleccionarCotizacion(cotizacion)">
+              <button
+                mat-icon-button
+                (click)="seleccionarCotizacion(cotizacion)"
+              >
                 <mat-icon>add</mat-icon>
               </button>
             </td>
           </ng-container>
 
           <tr mat-header-row *matHeaderRowDef="columnasTablaCotizaciones"></tr>
-          <tr mat-row *matRowDef="let row; columns: columnasTablaCotizaciones"></tr>
+          <tr
+            mat-row
+            *matRowDef="let row; columns: columnasTablaCotizaciones"
+          ></tr>
         </table>
 
         <div>
@@ -84,7 +166,8 @@
 
         <div
           *ngIf="!cargando && dataSourceCotizaciones.data.length === 0"
-          class="text-center mt-2" style="font-size: 14px; color: red;"
+          class="text-center mt-2"
+          style="font-size: 14px; color: red"
         >
           No se encontraron cotizaciones.
         </div>
@@ -92,7 +175,26 @@
     </div>
   </mat-dialog-content>
 
-  <mat-dialog-actions align="end">
-    <button mat-stroked-button color="warn" (click)="cerrar()">Cerrar</button>
-  </mat-dialog-actions>
+  <div class="row-flex mt-3">
+    <div [style.flex]="setFlex(25, '%')" class="flex-item text-end">
+      <button
+        mat-raised-button
+        class="btn-registrar"
+        type="button"
+        (click)="crearProtocolo()"
+      >
+        <mat-icon>save</mat-icon> CREAR
+      </button>
+    </div>
+    <div [style.flex]="setFlex(25, '%')" class="flex-item text-end">
+      <button
+        mat-raised-button
+        class="btn-cancelar"
+        type="button"
+        (click)="cerrar()"
+      >
+        <mat-icon>save</mat-icon> CANCELAR
+      </button>
+    </div>
+  </div>
 </form>

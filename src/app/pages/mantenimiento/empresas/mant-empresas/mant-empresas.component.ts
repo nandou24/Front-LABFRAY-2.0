@@ -400,6 +400,7 @@ export class MantEmpresasComponent implements OnInit, AfterViewInit {
   abrirDialogoAgregarProtocolo(ruc: string) {
     const dialogRef = this.dialog.open(DialogProtocoloComponent, {
       maxWidth: '1500px',
+      minWidth: '1500px',
       data: { ruc },
     });
     dialogRef.afterClosed().subscribe((empresaSeleccionada) => {

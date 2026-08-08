@@ -807,7 +807,9 @@
               color="primary"
               class="btn-telefono"
               type="button"
-              (click)="abrirDialogoAgregarProtocolo(empresaForm.get('ruc')?.value)"
+              (click)="
+                abrirDialogoAgregarProtocolo(empresaForm.get('ruc')?.value)
+              "
             >
               <mat-icon class="me-1">add</mat-icon>
               Agregar Protocolo

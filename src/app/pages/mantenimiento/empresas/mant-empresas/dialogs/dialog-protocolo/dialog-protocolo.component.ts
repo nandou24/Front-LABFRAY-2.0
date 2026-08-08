@@ -23,11 +23,13 @@ import {
   FormsModule,
   ReactiveFormsModule,
 } from '@angular/forms';
-import { IEmpresa } from '../../../../../../models/Mantenimiento/empresa.models';
 import { MatCardModule } from '@angular/material/card';
 import { MatSelectModule } from '@angular/material/select';
 import { CotizacionEmpresaService } from '../../../../../../services/gestion/cotizaciones/cotizacionEmpresa/cotizacion-empresa.service';
-import { ICotizacionEmpresa } from '../../../../../../models/Gestion/cotizacionEmpresa.models';
+import {
+  ICotizacionEmpresa,
+  IServicioCotizacionEmpresa,
+} from '../../../../../../models/Gestion/cotizacionEmpresa.models';
 
 @Component({
   selector: 'app-dialog-protocolo',
@@ -73,6 +75,7 @@ export class DialogProtocoloComponent {
   private _fb = inject(FormBuilder);
 
   public protocoloForm: FormGroup = this._fb.group({
+    nombreProtocolo: [''],
     nroCoti: [''],
     estado: [true],
   });
@@ -82,8 +85,17 @@ export class DialogProtocoloComponent {
     'codCotizacion',
     'empresa',
     'fecha',
-    'accion',];
+    'accion',
+  ];
+
+  columnasTablaServiciosSeleccionados: string[] = [
+    'codigo',
+    'nombre',
+    'accion',
+  ];
   dataSourceCotizaciones = new MatTableDataSource<ICotizacionEmpresa>();
+  dataSourceServiciosSeleccionados =
+    new MatTableDataSource<IServicioCotizacionEmpresa>();
 
   ultimasCotizaciones(): void {
     console.log('RUC recibido en el diálogo:', this.data.ruc);
@@ -91,17 +103,26 @@ export class DialogProtocoloComponent {
       console.error('No se proporcionó un RUC válido.');
       this.dataSourceCotizaciones.data = [];
       return;
-    }else {
-    this._cotizacionService.obtenerCotizacionPorRuc(this.data.ruc).subscribe({
-      next: (res: ICotizacionEmpresa[]) => {
-        this.dataSourceCotizaciones.data = res;
-        console.log('Cotizaciones obtenidas:', res);
-      },
-      error: (err: any) => {
-        this.dataSourceCotizaciones.data = [];
-      },
-    });
+    } else {
+      this._cotizacionService.obtenerCotizacionPorRuc(this.data.ruc).subscribe({
+        next: (res: ICotizacionEmpresa[]) => {
+          this.dataSourceCotizaciones.data = res;
+          console.log('Cotizaciones obtenidas:', res);
+        },
+        error: (err: any) => {
+          this.dataSourceCotizaciones.data = [];
+        },
+      });
     }
+  }
+
+  removerServicio(servicio: IServicioCotizacionEmpresa) {
+    this.dataSourceServiciosSeleccionados.data =
+      this.dataSourceServiciosSeleccionados.data.filter(
+        (servicioSeleccionado) =>
+          servicioSeleccionado.codServicio !== servicio.codServicio,
+      );
+    this.table.renderRows();
   }
 
   //setear los anchos
@@ -110,10 +131,27 @@ export class DialogProtocoloComponent {
   }
 
   seleccionarCotizacion(cotizacion: ICotizacionEmpresa) {
-    this.dialogRef.close(cotizacion);
+    console.log('Cotización seleccionada:', cotizacion);
+    // Necesito que el campo codCotizacion se muestre en el input nroCoti del formulario seguido de -V y el numero de version, por ejemplo: 12345-V1
+    this.protocoloForm.patchValue({
+      nroCoti: `${cotizacion.codCotizacion}-V${cotizacion.historial[cotizacion.historial.length - 1].version}`,
+    });
+    if (cotizacion.historial.length > 0) {
+      const serviciosSeleccionados =
+        cotizacion.historial[0].serviciosCotizacion.map(
+          (servicio: IServicioCotizacionEmpresa) => ({ ...servicio }),
+        );
+      this.dataSourceServiciosSeleccionados.data = serviciosSeleccionados;
+    }
   }
 
   cerrar() {
+    this.dialogRef.close();
+  }
+
+  crearProtocolo() {}
+
+  cancelar() {
     this.dialogRef.close();
   }
 }
