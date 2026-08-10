@@ -30,6 +30,10 @@ import {
   ICotizacionEmpresa,
   IServicioCotizacionEmpresa,
 } from '../../../../../../models/Gestion/cotizacionEmpresa.models';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { IServicio } from '../../../../../../models/Mantenimiento/servicios.models';
+import { ServiciosService } from '../../../../../../services/mantenimiento/servicios/servicios.service';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-dialog-protocolo',
@@ -45,6 +49,7 @@ import {
     MatIconModule,
     MatPaginator,
     MatProgressSpinnerModule,
+    MatSlideToggleModule,
     FormsModule,
     ReactiveFormsModule,
   ],
@@ -55,6 +60,7 @@ export class DialogProtocoloComponent {
   cargando = false;
   terminoBusquedaEmpresa = new FormControl();
   private _cotizacionService = inject(CotizacionEmpresaService);
+  private _servicioService = inject(ServiciosService);
 
   constructor(
     public dialogRef: MatDialogRef<DialogProtocoloComponent>,
@@ -63,6 +69,7 @@ export class DialogProtocoloComponent {
 
   ngOnInit(): void {
     this.ultimasCotizaciones();
+    this.ultimosServicios(0);
   }
 
   @ViewChild(MatTable) table!: MatTable<any>;
@@ -78,6 +85,7 @@ export class DialogProtocoloComponent {
     nombreProtocolo: [''],
     nroCoti: [''],
     estado: [true],
+    tipo: ['manual'],
   });
 
   //Tabla rrhh
@@ -94,8 +102,7 @@ export class DialogProtocoloComponent {
     'accion',
   ];
   dataSourceCotizaciones = new MatTableDataSource<ICotizacionEmpresa>();
-  dataSourceServiciosSeleccionados =
-    new MatTableDataSource<IServicioCotizacionEmpresa>();
+  dataSourceServiciosSeleccionados = new MatTableDataSource<any>();
 
   ultimasCotizaciones(): void {
     console.log('RUC recibido en el diálogo:', this.data.ruc);
@@ -147,6 +154,69 @@ export class DialogProtocoloComponent {
 
   cerrar() {
     this.dialogRef.close();
+  }
+
+  columnasServicios: string[] = ['codigo', 'nombre', 'tipo', 'accion'];
+  dataSourceServicios = new MatTableDataSource<IServicio>();
+  dataSourceServiciosFrecuentes = new MatTableDataSource<IServicio>();
+  terminoBusquedaServicio = new FormControl('');
+  timeoutBusqueda: any;
+
+  buscarServicio() {
+    clearTimeout(this.timeoutBusqueda);
+
+    this.timeoutBusqueda = setTimeout(() => {
+      const termino = this.terminoBusquedaServicio.value?.trim() || '';
+
+      if (termino.length >= 2) {
+        this._servicioService
+          .getServicio(termino)
+          .subscribe((res: IServicio[]) => {
+            this.dataSourceServicios.data = res;
+          });
+      } else if (termino.length > 0) {
+        this.dataSourceServicios.data = [];
+      } else {
+        this.ultimosServicios(0);
+      }
+    }, 200);
+  }
+
+  ultimosServicios(cantidad: number): void {
+    this._servicioService.getLastServicio(cantidad).subscribe({
+      next: (res: IServicio[]) => {
+        this.dataSourceServicios.data = res;
+      },
+      error: (err: any) => {
+        this.dataSourceServicios.data = [];
+      },
+    });
+  }
+
+  seleccionarServicio(servicio: IServicio) {
+
+    const existe = this.dataSourceServiciosSeleccionados.data.some(
+      (servicioSeleccionado) => servicioSeleccionado.codServicio === servicio.codServicio,
+    );
+
+    if (existe) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Servicio ya agregado',
+        text: 'Este servicio ya está en la lista de servicios seleccionados.',
+      });
+      return;
+    }
+
+    this.dataSourceServiciosSeleccionados.data = [
+      ...this.dataSourceServiciosSeleccionados.data,
+      servicio,
+    ];
+    this.table.renderRows();
+
+    
+
+
   }
 
   crearProtocolo() {}

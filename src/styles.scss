@@ -162,3 +162,13 @@ app-gest-pago-coti-persona {
     )
   );
 }
+
+app-dialog-protocolo {
+  @include mat.table-overrides(
+    (
+      row-item-container-height: 30px,
+      row-item-label-text-size: 12.5px,
+      row-item-label-text-line-height: 1.2,
+    )
+  );
+}
