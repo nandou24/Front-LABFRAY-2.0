@@ -801,19 +801,153 @@
         </mat-tab>
 
         <mat-tab label="Protocolos">
-          <div [style.flex]="setFlex(20, '%')" class="flex-item">
-            <button
-              mat-flat-button
-              color="primary"
-              class="btn-telefono"
-              type="button"
-              (click)="
-                abrirDialogoAgregarProtocolo(empresaForm.get('ruc')?.value)
+          <div class="row-flex mb-1">
+            <div [style.flex]="setFlex(20, '%')" class="flex-item">
+              <button
+                mat-flat-button
+                color="primary"
+                class="btn-telefono"
+                type="button"
+                (click)="
+                  abrirDialogoAgregarProtocolo(empresaForm.get('ruc')?.value)
+                "
+              >
+                <mat-icon class="me-1">add</mat-icon>
+                Agregar Protocolo
+              </button>
+            </div>
+          </div>
+
+          <div
+            class="row-flex"
+            *ngIf="(empresaForm.get('protocolos')?.value || []).length > 0"
+          >
+            <div
+              [style.flex]="setFlex(33.33, '%')"
+              class="flex-item mb-3"
+              *ngFor="
+                let protocolo of empresaForm.get('protocolos')?.value;
+                let i = index
               "
             >
-              <mat-icon class="me-1">add</mat-icon>
-              Agregar Protocolo
-            </button>
+              <mat-card class="protocolo-card">
+                <div class="protocolo-header">
+                  <mat-card-title
+                    >{{ protocolo.codigoProtocolo }} -
+                    {{ protocolo.nombreProtocolo }}
+                  </mat-card-title>
+                  <button
+                    mat-icon-button
+                    color="warn"
+                    type="button"
+                    class="btn-delete-protocolo"
+                    (click)="eliminarProtocolo(i)"
+                    aria-label="Eliminar protocolo"
+                  >
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+
+                <mat-card-content>
+                  <div class="protocolo-meta">
+                    <div class="meta-row">
+                      <div class="meta-item">
+                        <strong>Tipo:</strong>
+                        {{
+                          protocolo.tipo === "manual"
+                            ? "Manual"
+                            : "Con referencia"
+                        }}
+                      </div>
+                      <div class="meta-item">
+                        <strong>Estado:</strong>
+                        <strong>
+                          <span
+                            [class.text-success]="protocolo.estado"
+                            [class.text-danger]="!protocolo.estado"
+                          >
+                            {{ protocolo.estado ? "Activo" : "Inactivo" }}
+                          </span>
+                        </strong>
+                      </div>
+                    </div>
+
+                    <div class="meta-row">
+                      <div class="meta-item">
+                        <strong>Referencia:</strong>
+                        {{ protocolo.cotizacionReferencia || "-" }}
+                      </div>
+                      <div
+                        class="meta-item"
+                        *ngIf="protocolo.fechaInicioVigencia"
+                      >
+                        <strong>Inicio:</strong>
+                        {{ protocolo.fechaInicioVigencia | date: "dd/MM/yyyy" }}
+                      </div>
+                    </div>
+
+                    <div class="meta-row" *ngIf="protocolo.fechaFinVigencia">
+                      <div class="meta-item">
+                        <strong>Fin:</strong>
+                        {{ protocolo.fechaFinVigencia | date: "dd/MM/yyyy" }}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div
+                    class="servicios-block"
+                    *ngIf="protocolo.servicios?.length; else sinServicios"
+                  >
+                    <div class="servicios-title">Servicios</div>
+                    <table class="table-servicios">
+                      <thead>
+                        <tr>
+                          <th>Nro</th>
+                          <th>Código</th>
+                          <th>Nombre</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr
+                          *ngFor="
+                            let servicio of protocolo.servicios;
+                            let sIndex = index
+                          "
+                        >
+                          <td>{{ sIndex + 1 }}</td>
+                          <td>
+                            {{
+                              servicio.codServicio ||
+                                servicio.codigo ||
+                                servicio.codigoServicio ||
+                                "-"
+                            }}
+                          </td>
+                          <td>
+                            {{
+                              servicio.nombreServicio || servicio.nombre || "-"
+                            }}
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <ng-template #sinServicios>
+                    <div class="servicios-vacio">
+                      <strong>Servicios:</strong> Sin servicios
+                    </div>
+                  </ng-template>
+                </mat-card-content>
+              </mat-card>
+            </div>
+          </div>
+
+          <div
+            *ngIf="(empresaForm.get('protocolos')?.value || []).length === 0"
+            class="text-muted mt-2"
+          >
+            Aún no se agregaron protocolos para esta empresa.
           </div>
         </mat-tab>
       </mat-tab-group>

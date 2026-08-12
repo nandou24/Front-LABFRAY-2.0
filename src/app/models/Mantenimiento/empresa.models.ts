@@ -22,6 +22,19 @@ export interface IUbicacionSede {
   observacionesSede?: string;
 }
 
+export interface IProtocoloEmpresa {
+  _id?: string;
+  codigoProtocolo: string;
+  nombreProtocolo: string;
+  tipo: 'manual' | 'conReferencia';
+  estado: boolean;
+  cotizacionReferencia?: string;
+  observaciones?: string;
+  fechaInicioVigencia?: Date | string | null;
+  fechaFinVigencia?: Date | string | null;
+  servicios: any[];
+}
+
 export interface IEmpresa {
   _id?: string;
   ruc: string;
@@ -40,6 +53,7 @@ export interface IEmpresa {
   sector?: string; // 'Salud' | 'Educacion' | 'Mineria' | 'Construccion' | 'Otros'
   estado?: boolean;
   observaciones?: string;
+  protocolos?: IProtocoloEmpresa[];
 }
 
 export interface IEmpresaPostDTO {

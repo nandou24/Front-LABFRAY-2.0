@@ -27,6 +27,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import {
   IEmpresa,
+  IProtocoloEmpresa,
   IPersonaContacto,
   IUbicacionSede,
 } from '../../../../models/Mantenimiento/empresa.models';
@@ -235,6 +236,7 @@ export class MantEmpresasComponent implements OnInit, AfterViewInit {
     estado: [true],
     personasContacto: this._fb.array([]),
     ubicacionesSedes: this._fb.array([]),
+    protocolos: [[]],
   });
 
   get personasContacto(): FormArray {
@@ -398,16 +400,56 @@ export class MantEmpresasComponent implements OnInit, AfterViewInit {
   }
 
   abrirDialogoAgregarProtocolo(ruc: string) {
+    const empresaSeleccionadaDesdeListado = this.filaSeleccionadaIndex !== null;
+
+    if (!empresaSeleccionadaDesdeListado) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Seleccione una empresa',
+        text: 'Debe seleccionar una empresa del Listado de Empresas antes de agregar un protocolo.',
+      });
+      return;
+    }
+
+    const protocolosIniciales = this.empresaForm.get('protocolos')?.value || [];
+
     const dialogRef = this.dialog.open(DialogProtocoloComponent, {
       maxWidth: '1500px',
-      minWidth: '1500px',
-      data: { ruc },
+      data: { ruc, protocolos: protocolosIniciales },
     });
-    dialogRef.afterClosed().subscribe((empresaSeleccionada) => {
-      if (empresaSeleccionada) {
-        this.setEmpresaSeleccionada(empresaSeleccionada);
+
+    dialogRef.afterClosed().subscribe((protocolo: IProtocoloEmpresa | null) => {
+      if (!protocolo) {
+        return;
+      }
+
+      const protocolosActuales =
+        this.empresaForm.get('protocolos')?.value || [];
+      const existe = protocolosActuales.some(
+        (item: IProtocoloEmpresa) =>
+          item.codigoProtocolo === protocolo.codigoProtocolo ||
+          item.nombreProtocolo.trim().toLowerCase() ===
+            protocolo.nombreProtocolo.trim().toLowerCase() ||
+          (item.cotizacionReferencia &&
+            protocolo.cotizacionReferencia &&
+            item.cotizacionReferencia.trim().toLowerCase() ===
+              protocolo.cotizacionReferencia.trim().toLowerCase()),
+      );
+
+      if (!existe) {
+        this.empresaForm.patchValue({
+          protocolos: [...protocolosActuales, protocolo],
+        });
       }
     });
+  }
+
+  eliminarProtocolo(index: number) {
+    const protocolosActuales = this.empresaForm.get('protocolos')?.value || [];
+    const nuevosProtocolos = protocolosActuales.filter(
+      (_: any, i: number) => i !== index,
+    );
+    this.empresaForm.patchValue({ protocolos: nuevosProtocolos });
   }
 
   setEmpresaSeleccionada(empresa: IEmpresa) {
@@ -474,7 +516,10 @@ export class MantEmpresasComponent implements OnInit, AfterViewInit {
   //Carga los datos en los campos
   cargarEmpresa(empresa: IEmpresa, index: number): void {
     this.filaSeleccionadaIndex = index;
-    this.empresaForm.patchValue(empresa);
+    this.empresaForm.patchValue({
+      ...empresa,
+      protocolos: empresa.protocolos || [],
+    });
 
     // Limpiar los FormArrays antes de llenarlos
     this.personasContacto.clear();
@@ -634,6 +679,7 @@ export class MantEmpresasComponent implements OnInit, AfterViewInit {
       tipoEmpresa: 'Privada',
       sector: 'Otros',
       estado: true,
+      protocolos: [],
     });
     this.filaSeleccionadaIndex = null;
     this.terminoBusqueda.setValue('');
