@@ -9,14 +9,24 @@ mat-form-field {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
-.protocolo-header {
-  position: relative;
-  background-color: #0f3369;
+.protocolo-card-inactivo {
+  background-color: #f3f4f6;
+  border: 1px solid #cfd5dc;
 }
 
-.protocolo-header mat-card-title {
-  display: block;
-  padding-right: 2.8rem;
+.protocolo-title-inactivo {
+  background-color: #6b7280;
+  color: #f9fafb;
+}
+
+.protocolo-content-inactivo {
+  background-color: #f3f4f6;
+  color: #4b5563;
+}
+
+.protocolo-actions {
+  padding: 0.25rem 0 0;
+  gap: 0.35rem;
 }
 
 .btn-delete-protocolo {
@@ -33,6 +43,19 @@ mat-form-field {
 
 .protocolo-card mat-card-content {
   padding: 0.5rem 0.75rem 0.25rem;
+}
+
+.protocolo-content-inactivo .servicios-title {
+  color: #4b5563;
+}
+
+.protocolo-content-inactivo .table-servicios th {
+  background: #dde2e8;
+  color: #374151;
+}
+
+.protocolo-content-inactivo .table-servicios td {
+  background: #f8fafc;
 }
 
 .protocolo-meta {

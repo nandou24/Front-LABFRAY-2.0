@@ -22,6 +22,12 @@ export interface IUbicacionSede {
   observacionesSede?: string;
 }
 
+export interface IServicioProtocolo {
+  servicioId: string;
+  codServicio: string;
+  nombreServicio: string;
+}
+
 export interface IProtocoloEmpresa {
   _id?: string;
   codigoProtocolo: string;
@@ -32,7 +38,7 @@ export interface IProtocoloEmpresa {
   observaciones?: string;
   fechaInicioVigencia?: Date | string | null;
   fechaFinVigencia?: Date | string | null;
-  servicios: any[];
+  servicios: IServicioProtocolo[];
 }
 
 export interface IEmpresa {

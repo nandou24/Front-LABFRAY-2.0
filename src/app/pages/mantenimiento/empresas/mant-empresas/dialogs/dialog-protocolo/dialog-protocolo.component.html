@@ -1,7 +1,10 @@
 <form [formGroup]="protocoloForm">
   <mat-dialog-content>
     <div class="contenedor-flex">
-      <div class="contenedor-formulario">
+      <div
+        class="contenedor-formulario"
+        [class.contenedor-formulario-edicion]="esEdicion"
+      >
         <mat-card class="mt-2">
           <mat-card-title>
             <div class="row-flex">Crear Protocolo</div>
@@ -146,11 +149,13 @@
                             color="primary"
                             type="button"
                             (click)="removerServicio(servicio)"
-                            [disabled]="esTipoReferencia"
+                            [disabled]="esTipoReferencia || esEdicion"
                             [attr.aria-label]="
-                              esTipoReferencia
-                                ? 'No se pueden eliminar servicios con referencia'
-                                : 'Eliminar servicio'
+                              esEdicion
+                                ? 'No se pueden modificar servicios en modo edición'
+                                : esTipoReferencia
+                                  ? 'No se pueden eliminar servicios con referencia'
+                                  : 'Eliminar servicio'
                             "
                           >
                             <mat-icon>delete</mat-icon>
@@ -186,7 +191,7 @@
           </mat-card-content>
         </mat-card>
       </div>
-      <div class="contenedor-tablaDerecha">
+      <div class="contenedor-tablaDerecha" *ngIf="!esEdicion">
         <mat-card class="mt-2" *ngIf="esTipoReferencia">
           <mat-card-title> Cotizaciones Disponibles </mat-card-title>
 
@@ -373,18 +378,19 @@
     </div>
   </mat-dialog-content>
 
-  <div class="row-flex mt-3">
-    <div [style.flex]="setFlex(25, '%')" class="flex-item text-end">
+  <div class="row-flex mt-1">
+    <div [style.flex]="setFlex(50, '%')" class="flex-item text-center">
       <button
         mat-raised-button
         class="btn-registrar"
         type="button"
         (click)="crearProtocolo()"
       >
-        <mat-icon>save</mat-icon> CREAR
+        <mat-icon>save</mat-icon>
+        {{ esEdicion ? "ACTUALIZAR" : "CREAR" }}
       </button>
     </div>
-    <div [style.flex]="setFlex(25, '%')" class="flex-item text-end">
+    <div [style.flex]="setFlex(50, '%')" class="flex-item text-center">
       <button
         mat-raised-button
         class="btn-cancelar"

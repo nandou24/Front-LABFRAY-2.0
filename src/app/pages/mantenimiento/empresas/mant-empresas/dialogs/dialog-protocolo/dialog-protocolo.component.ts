@@ -88,6 +88,8 @@ export class DialogProtocoloComponent implements OnInit {
     this.protocoloForm.get('tipo')?.valueChanges.subscribe(() => {
       this.actualizarEstadoTipo();
     });
+    this.cargarProtocoloSiExiste();
+    this.configurarColumnasServiciosSeleccionados();
     this.actualizarEstadoTipo();
   }
 
@@ -120,7 +122,50 @@ export class DialogProtocoloComponent implements OnInit {
     return this.protocoloForm.get('tipo')?.value === 'conReferencia';
   }
 
+  get esEdicion(): boolean {
+    return !!this.data?.protocolo;
+  }
+
+  cargarProtocoloSiExiste(): void {
+    const protocolo = this.data?.protocolo;
+    if (!protocolo) {
+      return;
+    }
+
+    this.protocoloForm.patchValue({
+      nombreProtocolo: protocolo.nombreProtocolo || '',
+      nroCoti: protocolo.cotizacionReferencia || '-',
+      estado: protocolo.estado ?? true,
+      tipo: protocolo.tipo || 'manual',
+      fechaInicioVigencia: protocolo.fechaInicioVigencia || null,
+      fechaFinVigencia: protocolo.fechaFinVigencia || null,
+      observacionesProtocolo: protocolo.observaciones || '',
+    });
+
+    this.dataSourceServiciosSeleccionados.data = [
+      ...(protocolo.servicios || []),
+    ];
+
+    this.protocoloForm.get('nombreProtocolo')?.disable();
+    this.protocoloForm.get('tipo')?.disable();
+    this.protocoloForm.get('nroCoti')?.disable();
+    this.protocoloForm.get('fechaInicioVigencia')?.disable();
+    this.protocoloForm.get('observacionesProtocolo')?.disable();
+    this.protocoloForm.get('estado')?.enable();
+    this.protocoloForm.get('fechaFinVigencia')?.enable();
+  }
+
+  configurarColumnasServiciosSeleccionados(): void {
+    this.columnasTablaServiciosSeleccionados = this.esEdicion
+      ? ['codigo', 'nombre']
+      : ['codigo', 'nombre', 'accion'];
+  }
+
   actualizarEstadoTipo(): void {
+    if (this.esEdicion) {
+      return;
+    }
+
     const tipo = this.protocoloForm.get('tipo')?.value;
     const campoNroCoti = this.protocoloForm.get('nroCoti');
 
@@ -153,16 +198,15 @@ export class DialogProtocoloComponent implements OnInit {
   dataSourceServiciosSeleccionados = new MatTableDataSource<any>();
 
   ultimasCotizaciones(): void {
-    console.log('RUC recibido en el diálogo:', this.data.ruc);
     if (!this.data.ruc) {
-      console.error('No se proporcionó un RUC válido.');
+      //console.error('No se proporcionó un RUC válido.');
       this.dataSourceCotizaciones.data = [];
       return;
     } else {
       this._cotizacionService.obtenerCotizacionPorRuc(this.data.ruc).subscribe({
         next: (res: ICotizacionEmpresa[]) => {
           this.dataSourceCotizaciones.data = res;
-          console.log('Cotizaciones obtenidas:', res);
+          //console.log('Cotizaciones obtenidas:', res);
         },
         error: (err: any) => {
           this.dataSourceCotizaciones.data = [];
@@ -172,7 +216,7 @@ export class DialogProtocoloComponent implements OnInit {
   }
 
   removerServicio(servicio: IServicioCotizacionEmpresa) {
-    if (this.esTipoReferencia) {
+    if (this.esTipoReferencia || this.esEdicion) {
       return;
     }
 
@@ -190,8 +234,7 @@ export class DialogProtocoloComponent implements OnInit {
   }
 
   seleccionarCotizacion(cotizacion: ICotizacionEmpresa) {
-    console.log('Cotización seleccionada:', cotizacion);
-    // Necesito que el campo codCotizacion se muestre en el input nroCoti del formulario seguido de -V y el numero de version, por ejemplo: 12345-V1
+    //console.log('Cotización seleccionada:', cotizacion);
     this.protocoloForm.patchValue({
       nroCoti: `${cotizacion.codCotizacion}-V${cotizacion.historial[cotizacion.historial.length - 1].version}`,
     });
@@ -257,6 +300,10 @@ export class DialogProtocoloComponent implements OnInit {
   }
 
   seleccionarServicio(servicio: IServicio) {
+    if (this.esEdicion) {
+      return;
+    }
+
     const existe = this.dataSourceServiciosSeleccionados.data.some(
       (servicioSeleccionado) =>
         servicioSeleccionado.codServicio === servicio.codServicio,
@@ -270,11 +317,16 @@ export class DialogProtocoloComponent implements OnInit {
       });
       return;
     }
-
+    //aqui debemos generar servicioId y pasarle el _Id del servicio seleccionado
+    const servicioConId = {
+      ...servicio,
+      servicioId: servicio._id,
+    };
     this.dataSourceServiciosSeleccionados.data = [
       ...this.dataSourceServiciosSeleccionados.data,
-      servicio,
+      servicioConId,
     ];
+    //console.log('Servicio agregado:', servicioConId);
     this.intentoCrearSinServicios = false;
     this.table.renderRows();
   }
@@ -310,16 +362,21 @@ export class DialogProtocoloComponent implements OnInit {
       return;
     }
 
+    const protocoloOriginal = this.data?.protocolo;
     const referenciaRaw =
       this.protocoloForm.get('nroCoti')?.value?.trim() || '';
     const referencia =
       this.esTipoManual || referenciaRaw === '-' ? undefined : referenciaRaw;
     const nombreProtocolo =
-      this.protocoloForm.get('nombreProtocolo')?.value?.trim() || 'Sin nombre';
+      protocoloOriginal?.nombreProtocolo ||
+      this.protocoloForm.get('nombreProtocolo')?.value?.trim() ||
+      'Sin nombre';
 
     const existentes = this.data?.protocolos || [];
     const referenciaDuplicada = existentes.some(
       (item: any) =>
+        (!this.esEdicion ||
+          item.codigoProtocolo !== protocoloOriginal?.codigoProtocolo) &&
         item.cotizacionReferencia &&
         referencia &&
         this.normalizarTexto(item.cotizacionReferencia) ===
@@ -328,8 +385,10 @@ export class DialogProtocoloComponent implements OnInit {
 
     const nombreDuplicado = existentes.some(
       (item: any) =>
+        (!this.esEdicion ||
+          item.codigoProtocolo !== protocoloOriginal?.codigoProtocolo) &&
         this.normalizarTexto(item.nombreProtocolo) ===
-        this.normalizarTexto(nombreProtocolo),
+          this.normalizarTexto(nombreProtocolo),
     );
 
     if (referenciaDuplicada) {
@@ -351,15 +410,23 @@ export class DialogProtocoloComponent implements OnInit {
     }
 
     const protocolo = {
-      codigoProtocolo: this.generarCodigoProtocolo(),
+      codigoProtocolo:
+        protocoloOriginal?.codigoProtocolo || this.generarCodigoProtocolo(),
       nombreProtocolo,
-      tipo: this.protocoloForm.get('tipo')?.value || 'manual',
+      tipo:
+        protocoloOriginal?.tipo ||
+        this.protocoloForm.get('tipo')?.value ||
+        'manual',
       estado: this.protocoloForm.get('estado')?.value ?? true,
       cotizacionReferencia: referencia,
       observaciones:
-        this.protocoloForm.get('observacionesProtocolo')?.value || '',
+        protocoloOriginal?.observaciones ||
+        this.protocoloForm.get('observacionesProtocolo')?.value ||
+        '',
       fechaInicioVigencia:
-        this.protocoloForm.get('fechaInicioVigencia')?.value || null,
+        protocoloOriginal?.fechaInicioVigencia ||
+        this.protocoloForm.get('fechaInicioVigencia')?.value ||
+        null,
       fechaFinVigencia:
         this.protocoloForm.get('fechaFinVigencia')?.value || null,
       servicios: [...this.dataSourceServiciosSeleccionados.data],

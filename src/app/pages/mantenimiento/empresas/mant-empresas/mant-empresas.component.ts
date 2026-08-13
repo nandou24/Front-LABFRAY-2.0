@@ -444,12 +444,55 @@ export class MantEmpresasComponent implements OnInit, AfterViewInit {
     });
   }
 
+  abrirDialogoActualizarProtocolo(index: number, protocolo: IProtocoloEmpresa) {
+    const dialogRef = this.dialog.open(DialogProtocoloComponent, {
+      maxWidth: '1500px',
+      data: {
+        ruc: this.empresaForm.get('ruc')?.value,
+        protocolos: this.empresaForm.get('protocolos')?.value || [],
+        protocolo,
+        index,
+      },
+    });
+
+    dialogRef
+      .afterClosed()
+      .subscribe((protocoloActualizado: IProtocoloEmpresa | null) => {
+        if (!protocoloActualizado) {
+          return;
+        }
+
+        const protocolosActuales =
+          this.empresaForm.get('protocolos')?.value || [];
+        const nuevosProtocolos = protocolosActuales.map(
+          (item: IProtocoloEmpresa, i: number) =>
+            i === index ? { ...item, ...protocoloActualizado } : item,
+        );
+
+        this.empresaForm.patchValue({ protocolos: nuevosProtocolos });
+      });
+  }
+
+  //eliminarProtocolo debe lanzar una alerta en sweet alert, antes de eliminar el protocolo, para confirmar la acción del usuario. Si el usuario confirma, entonces se elimina el protocolo.
+
   eliminarProtocolo(index: number) {
-    const protocolosActuales = this.empresaForm.get('protocolos')?.value || [];
-    const nuevosProtocolos = protocolosActuales.filter(
-      (_: any, i: number) => i !== index,
-    );
-    this.empresaForm.patchValue({ protocolos: nuevosProtocolos });
+    Swal.fire({
+      title: '¿Estás seguro?',
+      text: '¿Deseas confirmar la eliminación de este protocolo?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+    }).then((result) => {
+      if (result.isConfirmed) {
+        const protocolosActuales =
+          this.empresaForm.get('protocolos')?.value || [];
+        const nuevosProtocolos = protocolosActuales.filter(
+          (_: any, i: number) => i !== index,
+        );
+        this.empresaForm.patchValue({ protocolos: nuevosProtocolos });
+      }
+    });
   }
 
   setEmpresaSeleccionada(empresa: IEmpresa) {
@@ -600,6 +643,31 @@ export class MantEmpresasComponent implements OnInit, AfterViewInit {
     return ubicaciones.length > 0;
   }
 
+  private construirProtocolosPayload(): IProtocoloEmpresa[] {
+    const protocolos = this.empresaForm.get('protocolos')?.value || [];
+
+    return protocolos.map((protocolo: IProtocoloEmpresa) => ({
+      _id: protocolo._id,
+      codigoProtocolo: protocolo.codigoProtocolo,
+      nombreProtocolo: protocolo.nombreProtocolo,
+      tipo: protocolo.tipo,
+      estado: !!protocolo.estado,
+      cotizacionReferencia:
+        protocolo.cotizacionReferencia && protocolo.cotizacionReferencia !== '-'
+          ? protocolo.cotizacionReferencia
+          : undefined,
+      observaciones: protocolo.observaciones || '',
+      fechaInicioVigencia: protocolo.fechaInicioVigencia || null,
+      fechaFinVigencia: protocolo.fechaFinVigencia || null,
+      servicios: (protocolo.servicios || []).map((servicio: any) => ({
+        servicioId: servicio.servicioId,
+        codServicio:
+          servicio.codServicio || servicio.codigoServicio || servicio.codigo,
+        nombreServicio: servicio.nombreServicio || servicio.nombre,
+      })),
+    }));
+  }
+
   registrarEmpresa() {
     this.formSubmitted = true;
 
@@ -708,6 +776,7 @@ export class MantEmpresasComponent implements OnInit, AfterViewInit {
       }).then((result) => {
         if (result.isConfirmed) {
           const body: IEmpresa = this.empresaForm.getRawValue();
+          body.protocolos = this.construirProtocolosPayload();
           this._empresaService.actualizarEmpresa(body).subscribe({
             next: () => {
               Swal.fire(

@@ -830,25 +830,19 @@
                 let i = index
               "
             >
-              <mat-card class="protocolo-card">
-                <div class="protocolo-header">
-                  <mat-card-title
-                    >{{ protocolo.codigoProtocolo }} -
-                    {{ protocolo.nombreProtocolo }}
-                  </mat-card-title>
-                  <button
-                    mat-icon-button
-                    color="warn"
-                    type="button"
-                    class="btn-delete-protocolo"
-                    (click)="eliminarProtocolo(i)"
-                    aria-label="Eliminar protocolo"
-                  >
-                    <mat-icon>delete</mat-icon>
-                  </button>
-                </div>
+              <mat-card
+                class="protocolo-card"
+                [class.protocolo-card-inactivo]="!protocolo.estado"
+              >
+                <mat-card-title
+                  [class.protocolo-title-inactivo]="!protocolo.estado"
+                  >{{ protocolo.codigoProtocolo }} -
+                  {{ protocolo.nombreProtocolo }}
+                </mat-card-title>
 
-                <mat-card-content>
+                <mat-card-content
+                  [class.protocolo-content-inactivo]="!protocolo.estado"
+                >
                   <div class="protocolo-meta">
                     <div class="meta-row">
                       <div class="meta-item">
@@ -861,14 +855,14 @@
                       </div>
                       <div class="meta-item">
                         <strong>Estado:</strong>
-                        <strong>
-                          <span
-                            [class.text-success]="protocolo.estado"
-                            [class.text-danger]="!protocolo.estado"
-                          >
+
+                        <span
+                          [class.text-success]="protocolo.estado"
+                          [class.text-danger]="!protocolo.estado"
+                          ><strong>
                             {{ protocolo.estado ? "Activo" : "Inactivo" }}
-                          </span>
-                        </strong>
+                          </strong>
+                        </span>
                       </div>
                     </div>
 
@@ -938,6 +932,27 @@
                       <strong>Servicios:</strong> Sin servicios
                     </div>
                   </ng-template>
+
+                  <mat-card-actions align="end" class="protocolo-actions">
+                    <button
+                      mat-button
+                      color="primary"
+                      type="button"
+                      (click)="abrirDialogoActualizarProtocolo(i, protocolo)"
+                    >
+                      <mat-icon class="me-1">edit</mat-icon>
+                      Actualizar
+                    </button>
+                    <button
+                      mat-button
+                      color="warn"
+                      type="button"
+                      (click)="eliminarProtocolo(i)"
+                    >
+                      <mat-icon class="me-1">delete</mat-icon>
+                      Eliminar
+                    </button>
+                  </mat-card-actions>
                 </mat-card-content>
               </mat-card>
             </div>

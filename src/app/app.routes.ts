@@ -128,11 +128,11 @@ export const routes: Routes = [
           ),
       },
       {
-        path: 'programacion-paciente',
+        path: 'programacion-empresas',
         loadComponent: () =>
           import(
-            './pages/gestionar/programacion-paciente/programacion-paciente.component'
-          ).then((m) => m.ProgramacionPacienteComponent),
+            './pages/gestionar/programacion/programacion-empresas/programacion-empresas.component'
+          ).then((m) => m.ProgramacionEmpresasComponent),
       },
       {
         path: 'triaje-particular',
