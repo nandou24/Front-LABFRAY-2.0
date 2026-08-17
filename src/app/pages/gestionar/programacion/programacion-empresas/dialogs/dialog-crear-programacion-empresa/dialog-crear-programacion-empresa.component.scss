@@ -2,6 +2,13 @@ mat-form-field {
   width: 100%;
 }
 
+mat-dialog-content {
+  display: block;
+  max-height: calc(92vh - 100px);
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
 mat-card-title {
   background-color: #0f3369; // Azul Bootstrap
   color: white;
@@ -22,49 +29,6 @@ mat-card-content {
 
 mat-option {
   font-size: 13px;
-}
-
-.mat-mdc-card-content:last-child {
-  padding-bottom: 0.5rem;
-}
-
-.mat-mdc-row .mat-mdc-cell {
-  cursor: pointer;
-}
-
-.mat-mdc-row:hover .mat-mdc-cell,
-.mat-mdc-row:hover .mat-mdc-cell mat-icon {
-  background-color: #dfe9f3;
-  // color: #ffffff;
-  // fill: #ffffff;
-}
-
-.mat-column-nro {
-  width: 5%;
-  text-align: center;
-  padding-left: 3px;
-  padding-right: 3px;
-}
-
-.mat-column-hc {
-  width: 20%;
-  text-align: center;
-  padding-left: 3px;
-  padding-right: 3px;
-}
-
-.mat-column-nombreCompleto {
-  width: 40%;
-  text-align: left;
-  padding-left: 3px;
-  padding-right: 3px;
-}
-
-.mat-column-documento {
-  width: 25%;
-  text-align: center;
-  padding-left: 3px;
-  padding-right: 3px;
 }
 
 .campo-fieldset {
@@ -92,15 +56,9 @@ mat-option {
   gap: 8px;
   align-items: flex-start;
 }
-//Aplicando flex al formulario
-.contenedor-formulario {
-  flex: 0 0 60%;
-  //min-width: 300px;
-}
 
-.contenedor-tablaDerecha {
-  flex: 1 1 38%;
-  //min-width: 300px;
+.contenedor-formulario {
+  flex: 0 0 100%;
 }
 
 .row-flex {
@@ -115,10 +73,6 @@ mat-option {
   min-width: 0;
   //text-align: center;
   padding: 10px;
-}
-
-.fila-seleccionada {
-  background-color: rgba(0, 102, 255, 0.15) !important;
 }
 
 @media (max-width: 1430px) {
@@ -156,20 +110,31 @@ mat-option {
   }
 }
 
-.btn-actualizar {
-  background-color: #ecb80b !important; // amarillo suave
-  color: #154cb3 !important;
-
-  &:hover {
-    background-color: #ffda06 !important;
-  }
-}
-
-.btn-nuevo {
-  background-color: #8d9097 !important; // azul moderno
+.btn-cancelar {
+  background-color: red !important; // amarillo suave
   color: white !important;
 
   &:hover {
-    background-color: #b9b7b7 !important;
+    background-color: darkred !important;
+  }
+}
+
+// Responsive design
+@media (max-width: 1430px) {
+  .contenedor-formulario,
+  .contenedor-tablaDerecha {
+    flex: 0 0 100%;
+  }
+}
+/* Tablets (2 columnas) */
+@media (max-width: 991px) {
+  .flex-item {
+    flex: 1 1 48% !important; /* Cada item ocupará 100% cuando sea pequeño */
+  }
+}
+/* Celulares (1 columna) */
+@media (max-width: 767px) {
+  .flex-item {
+    flex: 1 1 100% !important; /* Cada item ocupará 100% cuando sea pequeño */
   }
 }

@@ -20,9 +20,10 @@ import {
   MAT_DATE_LOCALE,
   MatNativeDateModule,
 } from '@angular/material/core';
-import { IProgramacionEmpresa } from '../../../../models/Gestion/programacionEmpresa,models';
+import { IProgramacionEmpresa } from '../../../../models/Gestion/programacionEmpresa.models';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { DialogCrearProgramacionEmpresaComponent } from './dialogs/dialog-crear-programacion-empresa/dialog-crear-programacion-empresa.component';
 @Component({
   selector: 'app-programacion-empresas',
   imports: [
@@ -151,6 +152,51 @@ export class ProgramacionEmpresasComponent {
     //         duration: 3000,
     //       });
     //     },
+    //   });
+  }
+
+  crearProgramacion() {
+    const dialogRef = this.dialog.open(
+      DialogCrearProgramacionEmpresaComponent,
+      {
+        width: '95vw',
+        maxWidth: '1500px',
+        height: 'auto',
+        maxHeight: '92vh',
+      },
+    );
+
+    dialogRef.afterClosed().subscribe((resultado) => {
+      if (!resultado?.ok) {
+        return;
+      }
+
+      this.snackBar.open('Programación registrada correctamente', 'Cerrar', {
+        duration: 3000,
+      });
+
+      const programacionNueva = resultado.programacion as IProgramacionEmpresa;
+      this.dataSourceProgramacion.data = [
+        programacionNueva,
+        ...this.dataSourceProgramacion.data,
+      ];
+    });
+
+    // dialogRef
+    //   .afterClosed()
+    //   .subscribe((protocoloActualizado: IProtocoloEmpresa | null) => {
+    //     if (!protocoloActualizado) {
+    //       return;
+    //     }
+
+    //     const protocolosActuales =
+    //       this.empresaForm.get('protocolos')?.value || [];
+    //     const nuevosProtocolos = protocolosActuales.map(
+    //       (item: IProtocoloEmpresa, i: number) =>
+    //         i === index ? { ...item, ...protocoloActualizado } : item,
+    //     );
+
+    //     this.empresaForm.patchValue({ protocolos: nuevosProtocolos });
     //   });
   }
 }

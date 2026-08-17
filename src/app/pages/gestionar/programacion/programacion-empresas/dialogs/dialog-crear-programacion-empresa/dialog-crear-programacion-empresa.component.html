@@ -1,0 +1,511 @@
+<form [formGroup]="programacionForm">
+  <mat-dialog-content>
+    <div class="contenedor-flex">
+      <div class="contenedor-formulario">
+        <mat-card>
+          <mat-card-title>
+            <div class="row-flex align-items-center">
+              DATOS PERSONALES Y CONTACTO
+            </div>
+          </mat-card-title>
+
+          <mat-card-content>
+            <div class="row-flex">
+              <div [style.flex]="setFlex(15, '%')" class="flex-item">
+                <mat-form-field appearance="outline">
+                  <mat-label>Tipo Doc</mat-label>
+                  <mat-select formControlName="tipoDoc">
+                    <mat-option value="DNI">DNI</mat-option>
+                    <mat-option value="CE">CE</mat-option>
+                    <mat-option value="Pasaporte">Pasaporte</mat-option>
+                  </mat-select>
+                  <mat-icon
+                    matSuffix
+                    *ngIf="programacionForm.get('tipoDoc')?.disabled"
+                    >lock</mat-icon
+                  >
+                </mat-form-field>
+              </div>
+
+              <div [style.flex]="setFlex(15, '%')" class="flex-item">
+                <mat-form-field appearance="outline">
+                  <mat-label>Nro. Documento</mat-label>
+                  <input matInput formControlName="nroDoc" />
+                  <mat-icon
+                    matSuffix
+                    *ngIf="programacionForm.get('nroDoc')?.disabled"
+                    >lock</mat-icon
+                  >
+
+                  <mat-error
+                    *ngIf="
+                      programacionForm.get('nroDoc')?.hasError('invalidDNI')
+                    "
+                  >
+                    DNI debe tener 8 números
+                  </mat-error>
+
+                  <mat-error
+                    *ngIf="
+                      programacionForm.get('nroDoc')?.hasError('invalidCE')
+                    "
+                  >
+                    CE tiene hasta 13 caracteres
+                  </mat-error>
+
+                  <mat-error
+                    *ngIf="
+                      programacionForm
+                        .get('nroDoc')
+                        ?.hasError('invalidPasaporte')
+                    "
+                  >
+                    Pasaporte tiene hasta 16 caracteres
+                  </mat-error>
+                </mat-form-field>
+              </div>
+
+              <div [style.flex]="setFlex(10, '%')" class="flex-item">
+                <button
+                  mat-flat-button
+                  type="button"
+                  (click)="buscarPaciente()"
+                >
+                  Buscar
+                </button>
+              </div>
+
+              <div [style.flex]="setFlex(20, '%')" class="flex-item">
+                <mat-form-field appearance="outline">
+                  <mat-label>Sexo</mat-label>
+                  <mat-select formControlName="sexoCliente">
+                    <mat-option value="Masculino">Masculino</mat-option>
+                    <mat-option value="Femenino">Femenino</mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+
+              <div [style.flex]="setFlex(20, '%')" class="flex-item">
+                <mat-form-field appearance="outline">
+                  <mat-label>Fecha Nacimiento</mat-label>
+                  <input
+                    matInput
+                    [matDatepicker]="picker"
+                    readonly="true"
+                    formControlName="fechaNacimiento"
+                    (dateChange)="actualizarEdad()"
+                  />
+                  <mat-datepicker-toggle
+                    matSuffix
+                    [for]="picker"
+                  ></mat-datepicker-toggle>
+                  <mat-datepicker #picker disabled="false"></mat-datepicker>
+
+                  <mat-error
+                    *ngIf="
+                      programacionForm
+                        .get('fechaNacimiento')
+                        ?.hasError('fechaFutura')
+                    "
+                  >
+                    Fecha no puede ser futura
+                  </mat-error>
+                </mat-form-field>
+              </div>
+
+              <div [style.flex]="setFlex(20, '%')" class="flex-item">
+                {{ programacionForm.get("edad")?.value }}
+              </div>
+            </div>
+
+            <div class="row-flex">
+              <div [style.flex]="setFlex(30, '%')" class="flex-item">
+                <mat-form-field appearance="outline">
+                  <mat-label>Apellido Paterno</mat-label>
+                  <input matInput formControlName="apePatCliente" />
+                  <mat-error
+                    *ngIf="
+                      programacionForm
+                        .get('apePatCliente')
+                        ?.hasError('required')
+                    "
+                  >
+                    Obligatorio
+                  </mat-error>
+                  <mat-error
+                    *ngIf="
+                      programacionForm.get('apePatCliente')?.hasError('pattern')
+                    "
+                  >
+                    Solo letras
+                  </mat-error>
+                </mat-form-field>
+              </div>
+
+              <div [style.flex]="setFlex(30, '%')" class="flex-item">
+                <mat-form-field appearance="outline">
+                  <mat-label>Apellido Materno</mat-label>
+                  <input matInput formControlName="apeMatCliente" />
+                  <mat-error
+                    *ngIf="
+                      programacionForm.get('apeMatCliente')?.hasError('pattern')
+                    "
+                  >
+                    Solo letras
+                  </mat-error>
+                </mat-form-field>
+              </div>
+
+              <div [style.flex]="setFlex(40, '%')" class="flex-item">
+                <mat-form-field appearance="outline">
+                  <mat-label>Nombres</mat-label>
+                  <input matInput formControlName="nombreCliente" />
+                  <mat-error
+                    *ngIf="
+                      programacionForm
+                        .get('nombreCliente')
+                        ?.hasError('required')
+                    "
+                  >
+                    Obligatorio
+                  </mat-error>
+                  <mat-error
+                    *ngIf="
+                      programacionForm.get('nombreCliente')?.hasError('pattern')
+                    "
+                  >
+                    Solo letras
+                  </mat-error>
+                </mat-form-field>
+              </div>
+            </div>
+
+            <fieldset class="campo-fieldset">
+              <legend>TELÉFONOS</legend>
+
+              <div class="row-flex">
+                <div
+                  [style.flex]="setFlex(20, '%')"
+                  class="flex-item text-center"
+                >
+                  <button
+                    mat-flat-button
+                    color="primary"
+                    class="btn-telefono"
+                    type="button"
+                    (click)="agregarTelefono()"
+                  >
+                    <mat-icon class="me-1">add</mat-icon>
+                    Agregar Teléfono
+                  </button>
+                </div>
+
+                <div [style.flex]="setFlex(80, '%')" class="flex-item">
+                  <div
+                    formArrayName="phones"
+                    *ngFor="let telGroup of phones.controls; let i = index"
+                  >
+                    <div [formGroupName]="i" class="row align-items-center">
+                      <div
+                        [style.flex]="setFlex(30, '%')"
+                        class="flex-item text-center"
+                      >
+                        <mat-form-field appearance="outline">
+                          <mat-label>Teléfono</mat-label>
+                          <input matInput formControlName="phoneNumber" />
+                          <mat-error
+                            *ngIf="
+                              telGroup.get('phoneNumber')?.hasError('required')
+                            "
+                          >
+                            Número requerido
+                          </mat-error>
+                          <mat-error
+                            *ngIf="
+                              telGroup.get('phoneNumber')?.hasError('pattern')
+                            "
+                          >
+                            Solo números de 9 a 11 dígitos
+                          </mat-error>
+                        </mat-form-field>
+                      </div>
+
+                      <div
+                        [style.flex]="setFlex(60, '%')"
+                        class="flex-item text-center"
+                      >
+                        <mat-form-field appearance="outline">
+                          <mat-label>Descripción</mat-label>
+                          <input matInput formControlName="descriptionPhone" />
+                          <mat-error
+                            *ngIf="
+                              telGroup
+                                .get('descriptionPhone')
+                                ?.hasError('required')
+                            "
+                          >
+                            Requerido
+                          </mat-error>
+                          <mat-error
+                            *ngIf="
+                              telGroup
+                                .get('descriptionPhone')
+                                ?.hasError('maxlength')
+                            "
+                          >
+                            Máximo 30 caracteres
+                          </mat-error>
+                        </mat-form-field>
+                      </div>
+
+                      <div
+                        [style.flex]="setFlex(8, '%')"
+                        class="flex-item text-center"
+                      >
+                        <button
+                          mat-icon-button
+                          class="mb-3"
+                          color="warn"
+                          type="button"
+                          (click)="eliminarTelefono(i)"
+                        >
+                          <mat-icon>delete</mat-icon>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </fieldset>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="mt-2">
+          <mat-card-title>
+            <div class="row-flex align-items-center">DATOS DE PROGRAMACIÓN</div>
+          </mat-card-title>
+
+          <mat-card-content>
+            <div [style.flex]="setFlex(100, '%')" class="flex-item">
+              <mat-form-field appearance="outline">
+                <mat-label>Empresa</mat-label>
+                <input
+                  type="text"
+                  placeholder="Buscar empresa"
+                  matInput
+                  [matAutocomplete]="auto"
+                  formControlName="empresa"
+                />
+                <mat-autocomplete
+                  #auto="matAutocomplete"
+                  [displayWith]="displayFnEmpresa"
+                  (optionSelected)="onEmpresaSeleccionada($event.option.value)"
+                >
+                  @for (empresa of empresasFiltradas; track empresa._id) {
+                    <mat-option [value]="empresa">
+                      {{ empresa.ruc }} - {{ empresa.razonSocial }}
+                    </mat-option>
+                  }
+                </mat-autocomplete>
+                <mat-error
+                  *ngIf="
+                    programacionForm.get('empresa')?.hasError('required') &&
+                    formSubmitted
+                  "
+                >
+                  Empresa obligatoria
+                </mat-error>
+              </mat-form-field>
+            </div>
+
+            <div class="row-flex w-100">
+              <div [style.flex]="setFlex(50, '%')" class="flex-item">
+                <mat-form-field appearance="outline">
+                  <mat-label>Protocolo</mat-label>
+                  <mat-select
+                    formControlName="protocoloEmpresa"
+                    (selectionChange)="onProtocoloSeleccionado($event.value)"
+                  >
+                    @for (
+                      protocolo of protocolosDisponibles;
+                      track protocolo._id
+                    ) {
+                      <mat-option [value]="protocolo">
+                        {{ displayProtocolo(protocolo) }}
+                      </mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+
+                <table
+                  mat-table
+                  [dataSource]="serviciosProtocoloSeleccionado"
+                  class="mat-elevation-z2 w-100"
+                  *ngIf="serviciosProtocoloSeleccionado.length > 0"
+                >
+                  <ng-container matColumnDef="codigo">
+                    <th mat-header-cell *matHeaderCellDef>Código</th>
+                    <td mat-cell *matCellDef="let servicio">
+                      {{ servicio.codServicio }}
+                    </td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="nombre">
+                    <th mat-header-cell *matHeaderCellDef>Nombre</th>
+                    <td mat-cell *matCellDef="let servicio">
+                      {{ servicio.nombreServicio }}
+                    </td>
+                  </ng-container>
+
+                  <tr
+                    mat-header-row
+                    *matHeaderRowDef="columnasServiciosProtocolo"
+                  ></tr>
+                  <tr
+                    mat-row
+                    *matRowDef="let row; columns: columnasServiciosProtocolo"
+                  ></tr>
+                </table>
+
+                <div
+                  class="text-muted"
+                  *ngIf="
+                    programacionForm.get('protocoloEmpresa')?.value &&
+                    serviciosProtocoloSeleccionado.length === 0
+                  "
+                >
+                  El protocolo seleccionado no tiene servicios registrados.
+                </div>
+              </div>
+
+              <div [style.flex]="setFlex(50, '%')" class="flex-item">
+                <mat-form-field appearance="outline">
+                  <mat-label>Fecha Programación</mat-label>
+                  <input
+                    matInput
+                    [matDatepicker]="pickerProgramacion"
+                    readonly="true"
+                    formControlName="fechaProgramacion"
+                  />
+                  <mat-datepicker-toggle
+                    matSuffix
+                    [for]="pickerProgramacion"
+                  ></mat-datepicker-toggle>
+                  <mat-datepicker
+                    #pickerProgramacion
+                    disabled="false"
+                  ></mat-datepicker>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Sede</mat-label>
+                  <mat-select formControlName="sede">
+                    <mat-option value="Comas">Comas</mat-option>
+                    <mat-option value="Callao">Callao</mat-option>
+                    <mat-option value="NoIndica">No indica</mat-option>
+                  </mat-select>
+                  <mat-icon
+                    matSuffix
+                    *ngIf="programacionForm.get('sede')?.disabled"
+                    >lock</mat-icon
+                  >
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Tipo de Evaluación</mat-label>
+                  <mat-select formControlName="tipoEvaluacion">
+                    <mat-option value="ETAs">ETAs</mat-option>
+                    <mat-option value="Ocupacional">Ocupacional</mat-option>
+                    <mat-option value="PreOcupacional"
+                      >Pre Ocupacional</mat-option
+                    >
+                    <mat-option value="Retiro">Retiro</mat-option>
+                  </mat-select>
+                  <mat-icon
+                    matSuffix
+                    *ngIf="programacionForm.get('tipoEvaluacion')?.disabled"
+                    >lock</mat-icon
+                  >
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Tipo de Atención</mat-label>
+                  <mat-select formControlName="tipoAtencion">
+                    <mat-option value="Regular">Regular</mat-option>
+                    <mat-option value="Preferencial">Preferencial</mat-option>
+                    <mat-option value="VIP">VIP</mat-option>
+                  </mat-select>
+                  <mat-icon
+                    matSuffix
+                    *ngIf="programacionForm.get('tipoAtencion')?.disabled"
+                    >lock</mat-icon
+                  >
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Prioridad</mat-label>
+                  <mat-select formControlName="prioridad">
+                    <mat-option value="Normal">Normal</mat-option>
+                    <mat-option value="Alta">Alta</mat-option>
+                  </mat-select>
+                  <mat-icon
+                    matSuffix
+                    *ngIf="programacionForm.get('prioridad')?.disabled"
+                    >lock</mat-icon
+                  >
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Observaciones</mat-label>
+                  <textarea
+                    matInput
+                    formControlName="observaciones"
+                    rows="2"
+                    maxlength="200"
+                    placeholder="Información adicional sobre la empresa..."
+                  ></textarea>
+                  <mat-error
+                    *ngIf="
+                      programacionForm
+                        .get('observaciones')
+                        ?.hasError('maxlength')
+                    "
+                  >
+                    Máximo 500 caracteres
+                  </mat-error>
+                </mat-form-field>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <div class="row-flex mt-1">
+          <div [style.flex]="setFlex(50, '%')" class="flex-item text-center">
+            <button
+              mat-raised-button
+              class="btn-cancelar"
+              type="button"
+              (click)="cerrar()"
+            >
+              <mat-icon>cancel</mat-icon> CANCELAR
+            </button>
+          </div>
+          <div [style.flex]="setFlex(50, '%')" class="flex-item text-center">
+            <button
+              mat-raised-button
+              class="btn-registrar"
+              type="button"
+              [disabled]="guardandoProgramacion"
+              (click)="registraProgramacion()"
+            >
+              <mat-icon>save</mat-icon>
+              {{
+                guardandoProgramacion ? "Guardando..." : "Crear Programacion"
+              }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </mat-dialog-content>
+</form>

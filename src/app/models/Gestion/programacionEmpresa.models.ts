@@ -16,7 +16,6 @@ export interface ServicioProgramado {
   servicioId: string;
   codServicio: string;
   nombreServicio: string;
-  tipoServicio: string;
 }
 
 export interface PendienteProgramacion {
@@ -87,4 +86,23 @@ export interface IProgramacionEmpresa {
 
   observaciones?: string;
   origenRegistro?: 'MANUAL' | 'IMPORTACION_EXCEL';
+}
+
+export interface IProgramacionPostDTO {
+  ok: boolean;
+  msg?: string;
+  errors?: string;
+  programacion?: IProgramacionEmpresa;
+}
+
+export interface IGetProgramaciones {
+  ok: boolean;
+  search?: string;
+  programaciones: IProgramacionEmpresa[];
+}
+
+export interface IGetProgramacionById {
+  ok: boolean;
+  search?: string;
+  programacion: IProgramacionEmpresa;
 }
