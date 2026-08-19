@@ -106,3 +106,11 @@ export interface IGetProgramacionById {
   search?: string;
   programacion: IProgramacionEmpresa;
 }
+
+export interface IListarProgramacionesQuery {
+  empresaId?: string;
+  estadoProgramacion?: EstadoProgramacion;
+  nroDoc?: string;
+  fechaInicio?: string;
+  fechaFin?: string;
+}

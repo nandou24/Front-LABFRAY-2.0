@@ -5,6 +5,7 @@ import { Observable, map } from 'rxjs';
 import { AuthService } from '../../../auth/auth.service';
 import { environment } from '../../../../../environments/environment';
 import {
+  IListarProgramacionesQuery,
   IProgramacionPostDTO,
   IProgramacionEmpresa,
   IGetProgramaciones,
@@ -39,23 +40,42 @@ export class ProgramacionEmpresaService {
   public getLastProgramaciones(
     cantidad: number,
   ): Observable<IProgramacionEmpresa[]> {
-    const params = new HttpParams().set('cant', cantidad);
-
-    return this._http
-      .get<IGetProgramaciones>(`${this.apiUrl}/latest`, {
-        params,
-        headers: this._auth.getAuthHeaders(),
-      })
-      .pipe(map((data) => data.programaciones));
+    return this.listarProgramaciones();
   }
 
   public getProgramacion(
     terminoBusqueda: string,
   ): Observable<IProgramacionEmpresa[]> {
-    const params = new HttpParams().set('search', terminoBusqueda);
+    return this.listarProgramaciones({ nroDoc: terminoBusqueda });
+  }
+
+  public listarProgramaciones(
+    filtros?: IListarProgramacionesQuery,
+  ): Observable<IProgramacionEmpresa[]> {
+    let params = new HttpParams();
+
+    if (filtros?.empresaId) {
+      params = params.set('empresaId', filtros.empresaId);
+    }
+
+    if (filtros?.estadoProgramacion) {
+      params = params.set('estadoProgramacion', filtros.estadoProgramacion);
+    }
+
+    if (filtros?.nroDoc) {
+      params = params.set('nroDoc', filtros.nroDoc);
+    }
+
+    if (filtros?.fechaInicio) {
+      params = params.set('fechaInicio', filtros.fechaInicio);
+    }
+
+    if (filtros?.fechaFin) {
+      params = params.set('fechaFin', filtros.fechaFin);
+    }
 
     return this._http
-      .get<IGetProgramaciones>(`${this.apiUrl}/findTerm`, {
+      .get<IGetProgramaciones>(this.apiUrl, {
         params,
         headers: this._auth.getAuthHeaders(),
       })
@@ -63,11 +83,8 @@ export class ProgramacionEmpresaService {
   }
 
   public getProgramacionById(id: string): Observable<IProgramacionEmpresa> {
-    const params = new HttpParams().set('search', id);
-
     return this._http
-      .get<IGetProgramacionById>(`${this.apiUrl}/findTermById`, {
-        params,
+      .get<IGetProgramacionById>(`${this.apiUrl}/${id}`, {
         headers: this._auth.getAuthHeaders(),
       })
       .pipe(map((data) => data.programacion));
@@ -77,7 +94,7 @@ export class ProgramacionEmpresaService {
     body: IProgramacionEmpresa,
   ): Observable<IProgramacionPostDTO> {
     return this._http.put<IProgramacionPostDTO>(
-      `${this.apiUrl}/updateProgramacion`,
+      `${this.apiUrl}/${body._id}`,
       body,
       {
         headers: this._auth.getAuthHeaders(),

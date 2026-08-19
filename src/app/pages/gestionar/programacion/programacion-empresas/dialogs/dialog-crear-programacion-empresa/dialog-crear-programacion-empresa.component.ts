@@ -43,6 +43,7 @@ import {
   catchError,
   debounceTime,
   distinctUntilChanged,
+  finalize,
   of,
   switchMap,
 } from 'rxjs';
@@ -542,36 +543,40 @@ export class DialogCrearProgramacionEmpresaComponent implements OnInit {
       const payload = this.construirPayloadProgramacion();
       this.guardandoProgramacion = true;
 
-      this._programacionService.crearProgramacionEmpresa(payload).subscribe({
-        next: (resp) => {
-          Swal.fire(
-            'Registrado',
-            'Programación registrada correctamente.',
-            'success',
-          );
+      this._programacionService
+        .crearProgramacionEmpresa(payload)
+        .pipe(
+          finalize(() => {
+            this.guardandoProgramacion = false;
+          }),
+        )
+        .subscribe({
+          next: (resp) => {
+            Swal.fire(
+              'Registrado',
+              'Programación registrada correctamente.',
+              'success',
+            );
 
-          this.dialogRef.close({
-            ok: true,
-            programacion: resp?.programacion ?? payload,
-          });
-        },
-        error: (err) => {
-          const mensaje =
-            err?.error?.msg ||
-            err.message ||
-            'No se pudo registrar la programación. Intenta nuevamente.';
+            this.dialogRef.close({
+              ok: true,
+              programacion: resp?.programacion ?? payload,
+            });
+          },
+          error: (err) => {
+            const mensaje =
+              err?.error?.msg ||
+              err.message ||
+              'No se pudo registrar la programación. Intenta nuevamente.';
 
-          Swal.fire({
-            title: 'Error',
-            text: mensaje,
-            icon: 'error',
-            confirmButtonText: 'Ok',
-          });
-        },
-        complete: () => {
-          this.guardandoProgramacion = false;
-        },
-      });
+            Swal.fire({
+              title: 'Error',
+              text: mensaje,
+              icon: 'error',
+              confirmButtonText: 'Ok',
+            });
+          },
+        });
     });
   }
 }

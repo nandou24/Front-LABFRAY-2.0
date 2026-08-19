@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import {
   FormBuilder,
   FormControl,
@@ -24,6 +24,8 @@ import { IProgramacionEmpresa } from '../../../../models/Gestion/programacionEmp
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { DialogCrearProgramacionEmpresaComponent } from './dialogs/dialog-crear-programacion-empresa/dialog-crear-programacion-empresa.component';
+import { ProgramacionEmpresaService } from '../../../../services/gestion/programacion/programacionEmpresas/programacion-empresa.service';
+import { catchError, of } from 'rxjs';
 @Component({
   selector: 'app-programacion-empresas',
   imports: [
@@ -44,12 +46,13 @@ import { DialogCrearProgramacionEmpresaComponent } from './dialogs/dialog-crear-
   templateUrl: './programacion-empresas.component.html',
   styleUrl: './programacion-empresas.component.scss',
 })
-export class ProgramacionEmpresasComponent {
+export class ProgramacionEmpresasComponent implements OnInit {
   private _fb = inject(FormBuilder);
   //private _solicitudService = inject(SolicitudAtencionService);
   //private _servicioService = inject(ServiciosService);
   private dialog = inject(MatDialog);
   private snackBar = inject(MatSnackBar);
+  private _programacionService = inject(ProgramacionEmpresaService);
   private readonly _adapter =
     inject<DateAdapter<unknown, unknown>>(DateAdapter);
 
@@ -59,6 +62,10 @@ export class ProgramacionEmpresasComponent {
     fechaFin: new FormControl(new Date()),
     filtroBusqueda: new FormControl(),
   });
+
+  ngOnInit(): void {
+    this.buscarProgramacionesDelDia();
+  }
 
   //setear los anchos
   setFlex(valor: number, unidad: 'px' | '%' = 'px'): string {
@@ -129,30 +136,59 @@ export class ProgramacionEmpresasComponent {
     const fin = new Date(fechaFinControl);
     fin.setHours(23, 59, 59, 999);
 
-    // console.log('Inicio:', inicio);
-    // console.log('Fin:', fin);
+    this._programacionService
+      .listarProgramaciones({
+        nroDoc: termino,
+        fechaInicio: inicio.toISOString(),
+        fechaFin: fin.toISOString(),
+      })
+      .pipe(
+        catchError((error) => {
+          console.error('Error al buscar programaciones:', error);
+          this.snackBar.open('Error al buscar programaciones', 'Cerrar', {
+            duration: 3000,
+          });
+          return of([] as IProgramacionEmpresa[]);
+        }),
+      )
+      .subscribe((programaciones) => {
+        this.dataSourceProgramacion.data = programaciones;
+      });
+  }
 
-    // console.log('Término despues:', fechaInicioControl, fechaFinControl);
+  buscarProgramacionesDelDia() {
+    const hoy = new Date();
+    const inicio = new Date(hoy);
+    inicio.setHours(0, 0, 0, 0);
+    const fin = new Date(hoy);
+    fin.setHours(23, 59, 59, 999);
 
-    // this._solicitudService
-    //   .getAllByDateRange(inicio.toISOString(), fin.toISOString(), termino)
-    //   .subscribe({
-    //     next: (solicitudes) => {
-    //       this.dataSourceProgramacion.data = solicitudes;
-    //       console.log('Solicitudes encontradas:', solicitudes);
-    //       this.snackBar.open(
-    //         `Se encontraron ${solicitudes.length} solicitudes`,
-    //         'Cerrar',
-    //         { duration: 3000 },
-    //       );
-    //     },
-    //     error: (err) => {
-    //       console.error('Error al buscar solicitudes:', err);
-    //       this.snackBar.open('Error al buscar solicitudes', 'Cerrar', {
-    //         duration: 3000,
-    //       });
-    //     },
-    //   });
+    this.myGroupBusqueda.patchValue({
+      fechaInicio: inicio,
+      fechaFin: fin,
+    });
+
+    this._programacionService
+      .listarProgramaciones({
+        fechaInicio: inicio.toISOString(),
+        fechaFin: fin.toISOString(),
+      })
+      .pipe(
+        catchError((error) => {
+          console.error('Error al cargar programaciones del día:', error);
+          this.snackBar.open(
+            'No se pudo cargar la programación del día',
+            'Cerrar',
+            {
+              duration: 3000,
+            },
+          );
+          return of([] as IProgramacionEmpresa[]);
+        }),
+      )
+      .subscribe((programaciones) => {
+        this.dataSourceProgramacion.data = programaciones;
+      });
   }
 
   crearProgramacion() {
@@ -181,22 +217,5 @@ export class ProgramacionEmpresasComponent {
         ...this.dataSourceProgramacion.data,
       ];
     });
-
-    // dialogRef
-    //   .afterClosed()
-    //   .subscribe((protocoloActualizado: IProtocoloEmpresa | null) => {
-    //     if (!protocoloActualizado) {
-    //       return;
-    //     }
-
-    //     const protocolosActuales =
-    //       this.empresaForm.get('protocolos')?.value || [];
-    //     const nuevosProtocolos = protocolosActuales.map(
-    //       (item: IProtocoloEmpresa, i: number) =>
-    //         i === index ? { ...item, ...protocoloActualizado } : item,
-    //     );
-
-    //     this.empresaForm.patchValue({ protocolos: nuevosProtocolos });
-    //   });
   }
 }

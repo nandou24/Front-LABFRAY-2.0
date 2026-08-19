@@ -158,7 +158,7 @@
               color="primary"
               (click)="iniciarProgramacion(row)"
             >
-              <mat-icon>start</mat-icon>
+              <mat-icon>play_arrow</mat-icon>
             </button>
             <button
               mat-icon-button
@@ -205,41 +205,34 @@
               <div class="example-element-detail">
                 <div
                   class="example-element-description"
-                  *ngIf="element.servicios && element.servicios.length"
+                  *ngIf="
+                    element.serviciosProgramados &&
+                    element.serviciosProgramados.length
+                  "
                 >
                   <table class="tabla-servicios-estilizada">
                     <thead>
                       <tr>
                         <th>Código Servicio</th>
                         <th>Nombre</th>
-                        <th>Médico</th>
-                        <th>Estado</th>
                       </tr>
                     </thead>
                     <tbody>
-                      <tr *ngFor="let servicio of element.servicios">
+                      <tr *ngFor="let servicio of element.serviciosProgramados">
                         <td>{{ servicio.codServicio }}</td>
                         <td>{{ servicio.nombreServicio }}</td>
-                        <td>
-                          {{ servicio.medicoAtiende.apePatRecHumano }}
-                          {{ servicio.medicoAtiende.apeMatRecHumano }}
-                          {{ servicio.medicoAtiende.nombreRecHumano }}
-                        </td>
-                        <td>
-                          <mat-chip
-                            [color]="
-                              servicio.estado === 'PENDIENTE'
-                                ? 'warn'
-                                : 'primary'
-                            "
-                            selected
-                          >
-                            {{ servicio.estado }}
-                          </mat-chip>
-                        </td>
                       </tr>
                     </tbody>
                   </table>
+                </div>
+                <div
+                  class="example-element-description"
+                  *ngIf="
+                    !element.serviciosProgramados ||
+                    element.serviciosProgramados.length === 0
+                  "
+                >
+                  No hay servicios programados para este paciente.
                 </div>
               </div>
             </div>
