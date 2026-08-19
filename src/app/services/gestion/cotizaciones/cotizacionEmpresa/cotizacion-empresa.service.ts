@@ -26,8 +26,8 @@ export class CotizacionEmpresaService {
   public crearCotizacionEmpresa(
     body: ICotizacionEmpresa,
   ): Observable<ICotizacionPostDTO> {
-    console.log('Enviando valores desde cotizacionEmpresa.service');
-    console.log('Valores enviados:', body);
+    //console.log('Enviando valores desde cotizacionEmpresa.service');
+    //console.log('Valores enviados:', body);
     return this._http.post<ICotizacionPostDTO>(this.apiUrl, body, {
       headers: this._auth.getAuthHeaders(),
     });
@@ -40,7 +40,7 @@ export class CotizacionEmpresaService {
   public crearNuevaVersionCotizacionEmpresa(
     body: ICotizacionEmpresa,
   ): Observable<ICotizacionPostDTO> {
-    console.log('Enviando nueva versión desde cotizacionEmpresa.service', body);
+    //console.log('Enviando nueva versión desde cotizacionEmpresa.service', body);
     return this._http.put<ICotizacionPostDTO>(
       `${this.apiUrl}/nueva-version`,
       body,

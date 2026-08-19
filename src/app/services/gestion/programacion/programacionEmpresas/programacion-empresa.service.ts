@@ -19,7 +19,7 @@ export class ProgramacionEmpresaService {
 
   private readonly _http = inject(HttpClient);
   private readonly _auth = inject(AuthService);
-  private readonly apiUrl = `${environment.baseUrl}/api/programacionEmpresa`;
+  private readonly apiUrl = `${environment.baseUrl}/api/programacionPacienteEmpresa`;
 
   public crearProgramacionEmpresa(
     body: IProgramacionEmpresa,
