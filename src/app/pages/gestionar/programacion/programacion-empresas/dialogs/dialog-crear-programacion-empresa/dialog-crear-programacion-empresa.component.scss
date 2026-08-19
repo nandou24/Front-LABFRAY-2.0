@@ -110,6 +110,15 @@ mat-option {
   }
 }
 
+.btn-actualizar {
+  background-color: #ecb80b !important; // amarillo suave
+  color: #154cb3 !important;
+
+  &:hover {
+    background-color: #ffda06 !important;
+  }
+}
+
 .btn-cancelar {
   background-color: red !important; // amarillo suave
   color: white !important;

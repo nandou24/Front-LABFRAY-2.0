@@ -49,6 +49,8 @@ export interface IProgramacionEmpresa {
   nombreCliente: string;
   apePatCliente: string;
   apeMatCliente: string;
+  sexoCliente?: 'Masculino' | 'Femenino';
+  fechaNacimiento?: Date | string;
   puesto?: string;
   area?: string;
 

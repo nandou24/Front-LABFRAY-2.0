@@ -44,6 +44,7 @@ import {
   debounceTime,
   distinctUntilChanged,
   finalize,
+  map,
   of,
   switchMap,
 } from 'rxjs';
@@ -99,6 +100,7 @@ export class DialogCrearProgramacionEmpresaComponent implements OnInit {
   public programacionForm: FormGroup = this._fb.group({
     _id: [null],
     hc: [null],
+    estadoProgramacion: ['PROGRAMADO'],
     tipoDoc: ['DNI'], // Valor por defecto: DNI
     nroDoc: ['', [this._documentValidator.documentValidator('tipoDoc')]],
     apePatCliente: [
@@ -147,6 +149,22 @@ export class DialogCrearProgramacionEmpresaComponent implements OnInit {
     'nombreCliente',
   ];
   public guardandoProgramacion = false;
+  public get modoDialog(): 'create' | 'edit' | 'view' {
+    return (this.data?.mode as 'create' | 'edit' | 'view') ?? 'create';
+  }
+
+  public get esModoEdicion(): boolean {
+    return this.modoDialog === 'edit';
+  }
+
+  public get esModoVista(): boolean {
+    return this.modoDialog === 'view';
+  }
+
+  public puedeEditarProgramacion(estado?: string): boolean {
+    const estadoNormalizado = (estado ?? '').trim().toUpperCase();
+    return estadoNormalizado !== 'ATENDIDO' && estadoNormalizado !== 'CANCELADO';
+  }
 
   ngOnInit(): void {
     this.traerEmpresas();
@@ -190,11 +208,82 @@ export class DialogCrearProgramacionEmpresaComponent implements OnInit {
       next: (empresas) => {
         this.empresas = this.ordenarEmpresasPorNombre(empresas);
         this.empresasFiltradas = [...this.empresas];
+        this.cargarProgramacionExistente();
       },
       error: (error) => {
         console.error('Error al cargar empresas:', error);
       },
     });
+  }
+
+  private cargarProgramacionExistente(): void {
+    const programacion = this.data?.programacion as IProgramacionEmpresa | undefined;
+    if (!programacion) {
+      this.aplicarEstadoVistaOEdicion();
+      return;
+    }
+
+    const empresaSeleccionada: IEmpresa =
+      this.empresas.find((empresa) => empresa._id === programacion.empresaId) ?? ({
+        _id: programacion.empresaId,
+        ruc: programacion.rucEmpresa,
+        razonSocial: programacion.razonSocialEmpresa,
+        nombreComercial: '',
+        direccionFiscal: '',
+        departamento: '',
+        provincia: '',
+        distrito: '',
+        cantidadTrabajadores: 0,
+        personasContacto: [],
+        ubicacionesSedes: [],
+      } as IEmpresa);
+
+    this.programacionForm.patchValue({
+      _id: programacion._id ?? null,
+      hc: programacion.hc ?? null,
+      estadoProgramacion: programacion.estadoProgramacion ?? 'PROGRAMADO',
+      tipoDoc: programacion.tipoDoc ?? 'DNI',
+      nroDoc: programacion.nroDoc ?? '',
+      apePatCliente: programacion.apePatCliente ?? '',
+      apeMatCliente: programacion.apeMatCliente ?? '',
+      nombreCliente: programacion.nombreCliente ?? '',
+      sexoCliente: programacion.sexoCliente ?? null,
+      fechaNacimiento: programacion.fechaNacimiento ?? '',
+      fechaProgramacion: programacion.fechaProgramada ?? new Date(),
+      empresa: empresaSeleccionada,
+      empresaId: programacion.empresaId ?? '',
+      rucEmpresa: programacion.rucEmpresa ?? '',
+      razonSocialEmpresa: programacion.razonSocialEmpresa ?? '',
+      observaciones: programacion.observaciones ?? '',
+    });
+
+    this.programacionForm.get('empresa')?.setValue(empresaSeleccionada);
+    this.onEmpresaSeleccionada(empresaSeleccionada);
+
+    const protocoloSeleccionado = this.protocolosDisponibles.find(
+      (protocolo) => protocolo._id === programacion.protocoloId,
+    );
+
+    if (protocoloSeleccionado) {
+      this.programacionForm.get('protocoloEmpresa')?.setValue(protocoloSeleccionado);
+      this.onProtocoloSeleccionado(protocoloSeleccionado);
+    }
+
+    this.aplicarEstadoVistaOEdicion();
+  }
+
+  private aplicarEstadoVistaOEdicion(): void {
+    if (this.esModoVista) {
+      this.programacionForm.disable();
+      return;
+    }
+
+    const estado = this.programacionForm.get('estadoProgramacion')?.value;
+    const bloqueado = !this.puedeEditarProgramacion(estado);
+
+    if (bloqueado) {
+      this.programacionForm.disable();
+    }
   }
 
   displayFnEmpresa(empresa: IEmpresa | null): string {
@@ -465,6 +554,7 @@ export class DialogCrearProgramacionEmpresaComponent implements OnInit {
     const protocolo = raw.protocoloEmpresa as IProtocoloEmpresa | null;
 
     return {
+      _id: raw._id ?? undefined,
       empresaId: raw.empresaId,
       rucEmpresa: raw.rucEmpresa,
       razonSocialEmpresa: raw.razonSocialEmpresa,
@@ -474,6 +564,8 @@ export class DialogCrearProgramacionEmpresaComponent implements OnInit {
       apePatCliente: raw.apePatCliente,
       apeMatCliente: raw.apeMatCliente ?? '',
       pacienteId: raw._id ?? null,
+      sexoCliente: raw.sexoCliente ?? null,
+      fechaNacimiento: raw.fechaNacimiento ?? '',
       hc: raw.hc ?? null,
       protocoloId: protocolo?._id ?? '',
       codProtocolo: protocolo?.codigoProtocolo ?? '',
@@ -486,13 +578,45 @@ export class DialogCrearProgramacionEmpresaComponent implements OnInit {
         }),
       ),
       fechaProgramada: raw.fechaProgramacion,
-      estadoProgramacion: 'PROGRAMADO',
+      estadoProgramacion: raw.estadoProgramacion ?? 'PROGRAMADO',
       observaciones: raw.observaciones?.trim() || '',
       origenRegistro: 'MANUAL',
     };
   }
 
+  private validarDuplicadoProgramacion(payload: IProgramacionEmpresa) {
+    const fecha = new Date(payload.fechaProgramada);
+    const inicio = new Date(fecha);
+    inicio.setHours(0, 0, 0, 0);
+
+    const fin = new Date(fecha);
+    fin.setHours(23, 59, 59, 999);
+
+    return this._programacionService
+      .listarProgramaciones({
+        fechaInicio: inicio.toISOString(),
+        fechaFin: fin.toISOString(),
+      })
+      .pipe(
+        map((programaciones) =>
+          programaciones.some(
+            (programacion) =>
+              programacion._id !== payload._id &&
+              programacion.empresaId === payload.empresaId &&
+              programacion.protocoloId === payload.protocoloId &&
+              programacion.tipoDoc === payload.tipoDoc &&
+              programacion.nroDoc === payload.nroDoc,
+          ),
+        ),
+      );
+  }
+
   registraProgramacion() {
+    if (this.esModoVista) {
+      this.cerrar();
+      return;
+    }
+
     console.log('Formulario de programación:', this.programacionForm.value);
     this.formSubmitted = true;
 
@@ -528,12 +652,25 @@ export class DialogCrearProgramacionEmpresaComponent implements OnInit {
       return;
     }
 
+    const estadoActual = this.programacionForm.get('estadoProgramacion')?.value;
+    if (!this.puedeEditarProgramacion(estadoActual) && this.esModoEdicion) {
+      Swal.fire({
+        title: 'Programación bloqueada',
+        text: 'No se puede editar una programación en estado Atendido o Cancelado.',
+        icon: 'info',
+        confirmButtonText: 'Ok',
+      });
+      return;
+    }
+
     Swal.fire({
-      title: '¿Confirmar registro?',
-      text: 'Se registrará la programación con los datos ingresados.',
+      title: this.esModoEdicion ? '¿Confirmar actualización?' : '¿Confirmar registro?',
+      text: this.esModoEdicion
+        ? 'Se actualizará la programación con los datos ingresados.'
+        : 'Se registrará la programación con los datos ingresados.',
       icon: 'question',
       showCancelButton: true,
-      confirmButtonText: 'Sí, registrar',
+      confirmButtonText: this.esModoEdicion ? 'Sí, actualizar' : 'Sí, registrar',
       cancelButtonText: 'Cancelar',
     }).then((result) => {
       if (!result.isConfirmed) {
@@ -543,35 +680,66 @@ export class DialogCrearProgramacionEmpresaComponent implements OnInit {
       const payload = this.construirPayloadProgramacion();
       this.guardandoProgramacion = true;
 
-      this._programacionService
-        .crearProgramacionEmpresa(payload)
+      this.validarDuplicadoProgramacion(payload)
         .pipe(
           finalize(() => {
             this.guardandoProgramacion = false;
           }),
         )
         .subscribe({
-          next: (resp) => {
-            Swal.fire(
-              'Registrado',
-              'Programación registrada correctamente.',
-              'success',
-            );
+          next: (hayDuplicado) => {
+            if (hayDuplicado) {
+              Swal.fire({
+                title: 'Duplicado',
+                text: 'Ya existe una programación del mismo paciente para la misma empresa y protocolo en este mismo día.',
+                icon: 'warning',
+                confirmButtonText: 'Ok',
+              });
+              return;
+            }
 
-            this.dialogRef.close({
-              ok: true,
-              programacion: resp?.programacion ?? payload,
+            const request$ = this.esModoEdicion
+              ? this._programacionService.actualizarProgramacion(payload)
+              : this._programacionService.crearProgramacionEmpresa(payload);
+
+            request$.subscribe({
+              next: (resp) => {
+                Swal.fire(
+                  this.esModoEdicion ? 'Actualizado' : 'Registrado',
+                  this.esModoEdicion
+                    ? 'Programación actualizada correctamente.'
+                    : 'Programación registrada correctamente.',
+                  'success',
+                );
+
+                this.dialogRef.close({
+                  ok: true,
+                  mode: this.modoDialog,
+                  programacion: resp?.programacion ?? payload,
+                });
+              },
+              error: (err) => {
+                const mensaje =
+                  err?.error?.msg ||
+                  err.message ||
+                  (this.esModoEdicion
+                    ? 'No se pudo actualizar la programación. Intenta nuevamente.'
+                    : 'No se pudo registrar la programación. Intenta nuevamente.');
+
+                Swal.fire({
+                  title: 'Error',
+                  text: mensaje,
+                  icon: 'error',
+                  confirmButtonText: 'Ok',
+                });
+              },
             });
           },
           error: (err) => {
-            const mensaje =
-              err?.error?.msg ||
-              err.message ||
-              'No se pudo registrar la programación. Intenta nuevamente.';
-
+            console.error('Error al validar duplicados:', err);
             Swal.fire({
               title: 'Error',
-              text: mensaje,
+              text: 'No se pudo validar la programación. Intenta nuevamente.',
               icon: 'error',
               confirmButtonText: 'Ok',
             });

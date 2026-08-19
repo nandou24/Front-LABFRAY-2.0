@@ -30,7 +30,11 @@
               <div [style.flex]="setFlex(15, '%')" class="flex-item">
                 <mat-form-field appearance="outline">
                   <mat-label>Nro. Documento</mat-label>
-                  <input matInput formControlName="nroDoc" />
+                  <input
+                    matInput
+                    formControlName="nroDoc"
+                    (keydown.enter)="buscarPaciente()"
+                  />
                   <mat-icon
                     matSuffix
                     *ngIf="programacionForm.get('nroDoc')?.disabled"
@@ -493,14 +497,19 @@
           <div [style.flex]="setFlex(50, '%')" class="flex-item text-center">
             <button
               mat-raised-button
-              class="btn-registrar"
+              [ngClass]="esModoEdicion ? 'btn-actualizar' : 'btn-registrar'"
               type="button"
+              *ngIf="!esModoVista"
               [disabled]="guardandoProgramacion"
               (click)="registraProgramacion()"
             >
               <mat-icon>save</mat-icon>
               {{
-                guardandoProgramacion ? "Guardando..." : "Crear Programacion"
+                guardandoProgramacion
+                  ? "Guardando..."
+                  : esModoEdicion
+                    ? "Guardar cambios"
+                    : "Crear Programacion"
               }}
             </button>
           </div>

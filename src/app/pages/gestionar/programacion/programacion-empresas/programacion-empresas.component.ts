@@ -105,9 +105,48 @@ export class ProgramacionEmpresasComponent implements OnInit {
     this.dataSourceProgramacion.filter = termino.trim().toLowerCase();
   }
 
+  puedeEditarProgramacion(estado?: string): boolean {
+    const estadoNormalizado = (estado ?? '').trim().toUpperCase();
+    return estadoNormalizado !== 'ATENDIDO' && estadoNormalizado !== 'CANCELADO';
+  }
+
   editarProgramacion(element: IProgramacionEmpresa) {
-    console.log('Editar programación:', element);
-    // Aquí puedes abrir un diálogo o navegar a otra página para editar la programación
+    const modo = this.puedeEditarProgramacion(element.estadoProgramacion)
+      ? 'edit'
+      : 'view';
+
+    const dialogRef = this.dialog.open(DialogCrearProgramacionEmpresaComponent, {
+      width: '95vw',
+      maxWidth: '1500px',
+      height: 'auto',
+      maxHeight: '92vh',
+      data: {
+        programacion: element,
+        mode: modo,
+      },
+    });
+
+    dialogRef.afterClosed().subscribe((resultado) => {
+      if (!resultado?.ok) {
+        return;
+      }
+
+      const programacionActualizada = resultado.programacion as IProgramacionEmpresa;
+      this.dataSourceProgramacion.data = this.dataSourceProgramacion.data.map(
+        (item) =>
+          item._id === programacionActualizada._id
+            ? programacionActualizada
+            : item,
+      );
+
+      this.snackBar.open(
+        modo === 'edit'
+          ? 'Programación actualizada correctamente'
+          : 'Detalles de programación cargados',
+        'Cerrar',
+        { duration: 3000 },
+      );
+    });
   }
 
   iniciarProgramacion(element: IProgramacionEmpresa) {
@@ -199,6 +238,9 @@ export class ProgramacionEmpresasComponent implements OnInit {
         maxWidth: '1500px',
         height: 'auto',
         maxHeight: '92vh',
+        data: {
+          mode: 'create',
+        },
       },
     );
 

@@ -20,4 +20,11 @@ describe('DialogCrearProgramacionEmpresaComponent', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   });
+
+  it('should block edit for attended or cancelled programations', () => {
+    expect(component.puedeEditarProgramacion('ATENDIDO')).toBeFalse();
+    expect(component.puedeEditarProgramacion('CANCELADO')).toBeFalse();
+    expect(component.puedeEditarProgramacion('PROGRAMADO')).toBeTrue();
+    expect(component.puedeEditarProgramacion('EN ATENCION')).toBeTrue();
+  });
 });
