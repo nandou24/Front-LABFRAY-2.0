@@ -5,6 +5,7 @@ import { Observable, map } from 'rxjs';
 import { AuthService } from '../../../auth/auth.service';
 import { environment } from '../../../../../environments/environment';
 import {
+  EstadoProgramacion,
   IListarProgramacionesQuery,
   IProgramacionPostDTO,
   IProgramacionEmpresa,
@@ -96,6 +97,19 @@ export class ProgramacionEmpresaService {
     return this._http.put<IProgramacionPostDTO>(
       `${this.apiUrl}/${body._id}`,
       body,
+      {
+        headers: this._auth.getAuthHeaders(),
+      },
+    );
+  }
+
+  public actualizarEstadoProgramacion(
+    id: string,
+    estadoProgramacion: EstadoProgramacion,
+  ): Observable<IProgramacionPostDTO> {
+    return this._http.put<IProgramacionPostDTO>(
+      `${this.apiUrl}/${id}/estado`,
+      { estadoProgramacion },
       {
         headers: this._auth.getAuthHeaders(),
       },

@@ -20,12 +20,16 @@ import {
   MAT_DATE_LOCALE,
   MatNativeDateModule,
 } from '@angular/material/core';
-import { IProgramacionEmpresa } from '../../../../models/Gestion/programacionEmpresa.models';
+import {
+  EstadoProgramacion,
+  IProgramacionEmpresa,
+} from '../../../../models/Gestion/programacionEmpresa.models';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { DialogCrearProgramacionEmpresaComponent } from './dialogs/dialog-crear-programacion-empresa/dialog-crear-programacion-empresa.component';
 import { ProgramacionEmpresaService } from '../../../../services/gestion/programacion/programacionEmpresas/programacion-empresa.service';
 import { catchError, of } from 'rxjs';
+import Swal from 'sweetalert2';
 @Component({
   selector: 'app-programacion-empresas',
   imports: [
@@ -87,6 +91,11 @@ export class ProgramacionEmpresasComponent implements OnInit {
   ];
   dataSourceProgramacion = new MatTableDataSource<IProgramacionEmpresa>();
   expandedProgramacion: IProgramacionEmpresa | null = null;
+  private readonly estadosNoEditables: EstadoProgramacion[] = [
+    'CANCELADO',
+    'EN ATENCION',
+    'ATENDIDO',
+  ];
 
   /** Checks whether an element is expanded. */
   isExpandedProgramacion(element: IProgramacionEmpresa) {
@@ -107,31 +116,46 @@ export class ProgramacionEmpresasComponent implements OnInit {
 
   puedeEditarProgramacion(estado?: string): boolean {
     const estadoNormalizado = (estado ?? '').trim().toUpperCase();
-    return estadoNormalizado !== 'ATENDIDO' && estadoNormalizado !== 'CANCELADO';
+    return (
+      estadoNormalizado !== 'ATENDIDO' && estadoNormalizado !== 'CANCELADO'
+    );
   }
 
   editarProgramacion(element: IProgramacionEmpresa) {
+    if (this.estadosNoEditables.includes(element.estadoProgramacion)) {
+      this.snackBar.open(
+        `La programación en estado ${element.estadoProgramacion} no se puede editar.`,
+        'Cerrar',
+        { duration: 3500 },
+      );
+      return;
+    }
+
     const modo = this.puedeEditarProgramacion(element.estadoProgramacion)
       ? 'edit'
       : 'view';
 
-    const dialogRef = this.dialog.open(DialogCrearProgramacionEmpresaComponent, {
-      width: '95vw',
-      maxWidth: '1500px',
-      height: 'auto',
-      maxHeight: '92vh',
-      data: {
-        programacion: element,
-        mode: modo,
+    const dialogRef = this.dialog.open(
+      DialogCrearProgramacionEmpresaComponent,
+      {
+        width: '95vw',
+        maxWidth: '1500px',
+        height: 'auto',
+        maxHeight: '92vh',
+        data: {
+          programacion: element,
+          mode: modo,
+        },
       },
-    });
+    );
 
     dialogRef.afterClosed().subscribe((resultado) => {
       if (!resultado?.ok) {
         return;
       }
 
-      const programacionActualizada = resultado.programacion as IProgramacionEmpresa;
+      const programacionActualizada =
+        resultado.programacion as IProgramacionEmpresa;
       this.dataSourceProgramacion.data = this.dataSourceProgramacion.data.map(
         (item) =>
           item._id === programacionActualizada._id
@@ -150,13 +174,100 @@ export class ProgramacionEmpresasComponent implements OnInit {
   }
 
   iniciarProgramacion(element: IProgramacionEmpresa) {
+    if (element.estadoProgramacion === 'CANCELADO') {
+      this.snackBar.open(
+        'No se puede iniciar una programación cancelada.',
+        'Cerrar',
+        { duration: 3500 },
+      );
+      return;
+    }
     console.log('Iniciar programación:', element);
     // Aquí puedes abrir un diálogo o navegar a otra página para iniciar la programación
   }
 
   anularProgramacion(element: IProgramacionEmpresa) {
-    console.log('Anular programación:', element);
-    // Aquí puedes abrir un diálogo o navegar a otra página para anular la programación
+    if (!element._id) {
+      this.snackBar.open(
+        'No se pudo identificar la programación a anular.',
+        'Cerrar',
+        { duration: 3000 },
+      );
+      return;
+    }
+
+    if (element.estadoProgramacion === 'CANCELADO') {
+      this.snackBar.open('La programación ya está cancelada.', 'Cerrar', {
+        duration: 3000,
+      });
+      return;
+    }
+
+    if (element.estadoProgramacion === 'EN ATENCION') {
+      this.snackBar.open(
+        'No se puede anular una atención en curso.',
+        'Cerrar',
+        { duration: 3500 },
+      );
+      return;
+    }
+
+    if (element.estadoProgramacion === 'ATENDIDO') {
+      this.snackBar.open(
+        'No se puede anular una programación ya atendida.',
+        'Cerrar',
+        { duration: 3500 },
+      );
+      return;
+    }
+
+    Swal.fire({
+      title: '¿Anular programación?',
+      text: 'Esta acción cambiará el estado a CANCELADO.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, anular',
+      cancelButtonText: 'No',
+    }).then((result) => {
+      if (!result.isConfirmed) {
+        return;
+      }
+
+      this._programacionService
+        .actualizarEstadoProgramacion(element._id!, 'CANCELADO')
+        .pipe(
+          catchError((error) => {
+            const mensaje =
+              error?.error?.msg ||
+              'No se pudo anular la programación. Intenta nuevamente.';
+
+            Swal.fire({
+              title: 'Error',
+              text: mensaje,
+              icon: 'error',
+              confirmButtonText: 'Ok',
+            });
+
+            return of(null);
+          }),
+        )
+        .subscribe((resp) => {
+          if (!resp?.ok) {
+            return;
+          }
+
+          this.dataSourceProgramacion.data =
+            this.dataSourceProgramacion.data.map((item) =>
+              item._id === element._id
+                ? { ...item, estadoProgramacion: 'CANCELADO' }
+                : item,
+            );
+
+          this.snackBar.open('Programación anulada correctamente.', 'Cerrar', {
+            duration: 3000,
+          });
+        });
+    });
   }
 
   buscarProgramacion() {

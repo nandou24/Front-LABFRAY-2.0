@@ -104,3 +104,82 @@ tr.example-element-row:not(.example-expanded-row):active {
     font-size: 12px;
   }
 }
+
+.chip-estado {
+  // font-weight: 600;
+  // font-size: 12px;
+  // color: #ffffff !important;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-width: 95px;
+  padding: 4px 12px;
+
+  border-radius: 8px;
+
+  font-size: 12px;
+  font-weight: 600;
+
+  border: 1px solid transparent;
+}
+
+.chip-programado {
+  //background-color: #2563eb !important;
+  background-color: #e3f2fd !important;
+  color: #1565c0 !important;
+  border-color: #bbdefb !important;
+}
+
+.chip-en-atencion {
+  background-color: #fff3e0;
+  color: #e65100;
+  border-color: #ffe0b2;
+}
+
+.chip-pendiente {
+  background-color: #fff8e1;
+  color: #8d6e00;
+  border-color: #ffecb3;
+}
+
+.chip-atendido {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+  border-color: #c8e6c9;
+}
+
+.chip-no-asistio {
+  background-color: #f3e5f5;
+  color: #6a1b9a;
+  border-color: #e1bee7;
+}
+
+.chip-cancelado {
+  background-color: #ffebee !important;
+  color: #c62828 !important;
+  border-color: #ffcdd2 !important;
+}
+
+.btn-accion {
+  transition:
+    transform 0.15s ease,
+    opacity 0.15s ease;
+}
+
+.btn-accion:hover {
+  transform: translateY(-1px);
+}
+
+.btn-accion-editar {
+  color: #173f73 !important;
+}
+
+.btn-accion-iniciar {
+  color: #198754 !important;
+}
+
+.btn-accion-cancelar {
+  color: #c62828 !important;
+}

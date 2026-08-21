@@ -136,9 +136,20 @@
         <ng-container matColumnDef="estado">
           <th mat-header-cell *matHeaderCellDef mat-sort-header>Estado</th>
           <td mat-cell *matCellDef="let row">
-            <mat-chip color="primary" [disabled]="true">{{
-              row.estadoProgramacion
-            }}</mat-chip>
+            <mat-chip
+              class="chip-estado"
+              [ngClass]="{
+                'chip-programado': row.estadoProgramacion === 'PROGRAMADO',
+                'chip-en-atencion': row.estadoProgramacion === 'EN ATENCION',
+                'chip-pendiente':
+                  row.estadoProgramacion === 'PENDIENTE DE COMPLETAR',
+                'chip-atendido': row.estadoProgramacion === 'ATENDIDO',
+                'chip-no-asistio': row.estadoProgramacion === 'NO ASISTIO',
+                'chip-cancelado': row.estadoProgramacion === 'CANCELADO',
+              }"
+            >
+              {{ row.estadoProgramacion }}
+            </mat-chip>
           </td>
         </ng-container>
 
