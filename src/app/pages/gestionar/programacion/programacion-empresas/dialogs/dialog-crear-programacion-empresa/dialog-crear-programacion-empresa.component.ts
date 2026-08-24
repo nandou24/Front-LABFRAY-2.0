@@ -553,8 +553,7 @@ export class DialogCrearProgramacionEmpresaComponent implements OnInit {
     const raw = this.programacionForm.getRawValue();
     const protocolo = raw.protocoloEmpresa as IProtocoloEmpresa | null;
 
-    return {
-      _id: raw._id ?? undefined,
+    const payload: IProgramacionEmpresa = {
       empresaId: raw.empresaId,
       rucEmpresa: raw.rucEmpresa,
       razonSocialEmpresa: raw.razonSocialEmpresa,
@@ -582,6 +581,12 @@ export class DialogCrearProgramacionEmpresaComponent implements OnInit {
       observaciones: raw.observaciones?.trim() || '',
       origenRegistro: 'MANUAL',
     };
+
+    if (this.esModoEdicion && raw._id) {
+      payload._id = raw._id;
+    }
+
+    return payload;
   }
 
   private validarDuplicadoProgramacion(payload: IProgramacionEmpresa) {
