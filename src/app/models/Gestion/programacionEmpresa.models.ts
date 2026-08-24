@@ -12,6 +12,20 @@ export type TurnoProgramacion = 'MAÑANA' | 'TARDE' | 'NOCHE';
 
 export type TipoPendiente = 'MUESTRA' | 'EVALUACION' | 'DOCUMENTO' | 'OTRO';
 
+export type SedeProgramacion = 'Callao' | 'Comas' | 'NoIndica';
+
+export type TipoEvaluacionProgramacion =
+  | 'ETAs'
+  | 'Ocupacional'
+  | 'PreOcupacional'
+  | 'Retiro'
+  | 'Toxicológico'
+  | 'Otro';
+
+export type TipoAtencionProgramacion = 'Regular' | 'Preferencial' | 'VIP';
+
+export type PrioridadProgramacion = 'Normal' | 'Alta';
+
 export interface ServicioProgramado {
   servicioId: string;
   codServicio: string;
@@ -72,6 +86,10 @@ export interface IProgramacionEmpresa {
   fechaProgramada: Date | string;
   turno?: TurnoProgramacion;
   horaProgramada?: string;
+  sede?: SedeProgramacion;
+  tipoEvaluacion?: TipoEvaluacionProgramacion;
+  tipoAtencion?: TipoAtencionProgramacion;
+  prioridad?: PrioridadProgramacion;
 
   // ESTADO
 

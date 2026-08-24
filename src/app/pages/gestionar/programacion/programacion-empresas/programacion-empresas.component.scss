@@ -3,6 +3,17 @@ mat-form-field {
   height: 50%;
 }
 
+.contenedor-flex {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.contenedor-formulario {
+  flex: 0 0 100%;
+}
+
 .row-flex {
   display: flex;
   flex-wrap: wrap;
@@ -17,8 +28,8 @@ mat-form-field {
   padding: 10px;
 }
 
-//nueva tabla
-table {
+// tabla principal
+.table-container > table {
   width: 100%;
 }
 
@@ -56,7 +67,15 @@ tr.example-element-row:not(.example-expanded-row):active {
 
 .example-element-detail {
   display: flex;
+  flex-direction: column;
+  gap: 1px;
   min-height: 0;
+  width: auto;
+  align-items: flex-start;
+}
+
+.protocolo-resumen {
+  margin-bottom: 1px;
 }
 
 .example-element-description {
@@ -76,7 +95,9 @@ tr.example-element-row:not(.example-expanded-row):active {
 }
 
 .tabla-servicios-estilizada {
-  width: 100%;
+  width: auto;
+  min-width: 520px;
+  max-width: 100%;
   border-collapse: collapse;
   background: #f4f6f8;
   border-radius: 8px;
@@ -182,4 +203,18 @@ tr.example-element-row:not(.example-expanded-row):active {
 
 .btn-accion-cancelar {
   color: #c62828 !important;
+}
+
+.tipo-atencion-celda {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.vip-star-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  line-height: 18px;
+  color: #f4c430;
 }

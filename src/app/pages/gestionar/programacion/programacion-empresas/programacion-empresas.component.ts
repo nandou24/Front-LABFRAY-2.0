@@ -81,7 +81,10 @@ export class ProgramacionEmpresasComponent implements OnInit {
     'fechaProgramacion',
     'nombreCompleto',
     'empresa',
-    'protocolo',
+    'sede',
+    'tipoEvaluacion',
+    'tipoAtencion',
+    'prioridad',
     'estado',
     'acciones',
   ];

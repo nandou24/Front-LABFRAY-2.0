@@ -114,7 +114,7 @@ export class DialogCrearProgramacionEmpresaComponent implements OnInit {
     ],
     fechaNacimiento: ['', [this._fechaService.fechaNoFuturaValidator()]],
     edad: [{ value: '', disabled: true }],
-    sexoCliente: [],
+    sexoCliente: [null],
     phones: this._fb.array([]),
     empresa: [null as IEmpresa | null, Validators.required],
     protocoloEmpresa: [
@@ -163,7 +163,9 @@ export class DialogCrearProgramacionEmpresaComponent implements OnInit {
 
   public puedeEditarProgramacion(estado?: string): boolean {
     const estadoNormalizado = (estado ?? '').trim().toUpperCase();
-    return estadoNormalizado !== 'ATENDIDO' && estadoNormalizado !== 'CANCELADO';
+    return (
+      estadoNormalizado !== 'ATENDIDO' && estadoNormalizado !== 'CANCELADO'
+    );
   }
 
   ngOnInit(): void {
@@ -217,14 +219,17 @@ export class DialogCrearProgramacionEmpresaComponent implements OnInit {
   }
 
   private cargarProgramacionExistente(): void {
-    const programacion = this.data?.programacion as IProgramacionEmpresa | undefined;
+    const programacion = this.data?.programacion as
+      | IProgramacionEmpresa
+      | undefined;
     if (!programacion) {
       this.aplicarEstadoVistaOEdicion();
       return;
     }
 
     const empresaSeleccionada: IEmpresa =
-      this.empresas.find((empresa) => empresa._id === programacion.empresaId) ?? ({
+      this.empresas.find((empresa) => empresa._id === programacion.empresaId) ??
+      ({
         _id: programacion.empresaId,
         ruc: programacion.rucEmpresa,
         razonSocial: programacion.razonSocialEmpresa,
@@ -255,6 +260,10 @@ export class DialogCrearProgramacionEmpresaComponent implements OnInit {
       rucEmpresa: programacion.rucEmpresa ?? '',
       razonSocialEmpresa: programacion.razonSocialEmpresa ?? '',
       observaciones: programacion.observaciones ?? '',
+      sede: programacion.sede ?? '',
+      tipoEvaluacion: programacion.tipoEvaluacion ?? '',
+      tipoAtencion: programacion.tipoAtencion ?? '',
+      prioridad: programacion.prioridad ?? '',
     });
 
     this.programacionForm.get('empresa')?.setValue(empresaSeleccionada);
@@ -265,7 +274,9 @@ export class DialogCrearProgramacionEmpresaComponent implements OnInit {
     );
 
     if (protocoloSeleccionado) {
-      this.programacionForm.get('protocoloEmpresa')?.setValue(protocoloSeleccionado);
+      this.programacionForm
+        .get('protocoloEmpresa')
+        ?.setValue(protocoloSeleccionado);
       this.onProtocoloSeleccionado(protocoloSeleccionado);
     }
 
@@ -578,6 +589,10 @@ export class DialogCrearProgramacionEmpresaComponent implements OnInit {
         }),
       ),
       fechaProgramada: raw.fechaProgramacion,
+      sede: raw.sede,
+      tipoEvaluacion: raw.tipoEvaluacion,
+      tipoAtencion: raw.tipoAtencion,
+      prioridad: raw.prioridad,
       estadoProgramacion: raw.estadoProgramacion ?? 'PROGRAMADO',
       observaciones: raw.observaciones?.trim() || '',
       origenRegistro: 'MANUAL',
@@ -664,13 +679,17 @@ export class DialogCrearProgramacionEmpresaComponent implements OnInit {
     }
 
     Swal.fire({
-      title: this.esModoEdicion ? '¿Confirmar actualización?' : '¿Confirmar registro?',
+      title: this.esModoEdicion
+        ? '¿Confirmar actualización?'
+        : '¿Confirmar registro?',
       text: this.esModoEdicion
         ? 'Se actualizará la programación con los datos ingresados.'
         : 'Se registrará la programación con los datos ingresados.',
       icon: 'question',
       showCancelButton: true,
-      confirmButtonText: this.esModoEdicion ? 'Sí, actualizar' : 'Sí, registrar',
+      confirmButtonText: this.esModoEdicion
+        ? 'Sí, actualizar'
+        : 'Sí, registrar',
       cancelButtonText: 'Cancelar',
     }).then((result) => {
       if (!result.isConfirmed) {
