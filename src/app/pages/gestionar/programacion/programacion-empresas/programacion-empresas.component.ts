@@ -27,6 +27,7 @@ import {
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { DialogCrearProgramacionEmpresaComponent } from './dialogs/dialog-crear-programacion-empresa/dialog-crear-programacion-empresa.component';
+import { DialogIniciarAtencionEmpresaComponent } from './dialogs/dialog-iniciar-atencion-empresa/dialog-iniciar-atencion-empresa.component';
 import { ProgramacionEmpresaService } from '../../../../services/gestion/programacion/programacionEmpresas/programacion-empresa.service';
 import { catchError, of } from 'rxjs';
 import Swal from 'sweetalert2';
@@ -176,7 +177,7 @@ export class ProgramacionEmpresasComponent implements OnInit {
     });
   }
 
-  iniciarProgramacion(element: IProgramacionEmpresa) {
+  iniciarAtencion(element: IProgramacionEmpresa) {
     if (element.estadoProgramacion === 'CANCELADO') {
       this.snackBar.open(
         'No se puede iniciar una programación cancelada.',
@@ -185,8 +186,13 @@ export class ProgramacionEmpresasComponent implements OnInit {
       );
       return;
     }
-    console.log('Iniciar programación:', element);
-    // Aquí puedes abrir un diálogo o navegar a otra página para iniciar la programación
+
+    this.dialog.open(DialogIniciarAtencionEmpresaComponent, {
+      width: '95vw',
+      maxWidth: '1400px',
+      maxHeight: '92vh',
+      data: { programacion: element },
+    });
   }
 
   anularProgramacion(element: IProgramacionEmpresa) {

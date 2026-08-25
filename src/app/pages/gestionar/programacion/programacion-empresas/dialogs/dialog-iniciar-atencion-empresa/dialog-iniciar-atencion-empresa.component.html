@@ -1,2 +1,164 @@
 <form [formGroup]="iniciarAtencionProgramacionForm">
+  <mat-dialog-content>
+    <div class="contenedor-flex">
+      <div class="contenedor-formulario">
+        <mat-card>
+          <mat-card-title>Datos del paciente</mat-card-title>
+          <mat-card-content>
+            <table class="tabla-detalles">
+              <tbody>
+                <tr>
+                  <th>Historia clínica</th>
+                  <td>{{ programacion?.hc || "-" }}</td>
+                </tr>
+                <tr>
+                  <th>Tipo de documento</th>
+                  <td>{{ programacion?.tipoDoc }}</td>
+                </tr>
+                <tr>
+                  <th>Número de documento</th>
+                  <td>{{ programacion?.nroDoc }}</td>
+                </tr>
+                <tr>
+                  <th>Paciente</th>
+                  <td>
+                    {{ programacion?.apePatCliente }}
+                    {{ programacion?.apeMatCliente }}
+                    {{ programacion?.nombreCliente }}
+                  </td>
+                </tr>
+                <tr>
+                  <th>Sexo</th>
+                  <td>{{ programacion?.sexoCliente || "-" }}</td>
+                </tr>
+                <tr>
+                  <th>Fecha de nacimiento</th>
+                  <td>
+                    {{ programacion?.fechaNacimiento | date: "dd/MM/yyyy" }}
+                  </td>
+                </tr>
+                <tr>
+                  <th>Edad</th>
+                  <td>
+                    {{
+                      iniciarAtencionProgramacionForm.get("edad")?.value || "-"
+                    }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </mat-card-content>
+        </mat-card>
+      </div>
+      <div class="contenedor-tablaCentro">
+        <mat-card>
+          <mat-card-title>Fotografía del paciente</mat-card-title>
+          <mat-card-content>
+            <section class="captura-foto">
+              <video
+                #cameraPreview
+                *ngIf="cameraActiva"
+                autoplay
+                playsinline
+              ></video>
+              <img
+                *ngIf="fotoPaciente"
+                [src]="fotoPaciente"
+                alt="Fotografía capturada del paciente"
+              />
+              <div class="acciones-foto">
+                <button
+                  mat-stroked-button
+                  type="button"
+                  *ngIf="!cameraActiva && !fotoPaciente"
+                  (click)="activarCamara()"
+                >
+                  <mat-icon>photo_camera</mat-icon>
+                  Activar cámara
+                </button>
+                <button
+                  mat-flat-button
+                  color="primary"
+                  type="button"
+                  *ngIf="cameraActiva"
+                  (click)="capturarFoto()"
+                >
+                  <mat-icon>camera</mat-icon>
+                  Capturar foto
+                </button>
+                <button
+                  mat-stroked-button
+                  type="button"
+                  *ngIf="fotoPaciente"
+                  (click)="repetirFoto()"
+                >
+                  <mat-icon>refresh</mat-icon>
+                  Repetir foto
+                </button>
+              </div>
+                
+            </section>
+          </mat-card-content>
+        </mat-card>
+      </div>
+      <div class="contenedor-tablaDerecha">
+        <mat-card>
+          <mat-card-title>Programación de empresa</mat-card-title>
+          <mat-card-content>
+            <table class="tabla-detalles">
+              <tbody>
+                <tr>
+                  <th>Empresa</th>
+                  <td>{{ programacion?.razonSocialEmpresa }}</td>
+                </tr>
+                <tr>
+                  <th>RUC</th>
+                  <td>{{ programacion?.rucEmpresa }}</td>
+                </tr>
+                <tr>
+                  <th>Protocolo</th>
+                  <td>{{ programacion?.nombreProtocolo }}</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <table
+              mat-table
+              [dataSource]="programacion?.serviciosProgramados ?? []"
+              class="mat-elevation-z2 w-100"
+            >
+              <ng-container matColumnDef="codigo">
+                <th mat-header-cell *matHeaderCellDef>Código</th>
+                <td mat-cell *matCellDef="let servicio">
+                  {{ servicio.codServicio }}
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="nombre">
+                <th mat-header-cell *matHeaderCellDef>Servicio</th>
+                <td mat-cell *matCellDef="let servicio">
+                  {{ servicio.nombreServicio }}
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="columnasServicios"></tr>
+              <tr mat-row *matRowDef="let row; columns: columnasServicios"></tr>
+            </table>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </div>
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" (click)="cancelar()">Cancelar</button>
+    <button
+      mat-flat-button
+      color="primary"
+      type="button"
+      (click)="iniciarAtencion()"
+    >
+      <mat-icon>play_arrow</mat-icon>
+      Iniciar
+    </button>
+  </mat-dialog-actions>
 </form>

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, Inject } from '@angular/core';
+import { Component, ElementRef, inject, Inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatCardModule } from '@angular/material/card';
@@ -22,6 +22,7 @@ import { EmpresaService } from '../../../../../../services/mantenimiento/empresa
 import { PacienteService } from '../../../../../../services/mantenimiento/paciente/paciente.service';
 import { ProgramacionEmpresaService } from '../../../../../../services/gestion/programacion/programacionEmpresas/programacion-empresa.service';
 import { IEmpresa, IProtocoloEmpresa } from '../../../../../../models/Mantenimiento/empresa.models';
+import { IProgramacionEmpresa } from '../../../../../../models/Gestion/programacionEmpresa.models';
 
 @Component({
   selector: 'app-dialog-iniciar-atencion-empresa',
@@ -51,7 +52,8 @@ import { IEmpresa, IProtocoloEmpresa } from '../../../../../../models/Mantenimie
   templateUrl: './dialog-iniciar-atencion-empresa.component.html',
   styleUrl: './dialog-iniciar-atencion-empresa.component.scss'
 })
-export class DialogIniciarAtencionEmpresaComponent {
+export class DialogIniciarAtencionEmpresaComponent implements OnInit, OnDestroy {
+  @ViewChild('cameraPreview') cameraPreview?: ElementRef<HTMLVideoElement>;
 
     constructor(
     public dialogRef: MatDialogRef<DialogIniciarAtencionEmpresaComponent>,
@@ -99,5 +101,109 @@ export class DialogIniciarAtencionEmpresaComponent {
     prioridad: ['Normal'],
     observaciones: [''],
   });
+
+  public programacion?: IProgramacionEmpresa;
+  public columnasServicios: string[] = ['codigo', 'nombre'];
+  public fotoPaciente = '';
+  public cameraActiva = false;
+  private cameraStream?: MediaStream;
+
+  ngOnInit(): void {
+    this.programacion = this.data?.programacion as IProgramacionEmpresa | undefined;
+    if (!this.programacion) {
+      this.dialogRef.close();
+      return;
+    }
+
+    this.iniciarAtencionProgramacionForm.patchValue({
+      _id: this.programacion._id ?? null,
+      hc: this.programacion.hc ?? null,
+      estadoProgramacion: this.programacion.estadoProgramacion,
+      tipoDoc: this.programacion.tipoDoc,
+      nroDoc: this.programacion.nroDoc,
+      apePatCliente: this.programacion.apePatCliente,
+      apeMatCliente: this.programacion.apeMatCliente,
+      nombreCliente: this.programacion.nombreCliente,
+      fechaNacimiento: this.programacion.fechaNacimiento ?? '',
+      sexoCliente: this.programacion.sexoCliente ?? null,
+      empresaId: this.programacion.empresaId,
+      rucEmpresa: this.programacion.rucEmpresa,
+      razonSocialEmpresa: this.programacion.razonSocialEmpresa,
+      fechaProgramacion: this.programacion.fechaProgramada,
+      observaciones: this.programacion.observaciones ?? '',
+    });
+
+    this.actualizarEdad();
+  }
+
+  ngOnDestroy(): void {
+    this.detenerCamara();
+  }
+
+    //setear los anchos
+  setFlex(valor: number, unidad: 'px' | '%' = 'px'): string {
+    return `0 0 ${valor}${unidad}`;
+  }
+
+
+  actualizarEdad(): void {
+    const fechaNacimiento = this.iniciarAtencionProgramacionForm.get('fechaNacimiento')?.value;
+    this.iniciarAtencionProgramacionForm.get('edad')?.setValue(
+      fechaNacimiento ? this._fechaService.calcularEdad(fechaNacimiento) : '',
+    );
+  }
+
+  async activarCamara(): Promise<void> {
+    try {
+      this.cameraStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'user' },
+      });
+      this.cameraActiva = true;
+
+      setTimeout(() => {
+        if (this.cameraPreview) {
+          this.cameraPreview.nativeElement.srcObject = this.cameraStream ?? null;
+        }
+      });
+    } catch (error) {
+      console.error('No se pudo acceder a la cámara:', error);
+    }
+  }
+
+  capturarFoto(): void {
+    const video = this.cameraPreview?.nativeElement;
+    if (!video?.videoWidth || !video.videoHeight) {
+      return;
+    }
+
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const context = canvas.getContext('2d');
+    context?.translate(canvas.width, 0);
+    context?.scale(-1, 1);
+    context?.drawImage(video, 0, 0, canvas.width, canvas.height);
+    this.fotoPaciente = canvas.toDataURL('image/jpeg', 0.85);
+    this.detenerCamara();
+  }
+
+  repetirFoto(): void {
+    this.fotoPaciente = '';
+    this.activarCamara();
+  }
+
+  iniciarAtencion(): void {
+    this.dialogRef.close({ fotoPaciente: this.fotoPaciente });
+  }
+
+  cancelar(): void {
+    this.dialogRef.close();
+  }
+
+  private detenerCamara(): void {
+    this.cameraStream?.getTracks().forEach((track) => track.stop());
+    this.cameraStream = undefined;
+    this.cameraActiva = false;
+  }
 
 }

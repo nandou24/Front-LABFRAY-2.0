@@ -1,0 +1,114 @@
+mat-form-field {
+  width: 100%;
+}
+
+mat-card-title {
+  background-color: #0f3369; // Azul Bootstrap
+  color: white;
+  padding-left: 1.5rem;
+  padding-top: 0.1rem;
+  padding-bottom: 0.1rem;
+  font-weight: lighter;
+  border-top-left-radius: 4px;
+  border-top-right-radius: 4px;
+}
+
+mat-card-content {
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  padding-top: 0.5rem;
+  font-size: 14px;
+}
+.contenedor-flex {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+//Aplicando flex al formulario
+.contenedor-formulario {
+  flex: 0 0 40%;
+  padding: 5px;
+  //min-width: 300px;
+}
+
+.contenedor-tablaCentro {
+  flex: 1 1 30%;
+  padding: 5px;
+  //min-width: 300px;
+}
+
+.contenedor-tablaDerecha {
+  flex: 1 1 30%;
+  padding: 5px;
+  //min-width: 300px;
+}
+
+.tabla-detalles {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.tabla-detalles th,
+.tabla-detalles td {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+  padding: 10px;
+  text-align: left;
+}
+
+.tabla-detalles th {
+  font-weight: 600;
+  width: 42%;
+}
+
+.captura-foto {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.captura-foto h3 {
+  font-size: 16px;
+}
+
+.captura-foto video,
+.captura-foto img {
+  background: #1f2937;
+  display: block;
+  height: 420px;
+  //max-width: 100%;
+  object-fit: cover;
+  width: 360px;
+
+}
+
+.captura-foto video {
+  transform: scaleX(-1);
+}
+
+.acciones-foto {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.row-flex {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  margin-bottom: 0px;
+}
+
+.flex-item {
+  justify-content: center;
+  min-width: 0;
+  //text-align: center;
+  padding: 10px;
+}
+
+@media (max-width: 900px) {
+  .contenedor-formulario,
+  .contenedor-tablaDerecha {
+    flex-basis: 100%;
+  }
+}
