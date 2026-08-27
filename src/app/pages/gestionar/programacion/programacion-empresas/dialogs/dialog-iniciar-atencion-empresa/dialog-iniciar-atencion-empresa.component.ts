@@ -1,19 +1,42 @@
 import { CommonModule } from '@angular/common';
-import { Component, ElementRef, inject, Inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import {
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  inject,
+  Inject,
+  OnDestroy,
+  OnInit,
+  ViewChild,
+} from '@angular/core';
+import {
+  MAT_DIALOG_DATA,
+  MatDialogModule,
+  MatDialogRef,
+} from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatCardModule } from '@angular/material/card';
 import { MatInputModule } from '@angular/material/input';
 import { MatTableModule } from '@angular/material/table';
 import { MatSelectModule } from '@angular/material/select';
 import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MAT_DATE_LOCALE, MatNativeDateModule, provideNativeDateAdapter } from '@angular/material/core';
+import {
+  MAT_DATE_LOCALE,
+  MatNativeDateModule,
+  provideNativeDateAdapter,
+} from '@angular/material/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
-import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  FormBuilder,
+  FormGroup,
+  FormsModule,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { UbigeoService } from '../../../../../../services/utilitarios/ubigeo.service';
 import { FechaValidatorService } from '../../../../../../services/utilitarios/validators/fechasValidator/fecha-validator.service';
@@ -21,13 +44,17 @@ import { DocValidatorService } from '../../../../../../services/utilitarios/vali
 import { EmpresaService } from '../../../../../../services/mantenimiento/empresa/empresa.service';
 import { PacienteService } from '../../../../../../services/mantenimiento/paciente/paciente.service';
 import { ProgramacionEmpresaService } from '../../../../../../services/gestion/programacion/programacionEmpresas/programacion-empresa.service';
-import { IEmpresa, IProtocoloEmpresa } from '../../../../../../models/Mantenimiento/empresa.models';
+import {
+  IEmpresa,
+  IProtocoloEmpresa,
+} from '../../../../../../models/Mantenimiento/empresa.models';
 import { IProgramacionEmpresa } from '../../../../../../models/Gestion/programacionEmpresa.models';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-dialog-iniciar-atencion-empresa',
   imports: [
-        CommonModule,
+    CommonModule,
     MatDialogModule,
     MatFormFieldModule,
     MatCardModule,
@@ -43,19 +70,21 @@ import { IProgramacionEmpresa } from '../../../../../../models/Gestion/programac
     MatSlideToggleModule,
     FormsModule,
     ReactiveFormsModule,
-    MatAutocompleteModule
+    MatAutocompleteModule,
   ],
   providers: [
     provideNativeDateAdapter(),
     { provide: MAT_DATE_LOCALE, useValue: 'es-PE' },
   ],
   templateUrl: './dialog-iniciar-atencion-empresa.component.html',
-  styleUrl: './dialog-iniciar-atencion-empresa.component.scss'
+  styleUrl: './dialog-iniciar-atencion-empresa.component.scss',
 })
-export class DialogIniciarAtencionEmpresaComponent implements OnInit, OnDestroy {
+export class DialogIniciarAtencionEmpresaComponent
+  implements OnInit, OnDestroy
+{
   @ViewChild('cameraPreview') cameraPreview?: ElementRef<HTMLVideoElement>;
 
-    constructor(
+  constructor(
     public dialogRef: MatDialogRef<DialogIniciarAtencionEmpresaComponent>,
     @Inject(MAT_DIALOG_DATA) public data: any,
     private _ubigeoService: UbigeoService,
@@ -67,6 +96,7 @@ export class DialogIniciarAtencionEmpresaComponent implements OnInit, OnDestroy 
   private _pacienteService = inject(PacienteService);
   private _programacionService = inject(ProgramacionEmpresaService);
   private _fb = inject(FormBuilder);
+  private _cdr = inject(ChangeDetectorRef);
 
   public iniciarAtencionProgramacionForm: FormGroup = this._fb.group({
     _id: [null],
@@ -104,12 +134,16 @@ export class DialogIniciarAtencionEmpresaComponent implements OnInit, OnDestroy 
 
   public programacion?: IProgramacionEmpresa;
   public columnasServicios: string[] = ['codigo', 'nombre'];
-  public fotoPaciente = '';
+  public fotoPaciente: Blob | null = null;
+  public fotoPacienteUrl: string | null = null;
+
   public cameraActiva = false;
   private cameraStream?: MediaStream;
 
   ngOnInit(): void {
-    this.programacion = this.data?.programacion as IProgramacionEmpresa | undefined;
+    this.programacion = this.data?.programacion as
+      | IProgramacionEmpresa
+      | undefined;
     if (!this.programacion) {
       this.dialogRef.close();
       return;
@@ -138,62 +172,157 @@ export class DialogIniciarAtencionEmpresaComponent implements OnInit, OnDestroy 
 
   ngOnDestroy(): void {
     this.detenerCamara();
+
+    if (this.fotoPacienteUrl) {
+      URL.revokeObjectURL(this.fotoPacienteUrl);
+      this.fotoPacienteUrl = null;
+    }
+
+    this.fotoPaciente = null;
   }
 
-    //setear los anchos
+  //setear los anchos
   setFlex(valor: number, unidad: 'px' | '%' = 'px'): string {
     return `0 0 ${valor}${unidad}`;
   }
 
-
   actualizarEdad(): void {
-    const fechaNacimiento = this.iniciarAtencionProgramacionForm.get('fechaNacimiento')?.value;
-    this.iniciarAtencionProgramacionForm.get('edad')?.setValue(
-      fechaNacimiento ? this._fechaService.calcularEdad(fechaNacimiento) : '',
-    );
+    const fechaNacimiento =
+      this.iniciarAtencionProgramacionForm.get('fechaNacimiento')?.value;
+    this.iniciarAtencionProgramacionForm
+      .get('edad')
+      ?.setValue(
+        fechaNacimiento ? this._fechaService.calcularEdad(fechaNacimiento) : '',
+      );
   }
 
   async activarCamara(): Promise<void> {
     try {
+      // ==========================================
+      // OBTENER STREAM DE LA CÁMARA
+      // ==========================================
+
       this.cameraStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'user' },
+        video: {
+          facingMode: 'user',
+        },
       });
+
+      // ==========================================
+      // MOSTRAR ELEMENTO VIDEO
+      // ==========================================
+
       this.cameraActiva = true;
 
-      setTimeout(() => {
-        if (this.cameraPreview) {
-          this.cameraPreview.nativeElement.srcObject = this.cameraStream ?? null;
-        }
-      });
+      // Fuerza a Angular a crear el <video>
+      // que depende de *ngIf="cameraActiva"
+      this._cdr.detectChanges();
+
+      // ==========================================
+      // ASIGNAR STREAM AL VIDEO
+      // ==========================================
+
+      const video = this.cameraPreview?.nativeElement;
+
+      if (!video) {
+        console.error(
+          'No se encontró el elemento de previsualización de la cámara',
+        );
+
+        this.detenerCamara();
+
+        return;
+      }
+
+      video.srcObject = this.cameraStream;
+
+      await video.play();
     } catch (error) {
       console.error('No se pudo acceder a la cámara:', error);
+
+      this.detenerCamara();
+
+      this._cdr.detectChanges();
     }
   }
 
   capturarFoto(): void {
     const video = this.cameraPreview?.nativeElement;
+
     if (!video?.videoWidth || !video.videoHeight) {
       return;
     }
 
     const canvas = document.createElement('canvas');
+
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
+
     const context = canvas.getContext('2d');
+
     context?.translate(canvas.width, 0);
     context?.scale(-1, 1);
+
     context?.drawImage(video, 0, 0, canvas.width, canvas.height);
-    this.fotoPaciente = canvas.toDataURL('image/jpeg', 0.85);
-    this.detenerCamara();
+
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) {
+          console.error('No se pudo generar la fotografía del paciente');
+          return;
+        }
+
+        this.fotoPaciente = blob;
+
+        this.fotoPacienteUrl = URL.createObjectURL(blob);
+
+        this.detenerCamara();
+        this._cdr.detectChanges();
+      },
+      'image/jpeg',
+      0.85,
+    );
   }
 
-  repetirFoto(): void {
-    this.fotoPaciente = '';
-    this.activarCamara();
+  async repetirFoto(): Promise<void> {
+    if (this.fotoPacienteUrl) {
+      URL.revokeObjectURL(this.fotoPacienteUrl);
+    }
+
+    this.fotoPaciente = null;
+    this.fotoPacienteUrl = null;
+    await this.activarCamara();
   }
 
-  iniciarAtencion(): void {
-    this.dialogRef.close({ fotoPaciente: this.fotoPaciente });
+  async iniciarAtencion(): Promise<void> {
+    // ==========================================
+    // SI NO HAY FOTOGRAFÍA
+    // ==========================================
+
+    if (!this.fotoPaciente) {
+      const resultado = await Swal.fire({
+        title: '¿Iniciar sin fotografía?',
+        text: 'El paciente no tiene una fotografía capturada. Podrá registrarla o actualizarla posteriormente.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, iniciar atención',
+        cancelButtonText: 'Volver',
+        reverseButtons: true,
+      });
+
+      if (!resultado.isConfirmed) {
+        return;
+      }
+    }
+
+    // ==========================================
+    // CERRAR DIÁLOGO
+    // ==========================================
+
+    this.dialogRef.close({
+      ok: true,
+      fotoPaciente: this.fotoPaciente,
+    });
   }
 
   cancelar(): void {
@@ -205,5 +334,4 @@ export class DialogIniciarAtencionEmpresaComponent implements OnInit, OnDestroy 
     this.cameraStream = undefined;
     this.cameraActiva = false;
   }
-
 }

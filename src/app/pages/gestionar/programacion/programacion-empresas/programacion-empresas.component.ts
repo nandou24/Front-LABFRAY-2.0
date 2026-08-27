@@ -187,11 +187,23 @@ export class ProgramacionEmpresasComponent implements OnInit {
       return;
     }
 
-    this.dialog.open(DialogIniciarAtencionEmpresaComponent, {
+    const dialogRef = this.dialog.open(DialogIniciarAtencionEmpresaComponent, {
       width: '95vw',
       maxWidth: '1400px',
       maxHeight: '92vh',
-      data: { programacion: element },
+      data: {
+        programacion: element,
+      },
+    });
+
+    dialogRef.afterClosed().subscribe((resultado) => {
+      if (!resultado?.ok) {
+        return;
+      }
+
+      console.log('Resultado del inicio de atención:', resultado);
+      console.log('Fotografía recibida:', resultado.fotoPaciente);
+      console.log('¿Es Blob?:', resultado.fotoPaciente instanceof Blob);
     });
   }
 

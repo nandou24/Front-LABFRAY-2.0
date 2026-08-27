@@ -62,8 +62,8 @@
                 playsinline
               ></video>
               <img
-                *ngIf="fotoPaciente"
-                [src]="fotoPaciente"
+                *ngIf="fotoPacienteUrl"
+                [src]="fotoPacienteUrl"
                 alt="Fotografía capturada del paciente"
               />
               <div class="acciones-foto">
@@ -96,7 +96,6 @@
                   Repetir foto
                 </button>
               </div>
-                
             </section>
           </mat-card-content>
         </mat-card>
