@@ -664,6 +664,7 @@ export class MantEmpresasComponent implements OnInit, AfterViewInit {
         codServicio:
           servicio.codServicio || servicio.codigoServicio || servicio.codigo,
         nombreServicio: servicio.nombreServicio || servicio.nombre,
+        tipoServicio: servicio.tipoServicio,
       })),
     }));
   }

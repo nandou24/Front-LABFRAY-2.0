@@ -326,7 +326,7 @@ export class DialogProtocoloComponent implements OnInit {
       ...this.dataSourceServiciosSeleccionados.data,
       servicioConId,
     ];
-    //console.log('Servicio agregado:', servicioConId);
+    console.log('Servicio agregado:', servicioConId);
     this.intentoCrearSinServicios = false;
     this.table.renderRows();
   }
