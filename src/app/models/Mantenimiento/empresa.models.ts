@@ -26,6 +26,7 @@ export interface IServicioProtocolo {
   servicioId: string;
   codServicio: string;
   nombreServicio: string;
+  tipoServicio: string;
 }
 
 export interface IProtocoloEmpresa {

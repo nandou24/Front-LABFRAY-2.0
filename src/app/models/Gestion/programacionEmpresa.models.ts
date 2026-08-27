@@ -30,6 +30,7 @@ export interface ServicioProgramado {
   servicioId: string;
   codServicio: string;
   nombreServicio: string;
+  tipoServicio: string;
 }
 
 export interface PendienteProgramacion {

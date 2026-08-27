@@ -585,6 +585,7 @@ export class DialogCrearProgramacionEmpresaComponent implements OnInit {
           servicioId: servicio.servicioId,
           codServicio: servicio.codServicio,
           nombreServicio: servicio.nombreServicio,
+          tipoServicio: servicio.tipoServicio,
         }),
       ),
       fechaProgramada: raw.fechaProgramacion,
