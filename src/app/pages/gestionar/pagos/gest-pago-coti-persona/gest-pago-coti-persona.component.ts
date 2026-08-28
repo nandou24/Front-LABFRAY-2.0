@@ -24,10 +24,9 @@ import {
   IHistorialCotizacion,
   IServicioCotizacion,
 } from '../../../../models/Gestion/cotizacionPersona.models';
-import { IDetallePago, IPago } from '../../../../models/Gestion/pagos.models';
+import { IPago } from '../../../../models/Gestion/pagos.models';
 import { PagosCotizacionPersonalService } from '../../../../services/gestion/pagos/pagos-cotizacion-personal.service';
 import Swal from 'sweetalert2';
-import { DialogRegistroPacienteComponent } from './dialogs/dialog-registro-paciente/dialog-registro-paciente.component';
 import { MatDialog } from '@angular/material/dialog';
 import { DateAdapter, MAT_DATE_LOCALE } from '@angular/material/core';
 import { MatPaginator } from '@angular/material/paginator';
@@ -758,92 +757,6 @@ export class GestPagoCotiPersonaComponent implements OnInit {
   }
 
   registrarPagos(pago: IPago) {
-    // const codCotizacion = this.myFormPagoPersona.get('codCotizacion')?.value;
-
-    // this._cotizacionService.verificarHcRegistrada(codCotizacion).subscribe({
-    //   next: (hcRegistrada: boolean) => {
-    //     if (!hcRegistrada) {
-    //       Swal.fire({
-    //         title: 'Error',
-    //         text: 'El paciente no está registrado en el sistema.',
-    //         icon: 'error',
-    //         showCancelButton: true,
-    //         confirmButtonText: 'Registrar paciente',
-    //         cancelButtonText: 'Cancelar',
-    //       }).then((result) => {
-    //         if (result.isConfirmed) {
-    //           const dialogRef = this.dialog.open(
-    //             DialogRegistroPacienteComponent,
-    //             {
-    //               width: '700px',
-    //               height: '850px',
-    //               minWidth: '500px',
-    //               maxWidth: '1000px',
-
-    //               data: {
-    //                 codCotizacion:
-    //                   this.myFormPagoPersona.get('codCotizacion')?.value,
-    //                 paciente: {
-    //                   nombreCompleto:
-    //                     this.myFormPagoPersona.get('nombreCompleto')?.value,
-    //                   tipoDoc: this.myFormPagoPersona.get('tipoDoc')?.value,
-    //                   nroDoc: this.myFormPagoPersona.get('nroDoc')?.value,
-    //                 },
-    //               },
-    //             },
-    //           );
-
-    //           dialogRef.afterClosed().subscribe((pacienteSeleccionado) => {
-    //             if (pacienteSeleccionado) {
-    //               this.setPacienteRegistrado(pacienteSeleccionado);
-    //               this.ultimasCotizaciones(20); // Actualizar lista de cotizaciones
-    //             }
-    //           });
-    //         }
-    //       });
-    //     } else {
-    //       this._pagoService.registrarPago(pago).subscribe({
-    //         next: (data) => {
-    //           Swal.fire({
-    //             title: 'Confirmado',
-    //             text: data.msg,
-    //             icon: 'success',
-    //             confirmButtonText: 'Ok',
-    //           });
-    //           this.nuevoPago();
-    //           this.cancelarAnulacion();
-    //         },
-    //         error: (err) => {
-    //           console.error('Error al registrar el pago:', err);
-
-    //           const mensaje =
-    //             err?.error?.msg ||
-    //             err.message ||
-    //             'No se pudo registrar el pago. Intenta nuevamente.';
-
-    //           const hc22: boolean = err?.error?.errors?.faltaHC;
-
-    //           // Error genérico
-    //           Swal.fire({
-    //             title: 'Error',
-    //             text: mensaje,
-    //             icon: 'error',
-    //             confirmButtonText: 'Ok',
-    //           });
-    //         },
-    //       });
-    //     }
-    //   },
-    //   error: (err) => {
-    //     console.error('Error al verificar HC:', err);
-    //     Swal.fire(
-    //       'Error',
-    //       'No se pudo verificar la historia clínica.',
-    //       'error',
-    //     );
-    //   },
-    // });
-
     this._pagoService.registrarPago(pago).subscribe({
       next: (data) => {
         Swal.fire({

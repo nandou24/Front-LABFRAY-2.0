@@ -87,11 +87,4 @@ export class PacienteService {
       { headers: this._auth.getAuthHeaders() },
     );
   }
-
-  registrarPacienteDesdeCotizacion(pacienteData: any): Observable<any> {
-    return this._http.post<IPacientePostReturnDTO>(
-      `${this.apiUrl}/newPatientWhitoutHC`,
-      pacienteData,
-    );
-  }
 }
