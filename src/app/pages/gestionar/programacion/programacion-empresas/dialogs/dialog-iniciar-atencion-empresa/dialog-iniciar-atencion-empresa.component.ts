@@ -50,6 +50,7 @@ import {
 } from '../../../../../../models/Mantenimiento/empresa.models';
 import { IProgramacionEmpresa } from '../../../../../../models/Gestion/programacionEmpresa.models';
 import Swal from 'sweetalert2';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-dialog-iniciar-atencion-empresa',
@@ -139,6 +140,7 @@ export class DialogIniciarAtencionEmpresaComponent
 
   public cameraActiva = false;
   private cameraStream?: MediaStream;
+  public procesandoInicio = false;
 
   ngOnInit(): void {
     this.programacion = this.data?.programacion as
@@ -296,13 +298,30 @@ export class DialogIniciarAtencionEmpresaComponent
 
   async iniciarAtencion(): Promise<void> {
     // ==========================================
-    // SI NO HAY FOTOGRAFÍA
+    // 1. VALIDAR PROGRAMACIÓN
+    // ==========================================
+
+    if (!this.programacion?._id) {
+      await Swal.fire({
+        title: 'Error',
+        text: 'No se pudo identificar la programación.',
+        icon: 'error',
+        confirmButtonText: 'Ok',
+      });
+
+      return;
+    }
+
+    // ==========================================
+    // 2. SI NO HAY FOTOGRAFÍA
     // ==========================================
 
     if (!this.fotoPaciente) {
       const resultado = await Swal.fire({
         title: '¿Iniciar sin fotografía?',
-        text: 'El paciente no tiene una fotografía capturada. Podrá registrarla o actualizarla posteriormente.',
+        text:
+          'El paciente no tiene una fotografía capturada. ' +
+          'Podrá registrarla o actualizarla posteriormente.',
         icon: 'warning',
         showCancelButton: true,
         confirmButtonText: 'Sí, iniciar atención',
@@ -316,13 +335,139 @@ export class DialogIniciarAtencionEmpresaComponent
     }
 
     // ==========================================
-    // CERRAR DIÁLOGO
+    // 3. INICIAR ATENCIÓN EN BACKEND
     // ==========================================
 
-    this.dialogRef.close({
-      ok: true,
-      fotoPaciente: this.fotoPaciente,
-    });
+    this.procesandoInicio = true;
+
+    try {
+      const respuesta = await firstValueFrom(
+        this._programacionService.iniciarAtencionProgramacion(
+          this.programacion._id,
+        ),
+      );
+
+      // ==========================================
+      // 4. RESPUESTA CORRECTA
+      // ==========================================
+
+      await Swal.fire({
+        title: 'Correcto',
+        text: respuesta?.msg || 'La atención fue iniciada correctamente.',
+        icon: 'success',
+        confirmButtonText: 'Ok',
+      });
+
+      // ==========================================
+      // 5. CERRAR DIÁLOGO
+      // ==========================================
+
+      this.dialogRef.close({
+        ok: true,
+
+        fotoPaciente: this.fotoPaciente,
+
+        paciente: respuesta?.paciente,
+
+        programacion: respuesta?.programacion,
+
+        respuestaBackend: respuesta,
+      });
+    } catch (error: any) {
+      console.error('Error al iniciar atención:', error);
+
+      const respuesta = error?.error;
+
+      // ==========================================
+      // INCONSISTENCIA DE IDENTIDAD
+      // ==========================================
+
+      if (respuesta?.codigo === 'INCONSISTENCIA_IDENTIDAD') {
+        const programado = respuesta.programacionPaciente;
+
+        const registrado = respuesta.pacienteRegistrado;
+
+        await Swal.fire({
+          title: 'Inconsistencia de identidad',
+
+          icon: 'warning',
+
+          html: `
+        <div style="text-align:left">
+
+          <p>
+            El documento
+            <strong>
+              ${programado?.tipoDoc ?? ''}
+              ${programado?.nroDoc ?? ''}
+            </strong>
+            ya corresponde a un paciente registrado,
+            pero los nombres no coinciden.
+          </p>
+
+          <hr>
+
+          <p>
+            <strong>Datos de la programación:</strong><br>
+            ${programado?.apePatCliente ?? ''}
+            ${programado?.apeMatCliente ?? ''}
+            ${programado?.nombreCliente ?? ''}
+          </p>
+
+          <p>
+            <strong>Paciente registrado:</strong><br>
+            HC: ${registrado?.hc ?? '-'}<br>
+            ${registrado?.apePatCliente ?? ''}
+            ${registrado?.apeMatCliente ?? ''}
+            ${registrado?.nombreCliente ?? ''}
+          </p>
+
+          <hr>
+
+          <p>
+            Verifique el documento y los datos del paciente.
+            Si existe un error, edite la programación antes
+            de iniciar la atención.
+          </p>
+
+        </div>
+      `,
+
+          confirmButtonText: 'Entendido',
+        });
+
+        return;
+      }
+
+      if (respuesta?.codigo === 'DOCUMENTO_REQUERIDO') {
+        await Swal.fire({
+          title: 'Documento requerido',
+
+          text:
+            respuesta?.indicacion ||
+            'Debe registrar el documento del paciente antes de iniciar la atención.',
+
+          icon: 'warning',
+
+          confirmButtonText: 'Entendido',
+        });
+
+        return;
+      }
+
+      // ==========================================
+      // MOSTRAR MENSAJE DEL BACKEND
+      // ==========================================
+
+      await Swal.fire({
+        title: 'No se pudo iniciar la atención',
+        text: error?.error?.msg || 'Ocurrió un error al iniciar la atención.',
+        icon: 'error',
+        confirmButtonText: 'Ok',
+      });
+    } finally {
+      this.procesandoInicio = false;
+    }
   }
 
   cancelar(): void {

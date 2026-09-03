@@ -76,76 +76,84 @@
       </div>
     </div>
 
-    <!-- Tabla de solicitudes -->
-    <div class="table-container">
-      <table
-        mat-table
-        [dataSource]="dataSourceSolicitud"
-        multiTemplateDataRows
-        class="mat-elevation-z8"
-      >
-        <!-- Código Solicitud -->
-        <ng-container matColumnDef="codigoSolicitud">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>
-            Cod. Solicitud
-          </th>
-          <td mat-cell *matCellDef="let row">{{ row.codSolicitud }}</td>
-        </ng-container>
+    <mat-tab-group>
+      <!-- ===================================== -->
+      <!-- PARTICULARES -->
+      <!-- ===================================== -->
+      <mat-tab label="Particulares">
+        <div class="table-container">
+          <table
+            mat-table
+            [dataSource]="dataSourceParticulares"
+            multiTemplateDataRows
+            class="mat-elevation-z8"
+          >
+            <!-- Código Solicitud -->
+            <ng-container matColumnDef="codigoSolicitud">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                Cod. Solicitud
+              </th>
+              <td mat-cell *matCellDef="let row">{{ row.codSolicitud }}</td>
+            </ng-container>
 
-        <!-- Código Solicitud -->
-        <ng-container matColumnDef="cotizacionId">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>
-            Cod. Cotización
-          </th>
-          <td mat-cell *matCellDef="let row">{{ row.codCotizacion }}</td>
-        </ng-container>
+            <!-- Código Solicitud -->
+            <ng-container matColumnDef="cotizacionId">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                Cod. Cotización
+              </th>
+              <td mat-cell *matCellDef="let row">{{ row.codCotizacion }}</td>
+            </ng-container>
 
-        <!-- Código Solicitud -->
-        <ng-container matColumnDef="codigoPago">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Cod. Pago</th>
-          <td mat-cell *matCellDef="let row">{{ row.codPago }}</td>
-        </ng-container>
+            <!-- Código Solicitud -->
+            <ng-container matColumnDef="codigoPago">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                Cod. Pago
+              </th>
+              <td mat-cell *matCellDef="let row">{{ row.codPago }}</td>
+            </ng-container>
 
-        <!-- Fecha Emisión -->
-        <ng-container matColumnDef="fechaEmision">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Fecha</th>
-          <td mat-cell *matCellDef="let row">
-            {{ row.fechaEmision | date: "dd/MM/yyyy HH:mm" }}
-          </td>
-        </ng-container>
+            <!-- Fecha Emisión -->
+            <ng-container matColumnDef="fechaEmision">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Fecha</th>
+              <td mat-cell *matCellDef="let row">
+                {{ row.fechaEmision | date: "dd/MM/yyyy HH:mm" }}
+              </td>
+            </ng-container>
 
-        <!-- Nombre del paciente -->
-        <ng-container matColumnDef="nombreCompleto">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Paciente</th>
-          <td mat-cell *matCellDef="let row">
-            {{ row.tipoDoc }} {{ row.nroDoc }} --
+            <!-- Nombre del paciente -->
+            <ng-container matColumnDef="nombreCompleto">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                Paciente
+              </th>
+              <td mat-cell *matCellDef="let row">
+                {{ row.tipoDoc }} {{ row.nroDoc }} --
 
-            {{ row.apePatCliente }} {{ row.apeMatCliente }}
-            {{ row.nombreCliente }}
-          </td>
-        </ng-container>
+                {{ row.apePatCliente }} {{ row.apeMatCliente }}
+                {{ row.nombreCliente }}
+              </td>
+            </ng-container>
 
-        <!-- Tipo de atención -->
-        <ng-container matColumnDef="tipo">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Tipo</th>
-          <td mat-cell *matCellDef="let row">{{ row.tipo }}</td>
-        </ng-container>
+            <!-- Tipo de atención -->
+            <ng-container matColumnDef="tipo">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Tipo</th>
+              <td mat-cell *matCellDef="let row">{{ row.tipo }}</td>
+            </ng-container>
 
-        <!-- Estado -->
-        <ng-container matColumnDef="estado">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Estado</th>
-          <td mat-cell *matCellDef="let row">
-            <mat-chip color="primary" [disabled]="true">{{
-              row.estado
-            }}</mat-chip>
-          </td>
-        </ng-container>
+            <!-- Estado -->
+            <ng-container matColumnDef="estado">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Estado</th>
+              <td mat-cell *matCellDef="let row">
+                <mat-chip color="primary" [disabled]="true">{{
+                  row.estado
+                }}</mat-chip>
+              </td>
+            </ng-container>
 
-        <!-- Acciones -->
-        <ng-container matColumnDef="acciones">
-          <th mat-header-cell *matHeaderCellDef>Acciones</th>
-          <td mat-cell *matCellDef="let row">
-            <!-- <button
+            <!-- Acciones -->
+            <ng-container matColumnDef="acciones">
+              <th mat-header-cell *matHeaderCellDef>Acciones</th>
+              <td mat-cell *matCellDef="let row">
+                <!-- <button
               mat-icon-button
               color="accent"
               matTooltip="Actualizar estado"
@@ -153,120 +161,399 @@
             >
               <mat-icon>edit</mat-icon>
             </button> -->
-            <button
-              mat-icon-button
-              color="primary"
-              matTooltip="Imprimir"
-              (click)="imprimirSolicitud(row)"
-            >
-              <mat-icon>print</mat-icon>
-            </button>
-            <button
-              mat-icon-button
-              color="accent"
-              matTooltip="Texto SUNAT"
-              (click)="mostrarTextoSunat(row)"
-            >
-              <mat-icon>content_copy</mat-icon>
-            </button>
-          </td>
-        </ng-container>
-
-        <ng-container matColumnDef="expand">
-          <th mat-header-cell *matHeaderCellDef aria-label="row actions">
-            &nbsp;
-          </th>
-          <td mat-cell *matCellDef="let element">
-            <button
-              mat-icon-button
-              aria-label="expand row"
-              (click)="toggleSolicitud(element); $event.stopPropagation()"
-              class="example-toggle-button"
-              [class.example-toggle-button-expanded]="
-                isExpandedSolicitud(element)
-              "
-            >
-              <mat-icon>keyboard_arrow_down</mat-icon>
-            </button>
-          </td>
-        </ng-container>
-
-        <!-- Expanded Content Column - The detail row is made up of this one column that spans across all columns -->
-        <ng-container matColumnDef="expandedDetail">
-          <td
-            mat-cell
-            *matCellDef="let element"
-            [attr.colspan]="columnasTablaSolicitudWithExpand.length"
-          >
-            <div
-              class="example-element-detail-wrapper"
-              [class.example-element-detail-wrapper-expanded]="
-                isExpandedSolicitud(element)
-              "
-            >
-              <div class="example-element-detail">
-                <div
-                  class="example-element-description"
-                  *ngIf="element.servicios && element.servicios.length"
+                <button
+                  mat-icon-button
+                  color="primary"
+                  matTooltip="Imprimir"
+                  (click)="imprimirSolicitud(row)"
                 >
-                  <table class="tabla-servicios-estilizada">
-                    <thead>
-                      <tr>
-                        <th>Código Servicio</th>
-                        <th>Nombre</th>
-                        <th>Médico</th>
-                        <th>Estado</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr *ngFor="let servicio of element.servicios">
-                        <td>{{ servicio.codServicio }}</td>
-                        <td>{{ servicio.nombreServicio }}</td>
-                        <td>
-                          {{ servicio.medicoAtiende.apePatRecHumano }}
-                          {{ servicio.medicoAtiende.apeMatRecHumano }}
-                          {{ servicio.medicoAtiende.nombreRecHumano }}
-                        </td>
-                        <td>
-                          <mat-chip
-                            [color]="
-                              servicio.estado === 'PENDIENTE'
-                                ? 'warn'
-                                : 'primary'
-                            "
-                            selected
-                          >
-                            {{ servicio.estado }}
-                          </mat-chip>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          </td>
-        </ng-container>
+                  <mat-icon>print</mat-icon>
+                </button>
+                <button
+                  mat-icon-button
+                  color="accent"
+                  matTooltip="Texto SUNAT"
+                  (click)="mostrarTextoSunat(row)"
+                >
+                  <mat-icon>content_copy</mat-icon>
+                </button>
+              </td>
+            </ng-container>
 
-        <tr
-          mat-header-row
-          *matHeaderRowDef="columnasTablaSolicitudWithExpand"
-        ></tr>
-        <tr
-          mat-row
-          *matRowDef="let element; columns: columnasTablaSolicitudWithExpand"
-          class="example-element-row"
-        ></tr>
-        <tr
-          mat-row
-          *matRowDef="let row; columns: ['expandedDetail']"
-          class="example-detail-row"
-        ></tr>
-      </table>
-      <!-- Paginador -->
-      <mat-paginator [pageSizeOptions]="[25, 50, 100]" [pageSize]="25">
-        showFirstLastButtons ></mat-paginator
-      >
-    </div>
+            <ng-container matColumnDef="expand">
+              <th mat-header-cell *matHeaderCellDef aria-label="row actions">
+                &nbsp;
+              </th>
+              <td mat-cell *matCellDef="let element">
+                <button
+                  mat-icon-button
+                  aria-label="expand row"
+                  (click)="
+                    toggleSolicitudParticular(element); $event.stopPropagation()
+                  "
+                  class="example-toggle-button"
+                  [class.example-toggle-button-expanded]="
+                    isExpandedParticular(element)
+                  "
+                >
+                  <mat-icon>keyboard_arrow_down</mat-icon>
+                </button>
+              </td>
+            </ng-container>
+
+            <!-- Expanded Content Column - The detail row is made up of this one column that spans across all columns -->
+            <ng-container matColumnDef="expandedDetail">
+              <td
+                mat-cell
+                *matCellDef="let element"
+                [attr.colspan]="columnasTablaParticularesWithExpand.length"
+              >
+                <div
+                  class="example-element-detail-wrapper"
+                  [class.example-element-detail-wrapper-expanded]="
+                    isExpandedParticular(element)
+                  "
+                >
+                  <div class="example-element-detail">
+                    <div
+                      class="example-element-description"
+                      *ngIf="element.servicios && element.servicios.length"
+                    >
+                      <table class="tabla-servicios-estilizada">
+                        <thead>
+                          <tr>
+                            <th>Código Servicio</th>
+                            <th>Nombre</th>
+                            <th>Médico</th>
+                            <th>Estado</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr *ngFor="let servicio of element.servicios">
+                            <td>{{ servicio.codServicio }}</td>
+                            <td>{{ servicio.nombreServicio }}</td>
+                            <td>
+                              {{ servicio.medicoAtiende.apePatRecHumano }}
+                              {{ servicio.medicoAtiende.apeMatRecHumano }}
+                              {{ servicio.medicoAtiende.nombreRecHumano }}
+                            </td>
+                            <td>
+                              <mat-chip
+                                [color]="
+                                  servicio.estado === 'PENDIENTE'
+                                    ? 'warn'
+                                    : 'primary'
+                                "
+                                selected
+                              >
+                                {{ servicio.estado }}
+                              </mat-chip>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </ng-container>
+
+            <tr
+              mat-header-row
+              *matHeaderRowDef="columnasTablaParticularesWithExpand"
+            ></tr>
+            <tr
+              mat-row
+              *matRowDef="
+                let element;
+                columns: columnasTablaParticularesWithExpand
+              "
+              class="example-element-row"
+            ></tr>
+            <tr
+              mat-row
+              *matRowDef="let row; columns: ['expandedDetail']"
+              class="example-detail-row"
+            ></tr>
+          </table>
+          <!-- Paginador -->
+          <mat-paginator
+            #paginatorParticulares
+            [pageSizeOptions]="[25, 50, 100]"
+            [pageSize]="25"
+            showFirstLastButtons
+          >
+          </mat-paginator>
+        </div>
+      </mat-tab>
+
+      <!-- ===================================== -->
+      <!-- EMPRESAS -->
+      <!-- ===================================== -->
+      <mat-tab label="Empresas">
+        <div class="table-container">
+          <!-- AQUÍ CONSTRUIREMOS LA TABLA EMPRESA -->
+
+          <table
+            mat-table
+            [dataSource]="dataSourceEmpresas"
+            multiTemplateDataRows
+            class="mat-elevation-z8"
+          >
+            <!-- Código solicitud -->
+            <ng-container matColumnDef="codigoSolicitud">
+              <th mat-header-cell *matHeaderCellDef>Cod. Solicitud</th>
+
+              <td mat-cell *matCellDef="let row">
+                {{ row.codSolicitud }}
+              </td>
+            </ng-container>
+
+            <!-- Código programación -->
+            <ng-container matColumnDef="codigoProgramacion">
+              <th mat-header-cell *matHeaderCellDef>Cod. Programación</th>
+
+              <td mat-cell *matCellDef="let row">
+                {{ row.programacionEmpresaId?.codProgramacion }}
+              </td>
+            </ng-container>
+
+            <!-- Fecha -->
+            <ng-container matColumnDef="fechaEmision">
+              <th mat-header-cell *matHeaderCellDef>Fecha</th>
+
+              <td mat-cell *matCellDef="let row">
+                {{ row.fechaEmision | date: "dd/MM/yyyy HH:mm" }}
+              </td>
+            </ng-container>
+
+            <!-- Paciente -->
+            <ng-container matColumnDef="nombreCompleto">
+              <th mat-header-cell *matHeaderCellDef>Paciente</th>
+
+              <td mat-cell *matCellDef="let row">
+                {{ row.programacionEmpresaId?.tipoDoc }}
+                {{ row.programacionEmpresaId?.nroDoc }} --
+
+                {{ row.programacionEmpresaId?.apePatCliente }}
+                {{ row.programacionEmpresaId?.apeMatCliente }}
+                {{ row.programacionEmpresaId?.nombreCliente }}
+              </td>
+            </ng-container>
+
+            <!-- HC -->
+            <ng-container matColumnDef="hc">
+              <th mat-header-cell *matHeaderCellDef>HC</th>
+
+              <td mat-cell *matCellDef="let row">
+                {{ row.programacionEmpresaId?.hc || "-" }}
+              </td>
+            </ng-container>
+
+            <!-- Empresa -->
+            <ng-container matColumnDef="empresa">
+              <th mat-header-cell *matHeaderCellDef>Empresa</th>
+
+              <td mat-cell *matCellDef="let row">
+                {{ row.programacionEmpresaId?.razonSocialEmpresa }}
+              </td>
+            </ng-container>
+
+            <!-- Sede -->
+            <ng-container matColumnDef="sede">
+              <th mat-header-cell *matHeaderCellDef>Sede</th>
+
+              <td mat-cell *matCellDef="let row">
+                {{ row.programacionEmpresaId?.sede || "-" }}
+              </td>
+            </ng-container>
+
+            <!-- Tipo evaluación -->
+            <ng-container matColumnDef="tipoEvaluacion">
+              <th mat-header-cell *matHeaderCellDef>Tipo Evaluación</th>
+
+              <td mat-cell *matCellDef="let row">
+                {{ row.programacionEmpresaId?.tipoEvaluacion || "-" }}
+              </td>
+            </ng-container>
+
+            <!-- Tipo atención -->
+            <ng-container matColumnDef="tipoAtencion">
+              <th mat-header-cell *matHeaderCellDef>Tipo Atención</th>
+
+              <td mat-cell *matCellDef="let row">
+                <span
+                  [class.tipo-atencion-vip]="
+                    row.programacionEmpresaId?.tipoAtencion === 'VIP'
+                  "
+                >
+                  <mat-icon
+                    *ngIf="row.programacionEmpresaId?.tipoAtencion === 'VIP'"
+                    class="vip-star-icon"
+                  >
+                    star
+                  </mat-icon>
+
+                  {{ row.programacionEmpresaId?.tipoAtencion || "-" }}
+                </span>
+              </td>
+            </ng-container>
+
+            <!-- Prioridad -->
+            <ng-container matColumnDef="prioridad">
+              <th mat-header-cell *matHeaderCellDef>Prioridad</th>
+
+              <td mat-cell *matCellDef="let row">
+                <mat-chip>
+                  {{ row.programacionEmpresaId?.prioridad || "Normal" }}
+                </mat-chip>
+              </td>
+            </ng-container>
+
+            <!-- Tipo solicitud -->
+            <ng-container matColumnDef="tipo">
+              <th mat-header-cell *matHeaderCellDef>Tipo</th>
+
+              <td mat-cell *matCellDef="let row">
+                {{ row.tipo }}
+              </td>
+            </ng-container>
+
+            <!-- Estado -->
+            <ng-container matColumnDef="estado">
+              <th mat-header-cell *matHeaderCellDef>Estado</th>
+
+              <td mat-cell *matCellDef="let row">
+                <mat-chip color="primary" [disabled]="true">
+                  {{ row.estado }}
+                </mat-chip>
+              </td>
+            </ng-container>
+
+            <!-- Acciones -->
+            <ng-container matColumnDef="acciones">
+              <th mat-header-cell *matHeaderCellDef>Acciones</th>
+
+              <td mat-cell *matCellDef="let row">
+                <button
+                  mat-icon-button
+                  color="primary"
+                  (click)="imprimirSolicitud(row)"
+                >
+                  <mat-icon>print</mat-icon>
+                </button>
+              </td>
+            </ng-container>
+
+            <!-- Expand -->
+            <ng-container matColumnDef="expand">
+              <th mat-header-cell *matHeaderCellDef>&nbsp;</th>
+
+              <td mat-cell *matCellDef="let element">
+                <button
+                  mat-icon-button
+                  (click)="
+                    toggleSolicitudEmpresa(element); $event.stopPropagation()
+                  "
+                  class="example-toggle-button"
+                  [class.example-toggle-button-expanded]="
+                    isExpandedEmpresa(element)
+                  "
+                >
+                  <mat-icon> keyboard_arrow_down </mat-icon>
+                </button>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="expandedDetail">
+              <td
+                mat-cell
+                *matCellDef="let element"
+                [attr.colspan]="columnasTablaEmpresasWithExpand.length"
+              >
+                <div
+                  class="example-element-detail-wrapper"
+                  [class.example-element-detail-wrapper-expanded]="
+                    isExpandedEmpresa(element)
+                  "
+                >
+                  <div class="example-element-detail">
+                    <div class="example-element-description protocolo-resumen">
+                      <strong> Protocolo: </strong>
+                      {{ element.programacionEmpresaId?.codProtocolo }}
+                      -
+                      {{ element.programacionEmpresaId?.nombreProtocolo }}
+                    </div>
+
+                    <div
+                      class="example-element-description"
+                      *ngIf="element.servicios && element.servicios.length"
+                    >
+                      <table class="tabla-servicios-estilizada">
+                        <thead>
+                          <tr>
+                            <th>Código Servicio</th>
+                            <th>Nombre</th>
+                            <th>Médico</th>
+                            <th>Estado</th>
+                          </tr>
+                        </thead>
+
+                        <tbody>
+                          <tr *ngFor="let servicio of element.servicios">
+                            <td>
+                              {{ servicio.codServicio }}
+                            </td>
+
+                            <td>
+                              {{ servicio.nombreServicio }}
+                            </td>
+
+                            <td>
+                              {{ servicio.medicoAtiende?.apePatRecHumano }}
+                              {{ servicio.medicoAtiende?.apeMatRecHumano }}
+                              {{ servicio.medicoAtiende?.nombreRecHumano }}
+                            </td>
+
+                            <td>
+                              <mat-chip>
+                                {{ servicio.estado }}
+                              </mat-chip>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </ng-container>
+            <tr
+              mat-header-row
+              *matHeaderRowDef="columnasTablaEmpresasWithExpand"
+            ></tr>
+
+            <tr
+              mat-row
+              *matRowDef="let element; columns: columnasTablaEmpresasWithExpand"
+              class="example-element-row"
+            ></tr>
+
+            <tr
+              mat-row
+              *matRowDef="let row; columns: ['expandedDetail']"
+              class="example-detail-row"
+            ></tr>
+          </table>
+          <mat-paginator
+            #paginatorEmpresas
+            [pageSizeOptions]="[25, 50, 100]"
+            [pageSize]="25"
+            showFirstLastButtons
+          >
+          </mat-paginator>
+        </div>
+      </mat-tab>
+    </mat-tab-group>
   </div>
 </div>

@@ -154,27 +154,27 @@ tr.example-element-row:not(.example-expanded-row):active {
 }
 
 .chip-en-atencion {
-  background-color: #fff3e0;
-  color: #e65100;
-  border-color: #ffe0b2;
+  background-color: #fff3e0 !important;
+  color: #e65100 !important;
+  border-color: #ffe0b2 !important;
 }
 
 .chip-pendiente {
-  background-color: #fff8e1;
-  color: #8d6e00;
-  border-color: #ffecb3;
+  background-color: #fff8e1 !important;
+  color: #8d6e00 !important;
+  border-color: #ffecb3 !important;
 }
 
 .chip-atendido {
-  background-color: #e8f5e9;
-  color: #2e7d32;
-  border-color: #c8e6c9;
+  background-color: #e8f5e9 !important;
+  color: #2e7d32 !important;
+  border-color: #c8e6c9 !important;
 }
 
 .chip-no-asistio {
-  background-color: #f3e5f5;
-  color: #6a1b9a;
-  border-color: #e1bee7;
+  background-color: #f3e5f5 !important;
+  color: #6a1b9a !important;
+  border-color: #e1bee7 !important;
 }
 
 .chip-cancelado {
@@ -202,7 +202,7 @@ tr.example-element-row:not(.example-expanded-row):active {
 }
 
 .btn-accion-cancelar {
-  color: #c62828 !important;
+  color: #c53636 !important;
 }
 
 .tipo-atencion-celda {

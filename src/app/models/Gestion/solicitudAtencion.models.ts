@@ -1,10 +1,66 @@
+export type OrigenAtencion = 'PARTICULAR' | 'EMPRESA';
+
+export interface IProgramacionEmpresaSolicitud {
+  _id: string;
+
+  codProgramacion: string;
+
+  empresaId: string;
+  rucEmpresa: string;
+  razonSocialEmpresa: string;
+
+  pacienteId?: string | null;
+  hc?: string | null;
+
+  tipoDoc?: string;
+  nroDoc?: string;
+
+  nombreCliente?: string;
+  apePatCliente?: string;
+  apeMatCliente?: string;
+
+  protocoloId: string;
+  codProtocolo: string;
+  nombreProtocolo: string;
+
+  sede?: string;
+  tipoEvaluacion?: string;
+  tipoAtencion?: string;
+  prioridad?: string;
+
+  estadoProgramacion?: string;
+}
+
 export interface ISolicitudAtencion {
   _id?: string;
-  codSolicitud: string; // Código interno, ej: SOL-LAB-00001
-  cotizacionId: string;
-  codCotizacion: string;
-  pagoId: string; // Código de pago asociado
-  codPago: string;
+  codSolicitud: string;
+  origenAtencion: OrigenAtencion;
+
+  // ==========================================
+  // PARTICULAR
+  // ==========================================
+
+  cotizacionId?: string | null;
+  codCotizacion?: string | null;
+  pagoId?: any | null;
+  codPago?: string | null;
+
+  // ==========================================
+  // EMPRESA
+  // ==========================================
+
+  programacionEmpresaId?: IProgramacionEmpresaSolicitud | string | null;
+  codProgramacion?: string | null;
+  empresaId?: string | null;
+  razonSocialEmpresa?: string | null;
+  protocoloId?: string | null;
+  codProtocolo?: string | null;
+  nombreProtocolo?: string | null;
+
+  // ==========================================
+  // SOLICITUD
+  // ==========================================
+
   tipo: string;
   servicios: IServicioSolicitud[];
   hc: string;
@@ -14,15 +70,15 @@ export interface ISolicitudAtencion {
   nombreCliente: string;
   apePatCliente: string;
   apeMatCliente: string;
-  solicitanteId?: string;
+  solicitanteId?: any | null;
   fechaEmision: Date | string;
   estado: string;
-  usuarioEmisor: string;
+  usuarioEmisor?: string;
 }
 
 export interface IServicioSolicitud {
   servicioId: string;
-  codigoServicio: string;
+  codServicio: string;
   nombreServicio: string;
   estado: string;
   medicoAtiende?: {

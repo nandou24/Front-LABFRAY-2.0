@@ -573,7 +573,7 @@ export class DialogCrearProgramacionEmpresaComponent implements OnInit {
       nombreCliente: raw.nombreCliente,
       apePatCliente: raw.apePatCliente,
       apeMatCliente: raw.apeMatCliente ?? '',
-      pacienteId: raw._id ?? null,
+      pacienteId: raw.pacienteId ?? null,
       sexoCliente: raw.sexoCliente ?? null,
       fechaNacimiento: raw.fechaNacimiento ?? '',
       hc: raw.hc ?? null,

@@ -1,4 +1,10 @@
-import { Component, inject, OnInit, ViewChild } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  inject,
+  OnInit,
+  ViewChild,
+} from '@angular/core';
 import {
   FormArray,
   FormBuilder,
@@ -29,6 +35,7 @@ import { DialogPdfSolicitudAtencionComponent } from './dialogs/dialog-pdf-solici
 import { HojaTrabajoLabPdfService } from '../../../services/utilitarios/pdf/hojaTrabajo-Lab/hoja-trabajo-lab-pdf.service';
 import { ServiciosService } from '../../../services/mantenimiento/servicios/servicios.service';
 import { DialogServiciosSunatComponent } from './dialogs/dialog-servicios-sunat/dialog-servicios-sunat.component';
+import { MatTabsModule } from '@angular/material/tabs';
 
 @Component({
   selector: 'app-solicitud-atencion',
@@ -45,12 +52,13 @@ import { DialogServiciosSunatComponent } from './dialogs/dialog-servicios-sunat/
     MatChipsModule,
     MatDatepickerModule,
     MatNativeDateModule,
+    MatTabsModule,
   ],
   providers: [{ provide: MAT_DATE_LOCALE, useValue: 'es-PE' }],
   templateUrl: './solicitud-atencion.component.html',
   styleUrl: './solicitud-atencion.component.scss',
 })
-export class SolicitudAtencionComponent implements OnInit {
+export class SolicitudAtencionComponent implements OnInit, AfterViewInit {
   private _fb = inject(FormBuilder);
   private _solicitudService = inject(SolicitudAtencionService);
   private _servicioService = inject(ServiciosService);
@@ -63,9 +71,15 @@ export class SolicitudAtencionComponent implements OnInit {
 
   ngOnInit(): void {
     this.buscarSolicitudes();
-    this.dataSourceSolicitud.paginator = this.paginator;
-    this.dataSourceSolicitud.sort = this.sort;
     this._adapter.setLocale('es-PE'); // Establecer el locale para el adaptador de fecha
+  }
+
+  ngAfterViewInit(): void {
+    this.dataSourceParticulares.paginator = this.paginatorParticulares;
+    this.dataSourceParticulares.sort = this.sort;
+
+    this.dataSourceEmpresas.paginator = this.paginatorEmpresas;
+    this.dataSourceEmpresas.sort = this.sort;
   }
 
   limpiarTextoSunat(texto: string): string {
@@ -169,7 +183,12 @@ export class SolicitudAtencionComponent implements OnInit {
     filtroBusqueda: new FormControl(),
   });
 
-  @ViewChild(MatPaginator) paginator!: MatPaginator;
+  @ViewChild('paginatorParticulares')
+  paginatorParticulares!: MatPaginator;
+
+  @ViewChild('paginatorEmpresas')
+  paginatorEmpresas!: MatPaginator;
+
   @ViewChild(MatSort) sort!: MatSort;
 
   //setear los anchos
@@ -177,7 +196,11 @@ export class SolicitudAtencionComponent implements OnInit {
     return `0 0 ${valor}${unidad}`;
   }
 
-  columnasTablaSolicitud: string[] = [
+  // ==========================================
+  // SOLICITUDES PARTICULARES
+  // ==========================================
+
+  columnasTablaParticulares: string[] = [
     'cotizacionId',
     'codigoPago',
     'codigoSolicitud',
@@ -187,23 +210,68 @@ export class SolicitudAtencionComponent implements OnInit {
     'estado',
     'acciones',
   ];
-  columnasTablaSolicitudWithExpand = [...this.columnasTablaSolicitud, 'expand'];
-  dataSourceSolicitud = new MatTableDataSource<ISolicitudAtencion>();
-  expandedSolicitud: ISolicitudAtencion | null = null;
 
-  /** Checks whether an element is expanded. */
-  isExpandedSolicitud(element: ISolicitudAtencion) {
-    return this.expandedSolicitud === element;
+  columnasTablaParticularesWithExpand = [
+    ...this.columnasTablaParticulares,
+    'expand',
+  ];
+
+  dataSourceParticulares = new MatTableDataSource<ISolicitudAtencion>();
+
+  expandedSolicitudParticular: ISolicitudAtencion | null = null;
+
+  // ==========================================
+  // SOLICITUDES EMPRESAS
+  // ==========================================
+
+  columnasTablaEmpresas: string[] = [
+    'codigoSolicitud',
+    'codigoProgramacion',
+    'fechaEmision',
+    'nombreCompleto',
+    'hc',
+    'empresa',
+    'sede',
+    'tipoEvaluacion',
+    'tipoAtencion',
+    'prioridad',
+    'tipo',
+    'estado',
+    'acciones',
+  ];
+
+  columnasTablaEmpresasWithExpand = [...this.columnasTablaEmpresas, 'expand'];
+  dataSourceEmpresas = new MatTableDataSource<ISolicitudAtencion>();
+  expandedSolicitudEmpresa: ISolicitudAtencion | null = null;
+
+  isExpandedParticular(element: ISolicitudAtencion): boolean {
+    return this.expandedSolicitudParticular === element;
   }
 
-  /** Toggles the expanded state of an element. */
-  toggleSolicitud(element: ISolicitudAtencion) {
-    this.expandedSolicitud = this.isExpandedSolicitud(element) ? null : element;
+  toggleSolicitudParticular(element: ISolicitudAtencion): void {
+    this.expandedSolicitudParticular = this.isExpandedParticular(element)
+      ? null
+      : element;
   }
 
-  filtrar(event: Event) {
-    const termino = (event.target as HTMLInputElement).value;
-    this.dataSourceSolicitud.filter = termino.trim().toLowerCase();
+  isExpandedEmpresa(element: ISolicitudAtencion): boolean {
+    return this.expandedSolicitudEmpresa === element;
+  }
+
+  toggleSolicitudEmpresa(element: ISolicitudAtencion): void {
+    this.expandedSolicitudEmpresa = this.isExpandedEmpresa(element)
+      ? null
+      : element;
+  }
+
+  filtrar(event: Event): void {
+    const termino = (event.target as HTMLInputElement).value
+      .trim()
+      .toLowerCase();
+
+    this.dataSourceParticulares.filter = termino;
+
+    this.dataSourceEmpresas.filter = termino;
   }
 
   async imprimirSolicitud(solicitud: any) {
@@ -289,8 +357,29 @@ export class SolicitudAtencionComponent implements OnInit {
       .getAllByDateRange(inicio.toISOString(), fin.toISOString(), termino)
       .subscribe({
         next: (solicitudes) => {
-          this.dataSourceSolicitud.data = solicitudes;
-          console.log('Solicitudes encontradas:', solicitudes);
+          // ========================================
+          // PARTICULARES
+          // ========================================
+
+          this.dataSourceParticulares.data = solicitudes.filter(
+            (solicitud) => solicitud.origenAtencion === 'PARTICULAR',
+          );
+
+          // ========================================
+          // EMPRESAS
+          // ========================================
+
+          this.dataSourceEmpresas.data = solicitudes.filter(
+            (solicitud) => solicitud.origenAtencion === 'EMPRESA',
+          );
+
+          console.log(
+            'Solicitudes particulares:',
+            this.dataSourceParticulares.data,
+          );
+
+          console.log('Solicitudes empresas:', this.dataSourceEmpresas.data);
+
           this.snackBar.open(
             `Se encontraron ${solicitudes.length} solicitudes`,
             'Cerrar',

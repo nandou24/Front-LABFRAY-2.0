@@ -187,10 +187,15 @@ export class ProgramacionEmpresasComponent implements OnInit {
       return;
     }
 
+    // ==========================================
+    // ABRIR DIÁLOGO DE INICIO DE ATENCIÓN
+    // ==========================================
+
     const dialogRef = this.dialog.open(DialogIniciarAtencionEmpresaComponent, {
       width: '95vw',
       maxWidth: '1400px',
       maxHeight: '92vh',
+
       data: {
         programacion: element,
       },
@@ -201,9 +206,19 @@ export class ProgramacionEmpresasComponent implements OnInit {
         return;
       }
 
-      console.log('Resultado del inicio de atención:', resultado);
-      console.log('Fotografía recibida:', resultado.fotoPaciente);
-      console.log('¿Es Blob?:', resultado.fotoPaciente instanceof Blob);
+      const programacionActualizada =
+        resultado.programacion as IProgramacionEmpresa;
+
+      if (!programacionActualizada?._id) {
+        return;
+      }
+
+      this.dataSourceProgramacion.data = this.dataSourceProgramacion.data.map(
+        (item) =>
+          item._id === programacionActualizada._id
+            ? programacionActualizada
+            : item,
+      );
     });
   }
 
@@ -217,37 +232,22 @@ export class ProgramacionEmpresasComponent implements OnInit {
       return;
     }
 
-    if (element.estadoProgramacion === 'CANCELADO') {
-      this.snackBar.open('La programación ya está cancelada.', 'Cerrar', {
-        duration: 3000,
-      });
-      return;
-    }
-
-    if (element.estadoProgramacion === 'EN ATENCION') {
+    if (element.estadoProgramacion !== 'PROGRAMADO') {
       this.snackBar.open(
-        'No se puede anular una atención en curso.',
+        'Solo se puede cancelar una programación en estado PROGRAMADO.',
         'Cerrar',
         { duration: 3500 },
       );
-      return;
-    }
 
-    if (element.estadoProgramacion === 'ATENDIDO') {
-      this.snackBar.open(
-        'No se puede anular una programación ya atendida.',
-        'Cerrar',
-        { duration: 3500 },
-      );
       return;
     }
 
     Swal.fire({
-      title: '¿Anular programación?',
+      title: '¿Cancelar programación?',
       text: 'Esta acción cambiará el estado a CANCELADO.',
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonText: 'Sí, anular',
+      confirmButtonText: 'Sí, cancelar',
       cancelButtonText: 'No',
     }).then((result) => {
       if (!result.isConfirmed) {
@@ -277,16 +277,112 @@ export class ProgramacionEmpresasComponent implements OnInit {
             return;
           }
 
+          const programacionActualizada =
+            resp.programacion as IProgramacionEmpresa;
+
           this.dataSourceProgramacion.data =
             this.dataSourceProgramacion.data.map((item) =>
-              item._id === element._id
-                ? { ...item, estadoProgramacion: 'CANCELADO' }
+              item._id === programacionActualizada._id
+                ? programacionActualizada
                 : item,
             );
 
-          this.snackBar.open('Programación anulada correctamente.', 'Cerrar', {
-            duration: 3000,
-          });
+          this.snackBar.open(
+            'Programación cancelada correctamente.',
+            'Cerrar',
+            {
+              duration: 3000,
+            },
+          );
+        });
+    });
+  }
+
+  marcarNoAsistio(element: IProgramacionEmpresa) {
+    if (!element._id) {
+      this.snackBar.open('No se pudo identificar la programación.', 'Cerrar', {
+        duration: 3000,
+      });
+
+      return;
+    }
+
+    // ==========================================
+    // VALIDAR ESTADO
+    // ==========================================
+
+    if (element.estadoProgramacion !== 'PROGRAMADO') {
+      this.snackBar.open(
+        'Solo se puede marcar como no asistió una programación en estado PROGRAMADO.',
+        'Cerrar',
+        { duration: 3500 },
+      );
+
+      return;
+    }
+
+    // ==========================================
+    // CONFIRMACIÓN
+    // ==========================================
+
+    Swal.fire({
+      title: '¿Marcar como no asistió?',
+      text: 'Se registrará que el paciente no asistió a esta programación.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, marcar',
+      cancelButtonText: 'No',
+    }).then((result) => {
+      if (!result.isConfirmed) {
+        return;
+      }
+
+      // ==========================================
+      // ACTUALIZAR ESTADO
+      // ==========================================
+
+      this._programacionService
+        .actualizarEstadoProgramacion(element._id!, 'NO ASISTIO')
+        .pipe(
+          catchError((error) => {
+            const mensaje =
+              error?.error?.msg ||
+              'No se pudo marcar la programación como no asistió.';
+
+            Swal.fire({
+              title: 'Error',
+              text: mensaje,
+              icon: 'error',
+              confirmButtonText: 'Ok',
+            });
+
+            return of(null);
+          }),
+        )
+        .subscribe((resp) => {
+          if (!resp?.ok) {
+            return;
+          }
+
+          const programacionActualizada =
+            resp.programacion as IProgramacionEmpresa;
+
+          // ======================================
+          // ACTUALIZAR DATASOURCE
+          // ======================================
+
+          this.dataSourceProgramacion.data =
+            this.dataSourceProgramacion.data.map((item) =>
+              item._id === programacionActualizada._id
+                ? programacionActualizada
+                : item,
+            );
+
+          this.snackBar.open(
+            'Programación marcada como no asistió.',
+            'Cerrar',
+            { duration: 3000 },
+          );
         });
     });
   }

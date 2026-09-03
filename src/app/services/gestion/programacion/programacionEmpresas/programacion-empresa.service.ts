@@ -115,4 +115,14 @@ export class ProgramacionEmpresaService {
       },
     );
   }
+
+  public iniciarAtencionProgramacion(id: string): Observable<any> {
+    return this._http.post<any>(
+      `${this.apiUrl}/${id}/iniciar-atencion`,
+      {},
+      {
+        headers: this._auth.getAuthHeaders(),
+      },
+    );
+  }
 }

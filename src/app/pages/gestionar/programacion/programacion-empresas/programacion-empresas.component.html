@@ -193,21 +193,30 @@
           <td mat-cell *matCellDef="let row">
             <button
               mat-icon-button
-              color="accent"
+              class="btn-accion-editar"
               (click)="editarProgramacion(row)"
             >
               <mat-icon>edit</mat-icon>
             </button>
             <button
               mat-icon-button
-              color="primary"
+              class="btn-accion-iniciar"
               (click)="iniciarAtencion(row)"
             >
               <mat-icon>play_arrow</mat-icon>
             </button>
             <button
+              *ngIf="row.estadoProgramacion === 'PROGRAMADO'"
               mat-icon-button
-              color="accent"
+              class="btn-accion-no-asistio"
+              (click)="marcarNoAsistio(row)"
+            >
+              <mat-icon>person_off</mat-icon>
+            </button>
+            <button
+              *ngIf="row.estadoProgramacion === 'PROGRAMADO'"
+              mat-icon-button
+              class="btn-accion-cancelar"
               (click)="anularProgramacion(row)"
             >
               <mat-icon>cancel</mat-icon>
