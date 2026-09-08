@@ -521,9 +521,7 @@
 
 import { CommonModule } from '@angular/common';
 import { Component, inject, OnInit, ViewChild } from '@angular/core';
-
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
-
 import {
   FormArray,
   FormBuilder,
@@ -532,8 +530,10 @@ import {
   FormsModule,
   ReactiveFormsModule,
   Validators,
+  AbstractControl,
+  ValidationErrors,
+  ValidatorFn,
 } from '@angular/forms';
-
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatOptionModule } from '@angular/material/core';
@@ -542,25 +542,19 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
-
 import {
   MatTable,
   MatTableDataSource,
   MatTableModule,
 } from '@angular/material/table';
-
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
-
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatTooltipModule } from '@angular/material/tooltip';
-
 import Swal from 'sweetalert2';
-
 import {
   IItemLab,
   TipoResultadoItem,
 } from '../../../models/Mantenimiento/items.models';
-
 import { ItemLabService } from '../../../services/mantenimiento/itemLab/item-lab.service';
 
 @Component({
@@ -913,20 +907,24 @@ export class MantItemLabComponent implements OnInit {
   //AGREGAR REFERENCIA
 
   agregarReferencia(): void {
-    const referencia = this._fb.group({
-      descripcion: ['', [Validators.required, Validators.maxLength(100)]],
-      sexo: ['TODOS', [Validators.required]],
-      tipoReferencia: ['RANGO', [Validators.required]],
-      valorMin: [null],
-      valorMax: [null],
-      valorLimite: [null],
-      aplicarEdad: [false],
-      edadMin: [null],
-      edadMax: [null],
-      unidadEdad: ['ANIOS'],
-      activo: [true],
-    });
-
+    const referencia = this._fb.group(
+      {
+        descripcion: ['', [Validators.required, Validators.maxLength(100)]],
+        sexo: ['TODOS', [Validators.required]],
+        tipoReferencia: ['RANGO', [Validators.required]],
+        valorMin: [null],
+        valorMax: [null],
+        valorLimite: [null],
+        aplicarEdad: [false],
+        edadMin: [null],
+        edadMax: [null],
+        unidadEdad: ['ANIOS'],
+        activo: [true],
+      },
+      {
+        validators: [this.validarReferenciaNumerica()],
+      },
+    );
     this.configurarReferencia(referencia);
     this.referenciasResultado.push(referencia);
   }
@@ -997,6 +995,50 @@ export class MantItemLabComponent implements OnInit {
     valorLimite?.updateValueAndValidity();
   }
 
+  private validarReferenciaNumerica(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const tipoReferencia = control.get('tipoReferencia')?.value;
+      const valorMin = control.get('valorMin')?.value;
+      const valorMax = control.get('valorMax')?.value;
+      const aplicarEdad = control.get('aplicarEdad')?.value;
+      const edadMin = control.get('edadMin')?.value;
+      const edadMax = control.get('edadMax')?.value;
+      const errores: ValidationErrors = {};
+
+      // ========================================================
+      // VALIDAR RANGO NUMÉRICO
+      // ========================================================
+
+      if (
+        tipoReferencia === 'RANGO' &&
+        valorMin !== null &&
+        valorMin !== '' &&
+        valorMax !== null &&
+        valorMax !== '' &&
+        Number(valorMin) >= Number(valorMax)
+      ) {
+        errores['rangoInvalido'] = true;
+      }
+
+      // ========================================================
+      // VALIDAR RANGO DE EDAD
+      // ========================================================
+
+      if (
+        aplicarEdad === true &&
+        edadMin !== null &&
+        edadMin !== '' &&
+        edadMax !== null &&
+        edadMax !== '' &&
+        Number(edadMin) >= Number(edadMax)
+      ) {
+        errores['rangoEdadInvalido'] = true;
+      }
+
+      return Object.keys(errores).length > 0 ? errores : null;
+    };
+  }
+
   // ==========================================================
   // TABLA
   // ==========================================================
@@ -1022,7 +1064,7 @@ export class MantItemLabComponent implements OnInit {
   public columnasTablaPaciente: string[] = [
     'Codigo',
     'NombreItem',
-    'PerteneceAPrueba',
+    // 'PerteneceAPrueba',
     'grupoItemLab',
     'ordenImpresion',
     'accion',
@@ -1143,19 +1185,24 @@ export class MantItemLabComponent implements OnInit {
       (referencia.edadMin !== null && referencia.edadMin !== undefined) ||
       (referencia.edadMax !== null && referencia.edadMax !== undefined);
 
-    const grupo = this._fb.group({
-      descripcion: [referencia.descripcion ?? '', [Validators.required]],
-      sexo: [referencia.sexo ?? 'TODOS'],
-      tipoReferencia: [referencia.tipoReferencia ?? 'RANGO'],
-      valorMin: [referencia.valorMin ?? null],
-      valorMax: [referencia.valorMax ?? null],
-      valorLimite: [referencia.valorLimite ?? null],
-      aplicarEdad: [tieneEdad],
-      edadMin: [referencia.edadMin ?? null],
-      edadMax: [referencia.edadMax ?? null],
-      unidadEdad: [referencia.unidadEdad ?? 'ANIOS'],
-      activo: [referencia.activo ?? true],
-    });
+    const grupo = this._fb.group(
+      {
+        descripcion: [referencia.descripcion ?? '', [Validators.required]],
+        sexo: [referencia.sexo ?? 'TODOS'],
+        tipoReferencia: [referencia.tipoReferencia ?? 'RANGO'],
+        valorMin: [referencia.valorMin ?? null],
+        valorMax: [referencia.valorMax ?? null],
+        valorLimite: [referencia.valorLimite ?? null],
+        aplicarEdad: [tieneEdad],
+        edadMin: [referencia.edadMin ?? null],
+        edadMax: [referencia.edadMax ?? null],
+        unidadEdad: [referencia.unidadEdad ?? 'ANIOS'],
+        activo: [referencia.activo ?? true],
+      },
+      {
+        validators: [this.validarReferenciaNumerica()],
+      },
+    );
 
     this.configurarReferencia(grupo);
 

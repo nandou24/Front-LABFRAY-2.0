@@ -707,6 +707,17 @@
                       </mat-error>
                     </mat-form-field>
                   </div>
+
+                  <div
+                    class="row-flex"
+                    *ngIf="referenciaGroup.hasError('rangoInvalido')"
+                  >
+                    <div [style.flex]="setFlex(45, '%')" class="flex-item">
+                      <span class="text-danger">
+                        El valor mínimo no puede ser mayor que el valor máximo.
+                      </span>
+                    </div>
+                  </div>
                 </ng-container>
 
                 <!-- ===============================================
@@ -800,6 +811,17 @@
                       Requerido
                     </mat-error>
                   </mat-form-field>
+                </div>
+
+                <div
+                  class="row-flex"
+                  *ngIf="referenciaGroup.hasError('rangoEdadInvalido')"
+                >
+                  <div [style.flex]="setFlex(60, '%')" class="flex-item">
+                    <span class="text-danger">
+                      La edad mínima no puede ser mayor que la edad máxima.
+                    </span>
+                  </div>
                 </div>
 
                 <!-- Unidad de edad -->
@@ -919,12 +941,12 @@
               </td>
             </ng-container>
 
-            <ng-container matColumnDef="PerteneceAPrueba">
+            <!-- <ng-container matColumnDef="PerteneceAPrueba">
               <th mat-header-cell *matHeaderCellDef>Pertence a</th>
               <td mat-cell *matCellDef="let item">
                 {{ item.perteneceAPrueba.nombrePruebaLab || "N/A" }}
               </td>
-            </ng-container>
+            </ng-container> -->
 
             <ng-container matColumnDef="grupoItemLab">
               <th mat-header-cell *matHeaderCellDef>Grupo</th>
