@@ -1,0 +1,336 @@
+<form [formGroup]="formTipoMuestra">
+  <div class="contenedor-flex">
+    <!-- =====================================================
+         FORMULARIO
+    ====================================================== -->
+
+    <div class="contenedor-formulario">
+      <div class="row-flex" style="align-items: center">
+        <div
+          [style.flex]="setFlex(45, '%')"
+          class="flex-item quicksand-totales"
+        >
+          <h5 class="text-center mb-3" style="font-weight: 700">
+            MANTENIMIENTO DE TIPOS DE MUESTRA
+          </h5>
+        </div>
+      </div>
+
+      <mat-card>
+        <mat-card-title>
+          <div class="row-flex align-items-center">CONFIGURACIÓN</div>
+        </mat-card-title>
+
+        <mat-card-content>
+          <!-- =================================================
+               PRIMERA FILA
+          ================================================== -->
+
+          <div class="row-flex mt-2">
+            <!-- Código -->
+            <div [style.flex]="setFlex(20, '%')" class="flex-item">
+              <mat-form-field appearance="outline" class="w-100">
+                <mat-label>Código</mat-label>
+
+                <input matInput formControlName="codTipoMuestra" readonly />
+              </mat-form-field>
+            </div>
+
+            <!-- Nombre -->
+            <div [style.flex]="setFlex(58, '%')" class="flex-item">
+              <mat-form-field appearance="outline" class="w-100">
+                <mat-label> Nombre del tipo de muestra </mat-label>
+
+                <input
+                  matInput
+                  formControlName="nombreTipoMuestra"
+                  maxlength="80"
+                  placeholder="Ej. Suero, Plasma, Orina"
+                />
+
+                <mat-error
+                  *ngIf="
+                    formTipoMuestra
+                      .get('nombreTipoMuestra')
+                      ?.hasError('required')
+                  "
+                >
+                  Obligatorio
+                </mat-error>
+
+                <mat-error
+                  *ngIf="
+                    formTipoMuestra
+                      .get('nombreTipoMuestra')
+                      ?.hasError('minlength')
+                  "
+                >
+                  Debe contener al menos 2 caracteres
+                </mat-error>
+              </mat-form-field>
+            </div>
+
+            <!-- Estado -->
+            <div [style.flex]="setFlex(15, '%')" class="flex-item mb-3">
+              <mat-slide-toggle formControlName="estado">
+                Activo
+              </mat-slide-toggle>
+            </div>
+          </div>
+
+          <!-- =================================================
+               DESCRIPCIÓN
+          ================================================== -->
+
+          <div class="row-flex mt-2">
+            <div [style.flex]="setFlex(95, '%')" class="flex-item">
+              <mat-form-field appearance="outline" class="w-100">
+                <mat-label> Descripción </mat-label>
+
+                <textarea
+                  matInput
+                  formControlName="descripcionTipoMuestra"
+                  maxlength="250"
+                  rows="3"
+                  placeholder="Descripción opcional del tipo de muestra"
+                ></textarea>
+
+                <mat-hint align="end">
+                  {{
+                    formTipoMuestra.get("descripcionTipoMuestra")?.value
+                      ?.length || 0
+                  }}/250
+                </mat-hint>
+              </mat-form-field>
+            </div>
+          </div>
+
+          <!-- =================================================
+               BOTONES
+          ================================================== -->
+
+          <div class="row-flex mt-3">
+            <!-- Nuevo -->
+            <div [style.flex]="setFlex(25, '%')" class="flex-item text-end">
+              <button
+                mat-raised-button
+                type="button"
+                class="btn-nuevo"
+                (click)="cancelarEdicion()"
+              >
+                Nuevo
+              </button>
+            </div>
+
+            <!-- Registrar -->
+            <div
+              [style.flex]="setFlex(30, '%')"
+              class="flex-item text-end"
+              *ngIf="!modoEdicion"
+            >
+              <button
+                mat-raised-button
+                type="button"
+                class="btn-registrar"
+                (click)="guardarTipoMuestra()"
+              >
+                <mat-icon> save </mat-icon>
+
+                Registrar
+              </button>
+            </div>
+
+            <!-- Actualizar -->
+            <div
+              [style.flex]="setFlex(30, '%')"
+              class="flex-item text-end"
+              *ngIf="modoEdicion"
+            >
+              <button
+                mat-raised-button
+                type="button"
+                class="btn-actualizar"
+                (click)="actualizarTipoMuestra()"
+              >
+                <mat-icon> save </mat-icon>
+
+                Actualizar
+              </button>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- =====================================================
+         TABLA DERECHA
+    ====================================================== -->
+
+    <div class="contenedor-tablaDerecha">
+      <mat-card>
+        <mat-card-title> Tipos de Muestra Registrados </mat-card-title>
+
+        <mat-card-content>
+          <!-- =================================================
+               BÚSQUEDA
+          ================================================== -->
+
+          <mat-form-field appearance="outline" class="mt-1">
+            <mat-label> Buscar tipo de muestra </mat-label>
+
+            <input
+              matInput
+              [formControl]="terminoBusqueda"
+              (keyup)="buscarTiposMuestra()"
+              placeholder="Buscar por código, nombre o descripción"
+            />
+
+            @if (terminoBusqueda.value) {
+              <button
+                matSuffix
+                mat-icon-button
+                type="button"
+                class="clear-search-button"
+                aria-label="Limpiar búsqueda"
+                (click)="limpiarBusqueda()"
+              >
+                <mat-icon> close </mat-icon>
+              </button>
+            }
+          </mat-form-field>
+
+          <!-- =================================================
+               TABLA
+          ================================================== -->
+
+          <div class="tabla-contenedor">
+            <table
+              mat-table
+              [dataSource]="dataSourceTipoMuestra"
+              class="mat-elevation-z8 mt-2"
+            >
+              <!-- =============================================
+                   CÓDIGO
+              ============================================== -->
+
+              <ng-container matColumnDef="codigo">
+                <th mat-header-cell *matHeaderCellDef>Código</th>
+
+                <td mat-cell *matCellDef="let tipoMuestra">
+                  {{ tipoMuestra.codTipoMuestra }}
+                </td>
+              </ng-container>
+
+              <!-- =============================================
+                   NOMBRE
+              ============================================== -->
+
+              <ng-container matColumnDef="nombre">
+                <th mat-header-cell *matHeaderCellDef>Nombre</th>
+
+                <td mat-cell *matCellDef="let tipoMuestra">
+                  {{ tipoMuestra.nombreTipoMuestra }}
+                </td>
+              </ng-container>
+
+              <!-- =============================================
+                   DESCRIPCIÓN
+              ============================================== -->
+
+              <ng-container matColumnDef="descripcion">
+                <th mat-header-cell *matHeaderCellDef>Descripción</th>
+
+                <td mat-cell *matCellDef="let tipoMuestra">
+                  {{ tipoMuestra.descripcionTipoMuestra || "-" }}
+                </td>
+              </ng-container>
+
+              <!-- =============================================
+                   ESTADO
+              ============================================== -->
+
+              <ng-container matColumnDef="estado">
+                <th mat-header-cell *matHeaderCellDef>Estado</th>
+
+                <td mat-cell *matCellDef="let tipoMuestra">
+                  {{
+                    tipoMuestra.estadoTipoMuestra === "ACTIVO"
+                      ? "Activo"
+                      : "Inactivo"
+                  }}
+                </td>
+              </ng-container>
+
+              <!-- =============================================
+                   ACCIÓN
+              ============================================== -->
+
+              <ng-container matColumnDef="accion">
+                <th mat-header-cell *matHeaderCellDef>Acción</th>
+
+                <td mat-cell *matCellDef="let tipoMuestra; let i = index">
+                  <button
+                    mat-icon-button
+                    color="primary"
+                    type="button"
+                    matTooltip="Editar"
+                    (click)="editarTipoMuestra(tipoMuestra, i)"
+                  >
+                    <mat-icon> edit </mat-icon>
+                  </button>
+                </td>
+              </ng-container>
+
+              <!-- =============================================
+                   CABECERA
+              ============================================== -->
+
+              <tr
+                mat-header-row
+                *matHeaderRowDef="columnasTablaTipoMuestra"
+              ></tr>
+
+              <!-- =============================================
+                   FILAS
+              ============================================== -->
+
+              <tr
+                mat-row
+                *matRowDef="
+                  let row;
+                  let i = index;
+                  columns: columnasTablaTipoMuestra
+                "
+                [class.fila-seleccionada]="i === filaSeleccionadaIndex"
+              ></tr>
+            </table>
+
+            <!-- ===============================================
+                 SIN DATOS
+            ================================================ -->
+
+            <div
+              *ngIf="dataSourceTipoMuestra.data.length === 0"
+              class="no-datos-mensaje"
+            >
+              <p>No se encontraron tipos de muestra</p>
+            </div>
+
+            <!-- ===============================================
+                 PAGINADOR
+            ================================================ -->
+
+            <mat-paginator
+              #MatPaginatorTipoMuestra
+              [pageSizeOptions]="[5, 10, 20, 50]"
+              [pageSize]="20"
+              [hidePageSize]="true"
+              showFirstLastButtons
+            >
+            </mat-paginator>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+</form>

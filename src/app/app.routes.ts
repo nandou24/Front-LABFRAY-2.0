@@ -141,6 +141,20 @@ export const routes: Routes = [
             './pages/gestionar/triaje/gest-triaje-particular/gest-triaje-particular.component'
           ).then((m) => m.GestTriajeParticularComponent),
       },
+      {
+        path: 'tipo-muestra',
+        loadComponent: () =>
+          import(
+            './pages/laboratorio/tipo-muestra/tipo-muestra.component'
+          ).then((m) => m.TipoMuestraComponent),
+      },
+      {
+        path: 'tubo-envase',
+        loadComponent: () =>
+          import('./pages/laboratorio/tubo-envase/tubo-envase.component').then(
+            (m) => m.TuboEnvaseComponent,
+          ),
+      },
     ],
   },
   {

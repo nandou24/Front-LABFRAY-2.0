@@ -1,3 +1,69 @@
+// import { HttpClient, HttpParams } from '@angular/common/http';
+// import { inject, Injectable } from '@angular/core';
+// import { map, Observable } from 'rxjs';
+// import {
+//   IGetLastItemsLab,
+//   IItemLab,
+//   IItemLabPostDTO,
+// } from '../../../models/Mantenimiento/items.models';
+// import { environment } from '../../../../environments/environment';
+// import { AuthService } from '../../auth/auth.service';
+
+// @Injectable({
+//   providedIn: 'root',
+// })
+// export class ItemLabService {
+//   constructor() {}
+
+//   private readonly _http = inject(HttpClient);
+//   private readonly apiUrl = `${environment.baseUrl}/api/itemLab`;
+//   private readonly _auth = inject(AuthService);
+
+//   public registrarItemLab(body: IItemLab): Observable<IItemLabPostDTO> {
+//     console.log('Enviando valores desde servicio');
+//     console.log(body);
+
+//     return this._http.post<IItemLabPostDTO>(`${this.apiUrl}/newItemLab`, body, {
+//       headers: this._auth.getAuthHeaders(),
+//     });
+//   }
+
+//   getLastItemsLab(): Observable<IItemLab[]> {
+//     return this._http.get<IGetLastItemsLab>(`${this.apiUrl}/lastItems`).pipe(
+//       map((data) => {
+//         return data.itemsLab;
+//       }),
+//     );
+//   }
+
+//   getItem(terminoBusqueda: any): Observable<IItemLab[]> {
+//     const params = new HttpParams().set('search', terminoBusqueda);
+//     return this._http
+//       .get<IGetLastItemsLab>(`${this.apiUrl}/findTerm`, {
+//         params,
+//       })
+//       .pipe(map((data) => data.itemsLab));
+//   }
+
+//   public actualizarItem(
+//     codigo: string,
+//     body: IItemLab,
+//   ): Observable<IItemLabPostDTO> {
+//     return this._http.put<IItemLabPostDTO>(
+//       `${this.apiUrl}/${codigo}/updateItem`,
+//       body,
+//       { headers: this._auth.getAuthHeaders() },
+//     );
+//   }
+
+//   public eliminarItemLab(itemLabId: any): Observable<IItemLabPostDTO> {
+//     return this._http.delete<IItemLabPostDTO>(
+//       `${this.apiUrl}/${itemLabId}/deleteItem`,
+//       { headers: this._auth.getAuthHeaders() },
+//     );
+//   }
+// }
+
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { map, Observable } from 'rxjs';
@@ -16,34 +82,50 @@ export class ItemLabService {
   constructor() {}
 
   private readonly _http = inject(HttpClient);
-  private readonly apiUrl = `${environment.baseUrl}/api/itemLab`;
   private readonly _auth = inject(AuthService);
+  private readonly apiUrl = `${environment.baseUrl}/api/itemLab`;
+
+  // ==========================================================
+  // REGISTRAR ITEM
+  // ==========================================================
 
   public registrarItemLab(body: IItemLab): Observable<IItemLabPostDTO> {
-    console.log('Enviando valores desde servicio');
-    console.log(body);
-
     return this._http.post<IItemLabPostDTO>(`${this.apiUrl}/newItemLab`, body, {
       headers: this._auth.getAuthHeaders(),
     });
   }
 
-  getLastItemsLab(): Observable<IItemLab[]> {
-    return this._http.get<IGetLastItemsLab>(`${this.apiUrl}/lastItems`).pipe(
-      map((data) => {
-        return data.itemsLab;
-      }),
-    );
-  }
+  // ==========================================================
+  // ÚLTIMOS ITEMS
+  // ==========================================================
 
-  getItem(terminoBusqueda: any): Observable<IItemLab[]> {
-    const params = new HttpParams().set('search', terminoBusqueda);
+  getLastItemsLab(): Observable<IItemLab[]> {
     return this._http
-      .get<IGetLastItemsLab>(`${this.apiUrl}/findTerm`, {
-        params,
+      .get<IGetLastItemsLab>(`${this.apiUrl}/lastItems`, {
+        headers: this._auth.getAuthHeaders(),
       })
       .pipe(map((data) => data.itemsLab));
   }
+
+  // ==========================================================
+  // BUSCAR ITEM
+  // ==========================================================
+
+  getItem(terminoBusqueda: string): Observable<IItemLab[]> {
+    const params = new HttpParams().set('search', terminoBusqueda);
+
+    return this._http
+      .get<IGetLastItemsLab>(`${this.apiUrl}/findTerm`, {
+        params,
+
+        headers: this._auth.getAuthHeaders(),
+      })
+      .pipe(map((data) => data.itemsLab));
+  }
+
+  // ==========================================================
+  // ACTUALIZAR ITEM
+  // ==========================================================
 
   public actualizarItem(
     codigo: string,
@@ -52,14 +134,29 @@ export class ItemLabService {
     return this._http.put<IItemLabPostDTO>(
       `${this.apiUrl}/${codigo}/updateItem`,
       body,
-      { headers: this._auth.getAuthHeaders() },
+      {
+        headers: this._auth.getAuthHeaders(),
+      },
     );
   }
 
-  public eliminarItemLab(itemLabId: any): Observable<IItemLabPostDTO> {
+  // ==========================================================
+  // DELETE LEGACY
+  // ==========================================================
+  /*
+   * Lo dejamos temporalmente porque el endpoint ya existe.
+   *
+   * El nuevo mantenimiento NO lo utilizará.
+   * Posteriormente será retirado cuando confirmemos que
+   * estadoItem reemplaza completamente la eliminación.
+   */
+
+  public eliminarItemLab(itemLabId: string): Observable<IItemLabPostDTO> {
     return this._http.delete<IItemLabPostDTO>(
       `${this.apiUrl}/${itemLabId}/deleteItem`,
-      { headers: this._auth.getAuthHeaders() },
+      {
+        headers: this._auth.getAuthHeaders(),
+      },
     );
   }
 }

@@ -92,11 +92,26 @@ mat-option {
   }
 }
 
+.contenedor-flex {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  align-items: flex-start;
+}
+
+.contenedor-formulario {
+  flex: 0 0 64%;
+}
+
+.contenedor-tablaDerecha {
+  flex: 0 0 35%;
+}
+
 .row-flex {
   display: flex;
   flex-wrap: wrap;
-  justify-content: flex-start;
-  gap: 10px; /* Separación entre campos */
+  align-items: center;
+  gap: 10px;
   margin-bottom: 0px;
 }
 

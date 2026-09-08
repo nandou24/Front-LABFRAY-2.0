@@ -1,0 +1,441 @@
+<form [formGroup]="formTuboEnvase">
+  <div class="contenedor-flex">
+    <!-- =====================================================
+         FORMULARIO
+    ====================================================== -->
+
+    <div class="contenedor-formulario">
+      <div class="row-flex" style="align-items: center">
+        <div
+          [style.flex]="setFlex(45, '%')"
+          class="flex-item quicksand-totales"
+        >
+          <h5 class="text-center mb-3" style="font-weight: 700">
+            MANTENIMIENTO DE TUBOS / ENVASES
+          </h5>
+        </div>
+      </div>
+
+      <mat-card>
+        <mat-card-title>
+          <div class="row-flex align-items-center">CONFIGURACIÓN</div>
+        </mat-card-title>
+
+        <mat-card-content>
+          <!-- =================================================
+               PRIMERA FILA
+          ================================================== -->
+
+          <div class="row-flex mt-2">
+            <!-- Código -->
+            <div [style.flex]="setFlex(18, '%')" class="flex-item">
+              <mat-form-field appearance="outline" class="w-100">
+                <mat-label>Código</mat-label>
+
+                <input matInput formControlName="codTuboEnvase" readonly />
+              </mat-form-field>
+            </div>
+
+            <!-- Nombre -->
+            <div [style.flex]="setFlex(60, '%')" class="flex-item">
+              <mat-form-field appearance="outline" class="w-100">
+                <mat-label> Nombre del tubo / envase </mat-label>
+
+                <input
+                  matInput
+                  formControlName="nombreTuboEnvase"
+                  maxlength="100"
+                  placeholder="Ej. Tubo tapa amarilla"
+                />
+
+                <mat-error
+                  *ngIf="
+                    formTuboEnvase.get('nombreTuboEnvase')?.hasError('required')
+                  "
+                >
+                  Obligatorio
+                </mat-error>
+
+                <mat-error
+                  *ngIf="
+                    formTuboEnvase
+                      .get('nombreTuboEnvase')
+                      ?.hasError('minlength')
+                  "
+                >
+                  Debe contener al menos 2 caracteres
+                </mat-error>
+              </mat-form-field>
+            </div>
+
+            <!-- Estado -->
+            <div [style.flex]="setFlex(15, '%')" class="flex-item mb-3">
+              <mat-slide-toggle formControlName="estado">
+                Activo
+              </mat-slide-toggle>
+            </div>
+          </div>
+
+          <!-- =================================================
+               SEGUNDA FILA
+          ================================================== -->
+
+          <div class="row-flex mt-2">
+            <!-- Color -->
+            <div [style.flex]="setFlex(25, '%')" class="flex-item">
+              <mat-form-field appearance="outline" class="w-100">
+                <mat-label>Color</mat-label>
+
+                <input
+                  matInput
+                  formControlName="color"
+                  maxlength="50"
+                  placeholder="Ej. Amarillo"
+                />
+              </mat-form-field>
+            </div>
+
+            <!-- Aditivo -->
+            <div [style.flex]="setFlex(35, '%')" class="flex-item">
+              <mat-form-field appearance="outline" class="w-100">
+                <mat-label>Aditivo</mat-label>
+
+                <input
+                  matInput
+                  formControlName="aditivo"
+                  maxlength="100"
+                  placeholder="Ej. Gel separador"
+                />
+              </mat-form-field>
+            </div>
+
+            <!-- Capacidad -->
+            <div [style.flex]="setFlex(18, '%')" class="flex-item">
+              <mat-form-field appearance="outline" class="w-100">
+                <mat-label>Capacidad</mat-label>
+
+                <input
+                  matInput
+                  type="number"
+                  formControlName="capacidad"
+                  min="0"
+                  step="0.1"
+                  placeholder="Ej. 5"
+                />
+
+                <mat-error
+                  *ngIf="formTuboEnvase.get('capacidad')?.hasError('min')"
+                >
+                  No puede ser menor a 0
+                </mat-error>
+              </mat-form-field>
+            </div>
+
+            <!-- Unidad -->
+            <div [style.flex]="setFlex(15, '%')" class="flex-item">
+              <mat-form-field appearance="outline" class="w-100">
+                <mat-label>Unidad</mat-label>
+
+                <mat-select formControlName="unidadCapacidad">
+                  <mat-option [value]="null"> Sin unidad </mat-option>
+
+                  <mat-option
+                    *ngFor="let unidad of unidadesCapacidad"
+                    [value]="unidad"
+                  >
+                    {{ unidad }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+          </div>
+
+          <!-- =================================================
+               DESCRIPCIÓN
+          ================================================== -->
+
+          <div class="row-flex mt-2">
+            <div [style.flex]="setFlex(95, '%')" class="flex-item">
+              <mat-form-field appearance="outline" class="w-100">
+                <mat-label> Descripción </mat-label>
+
+                <textarea
+                  matInput
+                  formControlName="descripcionTuboEnvase"
+                  maxlength="250"
+                  rows="3"
+                  placeholder="Descripción opcional del tubo o envase"
+                ></textarea>
+
+                <mat-hint align="end">
+                  {{
+                    formTuboEnvase.get("descripcionTuboEnvase")?.value
+                      ?.length || 0
+                  }}/250
+                </mat-hint>
+              </mat-form-field>
+            </div>
+          </div>
+
+          <!-- =================================================
+               BOTONES
+          ================================================== -->
+
+          <div class="row-flex mt-3">
+            <!-- Nuevo -->
+            <div [style.flex]="setFlex(25, '%')" class="flex-item text-end">
+              <button
+                mat-raised-button
+                type="button"
+                class="btn-nuevo"
+                (click)="cancelarEdicion()"
+              >
+                Nuevo
+              </button>
+            </div>
+
+            <!-- Registrar -->
+            <div
+              [style.flex]="setFlex(30, '%')"
+              class="flex-item text-end"
+              *ngIf="!modoEdicion"
+            >
+              <button
+                mat-raised-button
+                type="button"
+                class="btn-registrar"
+                (click)="guardarTuboEnvase()"
+              >
+                <mat-icon>save</mat-icon>
+                Registrar
+              </button>
+            </div>
+
+            <!-- Actualizar -->
+            <div
+              [style.flex]="setFlex(30, '%')"
+              class="flex-item text-end"
+              *ngIf="modoEdicion"
+            >
+              <button
+                mat-raised-button
+                type="button"
+                class="btn-actualizar"
+                (click)="actualizarTuboEnvase()"
+              >
+                <mat-icon>save</mat-icon>
+                Actualizar
+              </button>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- =====================================================
+         TABLA DERECHA
+    ====================================================== -->
+
+    <div class="contenedor-tablaDerecha">
+      <mat-card>
+        <mat-card-title> Tubos / Envases Registrados </mat-card-title>
+
+        <mat-card-content>
+          <!-- =================================================
+               BÚSQUEDA
+          ================================================== -->
+
+          <mat-form-field appearance="outline" class="mt-1">
+            <mat-label> Buscar tubo / envase </mat-label>
+
+            <input
+              matInput
+              [formControl]="terminoBusqueda"
+              (keyup)="buscarTubosEnvases()"
+              placeholder="Buscar por código, nombre, color, aditivo..."
+            />
+
+            @if (terminoBusqueda.value) {
+              <button
+                matSuffix
+                mat-icon-button
+                type="button"
+                class="clear-search-button"
+                aria-label="Limpiar búsqueda"
+                (click)="limpiarBusqueda()"
+              >
+                <mat-icon>close</mat-icon>
+              </button>
+            }
+          </mat-form-field>
+
+          <!-- =================================================
+               TABLA
+          ================================================== -->
+
+          <div class="tabla-contenedor">
+            <table
+              mat-table
+              [dataSource]="dataSourceTuboEnvase"
+              class="mat-elevation-z8 mt-2"
+            >
+              <!-- =============================================
+                   CÓDIGO
+              ============================================== -->
+
+              <ng-container matColumnDef="codigo">
+                <th mat-header-cell *matHeaderCellDef>Código</th>
+
+                <td mat-cell *matCellDef="let tuboEnvase">
+                  {{ tuboEnvase.codTuboEnvase }}
+                </td>
+              </ng-container>
+
+              <!-- =============================================
+                   NOMBRE
+              ============================================== -->
+
+              <ng-container matColumnDef="nombre">
+                <th mat-header-cell *matHeaderCellDef>Nombre</th>
+
+                <td mat-cell *matCellDef="let tuboEnvase">
+                  {{ tuboEnvase.nombreTuboEnvase }}
+                </td>
+              </ng-container>
+
+              <!-- =============================================
+                   COLOR
+              ============================================== -->
+
+              <ng-container matColumnDef="color">
+                <th mat-header-cell *matHeaderCellDef>Color</th>
+
+                <td mat-cell *matCellDef="let tuboEnvase">
+                  {{ tuboEnvase.color || "-" }}
+                </td>
+              </ng-container>
+
+              <!-- =============================================
+                   ADITIVO
+              ============================================== -->
+
+              <ng-container matColumnDef="aditivo">
+                <th mat-header-cell *matHeaderCellDef>Aditivo</th>
+
+                <td mat-cell *matCellDef="let tuboEnvase">
+                  {{ tuboEnvase.aditivo || "-" }}
+                </td>
+              </ng-container>
+
+              <!-- =============================================
+                   CAPACIDAD
+              ============================================== -->
+
+              <ng-container matColumnDef="capacidad">
+                <th mat-header-cell *matHeaderCellDef>Capacidad</th>
+
+                <td mat-cell *matCellDef="let tuboEnvase">
+                  <ng-container
+                    *ngIf="
+                      tuboEnvase.capacidad !== null &&
+                        tuboEnvase.capacidad !== undefined;
+                      else sinCapacidad
+                    "
+                  >
+                    {{ tuboEnvase.capacidad }}
+                    {{ tuboEnvase.unidadCapacidad || "" }}
+                  </ng-container>
+
+                  <ng-template #sinCapacidad> - </ng-template>
+                </td>
+              </ng-container>
+
+              <!-- =============================================
+                   ESTADO
+              ============================================== -->
+
+              <ng-container matColumnDef="estado">
+                <th mat-header-cell *matHeaderCellDef>Estado</th>
+
+                <td mat-cell *matCellDef="let tuboEnvase">
+                  {{
+                    tuboEnvase.estadoTuboEnvase === "ACTIVO"
+                      ? "Activo"
+                      : "Inactivo"
+                  }}
+                </td>
+              </ng-container>
+
+              <!-- =============================================
+                   ACCIÓN
+              ============================================== -->
+
+              <ng-container matColumnDef="accion">
+                <th mat-header-cell *matHeaderCellDef>Acción</th>
+
+                <td mat-cell *matCellDef="let tuboEnvase; let i = index">
+                  <button
+                    mat-icon-button
+                    color="primary"
+                    type="button"
+                    matTooltip="Editar"
+                    (click)="editarTuboEnvase(tuboEnvase, i)"
+                  >
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                </td>
+              </ng-container>
+
+              <!-- =============================================
+                   CABECERA
+              ============================================== -->
+
+              <tr
+                mat-header-row
+                *matHeaderRowDef="columnasTablaTuboEnvase"
+              ></tr>
+
+              <!-- =============================================
+                   FILAS
+              ============================================== -->
+
+              <tr
+                mat-row
+                *matRowDef="
+                  let row;
+                  let i = index;
+                  columns: columnasTablaTuboEnvase
+                "
+                [class.fila-seleccionada]="i === filaSeleccionadaIndex"
+              ></tr>
+            </table>
+
+            <!-- ===============================================
+                 SIN DATOS
+            ================================================ -->
+
+            <div
+              *ngIf="dataSourceTuboEnvase.data.length === 0"
+              class="no-datos-mensaje"
+            >
+              <p>No se encontraron tubos / envases</p>
+            </div>
+
+            <!-- ===============================================
+                 PAGINADOR
+            ================================================ -->
+
+            <mat-paginator
+              #MatPaginatorTuboEnvase
+              [pageSizeOptions]="[5, 10, 20, 50]"
+              [pageSize]="20"
+              [hidePageSize]="true"
+              showFirstLastButtons
+            >
+            </mat-paginator>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+</form>
