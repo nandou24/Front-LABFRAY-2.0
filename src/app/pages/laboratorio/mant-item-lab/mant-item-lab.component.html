@@ -189,7 +189,7 @@
         <mat-card-content>
           <!-- =====================================================
          IDENTIFICACIÓN DEL ITEM
-    ====================================================== -->
+          ====================================================== -->
 
           <div class="row-flex mt-2">
             <!-- Nombre Informe -->
@@ -242,7 +242,7 @@
 
           <!-- =====================================================
          CONFIGURACIÓN DEL RESULTADO
-    ====================================================== -->
+          ====================================================== -->
 
           <div class="row-flex mt-2">
             <!-- Tipo de Resultado -->
@@ -287,11 +287,19 @@
             </div>
 
             <!-- Unidades -->
-            <div [style.flex]="setFlex(20, '%')" class="flex-item">
+            <div
+              *ngIf="myFormItemLab.get('tipoResultado')?.value === 'NUMERICO'"
+              [style.flex]="setFlex(20, '%')"
+              class="flex-item"
+            >
               <mat-form-field appearance="outline" class="w-100">
                 <mat-label> Unidades </mat-label>
 
-                <input matInput formControlName="unidadesRef" />
+                <input
+                  matInput
+                  formControlName="unidadesRef"
+                  placeholder="Ej. mg/dL"
+                />
 
                 <mat-error
                   *ngIf="myFormItemLab.get('unidadesRef')?.hasError('required')"
@@ -310,178 +318,184 @@
           </div>
         </mat-card-content>
       </mat-card>
-      <!--
-      <mat-card class="mt-2">
-        <mat-card-title> Parámetros de Validación </mat-card-title>
+
+      <!-- =========================================================
+     REFERENCIA - RESULTADO TEXTO
+        ========================================================= -->
+
+      <mat-card
+        class="mt-2"
+        *ngIf="myFormItemLab.get('tipoResultado')?.value === 'TEXTO'"
+      >
+        <mat-card-title>
+          <div class="row-flex align-items-center">
+            REFERENCIA DEL RESULTADO
+          </div>
+        </mat-card-title>
 
         <mat-card-content>
-          <div class="row mt-2 text-center">
-            <button
-              mat-flat-button
-              color="primary"
-              class="btn-telefono"
-              type="button"
-              (click)="agregarValidacion()"
-            >
-              <mat-icon class="me-1">add</mat-icon>
-              Agregar Validación
-            </button>
-          </div>
-
-          <div class="row mt-2">
-            <div
-              formArrayName="paramValidacion"
-              *ngFor="
-                let validacionGroup of paramValidacion.controls;
-                let i = index
-              "
-            >
-              <div [formGroupName]="i" class="flex-row-container">
-                <div [style.flex]="setFlex(2, '%')" class="flex-item mb-3">
-                  <span>{{ i + 1 }}</span>
-                </div>
-
-                <div [style.flex]="setFlex(23, '%')" class="flex-item">
-                  <mat-form-field appearance="outline" class="full-width">
-                    <mat-label>Desripción</mat-label>
-                    <input matInput formControlName="descrValidacion" />
-                    <mat-error
-                      *ngIf="
-                        validacionGroup
-                          .get('descrValidacion')
-                          ?.hasError('required')
-                      "
-                    >
-                      Requerido
-                    </mat-error>
-                  </mat-form-field>
-                </div>
-
-                <div [style.flex]="setFlex(10, '%')" class="flex-item">
-                  <mat-form-field appearance="outline">
-                    <mat-label>Sexo</mat-label>
-                    <mat-select formControlName="sexo">
-                      <mat-option value="Masculino">Masculino</mat-option>
-                      <mat-option value="Femenino">Femenino</mat-option>
-                      <mat-option value="Unisex">Unisex</mat-option>
-                    </mat-select>
-                    <mat-error
-                      *ngIf="validacionGroup.get('sexo')?.hasError('required')"
-                    >
-                      Requerido
-                    </mat-error>
-                  </mat-form-field>
-                </div>
-
-                <div [style.flex]="setFlex(10, '%')" class="flex-item mb-4">
-                  <mat-slide-toggle formControlName="edadIndistinta">
-                    Sin edad
-                  </mat-slide-toggle>
-                </div>
-
-                <div [style.flex]="setFlex(7, '%')" class="flex-item">
-                  <mat-form-field appearance="outline" class="full-width">
-                    <mat-label>Edad Mín</mat-label>
-                    <input matInput formControlName="edadMin" />
-                    <mat-error
-                      *ngIf="
-                        validacionGroup.get('edadMin')?.hasError('required')
-                      "
-                    >
-                      Requerido
-                    </mat-error>
-                  </mat-form-field>
-                </div>
-
-                <div [style.flex]="setFlex(7, '%')" class="flex-item">
-                  <mat-form-field appearance="outline" class="full-width">
-                    <mat-label>Edad Max</mat-label>
-                    <input matInput formControlName="edadMax" />
-                    <mat-error
-                      *ngIf="
-                        validacionGroup.get('edadMax')?.hasError('required')
-                      "
-                    >
-                      Requerido
-                    </mat-error>
-                  </mat-form-field>
-                </div>
-
-                <div [style.flex]="setFlex(15, '%')" class="flex-item">
-                  <mat-form-field appearance="outline" class="full-width">
-                    <mat-label>Seleccione Regla</mat-label>
-                    <mat-select formControlName="descRegla">
-                      <mat-option value="Igual a">Igual a</mat-option>
-                      <mat-option value="Entre">Entre</mat-option>
-                      <mat-option value="Mayor que">Mayor que</mat-option>
-                      <mat-option value="Menor que">Menor que</mat-option>
-                      <mat-option value="Mayor o igual que"
-                        >Mayor o igual que</mat-option
-                      >
-                      <mat-option value="Menor o igual que"
-                        >Menor o igual que</mat-option
-                      >
-                    </mat-select>
-                    <mat-error
-                      *ngIf="
-                        validacionGroup.get('descRegla')?.hasError('required')
-                      "
-                    >
-                      Requerido
-                    </mat-error>
-                  </mat-form-field>
-                </div>
-
-                <div [style.flex]="setFlex(8, '%')" class="flex-item">
-                  <mat-form-field appearance="outline" class="full-width">
-                    <mat-label>Valor Min</mat-label>
-                    <input matInput formControlName="valor1" />
-                    <mat-error *ngIf="validacionGroup.get('descriptionPhone')?.hasError('required')">
-                                            Requerido
-                                        </mat-error>
-                                        <mat-error *ngIf="validacionGroup.get('descriptionPhone')?.hasError('maxlength')">
-                                            Máximo 30 caracteres
-                                        </mat-error>
-                  </mat-form-field>
-                </div>
-
-                <div [style.flex]="setFlex(8, '%')" class="flex-item">
-                  <mat-form-field appearance="outline" class="full-width">
-                    <mat-label>Valor Max</mat-label>
-                    <input matInput formControlName="valor2" />
-                    <mat-error *ngIf="validacionGroup.get('descriptionPhone')?.hasError('required')">
-                                            Requerido
-                                        </mat-error>
-                                        <mat-error *ngIf="validacionGroup.get('descriptionPhone')?.hasError('maxlength')">
-                                            Máximo 30 caracteres
-                                        </mat-error>
-                  </mat-form-field>
-                </div>
-
-                <div [style.flex]="setFlex(2, '%')" class="flex-item">
-                  <button
-                    mat-icon-button
-                    class="mb-3"
-                    color="warn"
-                    type="button"
-                    (click)="eliminarValidacion(i)"
-                  >
-                    <mat-icon>delete</mat-icon>
-                  </button>
-                </div>
-              </div>
+          <!-- Switch -->
+          <div class="row-flex mt-3">
+            <div [style.flex]="setFlex(35, '%')" class="flex-item mb-3">
+              <mat-slide-toggle formControlName="poseeReferenciaTexto">
+                Mostrar referencia en informe
+              </mat-slide-toggle>
             </div>
           </div>
 
-          <span
-            class="text-danger text-center"
-            *ngIf="!validarArrayValores() && formSubmitted"
+          <!-- Texto de referencia -->
+          <div
+            class="row-flex mt-2"
+            *ngIf="myFormItemLab.get('poseeReferenciaTexto')?.value"
           >
-            Por favor ingrese al menos una validación
-          </span>
+            <div [style.flex]="setFlex(75, '%')" class="flex-item">
+              <mat-form-field appearance="outline" class="w-100">
+                <mat-label> Texto de referencia </mat-label>
+
+                <textarea
+                  matInput
+                  rows="2"
+                  formControlName="textoReferenciaResultado"
+                  placeholder="Ej. No se observan formas parasitarias"
+                ></textarea>
+
+                <mat-hint>
+                  Este texto podrá mostrarse como valor de referencia en el
+                  informe.
+                </mat-hint>
+              </mat-form-field>
+            </div>
+          </div>
         </mat-card-content>
       </mat-card>
-    -->
+
+      <!-- =========================================================
+     OPCIONES DE RESULTADO - CATEGÓRICO
+========================================================= -->
+
+      <mat-card
+        class="mt-2"
+        *ngIf="myFormItemLab.get('tipoResultado')?.value === 'CATEGORICO'"
+      >
+        <mat-card-title>
+          <div class="row-flex align-items-center">OPCIONES DE RESULTADO</div>
+        </mat-card-title>
+
+        <mat-card-content>
+          <!-- Explicación -->
+          <div class="row-flex mt-2">
+            <div [style.flex]="setFlex(95, '%')" class="flex-item">
+              <span style="font-size: 12px; color: #6c757d">
+                Configure los valores que podrán seleccionarse al registrar el
+                resultado de este Item.
+              </span>
+            </div>
+          </div>
+
+          <!-- Nueva opción -->
+          <div class="row-flex mt-2">
+            <div [style.flex]="setFlex(55, '%')" class="flex-item">
+              <mat-form-field appearance="outline" class="w-100">
+                <mat-label> Nueva opción </mat-label>
+
+                <input
+                  matInput
+                  [formControl]="nuevaOpcionResultado"
+                  placeholder="Ej. NEGATIVO"
+                  (keydown.enter)="onEnterOpcionResultado($event)"
+                />
+              </mat-form-field>
+            </div>
+
+            <div [style.flex]="setFlex(20, '%')" class="flex-item mb-3">
+              <button
+                mat-flat-button
+                color="primary"
+                type="button"
+                (click)="agregarOpcionResultado()"
+              >
+                <mat-icon> add </mat-icon>
+
+                Agregar
+              </button>
+            </div>
+          </div>
+
+          <!-- =====================================================
+         OPCIONES AGREGADAS
+    ====================================================== -->
+
+          <div
+            class="row-flex mt-1"
+            *ngIf="obtenerOpcionesResultado().length > 0"
+          >
+            <div [style.flex]="setFlex(95, '%')" class="flex-item">
+              <mat-chip-set>
+                <mat-chip
+                  *ngFor="
+                    let opcion of obtenerOpcionesResultado();
+                    let i = index
+                  "
+                >
+                  {{ opcion }}
+
+                  <button
+                    matChipRemove
+                    type="button"
+                    [attr.aria-label]="'Eliminar ' + opcion"
+                    (click)="eliminarOpcionResultado(i)"
+                  >
+                    <mat-icon> cancel </mat-icon>
+                  </button>
+                </mat-chip>
+              </mat-chip-set>
+            </div>
+          </div>
+
+          <!-- Sin opciones -->
+          <div
+            class="row-flex mt-2"
+            *ngIf="obtenerOpcionesResultado().length === 0"
+          >
+            <div [style.flex]="setFlex(95, '%')" class="flex-item">
+              <span style="font-size: 12px; color: #dc3545">
+                Aún no se han agregado opciones de resultado.
+              </span>
+            </div>
+          </div>
+
+          <!-- =====================================================
+     VALORES DE REFERENCIA CATEGÓRICOS
+====================================================== -->
+
+          <div
+            class="row-flex mt-3"
+            *ngIf="obtenerOpcionesResultado().length > 0"
+          >
+            <div [style.flex]="setFlex(55, '%')" class="flex-item">
+              <mat-form-field appearance="outline" class="w-100">
+                <mat-label> Valor(es) de referencia </mat-label>
+
+                <mat-select
+                  formControlName="valoresReferenciaCategorica"
+                  multiple
+                >
+                  <mat-option
+                    *ngFor="let opcion of obtenerOpcionesResultado()"
+                    [value]="opcion"
+                  >
+                    {{ opcion }}
+                  </mat-option>
+                </mat-select>
+
+                <mat-hint>
+                  Seleccione los resultados considerados esperados o normales
+                </mat-hint>
+              </mat-form-field>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
 
       <!-- =========================================================
      VALORES DE REFERENCIA - RESULTADO NUMÉRICO
@@ -837,6 +851,326 @@
                         {{ unidad.label }}
                       </mat-option>
                     </mat-select>
+                  </mat-form-field>
+                </div>
+              </div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- =========================================================
+     REGLAS DE ALERTA - RESULTADO NUMÉRICO
+========================================================= -->
+
+      <mat-card
+        class="mt-2"
+        *ngIf="myFormItemLab.get('tipoResultado')?.value === 'NUMERICO'"
+      >
+        <!-- =======================================================
+       TÍTULO
+  ======================================================== -->
+
+        <mat-card-title>
+          <div class="row-flex align-items-center">
+            <div [style.flex]="setFlex(70, '%')" class="flex-item">
+              REGLAS DE ALERTA
+            </div>
+
+            <div [style.flex]="setFlex(25, '%')" class="flex-item text-end">
+              <span style="font-size: 12px; font-weight: 400">
+                {{ reglasAlerta.length }}
+                regla(s) configurada(s)
+              </span>
+            </div>
+          </div>
+        </mat-card-title>
+
+        <mat-card-content>
+          <!-- =====================================================
+         TEXTO EXPLICATIVO
+    ====================================================== -->
+
+          <div class="row-flex mt-2">
+            <div [style.flex]="setFlex(95, '%')" class="flex-item">
+              <span style="font-size: 12px; color: #6c757d">
+                Configure condiciones que deberán generar una alerta durante el
+                registro o validación del resultado.
+              </span>
+            </div>
+          </div>
+
+          <!-- =====================================================
+         BOTÓN AGREGAR
+    ====================================================== -->
+
+          <div class="row mt-2 text-center">
+            <button
+              mat-flat-button
+              color="primary"
+              class="btn-telefono"
+              type="button"
+              (click)="agregarReglaAlerta()"
+            >
+              <mat-icon class="me-1"> add </mat-icon>
+
+              Agregar alerta
+            </button>
+          </div>
+
+          <!-- =====================================================
+         SIN ALERTAS
+    ====================================================== -->
+
+          <div *ngIf="reglasAlerta.length === 0" class="text-center mt-3 mb-2">
+            <span style="font-size: 12px; color: #6c757d">
+              No existen reglas de alerta configuradas para este Item.
+            </span>
+          </div>
+
+          <!-- =====================================================
+         FORM ARRAY
+    ====================================================== -->
+
+          <div formArrayName="reglasAlerta">
+            <div
+              *ngFor="let alertaGroup of reglasAlerta.controls; let i = index"
+              [formGroupName]="i"
+              class="mt-3"
+            >
+              <!-- =================================================
+             CABECERA
+        ================================================== -->
+
+              <div
+                class="row-flex"
+                style="
+                  align-items: center;
+                  border-bottom: 1px solid #dddddd;
+                  margin-bottom: 10px;
+                "
+              >
+                <div [style.flex]="setFlex(80, '%')" class="flex-item">
+                  <strong> Alerta {{ i + 1 }} </strong>
+                </div>
+
+                <!-- Activo -->
+                <div [style.flex]="setFlex(12, '%')" class="flex-item mb-2">
+                  <mat-slide-toggle formControlName="activo">
+                    Activo
+                  </mat-slide-toggle>
+                </div>
+
+                <!-- Eliminar -->
+                <div [style.flex]="setFlex(5, '%')" class="flex-item">
+                  <button
+                    mat-icon-button
+                    color="warn"
+                    type="button"
+                    matTooltip="Eliminar alerta"
+                    (click)="eliminarReglaAlerta(i)"
+                  >
+                    <mat-icon> delete </mat-icon>
+                  </button>
+                </div>
+              </div>
+
+              <!-- =================================================
+             PRIMERA FILA
+        ================================================== -->
+
+              <div class="row-flex mt-2">
+                <!-- Descripción -->
+                <div [style.flex]="setFlex(32, '%')" class="flex-item">
+                  <mat-form-field appearance="outline" class="w-100">
+                    <mat-label> Descripción </mat-label>
+
+                    <input
+                      matInput
+                      formControlName="descripcion"
+                      placeholder="Ej. Hipoglucemia crítica"
+                    />
+
+                    <mat-error
+                      *ngIf="
+                        alertaGroup.get('descripcion')?.hasError('required')
+                      "
+                    >
+                      Requerido
+                    </mat-error>
+                  </mat-form-field>
+                </div>
+
+                <!-- Condición -->
+                <div [style.flex]="setFlex(30, '%')" class="flex-item">
+                  <mat-form-field appearance="outline" class="w-100">
+                    <mat-label> Condición </mat-label>
+
+                    <mat-select formControlName="condicion">
+                      <mat-option
+                        *ngFor="let condicion of condicionesAlertaNumerica"
+                        [value]="condicion.value"
+                      >
+                        {{ condicion.label }}
+                      </mat-option>
+                    </mat-select>
+
+                    <mat-error
+                      *ngIf="alertaGroup.get('condicion')?.hasError('required')"
+                    >
+                      Requerido
+                    </mat-error>
+                  </mat-form-field>
+                </div>
+
+                <!-- Nivel -->
+                <div [style.flex]="setFlex(25, '%')" class="flex-item">
+                  <mat-form-field appearance="outline" class="w-100">
+                    <mat-label> Nivel de alerta </mat-label>
+
+                    <mat-select formControlName="nivelAlerta">
+                      <mat-option
+                        *ngFor="let nivel of nivelesAlerta"
+                        [value]="nivel.value"
+                      >
+                        {{ nivel.label }}
+                      </mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+              </div>
+
+              <!-- =================================================
+             SEGUNDA FILA - VALORES
+        ================================================== -->
+
+              <div class="row-flex mt-2">
+                <!-- =================================================
+               FUERA DE RANGO
+          ================================================== -->
+
+                <ng-container
+                  *ngIf="
+                    alertaGroup.get('condicion')?.value === 'FUERA_DE_RANGO'
+                  "
+                >
+                  <!-- Valor mínimo -->
+                  <div [style.flex]="setFlex(20, '%')" class="flex-item">
+                    <mat-form-field appearance="outline" class="w-100">
+                      <mat-label> Valor mínimo </mat-label>
+
+                      <input
+                        matInput
+                        type="number"
+                        step="any"
+                        formControlName="valor1"
+                      />
+
+                      <mat-error
+                        *ngIf="alertaGroup.get('valor1')?.hasError('required')"
+                      >
+                        Requerido
+                      </mat-error>
+                    </mat-form-field>
+                  </div>
+
+                  <!-- Valor máximo -->
+                  <div [style.flex]="setFlex(20, '%')" class="flex-item">
+                    <mat-form-field appearance="outline" class="w-100">
+                      <mat-label> Valor máximo </mat-label>
+
+                      <input
+                        matInput
+                        type="number"
+                        step="any"
+                        formControlName="valor2"
+                      />
+
+                      <mat-error
+                        *ngIf="alertaGroup.get('valor2')?.hasError('required')"
+                      >
+                        Requerido
+                      </mat-error>
+                    </mat-form-field>
+                  </div>
+                </ng-container>
+
+                <!-- =================================================
+               RESTO DE CONDICIONES
+          ================================================== -->
+
+                <ng-container
+                  *ngIf="
+                    alertaGroup.get('condicion')?.value !== 'FUERA_DE_RANGO'
+                  "
+                >
+                  <div [style.flex]="setFlex(25, '%')" class="flex-item">
+                    <mat-form-field appearance="outline" class="w-100">
+                      <mat-label> Valor </mat-label>
+
+                      <input
+                        matInput
+                        type="number"
+                        step="any"
+                        formControlName="valor1"
+                      />
+
+                      <mat-error
+                        *ngIf="alertaGroup.get('valor1')?.hasError('required')"
+                      >
+                        Requerido
+                      </mat-error>
+                    </mat-form-field>
+                  </div>
+                </ng-container>
+
+                <!-- Unidad solo informativa -->
+                <div [style.flex]="setFlex(20, '%')" class="flex-item mb-3">
+                  <span style="font-size: 12px; color: #6c757d">
+                    Unidad:
+                    <strong>
+                      {{
+                        myFormItemLab.get("unidadesRef")?.value || "Sin unidad"
+                      }}
+                    </strong>
+                  </span>
+                </div>
+              </div>
+
+              <!-- =================================================
+             VALIDACIÓN DEL RANGO
+        ================================================== -->
+
+              <div
+                class="row-flex"
+                *ngIf="alertaGroup.hasError('rangoAlertaInvalido')"
+              >
+                <div [style.flex]="setFlex(55, '%')" class="flex-item">
+                  <span class="text-danger">
+                    El valor mínimo no puede ser mayor que el valor máximo.
+                  </span>
+                </div>
+              </div>
+
+              <!-- =================================================
+             MENSAJE
+        ================================================== -->
+
+              <div class="row-flex mt-2">
+                <div [style.flex]="setFlex(75, '%')" class="flex-item">
+                  <mat-form-field appearance="outline" class="w-100">
+                    <mat-label> Mensaje de alerta </mat-label>
+
+                    <input
+                      matInput
+                      formControlName="mensaje"
+                      placeholder="Ej. GLUCOSA CRÍTICAMENTE BAJA"
+                    />
+
+                    <mat-hint>
+                      Este mensaje podrá mostrarse al personal durante la
+                      validación.
+                    </mat-hint>
                   </mat-form-field>
                 </div>
               </div>
