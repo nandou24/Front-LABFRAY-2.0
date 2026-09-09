@@ -110,8 +110,7 @@ mat-option {
 .row-flex {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  gap: 10px;
+  align-items: flex-start;
   margin-bottom: 0px;
 }
 
@@ -119,6 +118,7 @@ mat-option {
   justify-content: center;
   min-width: 0;
   text-align: center;
+  padding: 10px;
 }
 
 .fila-seleccionada {

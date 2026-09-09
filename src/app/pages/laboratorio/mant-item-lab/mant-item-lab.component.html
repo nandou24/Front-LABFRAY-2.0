@@ -20,167 +20,6 @@
         </div>
       </div>
 
-      <!--
-      <mat-card>
-        <mat-card-title>
-          <div class="row-flex align-items-center">Item de Laboratorio</div>
-        </mat-card-title>
-
-        <mat-card-content>
-          <div class="row-flex mt-2">
-            <div [style.flex]="setFlex(32, '%')" class="flex-item">
-              <mat-form-field appearance="outline">
-                <mat-label>Nombre - Informe</mat-label>
-                <input matInput formControlName="nombreInforme" />
-                <mat-error
-                  *ngIf="
-                    myFormItemLab.get('nombreInforme')?.hasError('required')
-                  "
-                >
-                  Nombre es requerido
-                </mat-error>
-              </mat-form-field>
-            </div>
-
-            <div [style.flex]="setFlex(32, '%')" class="flex-item">
-              <mat-form-field appearance="outline">
-                <mat-label>Nombre - Hoja de Trabajo</mat-label>
-                <input matInput formControlName="nombreHojaTrabajo" />
-                <mat-error
-                  *ngIf="
-                    myFormItemLab.get('nombreHojaTrabajo')?.hasError('required')
-                  "
-                >
-                  Nombre es requerido
-                </mat-error>
-              </mat-form-field>
-            </div>
-
-            <div [style.flex]="setFlex(32, '%')" class="flex-item">
-              <mat-form-field appearance="outline">
-                <mat-label>Método</mat-label>
-                <input matInput formControlName="metodoItemLab" />
-                <mat-error
-                  *ngIf="
-                    myFormItemLab.get('metodoItemLab')?.hasError('required')
-                  "
-                >
-                  Método es requerido
-                </mat-error>
-              </mat-form-field>
-            </div>
-          </div>
-
-          <div class="row-flex mt-2">
-            <div [style.flex]="setFlex(16, '%')" class="flex-item">
-              <mat-form-field appearance="outline">
-                <mat-label>Unidades</mat-label>
-                <input matInput formControlName="unidadesRef" />
-                <mat-error
-                  *ngIf="myFormItemLab.get('unidadesRef')?.hasError('required')"
-                >
-                  Requerido
-                </mat-error>
-              </mat-form-field>
-            </div>
-
-            <div [style.flex]="setFlex(32, '%')" class="flex-item">
-              <mat-form-field appearance="outline">
-                <mat-label>Pertenece a</mat-label>
-                <mat-select formControlName="perteneceAPrueba">
-                  <mat-option
-                    *ngFor="let prueba of pruebas"
-                    [value]="prueba._id"
-                  >
-                    {{ prueba.codPruebaLab }} -
-                    {{ prueba.nombrePruebaLab }}
-                  </mat-option>
-                </mat-select>
-
-                <mat-error
-                  *ngIf="
-                    myFormItemLab.get('perteneceAPrueba')?.hasError('required')
-                  "
-                >
-                  Obligatorio
-                </mat-error>
-              </mat-form-field>
-            </div>
-
-            <div [style.flex]="setFlex(32, '%')" class="flex-item">
-              <mat-form-field appearance="outline">
-                <mat-label>Grupo</mat-label>
-                <input matInput formControlName="grupoItemLab" />
-              </mat-form-field>
-            </div>
-
-            <div [style.flex]="setFlex(16, '%')" class="flex-item">
-              <mat-form-field appearance="outline">
-                <mat-label>Orden de Impresión</mat-label>
-                <input
-                  matInput
-                  type="number"
-                  min="1"
-                  formControlName="ordenImpresion"
-                />
-                <mat-error
-                  *ngIf="
-                    myFormItemLab.get('ordenImpresion')?.hasError('required')
-                  "
-                >
-                  Requerido
-                </mat-error>
-              </mat-form-field>
-            </div>
-          </div>
-
-          <div class="row-flex mt-2">
-            <div [style.flex]="setFlex(40, '%')" class="flex-item">
-              <mat-form-field appearance="outline">
-                <mat-label>Valores de Referencia - Hoja de Trabajo</mat-label>
-                <textarea
-                  rows="3"
-                  matInput
-                  formControlName="valoresHojaTrabajo"
-                ></textarea>
-                <mat-error
-                  *ngIf="
-                    myFormItemLab
-                      .get('valoresHojaTrabajo')
-                      ?.hasError('required')
-                  "
-                >
-                  Ingrese valores para hoja de trabajo
-                </mat-error>
-              </mat-form-field>
-            </div>
-            <div [style.flex]="setFlex(40, '%')" class="flex-item">
-              <mat-form-field appearance="outline">
-                <mat-label>Valor de Referencia - Informe</mat-label>
-                <textarea
-                  rows="3"
-                  matInput
-                  formControlName="valoresInforme"
-                ></textarea>
-                <mat-error
-                  *ngIf="
-                    myFormItemLab.get('valoresInforme')?.hasError('required')
-                  "
-                >
-                  Ingrese valores para informe
-                </mat-error>
-              </mat-form-field>
-            </div>
-            <div [style.flex]="setFlex(15, '%')" class="flex-item mb-3">
-              <mat-slide-toggle formControlName="poseeValidacion"
-                >Posee validación</mat-slide-toggle
-              >
-            </div>
-          </div>
-        </mat-card-content>
-      </mat-card>
--->
-
       <mat-card>
         <mat-card-title>
           <div class="row-flex align-items-center">DATOS DEL ITEM</div>
@@ -336,19 +175,17 @@
         <mat-card-content>
           <!-- Switch -->
           <div class="row-flex mt-3">
-            <div [style.flex]="setFlex(35, '%')" class="flex-item mb-3">
+            <div [style.flex]="setFlex(25, '%')" class="flex-item mb-3">
               <mat-slide-toggle formControlName="poseeReferenciaTexto">
                 Mostrar referencia en informe
               </mat-slide-toggle>
             </div>
-          </div>
 
-          <!-- Texto de referencia -->
-          <div
-            class="row-flex mt-2"
-            *ngIf="myFormItemLab.get('poseeReferenciaTexto')?.value"
-          >
-            <div [style.flex]="setFlex(75, '%')" class="flex-item">
+            <div
+              [style.flex]="setFlex(70, '%')"
+              class="flex-item"
+              *ngIf="myFormItemLab.get('poseeReferenciaTexto')?.value"
+            >
               <mat-form-field appearance="outline" class="w-100">
                 <mat-label> Texto de referencia </mat-label>
 
@@ -465,8 +302,35 @@
           </div>
 
           <!-- =====================================================
-     VALORES DE REFERENCIA CATEGÓRICOS
-====================================================== -->
+              PERMITIR VALOR NO LISTADO
+          ====================================================== -->
+
+          <div
+            class="row-flex mt-3"
+            *ngIf="obtenerOpcionesResultado().length > 0"
+          >
+            <div [style.flex]="setFlex(75, '%')" class="flex-item">
+              <mat-slide-toggle formControlName="permiteValorNoListado">
+                Permitir ingreso manual de un valor no listado
+              </mat-slide-toggle>
+
+              <div
+                style="
+                  font-size: 12px;
+                  color: #6c757d;
+                  margin-top: 5px;
+                  margin-left: 48px;
+                "
+              >
+                Active esta opción cuando puedan presentarse resultados
+                excepcionales que no estén incluidos en la lista habitual.
+              </div>
+            </div>
+          </div>
+
+          <!-- =====================================================
+              VALORES DE REFERENCIA CATEGÓRICOS
+          ====================================================== -->
 
           <div
             class="row-flex mt-3"
@@ -498,8 +362,8 @@
       </mat-card>
 
       <!-- =========================================================
-     VALORES DE REFERENCIA - RESULTADO NUMÉRICO
-========================================================= -->
+          VALORES DE REFERENCIA - RESULTADO NUMÉRICO
+      ========================================================= -->
 
       <mat-card
         class="mt-2"
@@ -525,8 +389,8 @@
 
         <mat-card-content>
           <!-- =====================================================
-         BOTÓN AGREGAR
-    ====================================================== -->
+              BOTÓN AGREGAR
+          ====================================================== -->
 
           <div class="row mt-2 text-center">
             <button
@@ -543,8 +407,8 @@
           </div>
 
           <!-- =====================================================
-         MENSAJE SI NO EXISTEN REFERENCIAS
-    ====================================================== -->
+              MENSAJE SI NO EXISTEN REFERENCIAS
+          ====================================================== -->
 
           <div
             *ngIf="referenciasResultado.length === 0"
@@ -556,8 +420,8 @@
           </div>
 
           <!-- =====================================================
-         FORM ARRAY
-    ====================================================== -->
+              FORM ARRAY
+          ====================================================== -->
 
           <div formArrayName="referenciasResultado">
             <div
@@ -569,8 +433,8 @@
               class="mt-3"
             >
               <!-- =================================================
-             CABECERA DE REFERENCIA
-        ================================================== -->
+                  CABECERA DE REFERENCIA
+              ================================================== -->
 
               <div
                 class="row-flex"
@@ -606,8 +470,8 @@
               </div>
 
               <!-- =================================================
-             PRIMERA FILA
-        ================================================== -->
+                  PRIMERA FILA
+              ================================================== -->
 
               <div class="row-flex mt-2">
                 <!-- Descripción -->
@@ -665,13 +529,13 @@
               </div>
 
               <!-- =================================================
-             VALORES
-        ================================================== -->
+                  VALORES
+              ================================================== -->
 
               <div class="row-flex mt-2">
                 <!-- ===============================================
-               RANGO
-          ================================================ -->
+                    RANGO
+                ================================================ -->
 
                 <ng-container
                   *ngIf="
@@ -735,8 +599,8 @@
                 </ng-container>
 
                 <!-- ===============================================
-               LÍMITE
-          ================================================ -->
+                    LÍMITE
+                ================================================ -->
 
                 <ng-container
                   *ngIf="
@@ -776,8 +640,8 @@
               </div>
 
               <!-- =================================================
-             EDAD
-        ================================================== -->
+                  EDAD
+              ================================================== -->
 
               <div
                 class="row-flex mt-2"
@@ -860,109 +724,84 @@
       </mat-card>
 
       <!-- =========================================================
-     REGLAS DE ALERTA - RESULTADO NUMÉRICO
-========================================================= -->
+          REGLAS DE ALERTA
+      ========================================================= -->
 
       <mat-card
-        class="mt-2"
-        *ngIf="myFormItemLab.get('tipoResultado')?.value === 'NUMERICO'"
+        class="mb-3 mt-3"
+        *ngIf="
+          myFormItemLab.get('tipoResultado')?.value === 'NUMERICO' ||
+          myFormItemLab.get('tipoResultado')?.value === 'CATEGORICO'
+        "
       >
         <!-- =======================================================
-       TÍTULO
-  ======================================================== -->
+            CABECERA
+        ======================================================== -->
 
-        <mat-card-title>
-          <div class="row-flex align-items-center">
-            <div [style.flex]="setFlex(70, '%')" class="flex-item">
-              REGLAS DE ALERTA
-            </div>
-
-            <div [style.flex]="setFlex(25, '%')" class="flex-item text-end">
-              <span style="font-size: 12px; font-weight: 400">
-                {{ reglasAlerta.length }}
-                regla(s) configurada(s)
-              </span>
-            </div>
-          </div>
-        </mat-card-title>
+        <mat-card-title> REGLAS DE ALERTA </mat-card-title>
 
         <mat-card-content>
-          <!-- =====================================================
-         TEXTO EXPLICATIVO
-    ====================================================== -->
+          <div class="row-flex mb-3">
+            <div [style.flex]="setFlex(25, '%')" class="flex-item text-muted">
+              {{ reglasAlerta.length }}
+              regla(s) configurada(s)
+            </div>
 
-          <div class="row-flex mt-2">
-            <div [style.flex]="setFlex(95, '%')" class="flex-item">
-              <span style="font-size: 12px; color: #6c757d">
-                Configure condiciones que deberán generar una alerta durante el
-                registro o validación del resultado.
-              </span>
+            <div [style.flex]="setFlex(50, '%')" class="flex-item text-muted">
+              Configure condiciones que requieran atención durante el ingreso o
+              validación del resultado.
+            </div>
+
+            <!-- =====================================================
+              AGREGAR ALERTA
+          ====================================================== -->
+
+            <div [style.flex]="setFlex(25, '%')" class="flex-item">
+              <button
+                mat-flat-button
+                color="primary"
+                type="button"
+                (click)="agregarReglaAlerta()"
+              >
+                <mat-icon> add </mat-icon>
+
+                Agregar alerta
+              </button>
             </div>
           </div>
 
           <!-- =====================================================
-         BOTÓN AGREGAR
-    ====================================================== -->
+              SIN ALERTAS
+          ====================================================== -->
 
-          <div class="row mt-2 text-center">
-            <button
-              mat-flat-button
-              color="primary"
-              class="btn-telefono"
-              type="button"
-              (click)="agregarReglaAlerta()"
-            >
-              <mat-icon class="me-1"> add </mat-icon>
-
-              Agregar alerta
-            </button>
+          <div *ngIf="reglasAlerta.length === 0" class="text-muted mb-3">
+            No se han configurado reglas de alerta.
           </div>
 
           <!-- =====================================================
-         SIN ALERTAS
-    ====================================================== -->
-
-          <div *ngIf="reglasAlerta.length === 0" class="text-center mt-3 mb-2">
-            <span style="font-size: 12px; color: #6c757d">
-              No existen reglas de alerta configuradas para este Item.
-            </span>
-          </div>
-
-          <!-- =====================================================
-         FORM ARRAY
-    ====================================================== -->
+              FORM ARRAY
+          ====================================================== -->
 
           <div formArrayName="reglasAlerta">
             <div
               *ngFor="let alertaGroup of reglasAlerta.controls; let i = index"
               [formGroupName]="i"
-              class="mt-3"
+              class="mb-4 p-3 border rounded"
             >
               <!-- =================================================
-             CABECERA
-        ================================================== -->
+                  ENCABEZADO DE LA ALERTA
+              ================================================== -->
 
               <div
-                class="row-flex"
-                style="
-                  align-items: center;
-                  border-bottom: 1px solid #dddddd;
-                  margin-bottom: 10px;
-                "
+                class="d-flex justify-content-between align-items-center mb-3"
               >
-                <div [style.flex]="setFlex(80, '%')" class="flex-item">
-                  <strong> Alerta {{ i + 1 }} </strong>
-                </div>
+                <strong> Alerta {{ i + 1 }} </strong>
 
-                <!-- Activo -->
-                <div [style.flex]="setFlex(12, '%')" class="flex-item mb-2">
+                <div class="d-flex align-items-center gap-3">
                   <mat-slide-toggle formControlName="activo">
-                    Activo
+                    Activa
                   </mat-slide-toggle>
-                </div>
 
-                <!-- Eliminar -->
-                <div [style.flex]="setFlex(5, '%')" class="flex-item">
                   <button
                     mat-icon-button
                     color="warn"
@@ -976,20 +815,16 @@
               </div>
 
               <!-- =================================================
-             PRIMERA FILA
-        ================================================== -->
+                  DESCRIPCIÓN / CONDICIÓN / NIVEL
+              ================================================== -->
 
-              <div class="row-flex mt-2">
-                <!-- Descripción -->
-                <div [style.flex]="setFlex(32, '%')" class="flex-item">
+              <div class="row-flex">
+                <!-- DESCRIPCIÓN -->
+                <div [style.flex]="setFlex(35, '%')" class="flex-item">
                   <mat-form-field appearance="outline" class="w-100">
                     <mat-label> Descripción </mat-label>
 
-                    <input
-                      matInput
-                      formControlName="descripcion"
-                      placeholder="Ej. Hipoglucemia crítica"
-                    />
+                    <input matInput formControlName="descripcion" />
 
                     <mat-error
                       *ngIf="
@@ -1001,32 +836,10 @@
                   </mat-form-field>
                 </div>
 
-                <!-- Condición -->
-                <div [style.flex]="setFlex(30, '%')" class="flex-item">
-                  <mat-form-field appearance="outline" class="w-100">
-                    <mat-label> Condición </mat-label>
-
-                    <mat-select formControlName="condicion">
-                      <mat-option
-                        *ngFor="let condicion of condicionesAlertaNumerica"
-                        [value]="condicion.value"
-                      >
-                        {{ condicion.label }}
-                      </mat-option>
-                    </mat-select>
-
-                    <mat-error
-                      *ngIf="alertaGroup.get('condicion')?.hasError('required')"
-                    >
-                      Requerido
-                    </mat-error>
-                  </mat-form-field>
-                </div>
-
-                <!-- Nivel -->
+                <!-- NIVEL -->
                 <div [style.flex]="setFlex(25, '%')" class="flex-item">
                   <mat-form-field appearance="outline" class="w-100">
-                    <mat-label> Nivel de alerta </mat-label>
+                    <mat-label> Nivel </mat-label>
 
                     <mat-select formControlName="nivelAlerta">
                       <mat-option
@@ -1038,67 +851,99 @@
                     </mat-select>
                   </mat-form-field>
                 </div>
+
+                <!-- CONDICIÓN -->
+                <div [style.flex]="setFlex(30, '%')" class="flex-item">
+                  <mat-form-field appearance="outline" class="w-100">
+                    <mat-label> Condición </mat-label>
+
+                    <mat-select formControlName="condicion">
+                      <!-- =========================================
+                          NUMÉRICO
+                      ========================================== -->
+
+                      <ng-container
+                        *ngIf="
+                          myFormItemLab.get('tipoResultado')?.value ===
+                          'NUMERICO'
+                        "
+                      >
+                        <mat-option
+                          *ngFor="let condicion of condicionesAlertaNumerica"
+                          [value]="condicion.value"
+                        >
+                          {{ condicion.label }}
+                        </mat-option>
+                      </ng-container>
+
+                      <!-- =========================================
+                          CATEGÓRICO
+                      ========================================== -->
+
+                      <ng-container
+                        *ngIf="
+                          myFormItemLab.get('tipoResultado')?.value ===
+                          'CATEGORICO'
+                        "
+                      >
+                        <mat-option
+                          *ngFor="let condicion of condicionesAlertaCategorica"
+                          [value]="condicion.value"
+                        >
+                          {{ condicion.label }}
+                        </mat-option>
+                      </ng-container>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
               </div>
 
               <!-- =================================================
-             SEGUNDA FILA - VALORES
-        ================================================== -->
+                  VALOR NUMÉRICO
+              ================================================== -->
 
-              <div class="row-flex mt-2">
-                <!-- =================================================
-               FUERA DE RANGO
-          ================================================== -->
-
+              <div
+                class="row-flex mt-2"
+                *ngIf="myFormItemLab.get('tipoResultado')?.value === 'NUMERICO'"
+              >
+                <!-- FUERA DE RANGO -->
                 <ng-container
                   *ngIf="
                     alertaGroup.get('condicion')?.value === 'FUERA_DE_RANGO'
                   "
                 >
-                  <!-- Valor mínimo -->
-                  <div [style.flex]="setFlex(20, '%')" class="flex-item">
+                  <div [style.flex]="setFlex(25, '%')" class="flex-item">
                     <mat-form-field appearance="outline" class="w-100">
                       <mat-label> Valor mínimo </mat-label>
 
-                      <input
-                        matInput
-                        type="number"
-                        step="any"
-                        formControlName="valor1"
-                      />
+                      <input matInput type="number" formControlName="valor1" />
 
-                      <mat-error
-                        *ngIf="alertaGroup.get('valor1')?.hasError('required')"
+                      <span
+                        matTextSuffix
+                        *ngIf="myFormItemLab.get('unidadesRef')?.value"
                       >
-                        Requerido
-                      </mat-error>
+                        {{ myFormItemLab.get("unidadesRef")?.value }}
+                      </span>
                     </mat-form-field>
                   </div>
 
-                  <!-- Valor máximo -->
-                  <div [style.flex]="setFlex(20, '%')" class="flex-item">
+                  <div [style.flex]="setFlex(25, '%')" class="flex-item">
                     <mat-form-field appearance="outline" class="w-100">
                       <mat-label> Valor máximo </mat-label>
 
-                      <input
-                        matInput
-                        type="number"
-                        step="any"
-                        formControlName="valor2"
-                      />
+                      <input matInput type="number" formControlName="valor2" />
 
-                      <mat-error
-                        *ngIf="alertaGroup.get('valor2')?.hasError('required')"
+                      <span
+                        matTextSuffix
+                        *ngIf="myFormItemLab.get('unidadesRef')?.value"
                       >
-                        Requerido
-                      </mat-error>
+                        {{ myFormItemLab.get("unidadesRef")?.value }}
+                      </span>
                     </mat-form-field>
                   </div>
                 </ng-container>
 
-                <!-- =================================================
-               RESTO DE CONDICIONES
-          ================================================== -->
-
+                <!-- UNA SOLA CIFRA -->
                 <ng-container
                   *ngIf="
                     alertaGroup.get('condicion')?.value !== 'FUERA_DE_RANGO'
@@ -1108,44 +953,60 @@
                     <mat-form-field appearance="outline" class="w-100">
                       <mat-label> Valor </mat-label>
 
-                      <input
-                        matInput
-                        type="number"
-                        step="any"
-                        formControlName="valor1"
-                      />
+                      <input matInput type="number" formControlName="valor1" />
 
-                      <mat-error
-                        *ngIf="alertaGroup.get('valor1')?.hasError('required')"
+                      <span
+                        matTextSuffix
+                        *ngIf="myFormItemLab.get('unidadesRef')?.value"
                       >
-                        Requerido
-                      </mat-error>
+                        {{ myFormItemLab.get("unidadesRef")?.value }}
+                      </span>
                     </mat-form-field>
                   </div>
                 </ng-container>
+              </div>
 
-                <!-- Unidad solo informativa -->
-                <div [style.flex]="setFlex(20, '%')" class="flex-item mb-3">
-                  <span style="font-size: 12px; color: #6c757d">
-                    Unidad:
-                    <strong>
-                      {{
-                        myFormItemLab.get("unidadesRef")?.value || "Sin unidad"
-                      }}
-                    </strong>
-                  </span>
+              <!-- =================================================
+                  VALOR CATEGÓRICO
+              ================================================== -->
+
+              <div
+                class="row-flex mt-2"
+                *ngIf="
+                  myFormItemLab.get('tipoResultado')?.value === 'CATEGORICO'
+                "
+              >
+                <div [style.flex]="setFlex(35, '%')" class="flex-item">
+                  <mat-form-field appearance="outline" class="w-100">
+                    <mat-label> Valor </mat-label>
+
+                    <mat-select formControlName="valor1">
+                      <mat-option
+                        *ngFor="let opcion of obtenerOpcionesResultado()"
+                        [value]="opcion"
+                      >
+                        {{ opcion }}
+                      </mat-option>
+                    </mat-select>
+
+                    <mat-error
+                      *ngIf="alertaGroup.get('valor1')?.hasError('required')"
+                    >
+                      Seleccione un valor
+                    </mat-error>
+                  </mat-form-field>
                 </div>
               </div>
 
               <!-- =================================================
-             VALIDACIÓN DEL RANGO
-        ================================================== -->
+                  ERROR RANGO NUMÉRICO
+              ================================================== -->
 
               <div
                 class="row-flex"
                 *ngIf="alertaGroup.hasError('rangoAlertaInvalido')"
               >
-                <div [style.flex]="setFlex(55, '%')" class="flex-item">
+                <div [style.flex]="setFlex(60, '%')" class="flex-item">
                   <span class="text-danger">
                     El valor mínimo no puede ser mayor que el valor máximo.
                   </span>
@@ -1153,25 +1014,124 @@
               </div>
 
               <!-- =================================================
-             MENSAJE
-        ================================================== -->
+                  MENSAJE
+              ================================================== -->
 
               <div class="row-flex mt-2">
-                <div [style.flex]="setFlex(75, '%')" class="flex-item">
+                <div [style.flex]="setFlex(70, '%')" class="flex-item">
                   <mat-form-field appearance="outline" class="w-100">
                     <mat-label> Mensaje de alerta </mat-label>
 
-                    <input
-                      matInput
-                      formControlName="mensaje"
-                      placeholder="Ej. GLUCOSA CRÍTICAMENTE BAJA"
-                    />
+                    <input matInput formControlName="mensaje" />
 
                     <mat-hint>
-                      Este mensaje podrá mostrarse al personal durante la
-                      validación.
+                      Mensaje que se mostrará durante la validación del
+                      resultado.
                     </mat-hint>
                   </mat-form-field>
+                </div>
+              </div>
+
+              <!-- =================================================
+                  POBLACIÓN
+              ================================================== -->
+
+              <div class="row-flex mt-3">
+                <div [style.flex]="setFlex(40, '%')" class="flex-item">
+                  <mat-slide-toggle formControlName="aplicarPoblacion">
+                    Aplicar según sexo / edad
+                  </mat-slide-toggle>
+                </div>
+              </div>
+
+              <!-- =================================================
+                  CONFIGURACIÓN DE POBLACIÓN
+              ================================================== -->
+
+              <div *ngIf="alertaGroup.get('aplicarPoblacion')?.value">
+                <div class="row-flex mt-3">
+                  <!-- SEXO -->
+                  <div [style.flex]="setFlex(25, '%')" class="flex-item">
+                    <mat-form-field appearance="outline" class="w-100">
+                      <mat-label> Sexo </mat-label>
+
+                      <mat-select formControlName="sexo">
+                        <mat-option
+                          *ngFor="let sexo of sexosReferencia"
+                          [value]="sexo.value"
+                        >
+                          {{ sexo.label }}
+                        </mat-option>
+                      </mat-select>
+                    </mat-form-field>
+                  </div>
+
+                  <!-- APLICAR EDAD -->
+                  <div [style.flex]="setFlex(30, '%')" class="flex-item">
+                    <mat-slide-toggle formControlName="aplicarEdad">
+                      Aplicar por edad
+                    </mat-slide-toggle>
+                  </div>
+                </div>
+
+                <!-- ===============================================
+                    EDAD
+                ================================================ -->
+
+                <div
+                  class="row-flex mt-2"
+                  *ngIf="alertaGroup.get('aplicarEdad')?.value"
+                >
+                  <div [style.flex]="setFlex(20, '%')" class="flex-item">
+                    <mat-form-field appearance="outline" class="w-100">
+                      <mat-label> Edad mínima </mat-label>
+
+                      <input
+                        matInput
+                        type="number"
+                        min="0"
+                        formControlName="edadMin"
+                      />
+                    </mat-form-field>
+                  </div>
+
+                  <div [style.flex]="setFlex(20, '%')" class="flex-item">
+                    <mat-form-field appearance="outline" class="w-100">
+                      <mat-label> Edad máxima </mat-label>
+
+                      <input
+                        matInput
+                        type="number"
+                        min="0"
+                        formControlName="edadMax"
+                      />
+                    </mat-form-field>
+                  </div>
+
+                  <div [style.flex]="setFlex(22, '%')" class="flex-item">
+                    <mat-form-field appearance="outline" class="w-100">
+                      <mat-label> Unidad </mat-label>
+
+                      <mat-select formControlName="unidadEdad">
+                        <mat-option
+                          *ngFor="let unidad of unidadesEdad"
+                          [value]="unidad.value"
+                        >
+                          {{ unidad.label }}
+                        </mat-option>
+                      </mat-select>
+                    </mat-form-field>
+                  </div>
+                </div>
+
+                <!-- ERROR EDAD -->
+                <div
+                  class="row-flex"
+                  *ngIf="alertaGroup.hasError('rangoEdadAlertaInvalido')"
+                >
+                  <span class="text-danger">
+                    La edad mínima no puede ser mayor que la edad máxima.
+                  </span>
                 </div>
               </div>
             </div>
@@ -1249,74 +1209,100 @@
           </mat-form-field>
 
           <table mat-table [dataSource]="dataSourceItems">
+            <!-- =====================================================
+                CÓDIGO
+            ====================================================== -->
+
             <ng-container matColumnDef="Codigo">
               <th mat-header-cell *matHeaderCellDef>Código</th>
-              <td mat-cell *matCellDef="let item">{{ item.codItemLab }}</td>
+
+              <td mat-cell *matCellDef="let item">
+                {{ item.codItemLab }}
+              </td>
             </ng-container>
+
+            <!-- =====================================================
+                ITEM
+            ====================================================== -->
 
             <ng-container matColumnDef="NombreItem">
               <th mat-header-cell *matHeaderCellDef>Item</th>
+
               <td mat-cell *matCellDef="let item">
                 {{ item.nombreInforme }}
               </td>
             </ng-container>
 
-            <ng-container matColumnDef="Metodo">
-              <th mat-header-cell *matHeaderCellDef>Método</th>
+            <!-- =====================================================
+                CONTEXTO
+            ====================================================== -->
+
+            <ng-container matColumnDef="Contexto">
+              <th mat-header-cell *matHeaderCellDef>Contexto</th>
+
               <td mat-cell *matCellDef="let item">
-                {{ item.metodoItemLab }}
+                {{ item.contextoAnalitico || "—" }}
               </td>
             </ng-container>
 
-            <ng-container matColumnDef="Validacion">
-              <th mat-header-cell *matHeaderCellDef>Validación</th>
+            <!-- =====================================================
+                TIPO DE RESULTADO
+            ====================================================== -->
+
+            <ng-container matColumnDef="TipoResultado">
+              <th mat-header-cell *matHeaderCellDef>Tipo</th>
+
               <td mat-cell *matCellDef="let item">
-                {{ item.poseeValidacion ? "Si" : "No" }}
+                {{ obtenerNombreTipoResultado(item.tipoResultado) }}
               </td>
             </ng-container>
 
-            <!-- <ng-container matColumnDef="PerteneceAPrueba">
-              <th mat-header-cell *matHeaderCellDef>Pertence a</th>
+            <!-- =====================================================
+                ESTADO
+            ====================================================== -->
+
+            <ng-container matColumnDef="Estado">
+              <th mat-header-cell *matHeaderCellDef>Estado</th>
+
               <td mat-cell *matCellDef="let item">
-                {{ item.perteneceAPrueba.nombrePruebaLab || "N/A" }}
+                <span [style.font-weight]="500">
+                  {{ item.estadoItem === "ACTIVO" ? "Activo" : "Inactivo" }}
+                </span>
               </td>
-            </ng-container> -->
-
-            <ng-container matColumnDef="grupoItemLab">
-              <th mat-header-cell *matHeaderCellDef>Grupo</th>
-              <td mat-cell *matCellDef="let item">{{ item.grupoItemLab }}</td>
             </ng-container>
 
-            <ng-container matColumnDef="ordenImpresion">
-              <th mat-header-cell *matHeaderCellDef>Orden</th>
-              <td mat-cell *matCellDef="let item">{{ item.ordenImpresion }}</td>
-            </ng-container>
+            <!-- =====================================================
+                ACCIÓN
+            ====================================================== -->
 
             <ng-container matColumnDef="accion">
-              <th mat-header-cell *matHeaderCellDef>Acción</th>
-              <td mat-cell *matCellDef="let item; let i = index">
+              <th mat-header-cell *matHeaderCellDef class="text-center">
+                Acción
+              </th>
+
+              <td
+                mat-cell
+                *matCellDef="let item; let i = index"
+                class="text-center"
+              >
                 <button
                   mat-icon-button
                   color="primary"
                   type="button"
+                  matTooltip="Editar Item"
                   (click)="cargarItemLab(item, i)"
                 >
-                  <mat-icon>edit</mat-icon>
-                </button>
-
-                <button
-                  mat-icon-button
-                  color="warn"
-                  type="button"
-                  (click)="eliminarItemLab(item)"
-                >
-                  <mat-icon>delete</mat-icon>
+                  <mat-icon> edit </mat-icon>
                 </button>
               </td>
             </ng-container>
 
-            <!-- Filas -->
+            <!-- =====================================================
+                FILAS
+            ====================================================== -->
+
             <tr mat-header-row *matHeaderRowDef="columnasTablaPaciente"></tr>
+
             <tr
               mat-row
               *matRowDef="
@@ -1327,6 +1313,7 @@
               [class.fila-seleccionada]="i === filaSeleccionadaIndex"
             ></tr>
           </table>
+
           <div>
             <mat-paginator
               #MatPaginatorItems

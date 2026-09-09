@@ -77,121 +77,51 @@ export class MantItemLabComponent implements OnInit {
   // CONFIGURACIÓN GENERAL
   // ==========================================================
 
-  public tiposResultado: {
-    value: TipoResultadoItem;
-    label: string;
-  }[] = [
-    {
-      value: 'NUMERICO',
-      label: 'Numérico',
-    },
-    {
-      value: 'TEXTO',
-      label: 'Texto',
-    },
-    {
-      value: 'CATEGORICO',
-      label: 'Categórico',
-    },
+  public tiposResultado: { value: TipoResultadoItem; label: string }[] = [
+    { value: 'NUMERICO', label: 'Numérico' },
+    { value: 'TEXTO', label: 'Texto' },
+    { value: 'CATEGORICO', label: 'Categórico' },
   ];
 
   public sexosReferencia = [
-    {
-      value: 'TODOS',
-      label: 'Todos',
-    },
-    {
-      value: 'MASCULINO',
-      label: 'Masculino',
-    },
-    {
-      value: 'FEMENINO',
-      label: 'Femenino',
-    },
+    { value: 'TODOS', label: 'Todos' },
+    { value: 'MASCULINO', label: 'Masculino' },
+    { value: 'FEMENINO', label: 'Femenino' },
   ];
 
   public tiposReferenciaNumerica = [
-    {
-      value: 'RANGO',
-      label: 'Rango',
-    },
-    {
-      value: 'MENOR_QUE',
-      label: 'Menor que',
-    },
-    {
-      value: 'MENOR_IGUAL_QUE',
-      label: 'Menor o igual que',
-    },
-    {
-      value: 'MAYOR_QUE',
-      label: 'Mayor que',
-    },
-    {
-      value: 'MAYOR_IGUAL_QUE',
-      label: 'Mayor o igual que',
-    },
+    { value: 'RANGO', label: 'Rango' },
+    { value: 'MENOR_QUE', label: 'Menor que' },
+    { value: 'MENOR_IGUAL_QUE', label: 'Menor o igual que' },
+    { value: 'MAYOR_QUE', label: 'Mayor que' },
+    { value: 'MAYOR_IGUAL_QUE', label: 'Mayor o igual que' },
   ];
 
   public unidadesEdad = [
-    {
-      value: 'DIAS',
-      label: 'Días',
-    },
-    {
-      value: 'MESES',
-      label: 'Meses',
-    },
-    {
-      value: 'ANIOS',
-      label: 'Años',
-    },
+    { value: 'DIAS', label: 'Días' },
+    { value: 'MESES', label: 'Meses' },
+    { value: 'ANIOS', label: 'Años' },
   ];
 
   public condicionesAlertaNumerica = [
-    {
-      value: 'MENOR_QUE',
-      label: 'Menor que',
-    },
-    {
-      value: 'MENOR_IGUAL_QUE',
-      label: 'Menor o igual que',
-    },
-    {
-      value: 'MAYOR_QUE',
-      label: 'Mayor que',
-    },
-    {
-      value: 'MAYOR_IGUAL_QUE',
-      label: 'Mayor o igual que',
-    },
-    {
-      value: 'FUERA_DE_RANGO',
-      label: 'Fuera de rango',
-    },
-    {
-      value: 'IGUAL_A',
-      label: 'Igual a',
-    },
-    {
-      value: 'DISTINTO_DE',
-      label: 'Distinto de',
-    },
+    { value: 'MENOR_QUE', label: 'Menor que' },
+    { value: 'MENOR_IGUAL_QUE', label: 'Menor o igual que' },
+    { value: 'MAYOR_QUE', label: 'Mayor que' },
+    { value: 'MAYOR_IGUAL_QUE', label: 'Mayor o igual que' },
+    { value: 'FUERA_DE_RANGO', label: 'Fuera de rango' },
+    { value: 'IGUAL_A', label: 'Igual a' },
+    { value: 'DISTINTO_DE', label: 'Distinto de' },
   ];
 
   public nivelesAlerta = [
-    {
-      value: 'INFORMATIVA',
-      label: 'Informativa',
-    },
-    {
-      value: 'ADVERTENCIA',
-      label: 'Advertencia',
-    },
-    {
-      value: 'CRITICA',
-      label: 'Crítica',
-    },
+    { value: 'INFORMATIVA', label: 'Informativa' },
+    { value: 'ADVERTENCIA', label: 'Advertencia' },
+    { value: 'CRITICA', label: 'Crítica' },
+  ];
+
+  public condicionesAlertaCategorica = [
+    { value: 'IGUAL_A', label: 'Igual a' },
+    { value: 'DISTINTO_DE', label: 'Distinto de' },
   ];
 
   // ==========================================================
@@ -232,6 +162,7 @@ export class MantItemLabComponent implements OnInit {
     contextoAnalitico: ['', [Validators.maxLength(150)]],
     tipoResultado: ['TEXTO', [Validators.required]],
     opcionesResultado: [[]],
+    permiteValorNoListado: [false],
     valoresReferenciaCategorica: [[]],
     poseeReferenciaTexto: [false],
     textoReferenciaResultado: [''],
@@ -271,26 +202,7 @@ export class MantItemLabComponent implements OnInit {
   ngOnInit(): void {
     this.ultimosItems();
     this.limpiarValidacion();
-    this.breakpointObserver
-      .observe([Breakpoints.Handset])
-      .subscribe((result) => {
-        this.isMobile = result.matches;
-
-        if (this.isMobile) {
-          this.opened = false;
-        }
-      });
-  }
-
-  // ==========================================================
-  // RESPONSIVE
-  // ==========================================================
-
-  public opened = false;
-  public isMobile = false;
-
-  get sidenavMode(): 'side' | 'over' {
-    return this.isMobile ? 'over' : 'side';
+    this.inicializarCambioTipoResultado();
   }
 
   // ==========================================================
@@ -610,15 +522,25 @@ export class MantItemLabComponent implements OnInit {
   }
 
   eliminarOpcionResultado(index: number): void {
-    const opciones = this.obtenerOpcionesResultado();
+    const opciones = [...this.obtenerOpcionesResultado()];
     const opcionEliminada = opciones[index];
+
+    if (!opcionEliminada) {
+      return;
+    }
+
+    // ========================================================
+    // ELIMINAR DE OPCIONES DE RESULTADO
+    // ========================================================
 
     opciones.splice(index, 1);
 
-    this.myFormItemLab.get('opcionesResultado')?.setValue([...opciones]);
+    this.myFormItemLab.get('opcionesResultado')?.setValue(opciones);
 
-    // Si la opción eliminada estaba configurada
-    // como referencia, también la retiramos.
+    // ========================================================
+    // ELIMINAR DE REFERENCIA CATEGÓRICA
+    // ========================================================
+
     const referenciasActuales: string[] =
       this.myFormItemLab.get('valoresReferenciaCategorica')?.value ?? [];
 
@@ -627,6 +549,24 @@ export class MantItemLabComponent implements OnInit {
       ?.setValue(
         referenciasActuales.filter((valor) => valor !== opcionEliminada),
       );
+
+    // ========================================================
+    // ELIMINAR DE REGLAS DE ALERTA
+    // ========================================================
+
+    this.reglasAlerta.controls.forEach((control) => {
+      const valorAlerta = control.get('valor1')?.value;
+
+      if (valorAlerta === opcionEliminada) {
+        control.get('valor1')?.setValue(null);
+
+        control.get('valor1')?.markAsTouched();
+      }
+    });
+
+    // ========================================================
+    // MARCAR CAMBIO
+    // ========================================================
 
     this.myFormItemLab.get('opcionesResultado')?.markAsDirty();
   }
@@ -643,9 +583,15 @@ export class MantItemLabComponent implements OnInit {
   private validarConfiguracionResultado(): boolean {
     const tipoResultado = this.myFormItemLab.get('tipoResultado')?.value;
 
+    // ========================================================
+    // CATEGÓRICO
+    // ========================================================
+
     if (tipoResultado === 'CATEGORICO') {
       const opciones = this.obtenerOpcionesResultado();
 
+      // Debe existir por lo menos
+      // una opción habitual.
       if (opciones.length === 0) {
         Swal.fire({
           title: 'Opciones de resultado requeridas',
@@ -656,7 +602,43 @@ export class MantItemLabComponent implements OnInit {
 
         return false;
       }
+
+      // ======================================================
+      // VALIDAR QUE LAS ALERTAS APUNTEN
+      // A OPCIONES EXISTENTES
+      // ======================================================
+
+      const alertaConValorInvalido = this.reglasAlerta.controls.some(
+        (control) => {
+          const valor = control.get('valor1')?.value;
+
+          /*
+           * Si está vacío, el Validators.required
+           * del formulario se encargará.
+           */
+          if (valor === null || valor === undefined || valor === '') {
+            return false;
+          }
+
+          return !opciones.includes(valor);
+        },
+      );
+
+      if (alertaConValorInvalido) {
+        Swal.fire({
+          title: 'Alerta categórica inválida',
+          text: 'Una regla de alerta utiliza un valor que ya no existe entre las opciones de resultado.',
+          icon: 'warning',
+          confirmButtonText: 'Ok',
+        });
+
+        return false;
+      }
     }
+
+    // ========================================================
+    // TEXTO
+    // ========================================================
 
     if (tipoResultado === 'TEXTO') {
       const poseeReferencia = this.myFormItemLab.get(
@@ -682,34 +664,52 @@ export class MantItemLabComponent implements OnInit {
     return true;
   }
 
+  private inicializarCambioTipoResultado(): void {
+    const tipoControl = this.myFormItemLab.get('tipoResultado');
+
+    let tipoAnterior: TipoResultadoItem = tipoControl?.value ?? 'TEXTO';
+
+    tipoControl?.valueChanges.subscribe((nuevoTipo: TipoResultadoItem) => {
+      if (tipoAnterior && nuevoTipo !== tipoAnterior) {
+        /*
+         * Las reglas numéricas y categóricas
+         * no son intercambiables.
+         *
+         * Ejemplo:
+         *
+         * NUMERICO:
+         * MENOR_QUE 40
+         *
+         * CATEGORICO:
+         * IGUAL_A POSITIVO
+         */
+        this.reglasAlerta.clear();
+      }
+
+      tipoAnterior = nuevoTipo;
+    });
+  }
+
   // ==========================================================
   // TABLA
   // ==========================================================
 
   @ViewChild(MatTable)
-  table!: MatTable<any>;
+  table!: MatTable<IItemLab>;
 
   @ViewChild('MatPaginatorItems')
   paginatorItems!: MatPaginator;
 
-  /*
-   * Temporalmente usamos any aquí porque el HTML antiguo
-   * todavía intenta acceder directamente a:
-   *
-   * item.perteneceAPrueba.nombrePruebaLab
-   *
-   * Cuando cambiemos el HTML, volverá a ser:
-   *
-   * MatTableDataSource<IItemLab>
-   */
-  public dataSourceItems = new MatTableDataSource<any>();
+  public dataSourceItems = new MatTableDataSource<IItemLab>();
+
   private todosLosItems: IItemLab[] = [];
+
   public columnasTablaPaciente: string[] = [
     'Codigo',
     'NombreItem',
-    // 'PerteneceAPrueba',
-    'grupoItemLab',
-    'ordenImpresion',
+    'Contexto',
+    'TipoResultado',
+    'Estado',
     'accion',
   ];
 
@@ -717,27 +717,21 @@ export class MantItemLabComponent implements OnInit {
     this.dataSourceItems.paginator = this.paginatorItems;
 
     this.dataSourceItems.filterPredicate = (data: IItemLab, filter: string) => {
-      const searchStr = filter.toLowerCase();
-      let nombrePrueba = '';
-
-      if (data.perteneceAPrueba && typeof data.perteneceAPrueba === 'object') {
-        nombrePrueba =
-          data.perteneceAPrueba.nombrePruebaLab?.toLowerCase() ?? '';
-      }
+      const searchStr = filter.trim().toLowerCase();
 
       const campos = [
-        data.codItemLab?.toLowerCase() ?? '',
-        data.nombreInforme?.toLowerCase() ?? '',
-        data.nombreHojaTrabajo?.toLowerCase() ?? '',
-        data.metodoItemLab?.toLowerCase() ?? '',
-        data.contextoAnalitico?.toLowerCase() ?? '',
-        data.tipoResultado?.toLowerCase() ?? '',
-        data.estadoItem?.toLowerCase() ?? '',
-        data.grupoItemLab?.toLowerCase() ?? '',
-        nombrePrueba,
+        data.codItemLab ?? '',
+        data.nombreInforme ?? '',
+        data.nombreHojaTrabajo ?? '',
+        data.metodoItemLab ?? '',
+        data.contextoAnalitico ?? '',
+        data.tipoResultado ?? '',
+        data.estadoItem ?? '',
       ];
 
-      return campos.some((campo) => campo.includes(searchStr));
+      return campos.some((campo) =>
+        String(campo).toLowerCase().includes(searchStr),
+      );
     };
   }
 
@@ -775,6 +769,22 @@ export class MantItemLabComponent implements OnInit {
     }
   }
 
+  obtenerNombreTipoResultado(tipo?: TipoResultadoItem): string {
+    switch (tipo) {
+      case 'NUMERICO':
+        return 'Numérico';
+
+      case 'CATEGORICO':
+        return 'Categórico';
+
+      case 'TEXTO':
+        return 'Texto';
+
+      default:
+        return '—';
+    }
+  }
+
   // ==========================================================
   // SELECCIÓN / EDICIÓN
   // ==========================================================
@@ -785,9 +795,25 @@ export class MantItemLabComponent implements OnInit {
   cargarItemLab(item: IItemLab, index: number): void {
     this.filaSeleccionadaIndex = index;
     this.itemSeleccionado = item;
+
+    // ========================================================
+    // LIMPIAR FORMARRAYS
+    // ========================================================
+
     this.paramValidacion.clear();
     this.referenciasResultado.clear();
     this.reglasAlerta.clear();
+
+    // ========================================================
+    // TIPO DE RESULTADO
+    // ========================================================
+
+    const tipoItem = item.tipoResultado ?? 'TEXTO';
+
+    // ========================================================
+    // REFERENCIA CATEGÓRICA
+    // ========================================================
+
     const referenciaCategorica = (item.referenciasResultado ?? []).find(
       (referencia) => referencia.tipoReferencia === 'VALORES_PERMITIDOS',
     );
@@ -795,13 +821,19 @@ export class MantItemLabComponent implements OnInit {
     const valoresReferenciaCategorica =
       referenciaCategorica?.valoresPermitidos ?? [];
 
+    // ========================================================
+    // REFERENCIA TEXTO
+    // ========================================================
+
     const referenciaTexto = (item.referenciasResultado ?? []).find(
       (referencia) => referencia.tipoReferencia === 'TEXTO',
     );
-
     const textoReferenciaResultado = referenciaTexto?.textoReferencia ?? '';
-
     const poseeReferenciaTexto = textoReferenciaResultado.trim().length > 0;
+
+    // ========================================================
+    // CARGAR FORMULARIO PRINCIPAL
+    // ========================================================
 
     this.myFormItemLab.reset({
       _id: item._id ?? null,
@@ -813,39 +845,63 @@ export class MantItemLabComponent implements OnInit {
       valoresInforme: item.valoresInforme ?? '',
       unidadesRef: item.unidadesRef ?? '',
 
-      // Legacy
+      // ======================================================
+      // LEGACY
+      // ======================================================
+
       perteneceAPrueba: null,
       ordenImpresion: item.ordenImpresion ?? 0,
       grupoItemLab: item.grupoItemLab ?? '',
       poseeValidacion: item.poseeValidacion ?? false,
 
-      // Nuevos
+      // ======================================================
+      // NUEVA ESTRUCTURA
+      // ======================================================
+
       contextoAnalitico: item.contextoAnalitico ?? '',
-      tipoResultado: item.tipoResultado ?? 'TEXTO',
+      tipoResultado: tipoItem,
       opcionesResultado: item.opcionesResultado ?? [],
+      permiteValorNoListado: item.permiteValorNoListado ?? false,
       valoresReferenciaCategorica: valoresReferenciaCategorica,
       poseeReferenciaTexto: poseeReferenciaTexto,
       textoReferenciaResultado: textoReferenciaResultado,
       estado: (item.estadoItem ?? 'ACTIVO') === 'ACTIVO',
     });
 
-    (item.referenciasResultado ?? []).forEach((referencia) => {
-      const grupo = this.crearReferenciaGroup(referencia);
+    // ========================================================
+    // RECONSTRUIR REFERENCIAS NUMÉRICAS
+    // ========================================================
 
-      this.referenciasResultado.push(grupo);
-    });
+    if (tipoItem === 'NUMERICO') {
+      (item.referenciasResultado ?? [])
+        .filter((referencia) =>
+          [
+            'RANGO',
+            'MENOR_QUE',
+            'MENOR_IGUAL_QUE',
+            'MAYOR_QUE',
+            'MAYOR_IGUAL_QUE',
+          ].includes(referencia.tipoReferencia),
+        )
+        .forEach((referencia) => {
+          const grupo = this.crearReferenciaGroup(referencia);
 
-    (item.reglasAlerta ?? []).forEach((alerta) => {
-      const grupo = this.crearReglaAlertaGroup(alerta);
+          this.referenciasResultado.push(grupo);
+        });
+    }
 
-      this.reglasAlerta.push(grupo);
-    });
+    // ========================================================
+    // RECONSTRUIR REGLAS DE ALERTA
+    // NUMÉRICO / CATEGÓRICO
+    // ========================================================
 
-    // (item.paramValidacion ?? []).forEach((validacion) => {
-    //   const grupo = this.crearValidacionGroup(validacion);
+    if (tipoItem === 'NUMERICO' || tipoItem === 'CATEGORICO') {
+      (item.reglasAlerta ?? []).forEach((alerta) => {
+        const grupo = this.crearReglaAlertaGroup(alerta, tipoItem);
 
-    //   this.paramValidacion.push(grupo);
-    // });
+        this.reglasAlerta.push(grupo);
+      });
+    }
   }
 
   private crearReferenciaGroup(referencia: any): FormGroup {
@@ -877,15 +933,35 @@ export class MantItemLabComponent implements OnInit {
     return grupo;
   }
 
-  private crearReglaAlertaGroup(alerta: any): FormGroup {
+  private crearReglaAlertaGroup(
+    alerta: any,
+    tipoResultado: 'NUMERICO' | 'CATEGORICO',
+  ): FormGroup {
+    const tieneRestriccionEdad =
+      (alerta.edadMin !== null && alerta.edadMin !== undefined) ||
+      (alerta.edadMax !== null && alerta.edadMax !== undefined);
+
+    const tieneRestriccionSexo = alerta.sexo && alerta.sexo !== 'TODOS';
+    const aplicarPoblacion = tieneRestriccionEdad || tieneRestriccionSexo;
+
+    const condicionInicial =
+      tipoResultado === 'CATEGORICO' ? 'IGUAL_A' : 'MENOR_QUE';
+
+    const validador =
+      tipoResultado === 'CATEGORICO'
+        ? this.validarReglaAlertaCategorica()
+        : this.validarReglaAlertaNumerica();
+
     const grupo = this._fb.group(
       {
         descripcion: [
           alerta.descripcion ?? '',
           [Validators.required, Validators.maxLength(100)],
         ],
-
-        condicion: [alerta.condicion ?? 'MENOR_QUE', [Validators.required]],
+        condicion: [
+          alerta.condicion ?? condicionInicial,
+          [Validators.required],
+        ],
         valor1: [alerta.valor1 ?? null],
         valor2: [alerta.valor2 ?? null],
         nivelAlerta: [
@@ -894,9 +970,15 @@ export class MantItemLabComponent implements OnInit {
         ],
         mensaje: [alerta.mensaje ?? '', [Validators.maxLength(250)]],
         activo: [alerta.activo ?? true],
+        aplicarPoblacion: [aplicarPoblacion],
+        sexo: [alerta.sexo ?? 'TODOS'],
+        aplicarEdad: [tieneRestriccionEdad],
+        edadMin: [alerta.edadMin ?? null],
+        edadMax: [alerta.edadMax ?? null],
+        unidadEdad: [alerta.unidadEdad ?? 'ANIOS'],
       },
       {
-        validators: [this.validarReglaAlertaNumerica()],
+        validators: [validador],
       },
     );
 
@@ -908,22 +990,14 @@ export class MantItemLabComponent implements OnInit {
   //REGLAS DE ALERTA
 
   agregarReglaAlerta(): void {
-    const alerta = this._fb.group(
-      {
-        descripcion: ['', [Validators.required, Validators.maxLength(100)]],
-        condicion: ['MENOR_QUE', [Validators.required]],
-        valor1: [null],
-        valor2: [null],
-        nivelAlerta: ['ADVERTENCIA', [Validators.required]],
-        mensaje: ['', [Validators.maxLength(250)]],
-        activo: [true],
-      },
-      {
-        validators: [this.validarReglaAlertaNumerica()],
-      },
-    );
+    const tipoResultado = this.myFormItemLab.get('tipoResultado')?.value;
 
-    this.configurarReglaAlerta(alerta);
+    if (tipoResultado !== 'NUMERICO' && tipoResultado !== 'CATEGORICO') {
+      return;
+    }
+
+    const alerta = this.crearReglaAlertaGroup({}, tipoResultado);
+
     this.reglasAlerta.push(alerta);
   }
 
@@ -932,11 +1006,82 @@ export class MantItemLabComponent implements OnInit {
   }
 
   private configurarReglaAlerta(alerta: FormGroup): void {
+    // ========================================================
+    // CONDICIÓN
+    // ========================================================
+
     alerta.get('condicion')?.valueChanges.subscribe((condicion) => {
       this.actualizarControlesReglaAlerta(alerta, condicion);
     });
 
+    // ========================================================
+    // APLICAR POBLACIÓN
+    // ========================================================
+
+    alerta
+      .get('aplicarPoblacion')
+      ?.valueChanges.subscribe((aplicar: boolean) => {
+        if (!aplicar) {
+          alerta.get('sexo')?.setValue('TODOS', {
+            emitEvent: false,
+          });
+
+          alerta.get('aplicarEdad')?.setValue(false, {
+            emitEvent: false,
+          });
+
+          alerta.get('edadMin')?.setValue(null, {
+            emitEvent: false,
+          });
+
+          alerta.get('edadMax')?.setValue(null, {
+            emitEvent: false,
+          });
+        }
+
+        this.actualizarValidacionEdadAlerta(alerta);
+      });
+
+    // ========================================================
+    // APLICAR EDAD
+    // ========================================================
+
+    alerta.get('aplicarEdad')?.valueChanges.subscribe(() => {
+      this.actualizarValidacionEdadAlerta(alerta);
+    });
+
+    // Estado inicial
     this.actualizarControlesReglaAlerta(alerta, alerta.get('condicion')?.value);
+
+    this.actualizarValidacionEdadAlerta(alerta);
+  }
+
+  private actualizarValidacionEdadAlerta(alerta: FormGroup): void {
+    const aplicarPoblacion = alerta.get('aplicarPoblacion')?.value;
+    const aplicarEdad = alerta.get('aplicarEdad')?.value;
+    const edadMin = alerta.get('edadMin');
+    const edadMax = alerta.get('edadMax');
+    const unidadEdad = alerta.get('unidadEdad');
+    edadMin?.clearValidators();
+    edadMax?.clearValidators();
+    unidadEdad?.clearValidators();
+
+    if (aplicarPoblacion && aplicarEdad) {
+      edadMin?.setValidators([Validators.required, Validators.min(0)]);
+      edadMax?.setValidators([Validators.required, Validators.min(0)]);
+      unidadEdad?.setValidators([Validators.required]);
+    } else {
+      edadMin?.setValue(null, { emitEvent: false });
+      edadMax?.setValue(null, { emitEvent: false });
+    }
+
+    edadMin?.updateValueAndValidity({ emitEvent: false });
+    edadMax?.updateValueAndValidity({ emitEvent: false });
+    unidadEdad?.updateValueAndValidity({ emitEvent: false });
+
+    alerta.updateValueAndValidity({
+      emitEvent: false,
+    });
   }
 
   private actualizarControlesReglaAlerta(
@@ -977,6 +1122,10 @@ export class MantItemLabComponent implements OnInit {
       const condicion = control.get('condicion')?.value;
       const valor1 = control.get('valor1')?.value;
       const valor2 = control.get('valor2')?.value;
+      const aplicarPoblacion = control.get('aplicarPoblacion')?.value;
+      const aplicarEdad = control.get('aplicarEdad')?.value;
+      const edadMin = control.get('edadMin')?.value;
+      const edadMax = control.get('edadMax')?.value;
 
       if (
         condicion === 'FUERA_DE_RANGO' &&
@@ -991,6 +1140,44 @@ export class MantItemLabComponent implements OnInit {
         };
       }
 
+      if (
+        aplicarPoblacion &&
+        aplicarEdad &&
+        edadMin !== null &&
+        edadMin !== '' &&
+        edadMax !== null &&
+        edadMax !== '' &&
+        Number(edadMin) > Number(edadMax)
+      ) {
+        return {
+          rangoEdadAlertaInvalido: true,
+        };
+      }
+      return null;
+    };
+  }
+
+  private validarReglaAlertaCategorica(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const aplicarPoblacion = control.get('aplicarPoblacion')?.value;
+      const aplicarEdad = control.get('aplicarEdad')?.value;
+      const edadMin = control.get('edadMin')?.value;
+      const edadMax = control.get('edadMax')?.value;
+
+      if (
+        aplicarPoblacion &&
+        aplicarEdad &&
+        edadMin !== null &&
+        edadMin !== '' &&
+        edadMax !== null &&
+        edadMax !== '' &&
+        Number(edadMin) > Number(edadMax)
+      ) {
+        return {
+          rangoEdadAlertaInvalido: true,
+        };
+      }
+
       return null;
     };
   }
@@ -1001,6 +1188,10 @@ export class MantItemLabComponent implements OnInit {
 
   private construirBody(): IItemLab {
     const formValue = this.myFormItemLab.value;
+    const esCategorico = formValue.tipoResultado === 'CATEGORICO';
+    const admiteAlertas =
+      formValue.tipoResultado === 'NUMERICO' ||
+      formValue.tipoResultado === 'CATEGORICO';
 
     return {
       codItemLab: formValue.codItemLab ?? undefined,
@@ -1031,6 +1222,10 @@ export class MantItemLabComponent implements OnInit {
       contextoAnalitico: formValue.contextoAnalitico ?? '',
       tipoResultado: formValue.tipoResultado ?? 'TEXTO',
       opcionesResultado: formValue.opcionesResultado ?? [],
+      permiteValorNoListado:
+        formValue.tipoResultado === 'CATEGORICO'
+          ? (formValue.permiteValorNoListado ?? false)
+          : false,
       estadoItem: formValue.estado ? 'ACTIVO' : 'INACTIVO',
 
       /*
@@ -1040,10 +1235,7 @@ export class MantItemLabComponent implements OnInit {
        * Si es nuevo, se envían arrays vacíos.
        */
       referenciasResultado: this.construirReferenciasSegunTipo(),
-      reglasAlerta:
-        formValue.tipoResultado === 'NUMERICO'
-          ? this.construirReglasAlerta()
-          : [],
+      reglasAlerta: admiteAlertas ? this.construirReglasAlerta() : [],
     };
   }
 
@@ -1154,14 +1346,15 @@ export class MantItemLabComponent implements OnInit {
       return {
         descripcion: alerta.descripcion ?? '',
 
-        /*
-         * Todavía no configuramos
-         * sexo ni edad desde la UI.
-         */
-        sexo: 'TODOS' as const,
-        edadMin: null,
-        edadMax: null,
-        unidadEdad: 'ANIOS' as const,
+        sexo: alerta.aplicarPoblacion ? (alerta.sexo ?? 'TODOS') : 'TODOS',
+        edadMin:
+          alerta.aplicarPoblacion && alerta.aplicarEdad ? alerta.edadMin : null,
+        edadMax:
+          alerta.aplicarPoblacion && alerta.aplicarEdad ? alerta.edadMax : null,
+        unidadEdad:
+          alerta.aplicarPoblacion && alerta.aplicarEdad
+            ? (alerta.unidadEdad ?? 'ANIOS')
+            : 'ANIOS',
         condicion: alerta.condicion,
         valor1: alerta.valor1,
         valor2: esRango ? alerta.valor2 : null,
@@ -1341,65 +1534,11 @@ export class MantItemLabComponent implements OnInit {
       contextoAnalitico: '',
       tipoResultado: 'TEXTO',
       opcionesResultado: [],
+      permiteValorNoListado: false,
       valoresReferenciaCategorica: [],
       poseeReferenciaTexto: false,
       textoReferenciaResultado: '',
       estado: true,
-    });
-  }
-
-  // ==========================================================
-  // DELETE LEGACY
-  // ==========================================================
-  /*
-   * TEMPORAL.
-   *
-   * El HTML actual todavía llama este método.
-   * Cuando actualicemos el HTML se eliminará.
-   */
-
-  eliminarItemLab(item: IItemLab): void {
-    if (!item._id) {
-      return;
-    }
-
-    Swal.fire({
-      title: '¿Estás seguro?',
-      text: `¿Deseas eliminar el item ${item.nombreInforme}?`,
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: 'Sí, eliminar',
-      cancelButtonText: 'Cancelar',
-    }).then((result) => {
-      if (!result.isConfirmed) {
-        return;
-      }
-
-      this._itemLabService.eliminarItemLab(item._id!).subscribe({
-        next: () => {
-          Swal.fire({
-            title: 'Confirmado',
-            text: 'Item Eliminado',
-            icon: 'success',
-            confirmButtonText: 'Ok',
-          });
-          this.ultimosItems();
-        },
-
-        error: (err) => {
-          const mensaje =
-            err?.error?.msg ||
-            err?.message ||
-            'No se pudo eliminar el item. Intenta nuevamente.';
-
-          Swal.fire({
-            title: 'Error',
-            text: mensaje,
-            icon: 'error',
-            confirmButtonText: 'Ok',
-          });
-        },
-      });
     });
   }
 }

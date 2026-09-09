@@ -139,24 +139,4 @@ export class ItemLabService {
       },
     );
   }
-
-  // ==========================================================
-  // DELETE LEGACY
-  // ==========================================================
-  /*
-   * Lo dejamos temporalmente porque el endpoint ya existe.
-   *
-   * El nuevo mantenimiento NO lo utilizará.
-   * Posteriormente será retirado cuando confirmemos que
-   * estadoItem reemplaza completamente la eliminación.
-   */
-
-  public eliminarItemLab(itemLabId: string): Observable<IItemLabPostDTO> {
-    return this._http.delete<IItemLabPostDTO>(
-      `${this.apiUrl}/${itemLabId}/deleteItem`,
-      {
-        headers: this._auth.getAuthHeaders(),
-      },
-    );
-  }
 }

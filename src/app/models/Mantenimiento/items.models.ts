@@ -163,6 +163,7 @@ export interface IItemLab {
   contextoAnalitico?: string;
   tipoResultado?: TipoResultadoItem;
   opcionesResultado?: string[];
+  permiteValorNoListado?: boolean;
   estadoItem?: EstadoItem;
   referenciasResultado?: IReferenciaResultado[];
   reglasAlerta?: IReglaAlerta[];
