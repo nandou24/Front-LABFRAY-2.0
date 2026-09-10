@@ -155,6 +155,13 @@ export const routes: Routes = [
             (m) => m.TuboEnvaseComponent,
           ),
       },
+      {
+        path: 'laboratorio-referencia',
+        loadComponent: () =>
+          import(
+            './pages/laboratorio/laboratorio-referencia/laboratorio-referencia.component'
+          ).then((m) => m.LaboratorioReferenciaComponent),
+      },
     ],
   },
   {
