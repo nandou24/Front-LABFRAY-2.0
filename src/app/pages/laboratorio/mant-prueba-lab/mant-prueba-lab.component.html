@@ -254,161 +254,766 @@
         </mat-card-content>
       </mat-card>
 
-      <div class="row-flex-items">
-        <div [style.flex]="setFlex(48, '%')" class="flex-item">
-          <mat-card>
-            <mat-card-title> Items disponibles </mat-card-title>
+      <!-- ====== Procesamiento ====== -->
 
-            <mat-card-content class="mb-2">
-              <mat-form-field appearance="outline" class="mt-2">
-                <mat-label>Buscar Item</mat-label>
+      <mat-card class="mb-2" formGroupName="procesamientoDefault">
+        <mat-card-title> Procesamiento </mat-card-title>
+
+        <mat-card-content>
+          <div class="row-flex mt-3">
+            <!-- Tipo de procesamiento -->
+            <div [style.flex]="setFlex(28, '%')" class="flex-item">
+              <mat-form-field appearance="outline" class="w-100">
+                <mat-label> Tipo de procesamiento </mat-label>
+
+                <mat-select formControlName="tipo">
+                  <mat-option
+                    *ngFor="let tipo of tiposProcesamiento"
+                    [value]="tipo.value"
+                  >
+                    {{ tipo.label }}
+                  </mat-option>
+                </mat-select>
+
+                <mat-error
+                  *ngIf="procesamientoDefault.get('tipo')?.hasError('required')"
+                >
+                  Requerido
+                </mat-error>
+              </mat-form-field>
+            </div>
+
+            <!-- Observación -->
+            <div [style.flex]="setFlex(65, '%')" class="flex-item">
+              <mat-form-field appearance="outline" class="w-100">
+                <mat-label> Observación de procesamiento </mat-label>
+
                 <input
                   matInput
-                  (input)="buscarItems()"
-                  [formControl]="terminoBusquedaItems"
-                  placeholder="Escribe el nombre del item"
+                  formControlName="observacion"
+                  placeholder="Ej. Procesar en sede central"
                 />
-                @if (terminoBusquedaItems.value) {
-                  <button
-                    type="button"
-                    matSuffix
-                    mat-icon-button
-                    aria-label="Clear"
-                    (click)="terminoBusquedaItems.setValue(''); buscarItems()"
-                  >
-                    <mat-icon>close</mat-icon>
-                  </button>
-                }
+
+                <mat-hint> Opcional </mat-hint>
+
+                <mat-error
+                  *ngIf="
+                    procesamientoDefault
+                      .get('observacion')
+                      ?.hasError('maxlength')
+                  "
+                >
+                  Máximo 250 caracteres
+                </mat-error>
               </mat-form-field>
-              <table mat-table [dataSource]="dataSourceItemsDisponibles">
-                <!-- Definir las columnas -->
-                <ng-container matColumnDef="codigo">
-                  <th mat-header-cell *matHeaderCellDef>Código</th>
-                  <td mat-cell *matCellDef="let item">
-                    {{ item.codItemLab }}
-                  </td>
-                </ng-container>
+            </div>
+          </div>
 
-                <ng-container matColumnDef="nombre">
-                  <th mat-header-cell *matHeaderCellDef>Nombre</th>
-                  <td mat-cell *matCellDef="let item">
-                    {{ item.nombreInforme }}
-                  </td>
-                </ng-container>
+          <!-- ====== Referencia ====== -->
 
-                <ng-container matColumnDef="perteneceA">
-                  <th mat-header-cell *matHeaderCellDef>Pertenece</th>
-                  <td mat-cell *matCellDef="let item">
-                    {{ item.perteneceAPrueba.nombrePruebaLab }}
-                  </td>
-                </ng-container>
-
-                <ng-container matColumnDef="accion">
-                  <th mat-header-cell *matHeaderCellDef>Acción</th>
-                  <td mat-cell *matCellDef="let item">
-                    <button
-                      mat-icon-button
-                      color="primary"
-                      type="button"
-                      (click)="agregarItem(item)"
-                    >
-                      <mat-icon>add</mat-icon>
-                    </button>
-                  </td>
-                </ng-container>
-
-                <tr mat-header-row *matHeaderRowDef="columnasDisponibles"></tr>
-                <tr
-                  mat-row
-                  *matRowDef="let row; columns: columnasDisponibles"
-                ></tr>
-              </table>
-
-              <div>
-                <mat-paginator
-                  #MatPaginatorItems
-                  [pageSize]="10"
-                  [pageSizeOptions]="[5, 10, 20]"
-                  [hidePageSize]="true"
-                  showFirstLastButtons
-                ></mat-paginator>
+          <div
+            class="row-flex"
+            *ngIf="procesamientoDefault.get('tipo')?.value === 'REFERENCIA'"
+          >
+            <div [style.flex]="setFlex(95, '%')" class="flex-item">
+              <div style="font-size: 12px; color: #6c757d; margin-bottom: 10px">
+                Esta prueba será procesada por un laboratorio externo. La
+                selección del laboratorio de referencia se habilitará cuando
+                implementemos su mantenimiento.
               </div>
-            </mat-card-content>
-          </mat-card>
-        </div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
 
-        <!-- Tabla de Ítems Seleccionados -->
-        <div [style.flex]="setFlex(48, '%')" class="flex-item">
-          <mat-card>
-            <mat-card-title>
-              <div class="row align-items-center">
-                <div class="col-lg-5 col-auto">Items Seleccionados</div>
-              </div>
-            </mat-card-title>
+      <!-- ====== Composición del resultado ====== -->
 
-            <mat-card-content class="mb-2">
-              <table
-                mat-table
-                [dataSource]="dataSourceItemsSeleccionados"
-                class="mat-elevation-z8 tabla"
-              >
-                <!-- Definir las columnas -->
-                <ng-container matColumnDef="codigo">
-                  <th mat-header-cell *matHeaderCellDef>Código</th>
-                  <td mat-cell *matCellDef="let item">
-                    {{ item.codItemLab }}
-                  </td>
-                </ng-container>
+      <mat-card class="mb-2">
+        <mat-card-title> Composición del Resultado </mat-card-title>
 
-                <ng-container matColumnDef="nombre">
-                  <th mat-header-cell *matHeaderCellDef>Nombre</th>
-                  <td mat-cell *matCellDef="let item">
-                    {{ item.nombreInforme }}
-                  </td>
-                </ng-container>
+        <mat-card-content class="mt-3">
+          <div
+            *ngIf="gruposResultado.length === 0"
+            class="text-center"
+            style="color: #6c757d; padding: 20px 10px"
+          >
+            Aún no se han configurado grupos de resultados.
+          </div>
 
-                <ng-container matColumnDef="perteneceA">
-                  <th mat-header-cell *matHeaderCellDef>Pertenece</th>
-                  <td mat-cell *matCellDef="let item">
-                    {{ item.perteneceAPrueba.nombrePruebaLab }}
-                  </td>
-                </ng-container>
-
-                <ng-container matColumnDef="accion">
-                  <th mat-header-cell *matHeaderCellDef>Acción</th>
-                  <td mat-cell *matCellDef="let item">
-                    <button
-                      mat-icon-button
-                      color="warn"
-                      type="button"
-                      (click)="removerItem(item)"
-                    >
-                      <mat-icon>delete</mat-icon>
-                    </button>
-                  </td>
-                </ng-container>
-
-                <tr
-                  mat-header-row
-                  *matHeaderRowDef="columnasSeleccionados"
-                ></tr>
-                <tr
-                  mat-row
-                  *matRowDef="let row; columns: columnasSeleccionados"
-                ></tr>
-              </table>
-            </mat-card-content>
-
-            <!-- <div
-              class="text-danger text-center"
-              style="font-size: 14px"
-              *ngIf="!validarArrayItems() && formSubmitted"
+          <div formArrayName="gruposResultado">
+            <div
+              *ngFor="let grupo of gruposResultado.controls; let i = index"
+              [formGroupName]="i"
+              style="
+                border: 1px solid #d7dce2;
+                border-radius: 6px;
+                padding: 5px;
+                margin-bottom: 5px;
+              "
             >
-              Seleccione al menos un item
-            </div> -->
-          </mat-card>
-        </div>
-      </div>
+              <!-- ====== Cabecera del grupo ====== -->
+
+              <div class="row-flex" style="align-items: center">
+                <div [style.flex]="setFlex(15, '%')" class="flex-item">
+                  <strong> Grupo {{ i + 1 }} </strong>
+                </div>
+
+                <div [style.flex]="setFlex(50, '%')" class="flex-item">
+                  <mat-form-field appearance="outline" class="w-100">
+                    <mat-label> Nombre del grupo </mat-label>
+
+                    <input
+                      matInput
+                      formControlName="nombreGrupo"
+                      placeholder="Ej. Serie roja"
+                    />
+
+                    <mat-hint>
+                      Puede quedar vacío si no desea mostrar un título
+                    </mat-hint>
+                  </mat-form-field>
+                </div>
+
+                <div [style.flex]="setFlex(15, '%')" class="flex-item">
+                  <mat-form-field appearance="outline" class="w-100">
+                    <mat-label> Orden </mat-label>
+
+                    <input
+                      matInput
+                      type="number"
+                      min="1"
+                      formControlName="ordenGrupo"
+                    />
+
+                    <mat-error
+                      *ngIf="grupo.get('ordenGrupo')?.hasError('required')"
+                    >
+                      Requerido
+                    </mat-error>
+
+                    <mat-error *ngIf="grupo.get('ordenGrupo')?.hasError('min')">
+                      Orden no válido
+                    </mat-error>
+                  </mat-form-field>
+                </div>
+
+                <div [style.flex]="setFlex(15, '%')" class="flex-item mb-3">
+                  <mat-slide-toggle
+                    formControlName="mostrarTitulo"
+                    color="primary"
+                  >
+                    Mostrar título
+                  </mat-slide-toggle>
+                </div>
+
+                <div
+                  [style.flex]="setFlex(5, '%')"
+                  class="flex-item mb-3 text-end"
+                >
+                  <button
+                    mat-icon-button
+                    color="warn"
+                    type="button"
+                    (click)="eliminarGrupoResultado(i)"
+                  >
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+              </div>
+
+              <!-- ====== Procesamiento especial ====== -->
+
+              <div class="row-flex">
+                <div [style.flex]="setFlex(30, '%')" class="flex-item mt-2">
+                  <mat-slide-toggle
+                    formControlName="usarProcesamientoOverride"
+                    color="primary"
+                  >
+                    Usar procesamiento diferente al de la prueba
+                  </mat-slide-toggle>
+                </div>
+
+                <div
+                  [style.flex]="setFlex(70, '%')"
+                  class="flex-item"
+                  formGroupName="procesamientoOverride"
+                  *ngIf="grupo.get('usarProcesamientoOverride')?.value"
+                >
+                  <div class="row-flex">
+                    <div [style.flex]="setFlex(30, '%')" class="flex-item">
+                      <mat-form-field appearance="outline" class="w-100">
+                        <mat-label> Procesamiento </mat-label>
+
+                        <mat-select formControlName="tipo">
+                          <mat-option
+                            *ngFor="let tipo of tiposProcesamiento"
+                            [value]="tipo.value"
+                          >
+                            {{ tipo.label }}
+                          </mat-option>
+                        </mat-select>
+                      </mat-form-field>
+                    </div>
+
+                    <div [style.flex]="setFlex(70, '%')" class="flex-item">
+                      <mat-form-field appearance="outline" class="w-100">
+                        <mat-label> Observación </mat-label>
+
+                        <input
+                          matInput
+                          formControlName="observacion"
+                          placeholder="Observación de procesamiento del grupo"
+                        />
+                      </mat-form-field>
+                    </div>
+                    <div
+                      *ngIf="
+                        grupo.get('procesamientoOverride.tipo')?.value ===
+                        'REFERENCIA'
+                      "
+                      style="font-size: 12px; color: #6c757d"
+                    >
+                      El laboratorio de referencia se seleccionará cuando
+                      implementemos su mantenimiento.
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ====== Items del grupo ====== -->
+
+              <div style="border-top: 1px solid #e3e6e9">
+                <div class="row-flex">
+                  <div [style.flex]="setFlex(65, '%')" class="flex-item">
+                    <mat-form-field appearance="outline" class="w-100">
+                      <mat-label> Buscar y agregar Item </mat-label>
+
+                      <input
+                        matInput
+                        type="text"
+                        formControlName="busquedaItem"
+                        placeholder="Código, nombre o contexto"
+                        [matAutocomplete]="autoItem"
+                      />
+
+                      <mat-icon matSuffix> search </mat-icon>
+
+                      <mat-autocomplete
+                        #autoItem="matAutocomplete"
+                        (optionSelected)="
+                          agregarItemAGrupo(i, $event.option.value)
+                        "
+                      >
+                        <mat-option
+                          *ngFor="let item of obtenerItemsFiltradosParaGrupo(i)"
+                          [value]="item"
+                        >
+                          <div>
+                            <strong>
+                              {{ item.codItemLab }}
+                            </strong>
+
+                            -
+                            {{ item.nombreInforme }}
+
+                            <span
+                              *ngIf="item.contextoAnalitico"
+                              style="
+                                margin-left: 8px;
+                                color: #6c757d;
+                                font-size: 12px;
+                              "
+                            >
+                              {{ item.contextoAnalitico }}
+                            </span>
+                          </div>
+                        </mat-option>
+                      </mat-autocomplete>
+
+                      <mat-hint>
+                        Escriba código, nombre o contexto del Item
+                      </mat-hint>
+                    </mat-form-field>
+                  </div>
+
+                  <div
+                    [style.flex]="setFlex(25, '%')"
+                    class="flex-item"
+                    style="padding-top: 12px; color: #6c757d"
+                  >
+                    {{ obtenerItemsGrupo(i).length }}
+                    item(s)
+                  </div>
+                </div>
+
+                <!-- ====== Lista de Items ====== -->
+
+                <div formArrayName="items">
+                  <div
+                    *ngFor="
+                      let itemControl of obtenerItemsGrupo(i).controls;
+                      let j = index
+                    "
+                    [formGroupName]="j"
+                    style="border: 1px solid #e2e5e8; border-radius: 5px"
+                  >
+                    <div class="row-flex" style="align-items: center">
+                      <!-- Código -->
+
+                      <div [style.flex]="setFlex(12, '%')" class="flex-item">
+                        {{ itemControl.get("codItemLab")?.value }}
+                      </div>
+
+                      <!-- Nombre -->
+
+                      <div [style.flex]="setFlex(35, '%')" class="flex-item">
+                        {{ itemControl.get("nombreInforme")?.value }}
+
+                        <div
+                          *ngIf="itemControl.get('contextoAnalitico')?.value"
+                          style="font-size: 11px; color: #6c757d"
+                        >
+                          {{ itemControl.get("contextoAnalitico")?.value }}
+                        </div>
+                      </div>
+
+                      <!-- Orden -->
+
+                      <div [style.flex]="setFlex(15, '%')" class="flex-item">
+                        <mat-form-field appearance="outline" class="w-100">
+                          <mat-label> Orden </mat-label>
+
+                          <input
+                            matInput
+                            type="number"
+                            min="1"
+                            formControlName="ordenItem"
+                          />
+                        </mat-form-field>
+                      </div>
+
+                      <!-- Mostrar -->
+
+                      <div
+                        [style.flex]="setFlex(20, '%')"
+                        class="flex-item mb-3"
+                      >
+                        <mat-slide-toggle
+                          formControlName="mostrarItem"
+                          color="primary"
+                        >
+                          Mostrar
+                        </mat-slide-toggle>
+                      </div>
+
+                      <!-- Eliminar -->
+
+                      <div
+                        [style.flex]="setFlex(8, '%')"
+                        class="flex-item mb-3"
+                      >
+                        <button
+                          mat-icon-button
+                          color="warn"
+                          type="button"
+                          (click)="eliminarItemDeGrupo(i, j)"
+                        >
+                          <mat-icon> delete </mat-icon>
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- ====== Procesamiento del Item ====== -->
+
+                    <div
+                      class="row-flex"
+                      style="padding-top: 8px; border-top: 1px dashed #e1e4e8"
+                    >
+                      <div [style.flex]="setFlex(25, '%')" class="flex-item">
+                        <mat-slide-toggle
+                          formControlName="usarProcesamientoOverride"
+                          color="primary"
+                        >
+                          Usar procesamiento diferente
+                        </mat-slide-toggle>
+                      </div>
+
+                      <div
+                        [style.flex]="setFlex(75, '%')"
+                        formGroupName="procesamientoOverride"
+                        *ngIf="
+                          itemControl.get('usarProcesamientoOverride')?.value
+                        "
+                      >
+                        <div class="row-flex">
+                          <div
+                            [style.flex]="setFlex(30, '%')"
+                            class="flex-item"
+                          >
+                            <mat-form-field appearance="outline" class="w-100">
+                              <mat-label> Procesamiento </mat-label>
+
+                              <mat-select formControlName="tipo">
+                                <mat-option
+                                  *ngFor="let tipo of tiposProcesamiento"
+                                  [value]="tipo.value"
+                                >
+                                  {{ tipo.label }}
+                                </mat-option>
+                              </mat-select>
+                            </mat-form-field>
+                          </div>
+
+                          <div
+                            [style.flex]="setFlex(70, '%')"
+                            class="flex-item"
+                          >
+                            <mat-form-field appearance="outline" class="w-100">
+                              <mat-label> Observación </mat-label>
+
+                              <input
+                                matInput
+                                formControlName="observacion"
+                                placeholder="Observación de procesamiento del Item"
+                              />
+                            </mat-form-field>
+                          </div>
+                        </div>
+
+                        <div
+                          *ngIf="
+                            itemControl.get('procesamientoOverride.tipo')
+                              ?.value === 'REFERENCIA'
+                          "
+                          style="
+                            font-size: 12px;
+                            color: #6c757d;
+                            margin-bottom: 8px;
+                          "
+                        >
+                          El laboratorio de referencia se seleccionará cuando
+                          implementemos su mantenimiento.
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  *ngIf="obtenerItemsGrupo(i).length === 0"
+                  style="font-size: 12px; color: #6c757d; padding: 8px 0"
+                >
+                  Este grupo todavía no contiene Items.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div [style.flex]="setFlex(25, '%')" class="flex-item">
+            <button
+              mat-raised-button
+              color="primary"
+              type="button"
+              (click)="agregarGrupoResultado()"
+            >
+              <mat-icon>add</mat-icon>
+              Agregar Grupo
+            </button>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- ====== Requerimientos de muestra ====== -->
+
+      <mat-card class="mb-3">
+        <mat-card-title> Requerimientos de Muestra </mat-card-title>
+
+        <mat-card-content>
+          <!-- ====== Requiere muestra ====== -->
+
+          <div class="row-flex mt-3">
+            <div [style.flex]="setFlex(100, '%')" class="flex-item">
+              <mat-slide-toggle
+                formControlName="requiereMuestra"
+                color="primary"
+              >
+                La prueba requiere muestra
+              </mat-slide-toggle>
+            </div>
+          </div>
+
+          <!-- ====== Requerimientos ====== -->
+
+          <div *ngIf="myFormPruebaLab.get('requiereMuestra')?.value">
+            <div formArrayName="requerimientosMuestra">
+              <div
+                *ngFor="
+                  let requerimientoControl of requerimientosMuestra.controls;
+                  let i = index
+                "
+                [formGroupName]="i"
+                class="mt-3"
+                style="
+                  border: 1px solid #d9dee5;
+                  border-radius: 8px;
+                  padding: 14px;
+                "
+              >
+                <!-- ====== Cabecera ====== -->
+
+                <div class="row-flex">
+                  <div [style.flex]="setFlex(12, '%')" class="flex-item">
+                    <strong> Requerimiento {{ i + 1 }} </strong>
+                  </div>
+
+                  <div [style.flex]="setFlex(52, '%')" class="flex-item">
+                    <mat-form-field appearance="outline" class="w-100">
+                      <mat-label> Descripción </mat-label>
+
+                      <input
+                        matInput
+                        formControlName="descripcion"
+                        placeholder="Ej. Muestra para procesamiento principal"
+                      />
+                    </mat-form-field>
+                  </div>
+
+                  <div [style.flex]="setFlex(28, '%')" class="flex-item">
+                    <mat-form-field appearance="outline" class="w-100">
+                      <mat-label> Alcance </mat-label>
+
+                      <mat-select
+                        formControlName="alcance"
+                        (selectionChange)="cambiarAlcanceRequerimiento(i)"
+                      >
+                        <mat-option
+                          *ngFor="let alcance of alcancesRequerimiento"
+                          [value]="alcance.value"
+                        >
+                          {{ alcance.label }}
+                        </mat-option>
+                      </mat-select>
+                    </mat-form-field>
+                  </div>
+
+                  <!-- ====== Items específicos ====== -->
+
+                  <div
+                    class="row-flex"
+                    *ngIf="
+                      requerimientoControl.get('alcance')?.value ===
+                      'ITEMS_ESPECIFICOS'
+                    "
+                  >
+                    <div [style.flex]="setFlex(100, '%')" class="flex-item">
+                      <mat-form-field appearance="outline" class="w-100">
+                        <mat-label> Items asociados </mat-label>
+
+                        <mat-select formControlName="itemsAsociados" multiple>
+                          <mat-option
+                            *ngFor="
+                              let item of obtenerItemsDisponiblesRequerimiento()
+                            "
+                            [value]="item._id"
+                          >
+                            {{ item.codItemLab }}
+                            -
+                            {{ item.nombreInforme }}
+
+                            <span *ngIf="item.contextoAnalitico">
+                              ({{ item.contextoAnalitico }})
+                            </span>
+                          </mat-option>
+                        </mat-select>
+
+                        <mat-hint>
+                          Seleccione los Items cubiertos por este requerimiento.
+                        </mat-hint>
+                      </mat-form-field>
+                    </div>
+                  </div>
+
+                  <div [style.flex]="setFlex(8, '%')" class="flex-item">
+                    <button
+                      mat-icon-button
+                      type="button"
+                      color="warn"
+                      matTooltip="Eliminar requerimiento"
+                      (click)="eliminarRequerimientoMuestra(i)"
+                    >
+                      <mat-icon> delete </mat-icon>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- ====== Opciones válidas ====== -->
+
+                <div formArrayName="opciones">
+                  <div
+                    *ngFor="
+                      let opcionControl of obtenerOpcionesRequerimiento(i)
+                        .controls;
+                      let j = index
+                    "
+                    [formGroupName]="j"
+                    class="row-flex"
+                  >
+                    <div [style.flex]="setFlex(40, '%')" class="flex-item">
+                      <mat-form-field appearance="outline" class="w-100">
+                        <mat-label> Tipo de muestra </mat-label>
+
+                        <mat-select formControlName="tipoMuestraId">
+                          <mat-option
+                            *ngFor="let muestra of tiposMuestraActivos"
+                            [value]="muestra._id"
+                          >
+                            {{ muestra.nombreTipoMuestra }}
+                          </mat-option>
+                        </mat-select>
+                      </mat-form-field>
+                    </div>
+
+                    <div [style.flex]="setFlex(48, '%')" class="flex-item">
+                      <mat-form-field appearance="outline" class="w-100">
+                        <mat-label> Tubo / Envase </mat-label>
+
+                        <mat-select formControlName="tuboEnvaseId">
+                          <mat-option
+                            *ngFor="let tubo of tubosEnvasesActivos"
+                            [value]="tubo._id"
+                          >
+                            {{ tubo.nombreTuboEnvase }}
+                          </mat-option>
+                        </mat-select>
+                      </mat-form-field>
+                    </div>
+
+                    <div [style.flex]="setFlex(12, '%')" class="flex-item">
+                      <button
+                        mat-icon-button
+                        type="button"
+                        color="warn"
+                        matTooltip="Eliminar opción"
+                        (click)="eliminarOpcionMuestra(i, j)"
+                      >
+                        <mat-icon> delete </mat-icon>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <button
+                    mat-stroked-button
+                    type="button"
+                    color="primary"
+                    (click)="agregarOpcionMuestra(i)"
+                  >
+                    <mat-icon> add </mat-icon>
+
+                    Agregar alternativa
+                  </button>
+
+                  <span
+                    style="margin-left: 12px; font-size: 12px; color: #6c757d"
+                  >
+                    Las alternativas funcionan como "O".
+                  </span>
+                </div>
+
+                <!-- ====== Cantidad y volumen ====== -->
+
+                <div class="row-flex">
+                  <div [style.flex]="setFlex(25, '%')" class="flex-item">
+                    <mat-form-field appearance="outline" class="w-100">
+                      <mat-label> Cantidad de recipientes </mat-label>
+
+                      <input
+                        matInput
+                        type="number"
+                        min="1"
+                        formControlName="cantidadRecipientes"
+                      />
+                    </mat-form-field>
+                  </div>
+
+                  <div [style.flex]="setFlex(25, '%')" class="flex-item">
+                    <mat-form-field appearance="outline" class="w-100">
+                      <mat-label> Volumen mínimo </mat-label>
+
+                      <input
+                        matInput
+                        type="number"
+                        min="0"
+                        formControlName="volumenMinimo"
+                      />
+                    </mat-form-field>
+                  </div>
+
+                  <div [style.flex]="setFlex(20, '%')" class="flex-item">
+                    <mat-form-field appearance="outline" class="w-100">
+                      <mat-label> Unidad </mat-label>
+
+                      <mat-select formControlName="unidadVolumen">
+                        <mat-option [value]="null">
+                          Sin especificar
+                        </mat-option>
+
+                        <mat-option
+                          *ngFor="let unidad of unidadesVolumen"
+                          [value]="unidad.value"
+                        >
+                          {{ unidad.label }}
+                        </mat-option>
+                      </mat-select>
+                    </mat-form-field>
+                  </div>
+
+                  <div [style.flex]="setFlex(30, '%')" class="flex-item">
+                    <mat-slide-toggle
+                      formControlName="permiteCompartirMuestra"
+                      color="primary"
+                    >
+                      Permite compartir muestra
+                    </mat-slide-toggle>
+                  </div>
+                </div>
+
+                <!-- ====== Observación ====== -->
+
+                <div class="row-flex">
+                  <div [style.flex]="setFlex(100, '%')" class="flex-item">
+                    <mat-form-field appearance="outline" class="w-100">
+                      <mat-label> Observación </mat-label>
+
+                      <input
+                        matInput
+                        formControlName="observacion"
+                        placeholder="Indicaciones adicionales"
+                      />
+                    </mat-form-field>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ====== Agregar requerimiento ====== -->
+
+            <div class="mt-3" style="text-align: center">
+              <button
+                mat-stroked-button
+                type="button"
+                color="primary"
+                (click)="agregarRequerimientoMuestra()"
+              >
+                <mat-icon> add </mat-icon>
+
+                Agregar Requerimiento
+              </button>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
 
       <div class="row-flex-btn mt-3">
         <div [style.flex]="setFlex(20, '%')" class="flex-item text-end">
