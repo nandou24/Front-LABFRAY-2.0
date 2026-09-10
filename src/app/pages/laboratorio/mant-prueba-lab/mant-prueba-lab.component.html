@@ -75,27 +75,6 @@
                 </mat-form-field>
               </div>
 
-              <div [style.flex]="setFlex(15, '%')" class="flex-item">
-                <mat-form-field appearance="outline">
-                  <mat-label>Orden de Impresión</mat-label>
-                  <input
-                    matInput
-                    type="number"
-                    min="1"
-                    formControlName="ordenImpresion"
-                  />
-                  <mat-error
-                    *ngIf="
-                      myFormPruebaLab
-                        .get('ordenImpresion')
-                        ?.hasError('required')
-                    "
-                  >
-                    Requerido
-                  </mat-error>
-                </mat-form-field>
-              </div>
-
               <div [style.flex]="setFlex(10, '%')" class="flex-item mb-3">
                 <mat-slide-toggle
                   formControlName="estadoPrueba"
@@ -147,107 +126,6 @@
                     Requerido
                   </mat-error>
                 </mat-form-field>
-              </div>
-            </div>
-
-            <div class="row-flex">
-              <!-- Tipo de Muestra -->
-              <div [style.flex]="setFlex(48, '%')" class="flex-item">
-                <div class="grupo-checkbox">
-                  <label class="mb-2"><strong>Tipo de Muestra</strong></label>
-                  <div class="checkbox-grid" formGroupName="tipoMuestra">
-                    <mat-checkbox formControlName="suero">Suero</mat-checkbox>
-                    <mat-checkbox formControlName="sangreTotal"
-                      >Sangre Total</mat-checkbox
-                    >
-                    <mat-checkbox formControlName="plasmaCitratado"
-                      >Plasma Citratado</mat-checkbox
-                    >
-                    <mat-checkbox formControlName="orinaAleatoria"
-                      >Orina Aleatoria</mat-checkbox
-                    >
-                    <mat-checkbox formControlName="orina24Horas"
-                      >Orina 24 horas</mat-checkbox
-                    >
-                    <mat-checkbox formControlName="heces">Heces</mat-checkbox>
-                    <mat-checkbox formControlName="esputo">Esputo</mat-checkbox>
-                    <mat-checkbox formControlName="saliva">Saliva</mat-checkbox>
-                    <mat-checkbox formControlName="raspado"
-                      >Raspado</mat-checkbox
-                    >
-                    <mat-checkbox formControlName="hisopado"
-                      >Hisopado</mat-checkbox
-                    >
-                    <mat-checkbox formControlName="secrecion"
-                      >Secreción</mat-checkbox
-                    >
-                    <mat-checkbox formControlName="cintaAdhesiva"
-                      >Cinta Adhesiva</mat-checkbox
-                    >
-                    <mat-checkbox formControlName="otro">Otro</mat-checkbox>
-                  </div>
-                </div>
-
-                <div
-                  class="text-danger text-center"
-                  style="font-size: 14px"
-                  *ngIf="!validarTipoMuestra() && formSubmitted"
-                >
-                  Por favor seleccione al menos un tipo de muestra
-                </div>
-              </div>
-
-              <!-- Tipo de Envase -->
-              <div [style.flex]="setFlex(48, '%')" class="flex-item">
-                <div class="grupo-checkbox">
-                  <label class="mb-2"
-                    ><strong>Tipo de Tubo / Envase</strong></label
-                  >
-                  <div class="checkbox-grid" formGroupName="tipoTuboEnvase">
-                    <mat-checkbox formControlName="TuboLila"
-                      >Tubo Lila (EDTA K2)</mat-checkbox
-                    >
-                    <mat-checkbox formControlName="TuboAmarillo"
-                      >Tubo Amarillo (Gel)</mat-checkbox
-                    >
-                    <mat-checkbox formControlName="TuboCeleste"
-                      >Tubo Celeste (Citrato)</mat-checkbox
-                    >
-                    <mat-checkbox formControlName="TuboPlomo"
-                      >Tubo Plomo (Fluoruro)</mat-checkbox
-                    >
-                    <mat-checkbox formControlName="TuboVerde"
-                      >Tubo Verde (Heparina)</mat-checkbox
-                    >
-                    <mat-checkbox formControlName="Criovial"
-                      >Criovial</mat-checkbox
-                    >
-                    <mat-checkbox formControlName="FrascoEsteril"
-                      >Frasco Estéril</mat-checkbox
-                    >
-                    <mat-checkbox formControlName="FrascoNoEsteril"
-                      >Frasco No Estéril</mat-checkbox
-                    >
-                    <mat-checkbox formControlName="FrasconEspatula"
-                      >Frasco con Espátula</mat-checkbox
-                    >
-                    <mat-checkbox formControlName="Hemocultivo"
-                      >Frasco Hemocultivo</mat-checkbox
-                    >
-                    <mat-checkbox formControlName="MedioTransporte"
-                      >Medio de Transporte</mat-checkbox
-                    >
-                    <mat-checkbox formControlName="Lamina">Lámina</mat-checkbox>
-                  </div>
-                </div>
-
-                <div
-                  class="text-danger text-center"
-                  style="font-size: 14px"
-                  *ngIf="!validarTipoEnvase() && formSubmitted"
-                >
-                  Por favor seleccione al menos un tipo de envase
-                </div>
               </div>
             </div>
           </div>
@@ -796,43 +674,6 @@
                     </mat-form-field>
                   </div>
 
-                  <!-- ====== Items específicos ====== -->
-
-                  <div
-                    class="row-flex"
-                    *ngIf="
-                      requerimientoControl.get('alcance')?.value ===
-                      'ITEMS_ESPECIFICOS'
-                    "
-                  >
-                    <div [style.flex]="setFlex(100, '%')" class="flex-item">
-                      <mat-form-field appearance="outline" class="w-100">
-                        <mat-label> Items asociados </mat-label>
-
-                        <mat-select formControlName="itemsAsociados" multiple>
-                          <mat-option
-                            *ngFor="
-                              let item of obtenerItemsDisponiblesRequerimiento()
-                            "
-                            [value]="item._id"
-                          >
-                            {{ item.codItemLab }}
-                            -
-                            {{ item.nombreInforme }}
-
-                            <span *ngIf="item.contextoAnalitico">
-                              ({{ item.contextoAnalitico }})
-                            </span>
-                          </mat-option>
-                        </mat-select>
-
-                        <mat-hint>
-                          Seleccione los Items cubiertos por este requerimiento.
-                        </mat-hint>
-                      </mat-form-field>
-                    </div>
-                  </div>
-
                   <div [style.flex]="setFlex(8, '%')" class="flex-item">
                     <button
                       mat-icon-button
@@ -843,6 +684,41 @@
                     >
                       <mat-icon> delete </mat-icon>
                     </button>
+                  </div>
+                </div>
+
+                <!-- ====== Items específicos ====== -->
+
+                <div
+                  class="row-flex"
+                  *ngIf="
+                    requerimientoControl.get('alcance')?.value ===
+                    'ITEMS_ESPECIFICOS'
+                  "
+                >
+                  <div [style.flex]="setFlex(100, '%')" class="flex-item">
+                    <mat-form-field appearance="outline" class="w-100">
+                      <mat-label> Items asociados </mat-label>
+
+                      <mat-select formControlName="itemsAsociados" multiple>
+                        <mat-option
+                          *ngFor="let item of itemsDisponiblesRequerimiento"
+                          [value]="item._id"
+                        >
+                          {{ item.codItemLab }}
+                          -
+                          {{ item.nombreInforme }}
+
+                          <span *ngIf="item.contextoAnalitico">
+                            ({{ item.contextoAnalitico }})
+                          </span>
+                        </mat-option>
+                      </mat-select>
+
+                      <mat-hint>
+                        Seleccione los Items cubiertos por este requerimiento.
+                      </mat-hint>
+                    </mat-form-field>
                   </div>
                 </div>
 
@@ -1108,13 +984,6 @@
             <ng-container matColumnDef="areaLab">
               <th mat-header-cell *matHeaderCellDef>Área</th>
               <td mat-cell *matCellDef="let prueba">{{ prueba.areaLab }}</td>
-            </ng-container>
-
-            <ng-container matColumnDef="ordenImpresion">
-              <th mat-header-cell *matHeaderCellDef>Orden de Impresión</th>
-              <td mat-cell *matCellDef="let prueba">
-                {{ prueba.ordenImpresion }}
-              </td>
             </ng-container>
 
             <tr mat-header-row *matHeaderRowDef="columnasPruebas"></tr>

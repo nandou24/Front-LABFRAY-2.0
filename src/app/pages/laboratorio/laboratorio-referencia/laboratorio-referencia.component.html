@@ -1,0 +1,548 @@
+<form [formGroup]="myFormLaboratorioReferencia">
+  <!-- ====== Título general ====== -->
+
+  <div class="row" style="align-items: center">
+    <div [style.flex]="setFlex(50, '%')" class="flex-item">
+      <h5 class="text-center" style="font-weight: 500">
+        MANTENIMIENTO DE LABORATORIOS DE REFERENCIA
+      </h5>
+    </div>
+
+    <div [style.flex]="setFlex(20, '%')" class="flex-item mb-2">
+      <label>
+        Código:
+        {{ myFormLaboratorioReferencia.get("codLaboratorioReferencia")?.value }}
+      </label>
+    </div>
+  </div>
+
+  <!-- ====== Contenedor principal ====== -->
+
+  <div class="contenedor-flex">
+    <!-- ====== Formulario izquierdo ====== -->
+
+    <div class="contenedor-formulario">
+      <!-- ====== Datos del laboratorio ====== -->
+
+      <mat-card class="mb-2">
+        <mat-card-title> Laboratorio de Referencia </mat-card-title>
+
+        <mat-card-content class="mb-2">
+          <div class="mt-2">
+            <!-- ====== Primera fila ====== -->
+
+            <div class="row-flex">
+              <div [style.flex]="setFlex(18, '%')" class="flex-item">
+                <mat-form-field appearance="outline">
+                  <mat-label>Código</mat-label>
+
+                  <input matInput formControlName="codLaboratorioReferencia" />
+                </mat-form-field>
+              </div>
+
+              <div [style.flex]="setFlex(40, '%')" class="flex-item">
+                <mat-form-field appearance="outline">
+                  <mat-label> Nombre del laboratorio </mat-label>
+
+                  <input
+                    matInput
+                    formControlName="nombreLaboratorio"
+                    maxlength="150"
+                    autocomplete="off"
+                  />
+
+                  <mat-error
+                    *ngIf="
+                      myFormLaboratorioReferencia
+                        .get('nombreLaboratorio')
+                        ?.hasError('required')
+                    "
+                  >
+                    Nombre es requerido
+                  </mat-error>
+                </mat-form-field>
+              </div>
+
+              <div [style.flex]="setFlex(42, '%')" class="flex-item">
+                <mat-form-field appearance="outline">
+                  <mat-label> Razón social </mat-label>
+
+                  <input
+                    matInput
+                    formControlName="razonSocial"
+                    maxlength="200"
+                    autocomplete="off"
+                  />
+                </mat-form-field>
+              </div>
+            </div>
+
+            <!-- ====== Segunda fila ====== -->
+
+            <div class="row-flex">
+              <div [style.flex]="setFlex(20, '%')" class="flex-item">
+                <mat-form-field appearance="outline">
+                  <mat-label>RUC</mat-label>
+
+                  <input
+                    matInput
+                    formControlName="ruc"
+                    maxlength="11"
+                    autocomplete="off"
+                  />
+
+                  <mat-error
+                    *ngIf="
+                      myFormLaboratorioReferencia
+                        .get('ruc')
+                        ?.hasError('pattern')
+                    "
+                  >
+                    El RUC debe contener 11 dígitos
+                  </mat-error>
+                </mat-form-field>
+              </div>
+
+              <div [style.flex]="setFlex(28, '%')" class="flex-item">
+                <mat-form-field appearance="outline">
+                  <mat-label> Código de cliente </mat-label>
+
+                  <input
+                    matInput
+                    formControlName="codigoCliente"
+                    maxlength="50"
+                    autocomplete="off"
+                  />
+
+                  <mat-hint>
+                    Código asignado por el laboratorio de referencia
+                  </mat-hint>
+                </mat-form-field>
+              </div>
+
+              <div [style.flex]="setFlex(52, '%')" class="flex-item">
+                <mat-form-field appearance="outline">
+                  <mat-label> Dirección </mat-label>
+
+                  <input
+                    matInput
+                    formControlName="direccion"
+                    maxlength="250"
+                    autocomplete="off"
+                  />
+                </mat-form-field>
+              </div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- ====== Contactos ====== -->
+
+      <mat-card class="mb-2">
+        <mat-card-title> Contactos </mat-card-title>
+
+        <mat-card-content>
+          <!-- ====== Botón agregar ====== -->
+
+          <div class="row-flex mt-2">
+            <div [style.flex]="setFlex(25, '%')" class="flex-item">
+              <button
+                mat-raised-button
+                color="primary"
+                type="button"
+                (click)="agregarContacto()"
+              >
+                <mat-icon>add</mat-icon>
+                Agregar Contacto
+              </button>
+            </div>
+          </div>
+
+          <div
+            style="
+              font-size: 12px;
+              color: #6c757d;
+              margin-left: 8px;
+              margin-bottom: 8px;
+            "
+          >
+            Cada contacto debe registrar al menos un teléfono o correo
+            electrónico.
+          </div>
+
+          <!-- ====== FormArray ====== -->
+
+          <div formArrayName="contactos">
+            <div
+              *ngFor="let contactoControl of contactos.controls; let i = index"
+              [formGroupName]="i"
+              class="mt-3"
+              style="
+                border: 1px solid #d9dee5;
+                border-radius: 8px;
+                padding: 14px;
+              "
+            >
+              <!-- ====== Cabecera del contacto ====== -->
+
+              <div class="row-flex">
+                <div [style.flex]="setFlex(12, '%')" class="flex-item">
+                  <strong> Contacto {{ i + 1 }} </strong>
+                </div>
+
+                <div [style.flex]="setFlex(25, '%')" class="flex-item">
+                  <mat-form-field appearance="outline">
+                    <mat-label> Tipo de contacto </mat-label>
+
+                    <mat-select
+                      formControlName="tipoContacto"
+                      (selectionChange)="cambiarTipoContacto(i)"
+                    >
+                      <mat-option
+                        *ngFor="let tipo of tiposContacto"
+                        [value]="tipo.value"
+                      >
+                        {{ tipo.label }}
+                      </mat-option>
+                    </mat-select>
+
+                    <mat-error
+                      *ngIf="
+                        contactoControl
+                          .get('tipoContacto')
+                          ?.hasError('required')
+                      "
+                    >
+                      Requerido
+                    </mat-error>
+                  </mat-form-field>
+                </div>
+
+                <div [style.flex]="setFlex(31, '%')" class="flex-item">
+                  <mat-form-field appearance="outline">
+                    <mat-label> Nombre del contacto </mat-label>
+
+                    <input
+                      matInput
+                      formControlName="nombreContacto"
+                      maxlength="150"
+                      autocomplete="off"
+                    />
+                  </mat-form-field>
+                </div>
+
+                <div [style.flex]="setFlex(24, '%')" class="flex-item">
+                  <mat-form-field appearance="outline">
+                    <mat-label> Cargo </mat-label>
+
+                    <input
+                      matInput
+                      formControlName="cargo"
+                      maxlength="100"
+                      autocomplete="off"
+                    />
+                  </mat-form-field>
+                </div>
+
+                <div [style.flex]="setFlex(8, '%')" class="flex-item">
+                  <button
+                    mat-icon-button
+                    type="button"
+                    color="warn"
+                    matTooltip="Eliminar contacto"
+                    (click)="eliminarContacto(i)"
+                  >
+                    <mat-icon> delete </mat-icon>
+                  </button>
+                </div>
+              </div>
+
+              <!-- ====== Datos de comunicación ====== -->
+
+              <div class="row-flex">
+                <div [style.flex]="setFlex(28, '%')" class="flex-item">
+                  <mat-form-field appearance="outline">
+                    <mat-label> Teléfono </mat-label>
+
+                    <input
+                      matInput
+                      formControlName="telefono"
+                      maxlength="20"
+                      autocomplete="off"
+                    />
+
+                    <mat-error
+                      *ngIf="
+                        contactoControl.get('telefono')?.hasError('pattern')
+                      "
+                    >
+                      Teléfono no válido
+                    </mat-error>
+                  </mat-form-field>
+                </div>
+
+                <div [style.flex]="setFlex(45, '%')" class="flex-item">
+                  <mat-form-field appearance="outline">
+                    <mat-label> Correo </mat-label>
+
+                    <input
+                      matInput
+                      type="email"
+                      formControlName="correo"
+                      maxlength="150"
+                      autocomplete="off"
+                    />
+
+                    <mat-error
+                      *ngIf="contactoControl.get('correo')?.hasError('email')"
+                    >
+                      Correo no válido
+                    </mat-error>
+                  </mat-form-field>
+                </div>
+
+                <div [style.flex]="setFlex(27, '%')" class="flex-item mb-3">
+                  <mat-slide-toggle
+                    formControlName="principal"
+                    color="primary"
+                    (change)="cambiarPrincipal(i)"
+                  >
+                    Contacto principal
+                  </mat-slide-toggle>
+                </div>
+              </div>
+
+              <!-- ====== Observación del contacto ====== -->
+
+              <div class="row-flex">
+                <div [style.flex]="setFlex(100, '%')" class="flex-item">
+                  <mat-form-field appearance="outline">
+                    <mat-label> Observación del contacto </mat-label>
+
+                    <textarea
+                      matInput
+                      rows="2"
+                      maxlength="250"
+                      formControlName="observacion"
+                    ></textarea>
+
+                    <mat-hint align="end">
+                      {{
+                        contactoControl.get("observacion")?.value?.length || 0
+                      }}/250
+                    </mat-hint>
+                  </mat-form-field>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ====== Sin contactos ====== -->
+
+          <div
+            *ngIf="contactos.length === 0"
+            style="
+              font-size: 12px;
+              color: #6c757d;
+              text-align: center;
+              padding: 18px 0;
+            "
+          >
+            No se han registrado contactos.
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- ====== Observaciones y estado ====== -->
+
+      <mat-card class="mb-2">
+        <mat-card-title> Información Adicional </mat-card-title>
+
+        <mat-card-content class="mb-2">
+          <div class="row-flex mt-2">
+            <div [style.flex]="setFlex(85, '%')" class="flex-item">
+              <mat-form-field appearance="outline">
+                <mat-label> Observaciones </mat-label>
+
+                <textarea
+                  matInput
+                  rows="3"
+                  maxlength="500"
+                  formControlName="observacion"
+                ></textarea>
+
+                <mat-hint align="end">
+                  {{
+                    myFormLaboratorioReferencia.get("observacion")?.value
+                      ?.length || 0
+                  }}/500
+                </mat-hint>
+              </mat-form-field>
+            </div>
+
+            <div [style.flex]="setFlex(15, '%')" class="flex-item mb-3">
+              <mat-slide-toggle
+                formControlName="estadoLaboratorioReferencia"
+                color="primary"
+              >
+                {{
+                  myFormLaboratorioReferencia.get("estadoLaboratorioReferencia")
+                    ?.value
+                    ? "ACTIVO"
+                    : "INACTIVO"
+                }}
+              </mat-slide-toggle>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- ====== Botones ====== -->
+
+      <div class="row-flex-btn mb-3">
+        <button
+          mat-raised-button
+          type="button"
+          class="btn-nuevo"
+          (click)="nuevoLaboratorio()"
+        >
+          <mat-icon>add</mat-icon>
+          NUEVO
+        </button>
+
+        <button
+          *ngIf="!modoEdicion"
+          mat-raised-button
+          type="button"
+          class="btn-registrar"
+          (click)="registrarLaboratorio()"
+        >
+          <mat-icon>save</mat-icon>
+          REGISTRAR
+        </button>
+
+        <button
+          *ngIf="modoEdicion"
+          mat-raised-button
+          type="button"
+          class="btn-actualizar"
+          (click)="actualizarLaboratorio()"
+        >
+          <mat-icon>save</mat-icon>
+          ACTUALIZAR
+        </button>
+      </div>
+    </div>
+
+    <!-- ====== Tabla derecha ====== -->
+
+    <div class="contenedor-tablaDerecha">
+      <mat-card class="mb-2">
+        <mat-card-title> Laboratorios de Referencia </mat-card-title>
+
+        <mat-card-content>
+          <!-- ====== Búsqueda ====== -->
+
+          <div class="row-flex mt-2">
+            <div [style.flex]="setFlex(100, '%')" class="flex-item">
+              <mat-form-field appearance="outline">
+                <mat-label> Buscar laboratorio </mat-label>
+
+                <input
+                  matInput
+                  [formControl]="terminoBusqueda"
+                  placeholder="Código, nombre, RUC, cliente..."
+                  autocomplete="off"
+                />
+
+                <mat-icon matSuffix> search </mat-icon>
+              </mat-form-field>
+            </div>
+          </div>
+
+          <!-- ====== Tabla ====== -->
+
+          <table
+            mat-table
+            [dataSource]="dataSourceLaboratorios"
+            class="mat-elevation-z0"
+            style="width: 100%"
+          >
+            <!-- ====== Código ====== -->
+
+            <ng-container matColumnDef="codigo">
+              <th mat-header-cell *matHeaderCellDef>Código</th>
+
+              <td mat-cell *matCellDef="let laboratorio">
+                {{ laboratorio.codLaboratorioReferencia }}
+              </td>
+            </ng-container>
+
+            <!-- ====== Laboratorio ====== -->
+
+            <ng-container matColumnDef="nombre">
+              <th mat-header-cell *matHeaderCellDef>Laboratorio</th>
+
+              <td mat-cell *matCellDef="let laboratorio">
+                {{ laboratorio.nombreLaboratorio }}
+              </td>
+            </ng-container>
+
+            <!-- ====== Código de cliente ====== -->
+
+            <ng-container matColumnDef="codigoCliente">
+              <th mat-header-cell *matHeaderCellDef>Código Cliente</th>
+
+              <td mat-cell *matCellDef="let laboratorio">
+                {{ laboratorio.codigoCliente || "-" }}
+              </td>
+            </ng-container>
+
+            <!-- ====== Estado solo informativo ====== -->
+
+            <ng-container matColumnDef="estado">
+              <th mat-header-cell *matHeaderCellDef>Estado</th>
+
+              <td mat-cell *matCellDef="let laboratorio">
+                {{ laboratorio.estadoLaboratorioReferencia }}
+              </td>
+            </ng-container>
+
+            <!-- ====== Cabecera ====== -->
+
+            <tr mat-header-row *matHeaderRowDef="columnasLaboratorios"></tr>
+
+            <!-- ====== Filas ====== -->
+
+            <tr
+              mat-row
+              *matRowDef="let row; columns: columnasLaboratorios"
+              (click)="seleccionarLaboratorio(row)"
+            ></tr>
+
+            <!-- ====== Sin resultados ====== -->
+
+            <tr class="mat-row" *matNoDataRow>
+              <td
+                class="mat-cell text-center"
+                [attr.colspan]="columnasLaboratorios.length"
+              >
+                No se encontraron laboratorios.
+              </td>
+            </tr>
+          </table>
+
+          <!-- ====== Paginador ====== -->
+
+          <mat-paginator
+            [pageSize]="5"
+            [pageSizeOptions]="[5, 10, 20]"
+            showFirstLastButtons
+          >
+          </mat-paginator>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+</form>

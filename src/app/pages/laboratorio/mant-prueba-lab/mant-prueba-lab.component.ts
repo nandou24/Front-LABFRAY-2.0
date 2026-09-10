@@ -17,7 +17,6 @@ import {
   Validators,
 } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
-import { MatCheckbox } from '@angular/material/checkbox';
 import { MatOptionModule } from '@angular/material/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -34,6 +33,7 @@ import {
   EstadoPruebaLab,
   IProcesamientoLab,
   IPruebaLab,
+  IRequerimientoMuestra,
   TipoProcesamientoLab,
   UnidadVolumen,
 } from '../../../models/Mantenimiento/pruebaLab.models';
@@ -61,7 +61,6 @@ import { TuboEnvaseService } from '../../../services/mantenimiento/tuboEnvase/tu
     MatSelectModule,
     MatOptionModule,
     MatSlideToggleModule,
-    MatCheckbox,
     MatTableModule,
     MatIconModule,
     MatButtonModule,
@@ -128,56 +127,14 @@ export class MantPruebaLabComponent implements OnInit, AfterViewInit {
     nombrePruebaLab: ['', [Validators.required]],
     condPreAnalitPaciente: ['', [Validators.required]],
     condPreAnalitRefer: ['', [Validators.required]],
-
-    // ====== Legacy: tipos de muestra ======
-
-    tipoMuestra: this._fb.group({
-      suero: [false],
-      sangreTotal: [false],
-      plasmaCitratado: [false],
-      orinaAleatoria: [false],
-      orina24Horas: [false],
-      heces: [false],
-      esputo: [false],
-      saliva: [false],
-      raspado: [false],
-      hisopado: [false],
-      secrecion: [false],
-      cintaAdhesiva: [false],
-      otro: [false],
-    }),
-
-    // ====== Legacy: tubos / envases ======
-
-    tipoTuboEnvase: this._fb.group({
-      TuboLila: [false],
-      TuboAmarillo: [false],
-      TuboCeleste: [false],
-      TuboPlomo: [false],
-      TuboVerde: [false],
-      Criovial: [false],
-      FrascoEsteril: [false],
-      FrascoNoEsteril: [false],
-      FrasconEspatula: [false],
-      Hemocultivo: [false],
-      MedioTransporte: [false],
-      Lamina: [false],
-    }),
-
     tiempoRespuesta: [
       '',
       [Validators.required, Validators.pattern('^[1-9][0-9]*$')],
     ],
-
     observPruebas: [''],
 
     // En el formulario seguimos usando boolean.
     estadoPrueba: [true, [Validators.required]],
-
-    // ====== Legacy ======
-
-    ordenImpresion: ['', [Validators.required]],
-    itemsComponentes: this._fb.array([]),
 
     // ====== Procesamiento por defecto ======
 
@@ -193,10 +150,6 @@ export class MantPruebaLabComponent implements OnInit, AfterViewInit {
     requiereMuestra: [true],
     requerimientosMuestra: this._fb.array([]),
   });
-
-  get itemsComponentes(): FormArray {
-    return this.myFormPruebaLab.get('itemsComponentes') as FormArray;
-  }
 
   get procesamientoDefault(): FormGroup {
     return this.myFormPruebaLab.get('procesamientoDefault') as FormGroup;
@@ -223,7 +176,7 @@ export class MantPruebaLabComponent implements OnInit, AfterViewInit {
   }
 
   //Tabla pruebas de laboratorio
-  columnasPruebas: string[] = ['codigo', 'nombre', 'areaLab', 'ordenImpresion'];
+  columnasPruebas: string[] = ['codigo', 'nombre', 'areaLab'];
   dataSourcePruebas = new MatTableDataSource<IPruebaLab>();
 
   // ====== Grupos de resultado ======
@@ -478,11 +431,12 @@ export class MantPruebaLabComponent implements OnInit, AfterViewInit {
     this.gruposResultado.at(grupoIndex).get('busquedaItem')?.setValue('', {
       emitEvent: false,
     });
+
+    this.actualizarItemsDisponiblesRequerimiento();
   }
 
   eliminarItemDeGrupo(grupoIndex: number, itemIndex: number): void {
     const items = this.obtenerItemsGrupo(grupoIndex);
-
     const itemId = items.at(itemIndex).get('itemLabId')?.value;
 
     if (itemId) {
@@ -490,8 +444,8 @@ export class MantPruebaLabComponent implements OnInit, AfterViewInit {
     }
 
     items.removeAt(itemIndex);
-
     this.reordenarItemsGrupo(grupoIndex);
+    this.actualizarItemsDisponiblesRequerimiento();
   }
 
   private reordenarItemsGrupo(grupoIndex: number): void {
@@ -513,8 +467,20 @@ export class MantPruebaLabComponent implements OnInit, AfterViewInit {
   }
 
   eliminarGrupoResultado(index: number): void {
+    const grupo = this.gruposResultado.at(index) as FormGroup;
+    const items = grupo.get('items') as FormArray;
+
+    items.controls.forEach((itemControl) => {
+      const itemId = itemControl.get('itemLabId')?.value;
+
+      if (itemId) {
+        this.limpiarItemDeRequerimientos(String(itemId));
+      }
+    });
+
     this.gruposResultado.removeAt(index);
     this.reordenarGruposResultado();
+    this.actualizarItemsDisponiblesRequerimiento();
   }
 
   private reordenarGruposResultado(): void {
@@ -574,48 +540,6 @@ export class MantPruebaLabComponent implements OnInit, AfterViewInit {
     }
   }
 
-  validarArrayItems(): boolean {
-    const valoresArray = this.myFormPruebaLab.get(
-      'itemsComponentes',
-    ) as FormArray;
-
-    if (valoresArray.length === 0) {
-      return false;
-    }
-
-    return true;
-  }
-
-  validarTipoMuestra(): boolean {
-    const formValue = this.myFormPruebaLab.value;
-
-    // Filtrar solo los checkboxes seleccionados de tipo muestra
-    const tipoMuestraSeleccionado = Object.keys(formValue.tipoMuestra)
-      .filter((key) => formValue.tipoMuestra[key])
-      .map((key) => key); // Devuelve un array con las claves marcadas
-
-    if (tipoMuestraSeleccionado.length > 0) {
-      return true;
-    }
-
-    return false;
-  }
-
-  validarTipoEnvase(): boolean {
-    const formValue = this.myFormPruebaLab.value;
-
-    // Filtrar solo los checkboxes seleccionados de tipo muestra
-    const tipoEnvaseSeleccionado = Object.keys(formValue.tipoTuboEnvase)
-      .filter((key) => formValue.tipoTuboEnvase[key])
-      .map((key) => key); // Devuelve un array con las claves marcadas
-
-    if (tipoEnvaseSeleccionado.length > 0) {
-      return true;
-    }
-
-    return false;
-  }
-
   // ====== Cargar tipos de muestra ======
 
   private cargarTiposMuestraActivos(): void {
@@ -663,12 +587,14 @@ export class MantPruebaLabComponent implements OnInit, AfterViewInit {
 
   // ====== Items disponibles para requerimientos ======
 
-  public obtenerItemsDisponiblesRequerimiento(): {
+  public itemsDisponiblesRequerimiento: {
     _id: string;
     codItemLab: string;
     nombreInforme: string;
     contextoAnalitico: string;
-  }[] {
+  }[] = [];
+
+  private actualizarItemsDisponiblesRequerimiento(): void {
     const itemsDisponibles: {
       _id: string;
       codItemLab: string;
@@ -686,16 +612,16 @@ export class MantPruebaLabComponent implements OnInit, AfterViewInit {
           return;
         }
 
-        const yaExiste = itemsDisponibles.some(
-          (item) => String(item._id) === String(itemId),
-        );
+        const id = String(itemId);
+
+        const yaExiste = itemsDisponibles.some((item) => item._id === id);
 
         if (yaExiste) {
           return;
         }
 
         itemsDisponibles.push({
-          _id: String(itemId),
+          _id: id,
           codItemLab: itemControl.get('codItemLab')?.value ?? '',
           nombreInforme: itemControl.get('nombreInforme')?.value ?? '',
           contextoAnalitico: itemControl.get('contextoAnalitico')?.value ?? '',
@@ -703,7 +629,7 @@ export class MantPruebaLabComponent implements OnInit, AfterViewInit {
       });
     });
 
-    return itemsDisponibles;
+    this.itemsDisponiblesRequerimiento = itemsDisponibles;
   }
 
   // ====== Cambio de alcance ======
@@ -738,9 +664,9 @@ export class MantPruebaLabComponent implements OnInit, AfterViewInit {
   nuevaPrueba(): void {
     this.formSubmitted = false;
     this.filaSeleccionadaIndex = null;
-    this.itemsComponentes.clear();
     this.gruposResultado.clear();
     this.requerimientosMuestra.clear();
+    this.itemsDisponiblesRequerimiento = [];
 
     this.myFormPruebaLab.reset({
       codPruebaLab: '',
@@ -751,7 +677,6 @@ export class MantPruebaLabComponent implements OnInit, AfterViewInit {
       tiempoRespuesta: '',
       observPruebas: '',
       estadoPrueba: true,
-      ordenImpresion: '',
       requiereMuestra: true,
       procesamientoDefault: {
         tipo: 'INTERNO',
@@ -820,22 +745,126 @@ export class MantPruebaLabComponent implements OnInit, AfterViewInit {
     });
   }
 
+  // ====== Construcción de requerimientos de muestra ======
+
+  private construirRequerimientosMuestra(): IRequerimientoMuestra[] {
+    return this.requerimientosMuestra.controls.map((control) => {
+      const requerimiento = control as FormGroup;
+      const alcance = requerimiento.get('alcance')
+        ?.value as AlcanceRequerimientoMuestra;
+      const opciones = requerimiento.get('opciones') as FormArray;
+      const volumenMinimo = requerimiento.get('volumenMinimo')?.value;
+
+      return {
+        descripcion: requerimiento.get('descripcion')?.value?.trim() ?? '',
+        alcance,
+        opciones: opciones.controls.map((opcionControl) => {
+          const opcion = opcionControl as FormGroup;
+
+          return {
+            tipoMuestraId: opcion.get('tipoMuestraId')?.value,
+            tuboEnvaseId: opcion.get('tuboEnvaseId')?.value,
+          };
+        }),
+
+        itemsAsociados:
+          alcance === 'ITEMS_ESPECIFICOS'
+            ? (requerimiento.get('itemsAsociados')?.value ?? [])
+            : [],
+        cantidadRecipientes: Number(
+          requerimiento.get('cantidadRecipientes')?.value ?? 1,
+        ),
+
+        volumenMinimo:
+          volumenMinimo === null ||
+          volumenMinimo === undefined ||
+          volumenMinimo === ''
+            ? null
+            : Number(volumenMinimo),
+
+        unidadVolumen:
+          volumenMinimo === null ||
+          volumenMinimo === undefined ||
+          volumenMinimo === ''
+            ? null
+            : (requerimiento.get('unidadVolumen')?.value ?? null),
+
+        permiteCompartirMuestra:
+          requerimiento.get('permiteCompartirMuestra')?.value ?? true,
+
+        observacion: requerimiento.get('observacion')?.value?.trim() ?? '',
+      };
+    });
+  }
+
+  // ====== Validar configuración de muestras ======
+
+  private validarConfiguracionMuestras(): boolean {
+    const requiereMuestra =
+      this.myFormPruebaLab.get('requiereMuestra')?.value === true;
+
+    if (!requiereMuestra) {
+      return true;
+    }
+
+    if (this.requerimientosMuestra.length === 0) {
+      Swal.fire({
+        title: 'Requerimiento de muestra',
+        text: 'Debe configurar al menos un requerimiento de muestra.',
+        icon: 'warning',
+        confirmButtonText: 'Ok',
+      });
+
+      return false;
+    }
+
+    for (let i = 0; i < this.requerimientosMuestra.length; i++) {
+      const requerimiento = this.requerimientosMuestra.at(i) as FormGroup;
+      const alcance = requerimiento.get('alcance')?.value;
+      const itemsAsociados: string[] =
+        requerimiento.get('itemsAsociados')?.value ?? [];
+
+      // ====== Items específicos ======
+
+      if (alcance === 'ITEMS_ESPECIFICOS' && itemsAsociados.length === 0) {
+        Swal.fire({
+          title: 'Requerimiento incompleto',
+          text: `Seleccione al menos un Item en el requerimiento ${i + 1}.`,
+          icon: 'warning',
+          confirmButtonText: 'Ok',
+        });
+
+        return false;
+      }
+
+      // ====== Volumen ======
+
+      const volumenMinimo = requerimiento.get('volumenMinimo')?.value;
+      const unidadVolumen = requerimiento.get('unidadVolumen')?.value;
+      const tieneVolumen =
+        volumenMinimo !== null &&
+        volumenMinimo !== undefined &&
+        volumenMinimo !== '';
+
+      if (tieneVolumen && !unidadVolumen) {
+        Swal.fire({
+          title: 'Unidad requerida',
+          text: `Seleccione la unidad del volumen mínimo en el requerimiento ${i + 1}.`,
+          icon: 'warning',
+          confirmButtonText: 'Ok',
+        });
+
+        return false;
+      }
+    }
+
+    return true;
+  }
+
   // ====== Construcción del body ======
 
   private construirBody(): IPruebaLab {
     const formValue = this.myFormPruebaLab.getRawValue();
-
-    // ====== Muestras legacy ======
-
-    const tipoMuestraSeleccionado = Object.keys(
-      formValue.tipoMuestra ?? {},
-    ).filter((key) => formValue.tipoMuestra[key]);
-
-    // ====== Tubos / envases legacy ======
-
-    const tipoTuboEnvaseSeleccionado = Object.keys(
-      formValue.tipoTuboEnvase ?? {},
-    ).filter((key) => formValue.tipoTuboEnvase[key]);
 
     // ====== Estado ======
 
@@ -853,13 +882,6 @@ export class MantPruebaLabComponent implements OnInit, AfterViewInit {
       observPruebas: formValue.observPruebas ?? '',
       estadoPrueba,
 
-      // ====== Legacy temporal ======
-
-      tipoMuestra: tipoMuestraSeleccionado,
-      tipoTuboEnvase: tipoTuboEnvaseSeleccionado,
-      ordenImpresion: formValue.ordenImpresion,
-      itemsComponentes: [],
-
       // ====== Procesamiento ======
 
       procesamientoDefault: this.construirProcesamientoDefault(),
@@ -867,6 +889,14 @@ export class MantPruebaLabComponent implements OnInit, AfterViewInit {
       // ====== Composición nueva ======
 
       gruposResultado: this.construirGruposResultado(),
+
+      // ====== Muestras ======
+
+      requiereMuestra: formValue.requiereMuestra ?? true,
+
+      requerimientosMuestra: formValue.requiereMuestra
+        ? this.construirRequerimientosMuestra()
+        : [],
     };
   }
 
@@ -878,7 +908,7 @@ export class MantPruebaLabComponent implements OnInit, AfterViewInit {
       return;
     }
 
-    if (!this.validarTipoMuestra() || !this.validarTipoEnvase()) {
+    if (!this.validarConfiguracionMuestras()) {
       return;
     }
 
@@ -931,7 +961,7 @@ export class MantPruebaLabComponent implements OnInit, AfterViewInit {
       return;
     }
 
-    if (!this.validarTipoMuestra() || !this.validarTipoEnvase()) {
+    if (!this.validarConfiguracionMuestras()) {
       return;
     }
 
@@ -1008,7 +1038,6 @@ export class MantPruebaLabComponent implements OnInit, AfterViewInit {
       tiempoRespuesta: prueba.tiempoRespuesta,
       observPruebas: prueba.observPruebas ?? '',
       estadoPrueba: prueba.estadoPrueba === 'ACTIVO',
-      ordenImpresion: prueba.ordenImpresion ?? 0,
 
       procesamientoDefault: {
         tipo: prueba.procesamientoDefault?.tipo ?? 'INTERNO',
@@ -1018,34 +1047,6 @@ export class MantPruebaLabComponent implements OnInit, AfterViewInit {
       },
     });
 
-    // ====== Muestras legacy ======
-
-    const tipoMuestraFormGroup = this.myFormPruebaLab.get(
-      'tipoMuestra',
-    ) as FormGroup;
-
-    Object.keys(tipoMuestraFormGroup.controls).forEach((key) => {
-      tipoMuestraFormGroup
-        .get(key)
-        ?.setValue((prueba.tipoMuestra ?? []).includes(key));
-    });
-
-    // ====== Tubos / envases legacy ======
-
-    const tipoTuboEnvaseFormGroup = this.myFormPruebaLab.get(
-      'tipoTuboEnvase',
-    ) as FormGroup;
-
-    Object.keys(tipoTuboEnvaseFormGroup.controls).forEach((key) => {
-      tipoTuboEnvaseFormGroup
-        .get(key)
-        ?.setValue((prueba.tipoTuboEnvase ?? []).includes(key));
-    });
-
-    // ====== Items legacy ======
-
-    this.itemsComponentes.clear();
-
     // ====== Grupos de resultado ======
 
     this.gruposResultado.clear();
@@ -1053,6 +1054,8 @@ export class MantPruebaLabComponent implements OnInit, AfterViewInit {
     (prueba.gruposResultado ?? []).forEach((grupo) => {
       this.gruposResultado.push(this.crearGrupoResultado(grupo));
     });
+
+    this.actualizarItemsDisponiblesRequerimiento();
 
     // ====== Requerimientos de muestra ======
 

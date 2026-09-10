@@ -68,17 +68,10 @@ export interface IRequerimientoMuestra {
   observacion?: string;
 }
 
-// ====== Legacy temporal ======
-
-export interface IItemComponenteLegacy {
-  itemLabId: string | IItemLab;
-}
-
 // ====== Prueba de laboratorio ======
 
 export interface IPruebaLab {
   _id?: string;
-  pruebaLabId?: string;
   codPruebaLab?: string;
   areaLab: string;
   nombrePruebaLab: string;
@@ -89,11 +82,6 @@ export interface IPruebaLab {
   estadoPrueba: EstadoPruebaLab;
 
   // ====== Legacy temporal ======
-
-  tipoMuestra?: string[];
-  tipoTuboEnvase?: string[];
-  ordenImpresion?: number;
-  itemsComponentes?: IItemComponenteLegacy[];
 
   // ====== Composición ======
 
