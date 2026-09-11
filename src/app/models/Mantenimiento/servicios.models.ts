@@ -30,24 +30,15 @@ export interface IProfesionEspecialidad {
   especialidadId?: string | null;
 }
 
-// ====== Componente clínico del servicio ======
-
 export interface IExamenServicio {
   _id?: string;
 
-  // Temporalmente opcional mientras migramos servicios existentes.
-  tipoExamen?: TipoExamenServicio | null;
+  tipoExamen: TipoExamenServicio;
 
-  // Referencia dinámica al maestro clínico correspondiente.
   referenciaId?: string | null;
-
-  // Legacy temporal para servicios de laboratorio.
-  pruebaLabId?: string | null;
 
   codExamen: string;
   nombreExamen: string;
-
-  // ====== Configuración de instancias ======
 
   numeroInstancias: number;
   modalidadInstancias: ModalidadInstanciasServicio;

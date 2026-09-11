@@ -37,7 +37,7 @@
                   </mat-option>
 
                   <!-- Se habilitará cuando implementemos paquetes -->
-                  <mat-option value="PAQUETE" disabled>
+                  <mat-option value="PAQUETE">
                     Paquete de Servicios
                   </mat-option>
                 </mat-select>
@@ -107,7 +107,13 @@
 
             <div [style.flex]="setFlex(18, '%')" class="flex-item">
               <mat-form-field appearance="outline">
-                <mat-label>Precio de Referencia</mat-label>
+                <mat-label>
+                  {{
+                    myFormServicio.get("claseServicio")?.value === "PAQUETE"
+                      ? "Precio del Paquete"
+                      : "Precio de Referencia"
+                  }}
+                </mat-label>
 
                 <input
                   matInput
@@ -156,7 +162,13 @@
               </mat-slide-toggle>
             </div>
 
-            <div [style.flex]="setFlex(25, '%')" class="flex-item">
+            <div
+              *ngIf="
+                myFormServicio.get('claseServicio')?.value === 'INDIVIDUAL'
+              "
+              [style.flex]="setFlex(25, '%')"
+              class="flex-item"
+            >
               <mat-slide-toggle formControlName="requiereSeleccionProfesional">
                 Seleccionar profesional
               </mat-slide-toggle>
@@ -178,7 +190,13 @@
               </mat-form-field>
             </div>
 
-            <div [style.flex]="setFlex(25, '%')" class="flex-item">
+            <div
+              *ngIf="
+                myFormServicio.get('claseServicio')?.value === 'INDIVIDUAL'
+              "
+              [style.flex]="setFlex(25, '%')"
+              class="flex-item"
+            >
               <button
                 mat-flat-button
                 color="primary"
@@ -194,7 +212,10 @@
 
           <!-- ====== Configuración profesional ====== -->
 
-          <fieldset class="campo-fieldset mt-2 mb-3">
+          <fieldset
+            *ngIf="myFormServicio.get('claseServicio')?.value === 'INDIVIDUAL'"
+            class="campo-fieldset mt-2 mb-3"
+          >
             <legend>Profesiones asociadas</legend>
 
             <div class="mb-2">
@@ -314,6 +335,319 @@
           </fieldset>
         </mat-card-content>
       </mat-card>
+
+      <!-- ====== Composición del paquete ====== -->
+
+      <div
+        class="fila-flex mt-1"
+        *ngIf="myFormServicio.get('claseServicio')?.value === 'PAQUETE'"
+      >
+        <!-- ====== Servicios disponibles ====== -->
+
+        <div class="tabla-flex-50">
+          <mat-card>
+            <mat-card-title> Servicios Disponibles </mat-card-title>
+
+            <mat-card-content class="mt-2">
+              <!-- ====== Búsqueda ====== -->
+
+              <mat-form-field appearance="outline" style="width: 100%">
+                <mat-label> Buscar Servicio </mat-label>
+
+                <input
+                  matInput
+                  [formControl]="terminoBusquedaServiciosPaquete"
+                  (input)="buscarServiciosPaquete()"
+                  placeholder="Código, nombre o tipo de servicio"
+                  autocomplete="off"
+                />
+
+                <button
+                  *ngIf="terminoBusquedaServiciosPaquete.value"
+                  type="button"
+                  matSuffix
+                  mat-icon-button
+                  aria-label="Limpiar búsqueda"
+                  (click)="
+                    terminoBusquedaServiciosPaquete.setValue('');
+                    buscarServiciosPaquete()
+                  "
+                >
+                  <mat-icon>close</mat-icon>
+                </button>
+              </mat-form-field>
+
+              <!-- ====== Tabla disponibles ====== -->
+
+              <table
+                mat-table
+                [dataSource]="dataSourceServiciosPaqueteDisponibles"
+              >
+                <!-- Código -->
+
+                <ng-container matColumnDef="codigo">
+                  <th mat-header-cell *matHeaderCellDef>Código</th>
+
+                  <td mat-cell *matCellDef="let servicio">
+                    {{ servicio.codServicio }}
+                  </td>
+                </ng-container>
+
+                <!-- Tipo -->
+
+                <ng-container matColumnDef="tipo">
+                  <th mat-header-cell *matHeaderCellDef>Tipo</th>
+
+                  <td mat-cell *matCellDef="let servicio">
+                    {{ servicio.tipoServicio }}
+                  </td>
+                </ng-container>
+
+                <!-- Nombre -->
+
+                <ng-container matColumnDef="nombre">
+                  <th mat-header-cell *matHeaderCellDef>Nombre</th>
+
+                  <td mat-cell *matCellDef="let servicio">
+                    {{ servicio.nombreServicio }}
+                  </td>
+                </ng-container>
+
+                <!-- Precio -->
+
+                <ng-container matColumnDef="precio">
+                  <th mat-header-cell *matHeaderCellDef>Precio</th>
+
+                  <td mat-cell *matCellDef="let servicio">
+                    {{ servicio.precioServicio | number: "1.2-2" }}
+                  </td>
+                </ng-container>
+
+                <!-- Acción -->
+
+                <ng-container matColumnDef="accion">
+                  <th mat-header-cell *matHeaderCellDef>Acción</th>
+
+                  <td mat-cell *matCellDef="let servicio">
+                    <button
+                      mat-icon-button
+                      color="primary"
+                      type="button"
+                      aria-label="Agregar servicio al paquete"
+                      (click)="agregarServicioPaquete(servicio)"
+                    >
+                      <mat-icon>add</mat-icon>
+                    </button>
+                  </td>
+                </ng-container>
+
+                <tr
+                  mat-header-row
+                  *matHeaderRowDef="columnasServiciosPaqueteDisponibles"
+                ></tr>
+
+                <tr
+                  mat-row
+                  *matRowDef="
+                    let row;
+                    columns: columnasServiciosPaqueteDisponibles
+                  "
+                ></tr>
+
+                <tr class="mat-row" *matNoDataRow>
+                  <td
+                    class="mat-cell text-center"
+                    [attr.colspan]="columnasServiciosPaqueteDisponibles.length"
+                  >
+                    No hay servicios disponibles.
+                  </td>
+                </tr>
+              </table>
+            </mat-card-content>
+          </mat-card>
+        </div>
+
+        <!-- ====== Servicios incluidos ====== -->
+
+        <div class="tabla-flex-50">
+          <mat-card>
+            <mat-card-title> Servicios Incluidos </mat-card-title>
+
+            <mat-card-content class="mt-2">
+              <div formArrayName="serviciosIncluidos">
+                <table
+                  mat-table
+                  [dataSource]="dataSourceServiciosPaqueteSeleccionados"
+                >
+                  <!-- Código -->
+
+                  <ng-container matColumnDef="codigo">
+                    <th mat-header-cell *matHeaderCellDef>Código</th>
+
+                    <td mat-cell *matCellDef="let servicio">
+                      {{ servicio.codServicio }}
+                    </td>
+                  </ng-container>
+
+                  <!-- Nombre -->
+
+                  <ng-container matColumnDef="nombre">
+                    <th mat-header-cell *matHeaderCellDef>Nombre</th>
+
+                    <td mat-cell *matCellDef="let servicio">
+                      <div>
+                        {{ servicio.nombreServicio }}
+                      </div>
+
+                      <small class="text-muted">
+                        {{ servicio.tipoServicio }}
+                      </small>
+                    </td>
+                  </ng-container>
+
+                  <!-- Cantidad -->
+
+                  <ng-container matColumnDef="cantidad">
+                    <th mat-header-cell *matHeaderCellDef>Cant.</th>
+
+                    <td mat-cell *matCellDef="let servicio">
+                      <div [formGroupName]="servicio.index">
+                        <mat-form-field
+                          appearance="outline"
+                          style="width: 80px"
+                        >
+                          <input
+                            matInput
+                            type="number"
+                            min="1"
+                            step="1"
+                            formControlName="cantidad"
+                            (change)="
+                              actualizarCantidadServicioPaquete(servicio.index)
+                            "
+                            (focus)="seleccionarTexto($event)"
+                          />
+                        </mat-form-field>
+                      </div>
+                    </td>
+                  </ng-container>
+
+                  <!-- Precio -->
+
+                  <ng-container matColumnDef="precio">
+                    <th mat-header-cell *matHeaderCellDef>P. Unit.</th>
+
+                    <td mat-cell *matCellDef="let servicio">
+                      {{ servicio.precioServicio | number: "1.2-2" }}
+                    </td>
+                  </ng-container>
+
+                  <!-- Subtotal -->
+
+                  <ng-container matColumnDef="subtotal">
+                    <th mat-header-cell *matHeaderCellDef>Subtotal</th>
+
+                    <td mat-cell *matCellDef="let servicio">
+                      {{ servicio.subtotal | number: "1.2-2" }}
+                    </td>
+                  </ng-container>
+
+                  <!-- Acción -->
+
+                  <ng-container matColumnDef="accion">
+                    <th mat-header-cell *matHeaderCellDef>Acción</th>
+
+                    <td mat-cell *matCellDef="let servicio">
+                      <button
+                        mat-icon-button
+                        color="warn"
+                        type="button"
+                        aria-label="Eliminar servicio del paquete"
+                        (click)="eliminarServicioPaquete(servicio.index)"
+                      >
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                    </td>
+                  </ng-container>
+
+                  <tr
+                    mat-header-row
+                    *matHeaderRowDef="columnasServiciosPaqueteSeleccionados"
+                  ></tr>
+
+                  <tr
+                    mat-row
+                    *matRowDef="
+                      let row;
+                      columns: columnasServiciosPaqueteSeleccionados
+                    "
+                  ></tr>
+
+                  <tr class="mat-row" *matNoDataRow>
+                    <td
+                      class="mat-cell text-center"
+                      [attr.colspan]="
+                        columnasServiciosPaqueteSeleccionados.length
+                      "
+                    >
+                      No hay servicios incluidos.
+                    </td>
+                  </tr>
+                </table>
+              </div>
+
+              <!-- ====== Resumen económico ====== -->
+
+              <fieldset class="campo-fieldset mt-3 mb-2">
+                <legend>Resumen del Paquete</legend>
+
+                <div class="row-flex mt-2">
+                  <div [style.flex]="setFlex(32, '%')" class="flex-item">
+                    <strong> Total referencial: </strong>
+
+                    <div>
+                      {{ totalServiciosPaquete | number: "1.2-2" }}
+                    </div>
+                  </div>
+
+                  <div [style.flex]="setFlex(32, '%')" class="flex-item">
+                    <strong> Precio paquete: </strong>
+
+                    <div>
+                      {{
+                        myFormServicio.get("precioServicio")?.value || 0
+                          | number: "1.2-2"
+                      }}
+                    </div>
+                  </div>
+
+                  <div [style.flex]="setFlex(32, '%')" class="flex-item">
+                    <strong> Diferencia: </strong>
+
+                    <div>
+                      {{ ahorroPaquete | number: "1.2-2" }}
+                    </div>
+
+                    <small class="text-muted" *ngIf="totalServiciosPaquete > 0">
+                      {{ porcentajeAhorroPaquete | number: "1.2-2" }} %
+                    </small>
+                  </div>
+                </div>
+              </fieldset>
+
+              <!-- ====== Validación ====== -->
+
+              <div
+                *ngIf="formSubmitted && serviciosIncluidos.length === 0"
+                class="text-danger mt-2"
+                style="font-size: 14px; text-align: center"
+              >
+                El paquete debe contener al menos un servicio.
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </div>
 
       <!-- ====== Componentes clínicos ====== -->
 

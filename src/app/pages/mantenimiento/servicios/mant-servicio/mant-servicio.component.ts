@@ -132,12 +132,36 @@ export class MantServicioComponent implements OnInit, AfterViewInit {
   dataSourceExamenesDisponibles = new MatTableDataSource<any>();
   dataSourceExamenesSeleccionados = new MatTableDataSource<any>();
   dataSourceServicios = new MatTableDataSource<IServicio>();
+  // ====== Paquetes ======
+
+  columnasServiciosPaqueteDisponibles: string[] = [
+    'codigo',
+    'tipo',
+    'nombre',
+    'precio',
+    'accion',
+  ];
+
+  columnasServiciosPaqueteSeleccionados: string[] = [
+    'codigo',
+    'nombre',
+    'cantidad',
+    'precio',
+    'subtotal',
+    'accion',
+  ];
+
+  dataSourceServiciosPaqueteDisponibles = new MatTableDataSource<IServicio>();
+  dataSourceServiciosPaqueteSeleccionados = new MatTableDataSource<any>();
 
   // ====== Controles auxiliares ======
 
   tipoServicioTabla = new FormControl<string | null>('');
   terminoBusquedaExamenes = new FormControl<string>('', { nonNullable: true });
   terminoBusquedaServicio = new FormControl<string>('', { nonNullable: true });
+  terminoBusquedaServiciosPaquete = new FormControl<string>('', {
+    nonNullable: true,
+  });
 
   // ====== Estado ======
 
@@ -159,6 +183,7 @@ export class MantServicioComponent implements OnInit, AfterViewInit {
   // ====== Inicialización ======
 
   ngOnInit(): void {
+    this.escucharCambioClaseServicio();
     this.escucharCambioTipo();
     this.traerServicios();
     this.listarProfesiones();
@@ -179,6 +204,91 @@ export class MantServicioComponent implements OnInit, AfterViewInit {
   seleccionarTexto(event: FocusEvent): void {
     const input = event.target as HTMLInputElement;
     input.select();
+  }
+
+  // ====== Cambio clase servicio ======
+
+  private escucharCambioClaseServicio(): void {
+    this.myFormServicio
+      .get('claseServicio')
+      ?.valueChanges.subscribe((clase) => {
+        this.configurarClaseServicio(clase);
+      });
+  }
+
+  // ====== Configurar clase servicio ======
+
+  private configurarClaseServicio(clase: string | null): void {
+    const tipoServicioControl = this.myFormServicio.get('tipoServicio');
+
+    if (clase === 'PAQUETE') {
+      // ====== Paquete ======
+
+      tipoServicioControl?.clearValidators();
+
+      tipoServicioControl?.setValue(null, {
+        emitEvent: false,
+      });
+
+      tipoServicioControl?.disable({
+        emitEvent: false,
+      });
+
+      // Un paquete no tiene configuración
+      // profesional propia.
+      this.myFormServicio.get('requiereSeleccionProfesional')?.setValue(false, {
+        emitEvent: false,
+      });
+
+      this.profesionesAsociadas.clear();
+
+      this.especialidadesPorProfesion = {};
+
+      // Un paquete no contiene componentes
+      // clínicos directamente.
+      this.examenesServicio.clear();
+
+      this.dataSourceExamenesSeleccionados.data = [];
+
+      this.componenteConfiguracionIndex = null;
+
+      this.tipoServicioTabla.setValue('', {
+        emitEvent: false,
+      });
+
+      this.dataSourceExamenesDisponibles.data = [];
+
+      this.todasLosExamenesPorTipoMemoria = [];
+
+      this.actualizarServiciosDisponiblesPaquete();
+      this.actualizarTablaServiciosPaqueteSeleccionados();
+    } else {
+      // ====== Servicio individual ======
+
+      tipoServicioControl?.setValidators(Validators.required);
+
+      if (!this.myFormServicio.get('codServicio')?.value) {
+        tipoServicioControl?.enable({
+          emitEvent: false,
+        });
+      }
+
+      // Un individual no debe conservar
+      // composición de paquete.
+      this.serviciosIncluidos.clear();
+
+      this.terminoBusquedaServiciosPaquete.setValue('', {
+        emitEvent: false,
+      });
+
+      this.dataSourceServiciosPaqueteDisponibles.data = [];
+
+      this.dataSourceServiciosPaqueteSeleccionados.data = [];
+    }
+
+    tipoServicioControl?.updateValueAndValidity({
+      emitEvent: false,
+    });
   }
 
   // ====== Cambio tipo examen ======
@@ -279,9 +389,6 @@ export class MantServicioComponent implements OnInit, AfterViewInit {
     return {
       referenciaId: examen?._id ?? null,
 
-      // Legacy temporal.
-      pruebaLabId: tipoExamen === 'LABORATORIO' ? (examen?._id ?? null) : null,
-
       tipoExamen,
 
       codExamen:
@@ -360,9 +467,6 @@ export class MantServicioComponent implements OnInit, AfterViewInit {
       tipoExamen: [examen?.tipoExamen ?? null],
 
       referenciaId: [this.obtenerIdReferencia(examen?.referenciaId)],
-
-      // Legacy temporal.
-      pruebaLabId: [this.obtenerIdReferencia(examen?.pruebaLabId)],
 
       codExamen: [examen?.codExamen ?? '', Validators.required],
 
@@ -615,6 +719,11 @@ export class MantServicioComponent implements OnInit, AfterViewInit {
     this.examenesServicio.clear();
     this.profesionesAsociadas.clear();
     this.serviciosIncluidos.clear();
+    this.terminoBusquedaServiciosPaquete.setValue('', {
+      emitEvent: false,
+    });
+    this.dataSourceServiciosPaqueteDisponibles.data = [];
+    this.dataSourceServiciosPaqueteSeleccionados.data = [];
     this.especialidadesPorProfesion = {};
     this.terminoBusquedaServicio.setValue('');
     this.terminoBusquedaExamenes.setValue('');
@@ -623,7 +732,19 @@ export class MantServicioComponent implements OnInit, AfterViewInit {
     this.dataSourceExamenesSeleccionados.data = [];
     this.dataSourceExamenesDisponibles.data = [];
     this.todasLosExamenesPorTipoMemoria = [];
-    this.myFormServicio.get('tipoServicio')?.enable();
+    this.myFormServicio.get('claseServicio')?.enable({
+      emitEvent: false,
+    });
+
+    this.myFormServicio.get('tipoServicio')?.enable({
+      emitEvent: false,
+    });
+
+    this.myFormServicio.get('tipoServicio')?.setValidators(Validators.required);
+
+    this.myFormServicio.get('tipoServicio')?.updateValueAndValidity({
+      emitEvent: false,
+    });
     this.myFormServicio.markAsPristine();
     this.myFormServicio.markAsUntouched();
   }
@@ -756,14 +877,50 @@ export class MantServicioComponent implements OnInit, AfterViewInit {
       return false;
     }
 
+    const claseServicio = this.myFormServicio.get('claseServicio')?.value;
+
     const requiereProfesional = Boolean(
       this.myFormServicio.get('requiereSeleccionProfesional')?.value,
     );
 
-    if (requiereProfesional && this.profesionesAsociadas.length === 0) {
-      this.mostrarAlertaError('Debe agregar al menos una profesión asociada.');
+    // ====== Validar servicio individual ======
 
-      return false;
+    if (claseServicio === 'INDIVIDUAL') {
+      if (requiereProfesional && this.profesionesAsociadas.length === 0) {
+        this.mostrarAlertaError(
+          'Debe agregar al menos una profesión asociada.',
+        );
+
+        return false;
+      }
+    }
+
+    // ====== Validar paquete ======
+
+    if (claseServicio === 'PAQUETE') {
+      if (this.serviciosIncluidos.length === 0) {
+        this.mostrarAlertaError(
+          'Debe agregar al menos un servicio al paquete.',
+        );
+
+        return false;
+      }
+
+      const tieneCantidadInvalida = this.serviciosIncluidos.controls.some(
+        (control) => {
+          const cantidad = Number(control.get('cantidad')?.value);
+
+          return !Number.isInteger(cantidad) || cantidad < 1;
+        },
+      );
+
+      if (tieneCantidadInvalida) {
+        this.mostrarAlertaError(
+          'Todos los servicios incluidos deben tener una cantidad válida.',
+        );
+
+        return false;
+      }
     }
 
     return true;
@@ -773,25 +930,53 @@ export class MantServicioComponent implements OnInit, AfterViewInit {
 
   private construirServicioPayload(): IServicio {
     const formValue = this.myFormServicio.getRawValue();
+
     const claseServicio = formValue.claseServicio ?? 'INDIVIDUAL';
+
     const precioServicio = Number(formValue.precioServicio);
 
     return {
       codServicio: formValue.codServicio ?? '',
+
       claseServicio,
+
       tipoServicio: claseServicio === 'PAQUETE' ? null : formValue.tipoServicio,
+
       nombreServicio: formValue.nombreServicio?.trim() ?? '',
+
       descripcionServicio: formValue.descripcionServicio?.trim() ?? '',
+
       precioServicio,
+
       estadoServicio: Boolean(formValue.estadoServicio),
+
       favoritoServicio: Boolean(formValue.favoritoServicio),
+
       favoritoServicioEmpresa: Boolean(formValue.favoritoServicioEmpresa),
-      requiereSeleccionProfesional: Boolean(
-        formValue.requiereSeleccionProfesional,
-      ),
-      profesionesAsociadas: formValue.profesionesAsociadas ?? [],
-      examenesServicio: formValue.examenesServicio ?? [],
-      serviciosIncluidos: formValue.serviciosIncluidos ?? [],
+
+      // ====== Configuración profesional ======
+
+      requiereSeleccionProfesional:
+        claseServicio === 'INDIVIDUAL'
+          ? Boolean(formValue.requiereSeleccionProfesional)
+          : false,
+
+      profesionesAsociadas:
+        claseServicio === 'INDIVIDUAL'
+          ? (formValue.profesionesAsociadas ?? [])
+          : [],
+
+      // ====== Composición clínica ======
+
+      examenesServicio:
+        claseServicio === 'INDIVIDUAL'
+          ? (formValue.examenesServicio ?? [])
+          : [],
+
+      // ====== Composición comercial ======
+
+      serviciosIncluidos:
+        claseServicio === 'PAQUETE' ? (formValue.serviciosIncluidos ?? []) : [],
     };
   }
 
@@ -821,7 +1006,13 @@ export class MantServicioComponent implements OnInit, AfterViewInit {
     this._servicioService.getAllServicios().subscribe({
       next: (servicios: IServicio[]) => {
         this.dataSourceServicios.data = servicios;
+
         this.todasLosServiciosMemoria = servicios;
+
+        if (this.myFormServicio.get('claseServicio')?.value === 'PAQUETE') {
+          this.actualizarTablaServiciosPaqueteSeleccionados();
+          this.actualizarServiciosDisponiblesPaquete();
+        }
       },
 
       error: (error) => {
@@ -855,14 +1046,23 @@ export class MantServicioComponent implements OnInit, AfterViewInit {
 
     this.myFormServicio.patchValue({
       codServicio: servicio.codServicio ?? '',
+
       claseServicio: servicio.claseServicio ?? 'INDIVIDUAL',
+
       tipoServicio: servicio.tipoServicio ?? '',
+
       nombreServicio: servicio.nombreServicio ?? '',
+
       descripcionServicio: servicio.descripcionServicio ?? '',
+
       precioServicio: servicio.precioServicio ?? null,
+
       estadoServicio: servicio.estadoServicio ?? true,
+
       favoritoServicio: servicio.favoritoServicio ?? false,
+
       favoritoServicioEmpresa: servicio.favoritoServicioEmpresa ?? false,
+
       requiereSeleccionProfesional:
         servicio.requiereSeleccionProfesional ?? false,
     });
@@ -887,12 +1087,16 @@ export class MantServicioComponent implements OnInit, AfterViewInit {
     // ====== Profesiones ======
 
     this.profesionesAsociadas.clear();
+
     this.especialidadesPorProfesion = {};
+
     const profesiones = servicio.profesionesAsociadas ?? [];
 
     profesiones.forEach((profesion: any, indice: number) => {
       const profesionFormGroup = this.crearProfesionAsociada();
+
       this.profesionesAsociadas.push(profesionFormGroup);
+
       const profesionId = this.obtenerIdReferencia(profesion.profesionId);
 
       if (profesionId) {
@@ -901,13 +1105,15 @@ export class MantServicioComponent implements OnInit, AfterViewInit {
 
       profesionFormGroup.patchValue({
         profesionId,
+
         especialidadId: this.obtenerIdReferencia(profesion.especialidadId),
       });
     });
 
-    // ====== Paquetes ======
+    // ====== Servicios incluidos ======
 
     this.serviciosIncluidos.clear();
+
     const incluidos = servicio.serviciosIncluidos ?? [];
 
     incluidos.forEach((incluido: any) => {
@@ -916,11 +1122,48 @@ export class MantServicioComponent implements OnInit, AfterViewInit {
       );
     });
 
+    this.actualizarTablaServiciosPaqueteSeleccionados();
+
+    if (servicio.claseServicio === 'PAQUETE') {
+      this.actualizarServiciosDisponiblesPaquete();
+    }
+
     // ====== Estado formulario ======
 
-    this.myFormServicio.get('tipoServicio')?.disable();
+    // La clase de un servicio existente
+    // no puede modificarse.
+    this.myFormServicio.get('claseServicio')?.disable({
+      emitEvent: false,
+    });
+
+    if (servicio.claseServicio === 'INDIVIDUAL') {
+      this.myFormServicio
+        .get('tipoServicio')
+        ?.setValidators(Validators.required);
+
+      this.myFormServicio.get('tipoServicio')?.disable({
+        emitEvent: false,
+      });
+    } else {
+      this.myFormServicio.get('tipoServicio')?.clearValidators();
+
+      this.myFormServicio.get('tipoServicio')?.setValue(null, {
+        emitEvent: false,
+      });
+
+      this.myFormServicio.get('tipoServicio')?.disable({
+        emitEvent: false,
+      });
+    }
+
+    this.myFormServicio.get('tipoServicio')?.updateValueAndValidity({
+      emitEvent: false,
+    });
+
     this.formSubmitted = false;
+
     this.myFormServicio.markAsPristine();
+
     this.myFormServicio.markAsUntouched();
   }
 
@@ -933,19 +1176,23 @@ export class MantServicioComponent implements OnInit, AfterViewInit {
     const tipoExamen =
       examen?.tipoExamen ?? this.obtenerTipoExamenServicio(tipoServicio);
 
-    const referenciaId =
-      this.obtenerIdReferencia(examen?.referenciaId) ??
-      this.obtenerIdReferencia(examen?.pruebaLabId);
+    const referenciaId = this.obtenerIdReferencia(examen?.referenciaId);
 
     return {
       _id: examen?._id,
+
       tipoExamen,
+
       referenciaId,
-      pruebaLabId: this.obtenerIdReferencia(examen?.pruebaLabId),
+
       codExamen: examen?.codExamen ?? '',
+
       nombreExamen: examen?.nombreExamen ?? '',
+
       numeroInstancias: examen?.numeroInstancias ?? 1,
+
       modalidadInstancias: examen?.modalidadInstancias ?? 'UNICA',
+
       etiquetasInstancias: examen?.etiquetasInstancias ?? [],
     };
   }
@@ -1085,7 +1332,219 @@ export class MantServicioComponent implements OnInit, AfterViewInit {
     return this.profesionesAsociadas.length > 0;
   }
 
-  // ====== Paquetes ======
+  // ====== Actualizar servicios disponibles para paquete ======
+
+  private actualizarServiciosDisponiblesPaquete(): void {
+    if (this.myFormServicio.get('claseServicio')?.value !== 'PAQUETE') {
+      this.dataSourceServiciosPaqueteDisponibles.data = [];
+
+      return;
+    }
+
+    const idsSeleccionados = new Set(
+      this.serviciosIncluidos.controls
+        .map((control) => control.get('servicioId')?.value)
+        .filter(Boolean),
+    );
+
+    const termino = this.terminoBusquedaServiciosPaquete.value
+      .trim()
+      .toLowerCase();
+
+    const disponibles = this.todasLosServiciosMemoria.filter((servicio) => {
+      // Solo servicios individuales.
+      if (servicio.claseServicio !== 'INDIVIDUAL') {
+        return false;
+      }
+
+      // Para agregar nuevos componentes,
+      // solo mostramos servicios activos.
+      if (!servicio.estadoServicio) {
+        return false;
+      }
+
+      if (!servicio._id || idsSeleccionados.has(servicio._id)) {
+        return false;
+      }
+
+      if (!termino) {
+        return true;
+      }
+
+      const texto = [
+        servicio.codServicio,
+        servicio.nombreServicio,
+        servicio.tipoServicio ?? '',
+      ]
+        .join(' ')
+        .toLowerCase();
+
+      return texto.includes(termino);
+    });
+
+    this.dataSourceServiciosPaqueteDisponibles.data = disponibles;
+  }
+
+  // ====== Buscar servicios para paquete ======
+
+  buscarServiciosPaquete(): void {
+    this.actualizarServiciosDisponiblesPaquete();
+  }
+
+  // ====== Agregar servicio al paquete ======
+
+  agregarServicioPaquete(servicio: IServicio): void {
+    if (!servicio._id) {
+      this.mostrarAlertaError(
+        'El servicio seleccionado no tiene un identificador válido.',
+      );
+
+      return;
+    }
+
+    if (servicio.claseServicio !== 'INDIVIDUAL') {
+      this.mostrarAlertaError(
+        'Solo se pueden agregar servicios individuales al paquete.',
+      );
+
+      return;
+    }
+
+    const existe = this.serviciosIncluidos.controls.some(
+      (control) => control.get('servicioId')?.value === servicio._id,
+    );
+
+    if (existe) {
+      Swal.fire({
+        title: 'Información',
+        text: 'El servicio ya está incluido en el paquete.',
+        icon: 'info',
+        confirmButtonText: 'Ok',
+      });
+
+      return;
+    }
+
+    this.serviciosIncluidos.push(
+      this.crearServicioIncluidoFormGroup({
+        servicioId: servicio._id,
+        cantidad: 1,
+      }),
+    );
+
+    this.actualizarTablaServiciosPaqueteSeleccionados();
+    this.actualizarServiciosDisponiblesPaquete();
+  }
+
+  // ====== Eliminar servicio del paquete ======
+
+  eliminarServicioPaquete(index: number): void {
+    if (index < 0 || index >= this.serviciosIncluidos.length) {
+      return;
+    }
+
+    this.serviciosIncluidos.removeAt(index);
+
+    this.actualizarTablaServiciosPaqueteSeleccionados();
+    this.actualizarServiciosDisponiblesPaquete();
+  }
+
+  // ====== Actualizar cantidad ======
+
+  actualizarCantidadServicioPaquete(index: number): void {
+    const control = this.serviciosIncluidos.at(index);
+
+    if (!control) {
+      return;
+    }
+
+    const cantidadControl = control.get('cantidad');
+
+    let cantidad = Number(cantidadControl?.value) || 1;
+
+    cantidad = Math.floor(cantidad);
+
+    if (cantidad < 1) {
+      cantidad = 1;
+    }
+
+    cantidadControl?.setValue(cantidad, {
+      emitEvent: false,
+    });
+
+    this.actualizarTablaServiciosPaqueteSeleccionados();
+  }
+
+  // ====== Tabla servicios seleccionados ======
+
+  private actualizarTablaServiciosPaqueteSeleccionados(): void {
+    const seleccionados = this.serviciosIncluidos.controls.map(
+      (control, index) => {
+        const valor = control.getRawValue();
+
+        const servicio = this.todasLosServiciosMemoria.find(
+          (item) => item._id === valor.servicioId,
+        );
+
+        const cantidad = Number(valor.cantidad) || 1;
+
+        const precio = Number(servicio?.precioServicio ?? 0);
+
+        return {
+          index,
+
+          servicioId: valor.servicioId,
+
+          cantidad,
+
+          codServicio: servicio?.codServicio ?? '---',
+
+          nombreServicio: servicio?.nombreServicio ?? 'SERVICIO NO DISPONIBLE',
+
+          tipoServicio: servicio?.tipoServicio ?? null,
+
+          estadoServicio: servicio?.estadoServicio ?? false,
+
+          precioServicio: precio,
+
+          subtotal: precio * cantidad,
+        };
+      },
+    );
+
+    this.dataSourceServiciosPaqueteSeleccionados.data = seleccionados;
+  }
+
+  // ====== Total referencial del paquete ======
+
+  get totalServiciosPaquete(): number {
+    return this.dataSourceServiciosPaqueteSeleccionados.data.reduce(
+      (total, item) => total + Number(item.subtotal ?? 0),
+      0,
+    );
+  }
+
+  // ====== Diferencia precio paquete ======
+
+  get ahorroPaquete(): number {
+    const precioPaquete = Number(
+      this.myFormServicio.get('precioServicio')?.value ?? 0,
+    );
+
+    return this.totalServiciosPaquete - precioPaquete;
+  }
+
+  // ====== Porcentaje diferencia ======
+
+  get porcentajeAhorroPaquete(): number {
+    if (this.totalServiciosPaquete <= 0) {
+      return 0;
+    }
+
+    return (this.ahorroPaquete / this.totalServiciosPaquete) * 100;
+  }
+
+  // ====== Crear servicio incluido ======
 
   private crearServicioIncluidoFormGroup(servicio?: any): FormGroup {
     return this._fb.group({
@@ -1096,7 +1555,11 @@ export class MantServicioComponent implements OnInit, AfterViewInit {
 
       cantidad: [
         servicio?.cantidad ?? 1,
-        [Validators.required, Validators.min(1)],
+        [
+          Validators.required,
+          Validators.min(1),
+          Validators.pattern(/^[1-9]\d*$/),
+        ],
       ],
     });
   }
