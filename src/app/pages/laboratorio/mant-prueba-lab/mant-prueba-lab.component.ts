@@ -40,6 +40,7 @@ import {
 import { ITipoMuestra } from '../../../models/Mantenimiento/tipoMuestra.models';
 import { ITuboEnvase } from '../../../models/Mantenimiento/tuboEnvase.models';
 import { IItemLab } from '../../../models/Mantenimiento/items.models';
+import { ILaboratorioReferencia } from '../../../models/Mantenimiento/laboratorioReferencia.models';
 import { MatButtonModule } from '@angular/material/button';
 import { PruebaLabService } from '../../../services/mantenimiento/pruebaLab/prueba-lab.service';
 import { ItemLabService } from '../../../services/mantenimiento/itemLab/item-lab.service';
@@ -48,6 +49,7 @@ import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { TipoMuestraService } from '../../../services/mantenimiento/tipoMuestra/tipo-muestra.service';
 import { TuboEnvaseService } from '../../../services/mantenimiento/tuboEnvase/tubo-envase.service';
+import { LaboratorioReferenciaService } from '../../../services/mantenimiento/laboratorioReferencia/laboratorio-referencia.service';
 
 @Component({
   selector: 'app-mant-prueba-lab',
@@ -81,11 +83,15 @@ export class MantPruebaLabComponent implements OnInit, AfterViewInit {
     this.ultimosItems();
     this.cargarTiposMuestraActivos();
     this.cargarTubosEnvasesActivos();
+    this.cargarLaboratoriosReferenciaActivos();
   }
 
   private _fb = inject(FormBuilder);
   private readonly _tipoMuestraService = inject(TipoMuestraService);
   private readonly _tuboEnvaseService = inject(TuboEnvaseService);
+  private readonly _laboratorioReferenciaService = inject(
+    LaboratorioReferenciaService,
+  );
 
   // ====== Procesamiento ======
 
@@ -120,6 +126,9 @@ export class MantPruebaLabComponent implements OnInit, AfterViewInit {
 
   public tiposMuestraActivos: ITipoMuestra[] = [];
   public tubosEnvasesActivos: ITuboEnvase[] = [];
+  // ====== Laboratorios de referencia ======
+
+  public laboratoriosReferenciaActivos: ILaboratorioReferencia[] = [];
 
   public myFormPruebaLab: FormGroup = this._fb.group({
     codPruebaLab: [''],
@@ -178,6 +187,57 @@ export class MantPruebaLabComponent implements OnInit, AfterViewInit {
   //Tabla pruebas de laboratorio
   columnasPruebas: string[] = ['codigo', 'nombre', 'areaLab'];
   dataSourcePruebas = new MatTableDataSource<IPruebaLab>();
+
+  // ====== Cargar laboratorios de referencia ======
+
+  private cargarLaboratoriosReferenciaActivos(): void {
+    this._laboratorioReferenciaService
+      .getLaboratoriosReferenciaActivos()
+      .subscribe({
+        next: (laboratorios) => {
+          this.laboratoriosReferenciaActivos = laboratorios;
+        },
+
+        error: (error) => {
+          console.error('Error al cargar laboratorios de referencia:', error);
+
+          this.laboratoriosReferenciaActivos = [];
+        },
+      });
+  }
+
+  // ====== Cambio de procesamiento de la prueba ======
+
+  public cambiarTipoProcesamientoDefault(): void {
+    const tipo = this.procesamientoDefault.get('tipo')?.value;
+
+    if (tipo === 'INTERNO') {
+      this.procesamientoDefault.get('laboratorioReferenciaId')?.setValue(null);
+    }
+  }
+
+  // ====== Validar procesamiento de la prueba ======
+
+  private validarProcesamientoDefault(): boolean {
+    const tipo = this.procesamientoDefault.get('tipo')?.value;
+
+    const laboratorioReferenciaId = this.procesamientoDefault.get(
+      'laboratorioReferenciaId',
+    )?.value;
+
+    if (tipo === 'REFERENCIA' && !laboratorioReferenciaId) {
+      Swal.fire({
+        title: 'Laboratorio de referencia',
+        text: 'Seleccione el laboratorio de referencia que procesará la prueba.',
+        icon: 'warning',
+        confirmButtonText: 'Ok',
+      });
+
+      return false;
+    }
+
+    return true;
+  }
 
   // ====== Grupos de resultado ======
 
@@ -572,6 +632,51 @@ export class MantPruebaLabComponent implements OnInit, AfterViewInit {
     });
   }
 
+  // ====== Cambio de procesamiento de grupo ======
+
+  public cambiarTipoProcesamientoGrupo(grupoIndex: number): void {
+    const grupo = this.gruposResultado.at(grupoIndex) as FormGroup;
+    const procesamiento = grupo.get('procesamientoOverride') as FormGroup;
+    const tipo = procesamiento.get('tipo')?.value;
+
+    if (tipo === 'INTERNO') {
+      procesamiento.get('laboratorioReferenciaId')?.setValue(null);
+    }
+  }
+
+  // ====== Validar procesamiento de grupos ======
+
+  private validarProcesamientoGrupos(): boolean {
+    for (let i = 0; i < this.gruposResultado.length; i++) {
+      const grupo = this.gruposResultado.at(i) as FormGroup;
+      const usarOverride =
+        grupo.get('usarProcesamientoOverride')?.value === true;
+
+      if (!usarOverride) {
+        continue;
+      }
+
+      const procesamiento = grupo.get('procesamientoOverride') as FormGroup;
+      const tipo = procesamiento.get('tipo')?.value;
+      const laboratorioReferenciaId = procesamiento.get(
+        'laboratorioReferenciaId',
+      )?.value;
+
+      if (tipo === 'REFERENCIA' && !laboratorioReferenciaId) {
+        Swal.fire({
+          title: 'Laboratorio de referencia',
+          text: `Seleccione el laboratorio de referencia del Grupo ${i + 1}.`,
+          icon: 'warning',
+          confirmButtonText: 'Ok',
+        });
+
+        return false;
+      }
+    }
+
+    return true;
+  }
+
   private construirProcesamientoDefault(): IProcesamientoLab {
     const procesamiento = this.procesamientoDefault.getRawValue();
 
@@ -583,6 +688,64 @@ export class MantPruebaLabComponent implements OnInit, AfterViewInit {
           : null,
       observacion: procesamiento.observacion?.trim() ?? '',
     };
+  }
+
+  // ====== Cambio de procesamiento de Item ======
+
+  public cambiarTipoProcesamientoItem(
+    grupoIndex: number,
+    itemIndex: number,
+  ): void {
+    const grupo = this.gruposResultado.at(grupoIndex) as FormGroup;
+    const items = grupo.get('items') as FormArray;
+    const item = items.at(itemIndex) as FormGroup;
+    const procesamiento = item.get('procesamientoOverride') as FormGroup;
+    const tipo = procesamiento.get('tipo')?.value;
+
+    if (tipo === 'INTERNO') {
+      procesamiento.get('laboratorioReferenciaId')?.setValue(null);
+    }
+  }
+
+  // ====== Validar procesamiento de Items ======
+
+  private validarProcesamientoItems(): boolean {
+    for (let i = 0; i < this.gruposResultado.length; i++) {
+      const grupo = this.gruposResultado.at(i) as FormGroup;
+      const items = grupo.get('items') as FormArray;
+
+      for (let j = 0; j < items.length; j++) {
+        const item = items.at(j) as FormGroup;
+        const usarOverride =
+          item.get('usarProcesamientoOverride')?.value === true;
+
+        if (!usarOverride) {
+          continue;
+        }
+
+        const procesamiento = item.get('procesamientoOverride') as FormGroup;
+        const tipo = procesamiento.get('tipo')?.value;
+        const laboratorioReferenciaId = procesamiento.get(
+          'laboratorioReferenciaId',
+        )?.value;
+
+        if (tipo === 'REFERENCIA' && !laboratorioReferenciaId) {
+          const nombreItem =
+            item.get('nombreInforme')?.value ?? `Item ${j + 1}`;
+
+          Swal.fire({
+            title: 'Laboratorio de referencia',
+            text: `Seleccione el laboratorio de referencia para el Item "${nombreItem}" del Grupo ${i + 1}.`,
+            icon: 'warning',
+            confirmButtonText: 'Ok',
+          });
+
+          return false;
+        }
+      }
+    }
+
+    return true;
   }
 
   // ====== Items disponibles para requerimientos ======
@@ -685,6 +848,7 @@ export class MantPruebaLabComponent implements OnInit, AfterViewInit {
       },
     });
 
+    this.actualizarEstadoRequerimientosMuestra(true);
     this.myFormPruebaLab.get('nombrePruebaLab')?.enable();
     this.myFormPruebaLab.get('areaLab')?.enable();
     this.terminoBusqueda.setValue('');
@@ -807,9 +971,11 @@ export class MantPruebaLabComponent implements OnInit, AfterViewInit {
       return true;
     }
 
+    // ====== Debe existir al menos un requerimiento ======
+
     if (this.requerimientosMuestra.length === 0) {
       Swal.fire({
-        title: 'Requerimiento de muestra',
+        title: 'Requerimientos de muestra',
         text: 'Debe configurar al menos un requerimiento de muestra.',
         icon: 'warning',
         confirmButtonText: 'Ok',
@@ -818,17 +984,35 @@ export class MantPruebaLabComponent implements OnInit, AfterViewInit {
       return false;
     }
 
+    // ====== Items existentes en la composición ======
+
+    const itemsComposicion = new Set<string>();
+
+    this.gruposResultado.controls.forEach((grupoControl) => {
+      const items = grupoControl.get('items') as FormArray;
+
+      items.controls.forEach((itemControl) => {
+        const itemLabId = itemControl.get('itemLabId')?.value;
+
+        if (itemLabId) {
+          itemsComposicion.add(String(itemLabId));
+        }
+      });
+    });
+
+    // ====== Validar cada requerimiento ======
+
     for (let i = 0; i < this.requerimientosMuestra.length; i++) {
       const requerimiento = this.requerimientosMuestra.at(i) as FormGroup;
       const alcance = requerimiento.get('alcance')?.value;
       const itemsAsociados: string[] =
         requerimiento.get('itemsAsociados')?.value ?? [];
 
-      // ====== Items específicos ======
+      // ====== Items específicos requiere selección ======
 
       if (alcance === 'ITEMS_ESPECIFICOS' && itemsAsociados.length === 0) {
         Swal.fire({
-          title: 'Requerimiento incompleto',
+          title: 'Requerimiento de muestra',
           text: `Seleccione al menos un Item en el requerimiento ${i + 1}.`,
           icon: 'warning',
           confirmButtonText: 'Ok',
@@ -837,7 +1021,26 @@ export class MantPruebaLabComponent implements OnInit, AfterViewInit {
         return false;
       }
 
-      // ====== Volumen ======
+      // ====== Items asociados deben existir ======
+
+      if (alcance === 'ITEMS_ESPECIFICOS') {
+        const itemInexistente = itemsAsociados.find(
+          (itemId) => !itemsComposicion.has(String(itemId)),
+        );
+
+        if (itemInexistente) {
+          Swal.fire({
+            title: 'Requerimiento de muestra',
+            text: `El requerimiento ${i + 1} contiene un Item que ya no pertenece a la composición de la prueba. Revise los Items asociados.`,
+            icon: 'warning',
+            confirmButtonText: 'Ok',
+          });
+
+          return false;
+        }
+      }
+
+      // ====== Validar volumen ======
 
       const volumenMinimo = requerimiento.get('volumenMinimo')?.value;
       const unidadVolumen = requerimiento.get('unidadVolumen')?.value;
@@ -848,7 +1051,7 @@ export class MantPruebaLabComponent implements OnInit, AfterViewInit {
 
       if (tieneVolumen && !unidadVolumen) {
         Swal.fire({
-          title: 'Unidad requerida',
+          title: 'Volumen mínimo',
           text: `Seleccione la unidad del volumen mínimo en el requerimiento ${i + 1}.`,
           icon: 'warning',
           confirmButtonText: 'Ok',
@@ -859,6 +1062,181 @@ export class MantPruebaLabComponent implements OnInit, AfterViewInit {
     }
 
     return true;
+  }
+
+  // ====== Validar composición de la prueba ======
+
+  private validarComposicionPrueba(): boolean {
+    // ====== Debe existir al menos un grupo ======
+
+    if (this.gruposResultado.length === 0) {
+      Swal.fire({
+        title: 'Composición de la prueba',
+        text: 'Debe agregar al menos un grupo de resultados.',
+        icon: 'warning',
+        confirmButtonText: 'Ok',
+      });
+
+      return false;
+    }
+
+    // ====== Control general de Items ======
+
+    const itemsAsignados = new Map<
+      string,
+      {
+        grupoIndex: number;
+        itemIndex: number;
+        nombreItem: string;
+      }
+    >();
+
+    // ====== Control de órdenes de grupo ======
+
+    const ordenesGrupo = new Map<number, number>();
+
+    for (let i = 0; i < this.gruposResultado.length; i++) {
+      const grupo = this.gruposResultado.at(i) as FormGroup;
+      const items = grupo.get('items') as FormArray;
+      const nombreGrupo = grupo.get('nombreGrupo')?.value?.trim() ?? '';
+      const mostrarTitulo = grupo.get('mostrarTitulo')?.value === true;
+
+      // ====== Mostrar título requiere nombre ======
+
+      if (mostrarTitulo && !nombreGrupo) {
+        Swal.fire({
+          title: 'Nombre del grupo',
+          text: `El Grupo ${i + 1} está configurado para mostrar título. Debe ingresar un nombre para el grupo.`,
+          icon: 'warning',
+          confirmButtonText: 'Ok',
+        });
+
+        return false;
+      }
+
+      // ====== Cada grupo debe tener al menos un Item ======
+
+      if (items.length === 0) {
+        Swal.fire({
+          title: 'Composición de la prueba',
+          text: nombreGrupo
+            ? `El Grupo ${i + 1} "${nombreGrupo}" debe contener al menos un Item.`
+            : `El Grupo ${i + 1} debe contener al menos un Item.`,
+          icon: 'warning',
+          confirmButtonText: 'Ok',
+        });
+
+        return false;
+      }
+
+      // ====== Orden de grupo no repetido ======
+
+      const ordenGrupo = Number(grupo.get('ordenGrupo')?.value);
+      const grupoAnterior = ordenesGrupo.get(ordenGrupo);
+
+      if (grupoAnterior !== undefined) {
+        Swal.fire({
+          title: 'Orden de grupos',
+          text: `Los Grupos ${grupoAnterior + 1} y ${
+            i + 1
+          } tienen el mismo orden ${ordenGrupo}.`,
+          icon: 'warning',
+          confirmButtonText: 'Ok',
+        });
+
+        return false;
+      }
+
+      ordenesGrupo.set(ordenGrupo, i);
+
+      // ====== Control de órdenes de Items del grupo ======
+
+      const ordenesItem = new Map<number, number>();
+
+      for (let j = 0; j < items.length; j++) {
+        const item = items.at(j) as FormGroup;
+        const itemLabId = item.get('itemLabId')?.value;
+        const nombreItem = item.get('nombreInforme')?.value ?? `Item ${j + 1}`;
+
+        // ====== Item no repetido en toda la prueba ======
+
+        if (itemLabId) {
+          const id = String(itemLabId);
+          const itemAnterior = itemsAsignados.get(id);
+
+          if (itemAnterior) {
+            Swal.fire({
+              title: 'Item duplicado',
+              text: `El Item "${nombreItem}" está asignado más de una vez: Grupo ${
+                itemAnterior.grupoIndex + 1
+              } y Grupo ${i + 1}.`,
+              icon: 'warning',
+              confirmButtonText: 'Ok',
+            });
+
+            return false;
+          }
+
+          itemsAsignados.set(id, {
+            grupoIndex: i,
+            itemIndex: j,
+            nombreItem,
+          });
+        }
+
+        // ====== Orden de Item no repetido dentro del grupo ======
+
+        const ordenItem = Number(item.get('ordenItem')?.value);
+        const itemAnteriorIndex = ordenesItem.get(ordenItem);
+
+        if (itemAnteriorIndex !== undefined) {
+          const itemAnteriorControl = items.at(itemAnteriorIndex) as FormGroup;
+          const nombreItemAnterior =
+            itemAnteriorControl.get('nombreInforme')?.value ??
+            `Item ${itemAnteriorIndex + 1}`;
+
+          Swal.fire({
+            title: 'Orden de Items',
+            text: `Los Items "${nombreItemAnterior}" y "${nombreItem}" del Grupo ${
+              i + 1
+            } tienen el mismo orden ${ordenItem}.`,
+            icon: 'warning',
+            confirmButtonText: 'Ok',
+          });
+
+          return false;
+        }
+
+        ordenesItem.set(ordenItem, j);
+      }
+    }
+
+    return true;
+  }
+
+  // ====== Estado de requerimientos de muestra ======
+
+  private actualizarEstadoRequerimientosMuestra(
+    requiereMuestra: boolean,
+  ): void {
+    if (requiereMuestra) {
+      this.requerimientosMuestra.enable({
+        emitEvent: false,
+      });
+
+      return;
+    }
+
+    this.requerimientosMuestra.disable({
+      emitEvent: false,
+    });
+  }
+
+  public cambiarRequiereMuestra(): void {
+    const requiereMuestra =
+      this.myFormPruebaLab.get('requiereMuestra')?.value === true;
+
+    this.actualizarEstadoRequerimientosMuestra(requiereMuestra);
   }
 
   // ====== Construcción del body ======
@@ -908,7 +1286,22 @@ export class MantPruebaLabComponent implements OnInit, AfterViewInit {
       return;
     }
 
+    if (!this.validarComposicionPrueba()) {
+      return;
+    }
+
     if (!this.validarConfiguracionMuestras()) {
+      return;
+    }
+    if (!this.validarProcesamientoDefault()) {
+      return;
+    }
+
+    if (!this.validarProcesamientoGrupos()) {
+      return;
+    }
+
+    if (!this.validarProcesamientoItems()) {
       return;
     }
 
@@ -961,7 +1354,23 @@ export class MantPruebaLabComponent implements OnInit, AfterViewInit {
       return;
     }
 
+    if (!this.validarComposicionPrueba()) {
+      return;
+    }
+
     if (!this.validarConfiguracionMuestras()) {
+      return;
+    }
+
+    if (!this.validarProcesamientoDefault()) {
+      return;
+    }
+
+    if (!this.validarProcesamientoGrupos()) {
+      return;
+    }
+
+    if (!this.validarProcesamientoItems()) {
       return;
     }
 
@@ -1070,5 +1479,7 @@ export class MantPruebaLabComponent implements OnInit, AfterViewInit {
         this.crearRequerimientoMuestra(requerimiento),
       );
     });
+
+    this.actualizarEstadoRequerimientosMuestra(prueba.requiereMuestra ?? true);
   }
 }

@@ -134,17 +134,23 @@
 
       <!-- ====== Procesamiento ====== -->
 
+      <!-- ====== Procesamiento ====== -->
+
       <mat-card class="mb-2" formGroupName="procesamientoDefault">
         <mat-card-title> Procesamiento </mat-card-title>
 
         <mat-card-content>
           <div class="row-flex mt-3">
-            <!-- Tipo de procesamiento -->
-            <div [style.flex]="setFlex(28, '%')" class="flex-item">
+            <!-- ====== Tipo de procesamiento ====== -->
+
+            <div [style.flex]="setFlex(25, '%')" class="flex-item">
               <mat-form-field appearance="outline" class="w-100">
                 <mat-label> Tipo de procesamiento </mat-label>
 
-                <mat-select formControlName="tipo">
+                <mat-select
+                  formControlName="tipo"
+                  (selectionChange)="cambiarTipoProcesamientoDefault()"
+                >
                   <mat-option
                     *ngFor="let tipo of tiposProcesamiento"
                     [value]="tipo.value"
@@ -161,8 +167,44 @@
               </mat-form-field>
             </div>
 
-            <!-- Observación -->
-            <div [style.flex]="setFlex(65, '%')" class="flex-item">
+            <!-- ====== Laboratorio de referencia ====== -->
+
+            <div
+              *ngIf="procesamientoDefault.get('tipo')?.value === 'REFERENCIA'"
+              [style.flex]="setFlex(30, '%')"
+              class="flex-item"
+            >
+              <mat-form-field appearance="outline" class="w-100">
+                <mat-label> Laboratorio de referencia </mat-label>
+
+                <mat-select formControlName="laboratorioReferenciaId">
+                  <mat-option
+                    *ngFor="let laboratorio of laboratoriosReferenciaActivos"
+                    [value]="laboratorio._id"
+                  >
+                    {{ laboratorio.nombreLaboratorio }}
+                  </mat-option>
+                </mat-select>
+
+                <mat-hint>
+                  Laboratorio configurado para el procesamiento habitual
+                </mat-hint>
+              </mat-form-field>
+            </div>
+
+            <!-- ====== Observación ====== -->
+
+            <div
+              [style.flex]="
+                setFlex(
+                  procesamientoDefault.get('tipo')?.value === 'REFERENCIA'
+                    ? 45
+                    : 70,
+                  '%'
+                )
+              "
+              class="flex-item"
+            >
               <mat-form-field appearance="outline" class="w-100">
                 <mat-label> Observación de procesamiento </mat-label>
 
@@ -187,7 +229,7 @@
             </div>
           </div>
 
-          <!-- ====== Referencia ====== -->
+          <!-- ====== Información procesamiento externo ====== -->
 
           <div
             class="row-flex"
@@ -195,9 +237,10 @@
           >
             <div [style.flex]="setFlex(95, '%')" class="flex-item">
               <div style="font-size: 12px; color: #6c757d; margin-bottom: 10px">
-                Esta prueba será procesada por un laboratorio externo. La
-                selección del laboratorio de referencia se habilitará cuando
-                implementemos su mantenimiento.
+                La prueba será procesada habitualmente por el laboratorio de
+                referencia seleccionado. El laboratorio de envío podrá
+                modificarse posteriormente durante la atención si existiera una
+                contingencia operativa.
               </div>
             </div>
           </div>
@@ -222,12 +265,7 @@
             <div
               *ngFor="let grupo of gruposResultado.controls; let i = index"
               [formGroupName]="i"
-              style="
-                border: 1px solid #d7dce2;
-                border-radius: 6px;
-                padding: 5px;
-                margin-bottom: 5px;
-              "
+              class="grupo-resultado"
             >
               <!-- ====== Cabecera del grupo ====== -->
 
@@ -299,10 +337,12 @@
                 </div>
               </div>
 
-              <!-- ====== Procesamiento especial ====== -->
+              <!-- ====== Procesamiento especial del grupo ====== -->
 
               <div class="row-flex">
-                <div [style.flex]="setFlex(30, '%')" class="flex-item mt-2">
+                <!-- ====== Activar override ====== -->
+
+                <div [style.flex]="setFlex(25, '%')" class="flex-item mt-2">
                   <mat-slide-toggle
                     formControlName="usarProcesamientoOverride"
                     color="primary"
@@ -311,18 +351,25 @@
                   </mat-slide-toggle>
                 </div>
 
+                <!-- ====== Configuración override ====== -->
+
                 <div
-                  [style.flex]="setFlex(70, '%')"
+                  [style.flex]="setFlex(75, '%')"
                   class="flex-item"
                   formGroupName="procesamientoOverride"
                   *ngIf="grupo.get('usarProcesamientoOverride')?.value"
                 >
                   <div class="row-flex">
-                    <div [style.flex]="setFlex(30, '%')" class="flex-item">
+                    <!-- ====== Tipo ====== -->
+
+                    <div [style.flex]="setFlex(25, '%')" class="flex-item">
                       <mat-form-field appearance="outline" class="w-100">
                         <mat-label> Procesamiento </mat-label>
 
-                        <mat-select formControlName="tipo">
+                        <mat-select
+                          formControlName="tipo"
+                          (selectionChange)="cambiarTipoProcesamientoGrupo(i)"
+                        >
                           <mat-option
                             *ngFor="let tipo of tiposProcesamiento"
                             [value]="tipo.value"
@@ -333,7 +380,46 @@
                       </mat-form-field>
                     </div>
 
-                    <div [style.flex]="setFlex(70, '%')" class="flex-item">
+                    <!-- ====== Laboratorio de referencia ====== -->
+
+                    <div
+                      *ngIf="
+                        grupo.get('procesamientoOverride.tipo')?.value ===
+                        'REFERENCIA'
+                      "
+                      [style.flex]="setFlex(30, '%')"
+                      class="flex-item"
+                    >
+                      <mat-form-field appearance="outline" class="w-100">
+                        <mat-label> Laboratorio de referencia </mat-label>
+
+                        <mat-select formControlName="laboratorioReferenciaId">
+                          <mat-option
+                            *ngFor="
+                              let laboratorio of laboratoriosReferenciaActivos
+                            "
+                            [value]="laboratorio._id"
+                          >
+                            {{ laboratorio.nombreLaboratorio }}
+                          </mat-option>
+                        </mat-select>
+                      </mat-form-field>
+                    </div>
+
+                    <!-- ====== Observación ====== -->
+
+                    <div
+                      [style.flex]="
+                        setFlex(
+                          grupo.get('procesamientoOverride.tipo')?.value ===
+                            'REFERENCIA'
+                            ? 45
+                            : 75,
+                          '%'
+                        )
+                      "
+                      class="flex-item"
+                    >
                       <mat-form-field appearance="outline" class="w-100">
                         <mat-label> Observación </mat-label>
 
@@ -343,16 +429,6 @@
                           placeholder="Observación de procesamiento del grupo"
                         />
                       </mat-form-field>
-                    </div>
-                    <div
-                      *ngIf="
-                        grupo.get('procesamientoOverride.tipo')?.value ===
-                        'REFERENCIA'
-                      "
-                      style="font-size: 12px; color: #6c757d"
-                    >
-                      El laboratorio de referencia se seleccionará cuando
-                      implementemos su mantenimiento.
                     </div>
                   </div>
                 </div>
@@ -433,7 +509,7 @@
                       let j = index
                     "
                     [formGroupName]="j"
-                    style="border: 1px solid #e2e5e8; border-radius: 5px"
+                    class="item-resultado"
                   >
                     <div class="row-flex" style="align-items: center">
                       <!-- Código -->
@@ -507,6 +583,8 @@
                       class="row-flex"
                       style="padding-top: 8px; border-top: 1px dashed #e1e4e8"
                     >
+                      <!-- ====== Activar override ====== -->
+
                       <div [style.flex]="setFlex(25, '%')" class="flex-item">
                         <mat-slide-toggle
                           formControlName="usarProcesamientoOverride"
@@ -516,6 +594,8 @@
                         </mat-slide-toggle>
                       </div>
 
+                      <!-- ====== Configuración del override ====== -->
+
                       <div
                         [style.flex]="setFlex(75, '%')"
                         formGroupName="procesamientoOverride"
@@ -524,14 +604,21 @@
                         "
                       >
                         <div class="row-flex">
+                          <!-- ====== Tipo ====== -->
+
                           <div
-                            [style.flex]="setFlex(30, '%')"
+                            [style.flex]="setFlex(25, '%')"
                             class="flex-item"
                           >
                             <mat-form-field appearance="outline" class="w-100">
                               <mat-label> Procesamiento </mat-label>
 
-                              <mat-select formControlName="tipo">
+                              <mat-select
+                                formControlName="tipo"
+                                (selectionChange)="
+                                  cambiarTipoProcesamientoItem(i, j)
+                                "
+                              >
                                 <mat-option
                                   *ngFor="let tipo of tiposProcesamiento"
                                   [value]="tipo.value"
@@ -542,8 +629,46 @@
                             </mat-form-field>
                           </div>
 
+                          <!-- ====== Laboratorio de referencia ====== -->
+
                           <div
-                            [style.flex]="setFlex(70, '%')"
+                            *ngIf="
+                              itemControl.get('procesamientoOverride.tipo')
+                                ?.value === 'REFERENCIA'
+                            "
+                            [style.flex]="setFlex(30, '%')"
+                            class="flex-item"
+                          >
+                            <mat-form-field appearance="outline" class="w-100">
+                              <mat-label> Laboratorio de referencia </mat-label>
+
+                              <mat-select
+                                formControlName="laboratorioReferenciaId"
+                              >
+                                <mat-option
+                                  *ngFor="
+                                    let laboratorio of laboratoriosReferenciaActivos
+                                  "
+                                  [value]="laboratorio._id"
+                                >
+                                  {{ laboratorio.nombreLaboratorio }}
+                                </mat-option>
+                              </mat-select>
+                            </mat-form-field>
+                          </div>
+
+                          <!-- ====== Observación ====== -->
+
+                          <div
+                            [style.flex]="
+                              setFlex(
+                                itemControl.get('procesamientoOverride.tipo')
+                                  ?.value === 'REFERENCIA'
+                                  ? 45
+                                  : 75,
+                                '%'
+                              )
+                            "
                             class="flex-item"
                           >
                             <mat-form-field appearance="outline" class="w-100">
@@ -556,21 +681,6 @@
                               />
                             </mat-form-field>
                           </div>
-                        </div>
-
-                        <div
-                          *ngIf="
-                            itemControl.get('procesamientoOverride.tipo')
-                              ?.value === 'REFERENCIA'
-                          "
-                          style="
-                            font-size: 12px;
-                            color: #6c757d;
-                            margin-bottom: 8px;
-                          "
-                        >
-                          El laboratorio de referencia se seleccionará cuando
-                          implementemos su mantenimiento.
                         </div>
                       </div>
                     </div>
@@ -614,6 +724,7 @@
               <mat-slide-toggle
                 formControlName="requiereMuestra"
                 color="primary"
+                (change)="cambiarRequiereMuestra()"
               >
                 La prueba requiere muestra
               </mat-slide-toggle>
@@ -631,11 +742,7 @@
                 "
                 [formGroupName]="i"
                 class="mt-3"
-                style="
-                  border: 1px solid #d9dee5;
-                  border-radius: 8px;
-                  padding: 14px;
-                "
+                class="requerimiento-muestra mt-3"
               >
                 <!-- ====== Cabecera ====== -->
 
