@@ -1,33 +1,80 @@
 <form [formGroup]="myFormServicio">
+  <!-- ====== Encabezado ====== -->
+
   <div class="row" style="align-items: center">
     <div [style.flex]="setFlex(40, '%')" class="flex-item">
       <h5 class="text-center" style="font-weight: 500">
         MANTENIMIENTO DE SERVICIOS
       </h5>
     </div>
-    <div [style.flex]="setFlex(15, '%')" class="flex-item mb-2">
-      <label
-        >Código Servicio: {{ myFormServicio.get("codServicio")?.value }}</label
-      >
+
+    <div [style.flex]="setFlex(20, '%')" class="flex-item mb-2">
+      <label>
+        Código Servicio:
+        {{ myFormServicio.get("codServicio")?.value || "NUEVO" }}
+      </label>
     </div>
   </div>
 
   <div class="contenedor-flex">
+    <!-- ====== Formulario ====== -->
+
     <div class="contenedor-formulario">
       <mat-card>
-        <mat-card-title> Datos del Servicio </mat-card-title>
+        <mat-card-title>Datos del Servicio</mat-card-title>
 
         <mat-card-content class="mb-2">
+          <!-- ====== Clasificación ====== -->
+
           <div class="row-flex mt-2">
-            <div [style.flex]="setFlex(16, '%')" class="flex-item">
+            <div [style.flex]="setFlex(18, '%')" class="flex-item">
+              <mat-form-field appearance="outline">
+                <mat-label>Clase de Servicio</mat-label>
+
+                <mat-select formControlName="claseServicio">
+                  <mat-option value="INDIVIDUAL">
+                    Servicio Individual
+                  </mat-option>
+
+                  <!-- Se habilitará cuando implementemos paquetes -->
+                  <mat-option value="PAQUETE" disabled>
+                    Paquete de Servicios
+                  </mat-option>
+                </mat-select>
+
+                <mat-error
+                  *ngIf="
+                    myFormServicio.get('claseServicio')?.hasError('required')
+                  "
+                >
+                  Requerido
+                </mat-error>
+              </mat-form-field>
+            </div>
+
+            <div
+              *ngIf="
+                myFormServicio.get('claseServicio')?.value === 'INDIVIDUAL'
+              "
+              [style.flex]="setFlex(18, '%')"
+              class="flex-item"
+            >
               <mat-form-field appearance="outline">
                 <mat-label>Tipo de Servicio</mat-label>
+
                 <mat-select formControlName="tipoServicio">
-                  <mat-option value="Laboratorio">Laboratorio</mat-option>
-                  <mat-option value="Ecografía">Ecografía</mat-option>
-                  <mat-option value="Consulta">Consulta</mat-option>
-                  <mat-option value="Procedimiento">Procedimiento</mat-option>
+                  <mat-option value="Laboratorio"> Laboratorio </mat-option>
+
+                  <mat-option value="Ecografía"> Ecografía </mat-option>
+
+                  <mat-option value="Consulta"> Consulta </mat-option>
+
+                  <mat-option value="Procedimiento"> Procedimiento </mat-option>
+
+                  <!-- Se habilitará al implementar el maestro correspondiente -->
+                  <mat-option value="Rayos X" disabled> Rayos X </mat-option>
                 </mat-select>
+
                 <mat-error
                   *ngIf="
                     myFormServicio.get('tipoServicio')?.hasError('required')
@@ -38,10 +85,16 @@
               </mat-form-field>
             </div>
 
-            <div [style.flex]="setFlex(30, '%')" class="flex-item">
+            <div [style.flex]="setFlex(34, '%')" class="flex-item">
               <mat-form-field appearance="outline">
                 <mat-label>Nombre de Servicio</mat-label>
-                <input matInput formControlName="nombreServicio" />
+
+                <input
+                  matInput
+                  formControlName="nombreServicio"
+                  autocomplete="off"
+                />
+
                 <mat-error
                   *ngIf="
                     myFormServicio.get('nombreServicio')?.hasError('required')
@@ -52,10 +105,19 @@
               </mat-form-field>
             </div>
 
-            <div [style.flex]="setFlex(15, '%')" class="flex-item">
+            <div [style.flex]="setFlex(18, '%')" class="flex-item">
               <mat-form-field appearance="outline">
                 <mat-label>Precio de Referencia</mat-label>
-                <input matInput formControlName="precioServicio" />
+
+                <input
+                  matInput
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  formControlName="precioServicio"
+                  (focus)="seleccionarTexto($event)"
+                />
+
                 <mat-error
                   *ngIf="
                     myFormServicio.get('precioServicio')?.hasError('required')
@@ -63,33 +125,56 @@
                 >
                   Precio es requerido
                 </mat-error>
+
+                <mat-error
+                  *ngIf="myFormServicio.get('precioServicio')?.hasError('min')"
+                >
+                  El precio no puede ser negativo
+                </mat-error>
               </mat-form-field>
-            </div>
-
-            <div [style.flex]="setFlex(13, '%')" class="flex-item mb-3">
-              <mat-slide-toggle formControlName="estadoServicio"
-                >Activo</mat-slide-toggle
-              >
-            </div>
-
-            <div [style.flex]="setFlex(13, '%')" class="flex-item mb-3">
-              <mat-slide-toggle formControlName="favoritoServicio"
-                >Favorito</mat-slide-toggle
-              >
-            </div>
-
-            <div [style.flex]="setFlex(13, '%')" class="flex-item mb-3">
-              <mat-slide-toggle formControlName="favoritoServicioEmpresa"
-                >Favorito Empresa</mat-slide-toggle
-              >
             </div>
           </div>
 
+          <!-- ====== Estado y favoritos ====== -->
+
           <div class="row-flex mt-2">
+            <div [style.flex]="setFlex(25, '%')" class="flex-item">
+              <mat-slide-toggle formControlName="estadoServicio">
+                Servicio Activo
+              </mat-slide-toggle>
+            </div>
+
+            <div [style.flex]="setFlex(25, '%')" class="flex-item">
+              <mat-slide-toggle formControlName="favoritoServicio">
+                Favorito
+              </mat-slide-toggle>
+            </div>
+
+            <div [style.flex]="setFlex(25, '%')" class="flex-item">
+              <mat-slide-toggle formControlName="favoritoServicioEmpresa">
+                Favorito Empresa
+              </mat-slide-toggle>
+            </div>
+
+            <div [style.flex]="setFlex(25, '%')" class="flex-item">
+              <mat-slide-toggle formControlName="requiereSeleccionProfesional">
+                Seleccionar profesional
+              </mat-slide-toggle>
+            </div>
+          </div>
+
+          <!-- ====== Descripción ====== -->
+
+          <div class="row-flex mt-3">
             <div [style.flex]="setFlex(70, '%')" class="flex-item">
               <mat-form-field appearance="outline">
                 <mat-label>Descripción</mat-label>
-                <input matInput formControlName="descripcionServicio" />
+
+                <input
+                  matInput
+                  formControlName="descripcionServicio"
+                  autocomplete="off"
+                />
               </mat-form-field>
             </div>
 
@@ -107,8 +192,19 @@
             </div>
           </div>
 
+          <!-- ====== Configuración profesional ====== -->
+
           <fieldset class="campo-fieldset mt-2 mb-3">
             <legend>Profesiones asociadas</legend>
+
+            <div class="mb-2">
+              <small class="text-muted">
+                Define los perfiles profesionales que pueden ser utilizados para
+                este servicio. Si "Seleccionar profesional" está activo, la
+                cotización deberá permitir seleccionar un profesional que cumpla
+                esta configuración.
+              </small>
+            </div>
 
             <div formArrayName="profesionesAsociadas">
               <div
@@ -119,48 +215,60 @@
                 [formGroupName]="i"
               >
                 <div class="row-flex mt-2">
-                  <div [style.flex]="setFlex(30, '%')" class="flex-item">
+                  <!-- ====== Profesión ====== -->
+
+                  <div [style.flex]="setFlex(38, '%')" class="flex-item">
                     <mat-form-field appearance="outline">
                       <mat-label>Profesión</mat-label>
+
                       <mat-select
                         formControlName="profesionId"
                         (selectionChange)="onProfesionChange($event.value, i)"
                       >
                         <mat-option
-                          *ngFor="let profesion of profesiones"
-                          [value]="profesion._id"
+                          *ngFor="let itemProfesion of profesiones"
+                          [value]="itemProfesion._id"
                         >
-                          {{ profesion.codProfesion }} -
-                          {{ profesion.nombreProfesion }}
+                          {{ itemProfesion.codProfesion }} -
+                          {{ itemProfesion.nombreProfesion }}
                         </mat-option>
                       </mat-select>
+
                       <mat-error
                         *ngIf="
-                          myFormServicio
-                            .get('profesionServicio')
-                            ?.hasError('required')
+                          profesion.get('profesionId')?.hasError('required')
                         "
                       >
-                        Requerido
+                        Profesión requerida
                       </mat-error>
                     </mat-form-field>
                   </div>
 
-                  <div [style.flex]="setFlex(30, '%')" class="flex-item">
+                  <!-- ====== Especialidad ====== -->
+
+                  <div [style.flex]="setFlex(38, '%')" class="flex-item">
                     <mat-form-field appearance="outline">
                       <mat-label>Especialidad</mat-label>
+
                       <mat-select formControlName="especialidadId">
+                        <mat-option [value]="null">
+                          Sin especialidad específica
+                        </mat-option>
+
                         <mat-option
                           *ngFor="
                             let especialidad of getEspecialidadesPorIndex(i)
                           "
                           [value]="especialidad._id"
-                          >{{ especialidad.codEspecialidad }} -
+                        >
+                          {{ especialidad.codEspecialidad }} -
                           {{ especialidad.nombreEspecialidad }}
                         </mat-option>
                       </mat-select>
                     </mat-form-field>
                   </div>
+
+                  <!-- ====== Eliminar ====== -->
 
                   <div
                     [style.flex]="setFlex(10, '%')"
@@ -168,9 +276,9 @@
                   >
                     <button
                       mat-icon-button
-                      class="mb-3"
                       color="warn"
                       type="button"
+                      aria-label="Eliminar profesión"
                       (click)="eliminarProfesionAsociada(i)"
                     >
                       <mat-icon>delete</mat-icon>
@@ -180,58 +288,90 @@
               </div>
             </div>
 
+            <!-- ====== Validación selección profesional ====== -->
+
             <div
-              *ngIf="!validaarrayProfesion() && formSubmitted"
+              *ngIf="
+                myFormServicio.get('requiereSeleccionProfesional')?.value &&
+                !validaarrayProfesion() &&
+                formSubmitted
+              "
               class="text-danger mt-2"
               style="font-size: 14px; text-align: center"
             >
-              Debe agregar al menos una profesión
+              Si el servicio requiere selección de profesional, debe agregar al
+              menos una profesión asociada.
+            </div>
+
+            <div
+              *ngIf="profesionesAsociadas.length === 0"
+              class="text-center mt-2"
+            >
+              <small class="text-muted">
+                No existen profesiones asociadas.
+              </small>
             </div>
           </fieldset>
         </mat-card-content>
       </mat-card>
 
-      <div class="fila-flex mt-1">
+      <!-- ====== Componentes clínicos ====== -->
+
+      <div
+        class="fila-flex mt-1"
+        *ngIf="myFormServicio.get('claseServicio')?.value === 'INDIVIDUAL'"
+      >
+        <!-- ====== Componentes disponibles ====== -->
+
         <div class="tabla-flex-50">
           <mat-card>
-            <mat-card-title> Exámenes disponibles </mat-card-title>
+            <mat-card-title> Componentes Clínicos Disponibles </mat-card-title>
 
             <mat-card-content class="mt-2">
               <div class="row-flex">
                 <div [style.flex]="setFlex(48, '%')" class="flex-item">
                   <mat-form-field appearance="outline">
-                    <mat-label>Tipo de Examen</mat-label>
+                    <mat-label>Tipo de Componente</mat-label>
+
                     <mat-select [formControl]="tipoServicioTabla">
-                      <mat-option value="Laboratorio">Laboratorio</mat-option>
-                      <mat-option value="Ecografía">Ecografía</mat-option>
-                      <mat-option value="Consulta Médica"
-                        >Consulta Médica</mat-option
-                      >
-                      <mat-option value="Procedimiento"
-                        >Procedimiento</mat-option
-                      >
+                      <mat-option value="Laboratorio"> Laboratorio </mat-option>
+
+                      <mat-option value="Ecografía"> Ecografía </mat-option>
+
+                      <mat-option value="Consulta Médica">
+                        Consulta Médica
+                      </mat-option>
+
+                      <mat-option value="Procedimiento">
+                        Procedimiento
+                      </mat-option>
+
+                      <!-- Pendiente de backend / maestro -->
+                      <mat-option value="Rayos X" disabled>
+                        Rayos X
+                      </mat-option>
                     </mat-select>
-                    <!-- <mat-error *ngIf="myFormServicio.get('areaLab')?.hasError('required')">
-                                            Requerido
-                                        </mat-error> -->
                   </mat-form-field>
                 </div>
 
                 <div [style.flex]="setFlex(48, '%')" class="flex-item">
                   <mat-form-field appearance="outline">
-                    <mat-label>Buscar Examen</mat-label>
+                    <mat-label>Buscar Componente</mat-label>
+
                     <input
                       matInput
-                      (input)="buscarExamenes()"
                       [formControl]="terminoBusquedaExamenes"
-                      placeholder="Escribe el examen"
+                      (input)="buscarExamenes()"
+                      placeholder="Escribe código o nombre"
+                      autocomplete="off"
                     />
+
                     <button
                       *ngIf="terminoBusquedaExamenes.value"
                       type="button"
                       matSuffix
                       mat-icon-button
-                      aria-label="Clear"
+                      aria-label="Limpiar búsqueda"
                       (click)="
                         terminoBusquedaExamenes.setValue(''); buscarExamenes()
                       "
@@ -242,10 +382,12 @@
                 </div>
               </div>
 
+              <!-- ====== Tabla disponibles ====== -->
+
               <table mat-table [dataSource]="dataSourceExamenesDisponibles">
-                <!-- Definir las columnas -->
                 <ng-container matColumnDef="codigo">
                   <th mat-header-cell *matHeaderCellDef>Código</th>
+
                   <td mat-cell *matCellDef="let examen">
                     {{ examen.codExamen }}
                   </td>
@@ -253,6 +395,7 @@
 
                 <ng-container matColumnDef="nombre">
                   <th mat-header-cell *matHeaderCellDef>Nombre</th>
+
                   <td mat-cell *matCellDef="let examen">
                     {{ examen.nombreExamen }}
                   </td>
@@ -260,11 +403,13 @@
 
                 <ng-container matColumnDef="accion">
                   <th mat-header-cell *matHeaderCellDef>Acción</th>
+
                   <td mat-cell *matCellDef="let examen">
                     <button
                       mat-icon-button
                       color="primary"
                       type="button"
+                      aria-label="Agregar componente"
                       (click)="agregarExamen(examen)"
                     >
                       <mat-icon>add</mat-icon>
@@ -273,10 +418,20 @@
                 </ng-container>
 
                 <tr mat-header-row *matHeaderRowDef="columnasDisponibles"></tr>
+
                 <tr
                   mat-row
                   *matRowDef="let row; columns: columnasDisponibles"
                 ></tr>
+
+                <tr class="mat-row" *matNoDataRow>
+                  <td
+                    class="mat-cell text-center"
+                    [attr.colspan]="columnasDisponibles.length"
+                  >
+                    No hay componentes disponibles.
+                  </td>
+                </tr>
               </table>
 
               <mat-paginator
@@ -290,51 +445,277 @@
           </mat-card>
         </div>
 
+        <!-- ====== Componentes seleccionados ====== -->
+
+        <!-- ====== Componentes seleccionados ====== -->
+
         <div class="tabla-flex-50">
           <mat-card>
-            <mat-card-title> Exámenes seleccionados </mat-card-title>
+            <mat-card-title> Componentes Seleccionados </mat-card-title>
 
             <mat-card-content class="mb-2">
               <table mat-table [dataSource]="dataSourceExamenesSeleccionados">
-                <!-- Definir las columnas -->
+                <!-- ====== Código ====== -->
+
                 <ng-container matColumnDef="codigo">
                   <th mat-header-cell *matHeaderCellDef>Código</th>
-                  <td mat-cell *matCellDef="let servicio">
-                    {{ servicio.codExamen }}
+
+                  <td mat-cell *matCellDef="let examen">
+                    {{ examen.codExamen }}
                   </td>
                 </ng-container>
+
+                <!-- ====== Nombre ====== -->
 
                 <ng-container matColumnDef="nombre">
                   <th mat-header-cell *matHeaderCellDef>Nombre</th>
-                  <td mat-cell *matCellDef="let servicio">
-                    {{ servicio.nombreExamen }}
+
+                  <td mat-cell *matCellDef="let examen">
+                    <div>
+                      {{ examen.nombreExamen }}
+                    </div>
+
+                    <small
+                      class="text-muted"
+                      *ngIf="examen.tipoExamen === 'LABORATORIO'"
+                    >
+                      {{ examen.numeroInstancias || 1 }}
+                      instancia(s) ·
+
+                      {{
+                        examen.modalidadInstancias === "UNICA"
+                          ? "Única"
+                          : examen.modalidadInstancias ===
+                              "MUESTRAS_INDEPENDIENTES"
+                            ? "Muestras independientes"
+                            : "Repeticiones misma muestra"
+                      }}
+                    </small>
                   </td>
                 </ng-container>
 
+                <!-- ====== Acciones ====== -->
+
                 <ng-container matColumnDef="accion">
                   <th mat-header-cell *matHeaderCellDef>Acción</th>
-                  <td mat-cell *matCellDef="let servicio">
+
+                  <td mat-cell *matCellDef="let examen">
+                    <!-- Configuración disponible inicialmente para laboratorio -->
+
                     <button
+                      *ngIf="examen.tipoExamen === 'LABORATORIO'"
                       mat-icon-button
                       color="primary"
                       type="button"
-                      (click)="removerExamen(servicio)"
+                      aria-label="Configurar componente"
+                      (click)="configurarExamen(examen)"
+                    >
+                      <mat-icon>settings</mat-icon>
+                    </button>
+
+                    <button
+                      mat-icon-button
+                      color="warn"
+                      type="button"
+                      aria-label="Eliminar componente"
+                      (click)="removerExamen(examen)"
                     >
                       <mat-icon>delete</mat-icon>
                     </button>
                   </td>
                 </ng-container>
 
-                <tr mat-header-row *matHeaderRowDef="columnasDisponibles"></tr>
+                <tr
+                  mat-header-row
+                  *matHeaderRowDef="columnasSeleccionados"
+                ></tr>
+
                 <tr
                   mat-row
-                  *matRowDef="let row; columns: columnasDisponibles"
+                  *matRowDef="let row; columns: columnasSeleccionados"
                 ></tr>
+
+                <tr class="mat-row" *matNoDataRow>
+                  <td
+                    class="mat-cell text-center"
+                    [attr.colspan]="columnasSeleccionados.length"
+                  >
+                    No hay componentes seleccionados.
+                  </td>
+                </tr>
               </table>
+
+              <!-- ====== Configuración de instancia ====== -->
+
+              <fieldset
+                *ngIf="componenteConfiguracionForm as componenteForm"
+                class="campo-fieldset mt-3 mb-2"
+                [formGroup]="componenteForm"
+              >
+                <legend>Configuración del componente</legend>
+
+                <div class="mb-2">
+                  <strong>
+                    {{ componenteForm.get("codExamen")?.value }}
+                    -
+                    {{ componenteForm.get("nombreExamen")?.value }}
+                  </strong>
+                </div>
+
+                <div class="row-flex mt-2">
+                  <!-- ====== Modalidad ====== -->
+
+                  <div [style.flex]="setFlex(48, '%')" class="flex-item">
+                    <mat-form-field appearance="outline">
+                      <mat-label> Modalidad de instancias </mat-label>
+
+                      <mat-select
+                        formControlName="modalidadInstancias"
+                        (selectionChange)="onModalidadInstanciasChange()"
+                      >
+                        <mat-option value="UNICA"> Única </mat-option>
+
+                        <mat-option value="MUESTRAS_INDEPENDIENTES">
+                          Muestras independientes
+                        </mat-option>
+
+                        <mat-option value="REPETICIONES_MISMA_MUESTRA">
+                          Repeticiones de la misma muestra
+                        </mat-option>
+                      </mat-select>
+                    </mat-form-field>
+                  </div>
+
+                  <!-- ====== Número instancias ====== -->
+
+                  <div [style.flex]="setFlex(30, '%')" class="flex-item">
+                    <mat-form-field appearance="outline">
+                      <mat-label> Número de instancias </mat-label>
+
+                      <input
+                        matInput
+                        type="number"
+                        step="1"
+                        [min]="
+                          componenteForm.get('modalidadInstancias')?.value ===
+                          'UNICA'
+                            ? 1
+                            : 2
+                        "
+                        [readonly]="
+                          componenteForm.get('modalidadInstancias')?.value ===
+                          'UNICA'
+                        "
+                        formControlName="numeroInstancias"
+                        (change)="onNumeroInstanciasChange()"
+                      />
+
+                      <mat-error
+                        *ngIf="
+                          componenteForm
+                            .get('numeroInstancias')
+                            ?.hasError('required')
+                        "
+                      >
+                        Requerido
+                      </mat-error>
+
+                      <mat-error
+                        *ngIf="
+                          componenteForm
+                            .get('numeroInstancias')
+                            ?.hasError('min')
+                        "
+                      >
+                        Número de instancias inválido
+                      </mat-error>
+                    </mat-form-field>
+                  </div>
+                </div>
+
+                <!-- ====== Etiquetas ====== -->
+
+                <div
+                  *ngIf="
+                    componenteForm.get('modalidadInstancias')?.value !==
+                      'UNICA' && etiquetasConfiguracion as etiquetas
+                  "
+                  formArrayName="etiquetasInstancias"
+                >
+                  <div class="mt-2 mb-2">
+                    <strong> Etiquetas de las instancias </strong>
+                  </div>
+
+                  <div
+                    class="row-flex"
+                    *ngFor="let etiqueta of etiquetas.controls; let i = index"
+                  >
+                    <div [style.flex]="setFlex(60, '%')" class="flex-item">
+                      <mat-form-field appearance="outline">
+                        <mat-label> Instancia {{ i + 1 }} </mat-label>
+
+                        <input
+                          matInput
+                          [formControlName]="i"
+                          placeholder="Ej. Basal, 1 hora, 3 horas"
+                          autocomplete="off"
+                        />
+
+                        <mat-error *ngIf="etiqueta.hasError('required')">
+                          Etiqueta requerida
+                        </mat-error>
+                      </mat-form-field>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- ====== Descripción modalidad ====== -->
+
+                <div
+                  class="mb-3"
+                  *ngIf="
+                    componenteForm.get('modalidadInstancias')?.value ===
+                    'MUESTRAS_INDEPENDIENTES'
+                  "
+                >
+                  <small class="text-muted">
+                    Cada instancia corresponde a una muestra independiente del
+                    paciente.
+                  </small>
+                </div>
+
+                <div
+                  class="mb-3"
+                  *ngIf="
+                    componenteForm.get('modalidadInstancias')?.value ===
+                    'REPETICIONES_MISMA_MUESTRA'
+                  "
+                >
+                  <small class="text-muted">
+                    Las instancias se procesan sobre la misma muestra obtenida.
+                  </small>
+                </div>
+
+                <!-- ====== Cerrar ====== -->
+
+                <div class="text-end">
+                  <button
+                    mat-flat-button
+                    color="primary"
+                    type="button"
+                    (click)="cerrarConfiguracionExamen()"
+                  >
+                    <mat-icon>check</mat-icon>
+                    Aplicar configuración
+                  </button>
+                </div>
+              </fieldset>
             </mat-card-content>
           </mat-card>
         </div>
       </div>
+
+      <!-- ====== Acciones ====== -->
 
       <div class="row-flex-btn mt-4">
         <div [style.flex]="setFlex(20, '%')" class="flex-item text-end">
@@ -342,8 +723,10 @@
             mat-raised-button
             class="btn-nuevo"
             type="button"
+            [disabled]="isLoading"
             (click)="nuevoServicio()"
           >
+            <mat-icon>add</mat-icon>
             Nuevo Servicio
           </button>
         </div>
@@ -357,9 +740,11 @@
             mat-raised-button
             class="btn-registrar"
             type="button"
+            [disabled]="isLoading"
             (click)="registraServicio()"
           >
-            <mat-icon>save</mat-icon>Registrar Servicio
+            <mat-icon>save</mat-icon>
+            Registrar Servicio
           </button>
         </div>
 
@@ -372,13 +757,17 @@
             mat-raised-button
             class="btn-actualizar"
             type="button"
+            [disabled]="isLoading"
             (click)="actualizarServicio()"
           >
-            <mat-icon>save</mat-icon>Actualizar Servicio
+            <mat-icon>save</mat-icon>
+            Actualizar Servicio
           </button>
         </div>
       </div>
     </div>
+
+    <!-- ====== Servicios registrados ====== -->
 
     <div class="contenedor-tablaDerecha">
       <mat-card>
@@ -387,28 +776,33 @@
         <mat-card-content>
           <mat-form-field appearance="outline" class="mt-2">
             <mat-label>Buscar Servicio</mat-label>
+
             <input
               matInput
               [formControl]="terminoBusquedaServicio"
               (input)="buscarServicio()"
-              placeholder="Escribe el nombre del servicio"
+              placeholder="Escribe código o nombre"
+              autocomplete="off"
             />
+
             <button
               *ngIf="terminoBusquedaServicio.value"
               type="button"
               matSuffix
               mat-icon-button
-              aria-label="Clear"
+              aria-label="Limpiar búsqueda"
               (click)="terminoBusquedaServicio.setValue(''); buscarServicio()"
             >
               <mat-icon>close</mat-icon>
             </button>
           </mat-form-field>
 
+          <!-- ====== Tabla servicios ====== -->
+
           <table mat-table [dataSource]="dataSourceServicios">
-            <!-- Columnas -->
             <ng-container matColumnDef="codigo">
               <th mat-header-cell *matHeaderCellDef>Código</th>
+
               <td mat-cell *matCellDef="let servicio">
                 {{ servicio.codServicio }}
               </td>
@@ -416,6 +810,7 @@
 
             <ng-container matColumnDef="nombre">
               <th mat-header-cell *matHeaderCellDef>Nombre</th>
+
               <td mat-cell *matCellDef="let servicio">
                 {{ servicio.nombreServicio }}
               </td>
@@ -423,29 +818,38 @@
 
             <ng-container matColumnDef="precio">
               <th mat-header-cell *matHeaderCellDef>Precio</th>
+
               <td mat-cell *matCellDef="let servicio">
-                {{ servicio.precioServicio }}
+                {{ servicio.precioServicio | number: "1.2-2" }}
               </td>
             </ng-container>
 
             <tr mat-header-row *matHeaderRowDef="columnasServicios"></tr>
+
             <tr
               mat-row
               *matRowDef="let row; let i = index; columns: columnasServicios"
               (click)="cargarServicio(row, i)"
               [class.fila-seleccionada]="i === filaSeleccionadaIndex"
             ></tr>
+
+            <tr class="mat-row" *matNoDataRow>
+              <td
+                class="mat-cell text-center"
+                [attr.colspan]="columnasServicios.length"
+              >
+                No se encontraron servicios.
+              </td>
+            </tr>
           </table>
 
-          <div>
-            <mat-paginator
-              #MatPaginatorServicios
-              [pageSize]="15"
-              [pageSizeOptions]="[5, 10, 25]"
-              [hidePageSize]="true"
-              showFirstLastButtons
-            ></mat-paginator>
-          </div>
+          <mat-paginator
+            #MatPaginatorServicios
+            [pageSize]="15"
+            [pageSizeOptions]="[5, 10, 25]"
+            [hidePageSize]="true"
+            showFirstLastButtons
+          ></mat-paginator>
         </mat-card-content>
       </mat-card>
     </div>

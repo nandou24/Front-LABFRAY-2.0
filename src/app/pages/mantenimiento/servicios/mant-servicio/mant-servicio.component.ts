@@ -1,9 +1,9 @@
 import {
+  AfterViewInit,
   Component,
   inject,
-  ViewChild,
-  AfterViewInit,
   OnInit,
+  ViewChild,
 } from '@angular/core';
 import {
   AbstractControl,
@@ -15,74 +15,91 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatCardModule } from '@angular/material/card';
-import { MatSelectModule } from '@angular/material/select';
+
+import { CommonModule } from '@angular/common';
+
 import { MatButtonModule } from '@angular/material/button';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatCardModule } from '@angular/material/card';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
+import { MatPaginator, MatPaginatorIntl } from '@angular/material/paginator';
+import { MatSelectModule } from '@angular/material/select';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import {
   MatTable,
   MatTableDataSource,
   MatTableModule,
 } from '@angular/material/table';
-import { CommonModule } from '@angular/common';
-import { catchError, distinctUntilChanged, of } from 'rxjs';
-import { MatPaginator, MatPaginatorIntl } from '@angular/material/paginator';
+
+import { catchError, of } from 'rxjs';
 import Swal from 'sweetalert2';
+
 import { customPaginatorIntl } from '../../../../services/utilitarios/mat-paginator-intl';
+
 import { ServiciosService } from '../../../../services/mantenimiento/servicios/servicios.service';
 import { ProfesionService } from '../../../../services/mantenimiento/profesion/profesion.service';
 import { EspecialidadService } from '../../../../services/mantenimiento/especialidad/especialidad.service';
-import { IServicio } from '../../../../models/Mantenimiento/servicios.models';
+
+import {
+  IExamenServicio,
+  IServicio,
+  TipoExamenServicio,
+} from '../../../../models/Mantenimiento/servicios.models';
 
 @Component({
   selector: 'app-mant-servicio',
   imports: [
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule,
+
     MatFormFieldModule,
     MatInputModule,
-    FormsModule,
     MatCardModule,
     MatSelectModule,
-    ReactiveFormsModule,
     MatButtonModule,
     MatSlideToggleModule,
     MatIconModule,
     MatTableModule,
     MatPaginator,
-    CommonModule,
   ],
-  providers: [{ provide: MatPaginatorIntl, useFactory: customPaginatorIntl }],
+  providers: [
+    {
+      provide: MatPaginatorIntl,
+      useFactory: customPaginatorIntl,
+    },
+  ],
   templateUrl: './mant-servicio.component.html',
   styleUrl: './mant-servicio.component.scss',
 })
 export class MantServicioComponent implements OnInit, AfterViewInit {
-  constructor(private _servicioService: ServiciosService) {}
+  // ====== Servicios ======
 
-  ngOnInit(): void {
-    this.escucharCambioTipo();
-    this.traerServicios();
-    this.listarProfesiones();
-    this.listarEspecialidades();
-  }
+  private readonly _fb = inject(FormBuilder);
+  private readonly _servicioService = inject(ServiciosService);
+  private readonly _profesionService = inject(ProfesionService);
+  private readonly _especialidadService = inject(EspecialidadService);
 
-  private _fb = inject(FormBuilder);
-  private _profesionService = inject(ProfesionService);
-  private _especialidadService = inject(EspecialidadService);
+  // ====== Formulario ======
 
   public myFormServicio: FormGroup = this._fb.group({
-    codServicio: '',
-    tipoServicio: ['', [Validators.required]],
-    nombreServicio: ['', [Validators.required]],
+    codServicio: [''],
+    claseServicio: ['INDIVIDUAL', Validators.required],
+    tipoServicio: ['', Validators.required],
+    nombreServicio: ['', Validators.required],
     descripcionServicio: [''],
-    precioServicio: ['', [Validators.required]],
+    precioServicio: [null, [Validators.required, Validators.min(0)]],
     estadoServicio: [true],
     favoritoServicio: [false],
     favoritoServicioEmpresa: [false],
+    requiereSeleccionProfesional: [false],
     examenesServicio: this._fb.array([]),
     profesionesAsociadas: this._fb.array([]),
+    serviciosIncluidos: this._fb.array([]),
   });
+
+  // ====== FormArray ======
 
   get examenesServicio(): FormArray {
     return this.myFormServicio.get('examenesServicio') as FormArray;
@@ -92,42 +109,71 @@ export class MantServicioComponent implements OnInit, AfterViewInit {
     return this.myFormServicio.get('profesionesAsociadas') as FormArray;
   }
 
-  @ViewChild(MatTable) table!: MatTable<any>;
-  @ViewChild('MatPaginatorServicios') paginatorServicios!: MatPaginator;
-  @ViewChild('MatPaginatorExamenes') paginatorExamenes!: MatPaginator;
+  get serviciosIncluidos(): FormArray {
+    return this.myFormServicio.get('serviciosIncluidos') as FormArray;
+  }
 
-  ngAfterViewInit() {
+  // ====== Paginadores ======
+
+  @ViewChild(MatTable)
+  table!: MatTable<any>;
+
+  @ViewChild('MatPaginatorServicios')
+  paginatorServicios!: MatPaginator;
+
+  @ViewChild('MatPaginatorExamenes')
+  paginatorExamenes!: MatPaginator;
+
+  // ====== Tablas ======
+
+  columnasDisponibles: string[] = ['codigo', 'nombre', 'accion'];
+  columnasSeleccionados: string[] = ['codigo', 'nombre', 'accion'];
+  columnasServicios: string[] = ['codigo', 'nombre', 'precio'];
+  dataSourceExamenesDisponibles = new MatTableDataSource<any>();
+  dataSourceExamenesSeleccionados = new MatTableDataSource<any>();
+  dataSourceServicios = new MatTableDataSource<IServicio>();
+
+  // ====== Controles auxiliares ======
+
+  tipoServicioTabla = new FormControl<string | null>('');
+  terminoBusquedaExamenes = new FormControl<string>('', { nonNullable: true });
+  terminoBusquedaServicio = new FormControl<string>('', { nonNullable: true });
+
+  // ====== Estado ======
+
+  formSubmitted = false;
+  isLoading = false;
+  pruebaSeleccionada = false;
+  filaSeleccionadaIndex: number | null = null;
+
+  // ====== Datos en memoria ======
+
+  private todasLosExamenesPorTipoMemoria: any[] = [];
+  private todasLosServiciosMemoria: IServicio[] = [];
+  profesiones: any[] = [];
+  especialidades: any[] = [];
+  especialidadesPorProfesion: {
+    [key: number]: any[];
+  } = {};
+
+  // ====== Inicialización ======
+
+  ngOnInit(): void {
+    this.escucharCambioTipo();
+    this.traerServicios();
+    this.listarProfesiones();
+    this.listarEspecialidades();
+  }
+
+  ngAfterViewInit(): void {
     this.dataSourceServicios.paginator = this.paginatorServicios;
     this.dataSourceExamenesDisponibles.paginator = this.paginatorExamenes;
   }
 
+  // ====== Utilitarios visuales ======
+
   setFlex(valor: number, unidad: 'px' | '%' = 'px'): string {
     return `0 0 ${valor}${unidad}`;
-  }
-
-  //Tabla items disponibles
-  columnasDisponibles: string[] = ['codigo', 'nombre', 'accion'];
-  dataSourceExamenesDisponibles = new MatTableDataSource<any>();
-
-  //Tabla items seleccionados
-  columnasSeleccionados: string[] = ['codigo', 'nombre', 'accion'];
-  dataSourceExamenesSeleccionados = new MatTableDataSource<any>();
-
-  //Tabla pruebas de laboratorio
-  columnasServicios: string[] = ['codigo', 'nombre', 'precio'];
-  dataSourceServicios = new MatTableDataSource<IServicio>();
-
-  tipoServicioTabla = new FormControl('');
-  todosLosExamenes: any[] = [];
-
-  escucharCambioTipo() {
-    this.tipoServicioTabla.valueChanges.subscribe((tipo) => {
-      if (tipo) {
-        this.obtenerExamenesPorTipo(tipo);
-      } else {
-        this.dataSourceExamenesDisponibles.data = [];
-      }
-    });
   }
 
   seleccionarTexto(event: FocusEvent): void {
@@ -135,149 +181,461 @@ export class MantServicioComponent implements OnInit, AfterViewInit {
     input.select();
   }
 
-  private todasLosExamenesPorTipoMemoria: any[] = [];
+  // ====== Cambio tipo examen ======
 
-  obtenerExamenesPorTipo(tipo: string) {
+  escucharCambioTipo(): void {
+    this.tipoServicioTabla.valueChanges.subscribe((tipo) => {
+      this.terminoBusquedaExamenes.setValue('');
+
+      if (tipo) {
+        this.obtenerExamenesPorTipo(tipo);
+        return;
+      }
+
+      this.todasLosExamenesPorTipoMemoria = [];
+      this.dataSourceExamenesDisponibles.data = [];
+    });
+  }
+
+  // ====== Obtener exámenes ======
+
+  obtenerExamenesPorTipo(tipo: string): void {
     this._servicioService
       .getExamenesPorTipo(tipo)
       .pipe(
         catchError((error) => {
+          console.error('Error al obtener exámenes por tipo:', error);
+
           this.dataSourceExamenesDisponibles.data = [];
           this.todasLosExamenesPorTipoMemoria = [];
-          console.error('Error al obtener exámenes por tipo:', error);
-          return of({ ok: false, examenes: [] }); // devuelve array vacío para que igual entre en next
+
+          return of({
+            ok: false,
+            examenes: [],
+          });
         }),
       )
       .subscribe((res: any) => {
-        const examenes = res.examenes.map((examen: any) => ({
-          codExamen:
-            examen.codPruebaLab ||
-            examen.codEcografia ||
-            examen.codConsulta ||
-            examen.codProcedimiento,
-          nombreExamen:
-            examen.nombrePruebaLab ||
-            examen.nombreEcografia ||
-            examen.nombreConsulta ||
-            examen.nombreProcedimiento,
-        }));
+        const registros = Array.isArray(res) ? res : (res?.examenes ?? []);
+        const tipoExamen = this.obtenerTipoExamenServicio(tipo);
+        const examenes = registros.map((examen: any) =>
+          this.mapearExamenDisponible(examen, tipoExamen),
+        );
+
         this.dataSourceExamenesDisponibles.data = examenes;
         this.todasLosExamenesPorTipoMemoria = examenes;
+
+        if (this.dataSourceExamenesDisponibles.paginator) {
+          this.dataSourceExamenesDisponibles.paginator.firstPage();
+        }
       });
   }
 
-  terminoBusquedaExamenes = new FormControl('');
+  // ====== Normalizar tipo clínico ======
 
-  buscarExamenes() {
-    const termino = this.terminoBusquedaExamenes.value?.trim() ?? '';
-
-    if (termino === '') {
-      // Si no hay término de búsqueda, mostrar todas las pruebas iniciales
-      this.dataSourceExamenesDisponibles.data =
-        this.todasLosExamenesPorTipoMemoria;
-      this.dataSourceExamenesDisponibles.filter = '';
-    } else {
-      // Si hay término de búsqueda, aplicar filtro del dataSource
-      this.dataSourceExamenesDisponibles.data =
-        this.todasLosExamenesPorTipoMemoria; // Asegurar que tiene todos los datos
-      this.dataSourceExamenesDisponibles.filter = termino.toLowerCase();
+  private obtenerTipoExamenServicio(
+    tipo: string | null | undefined,
+  ): TipoExamenServicio | null {
+    if (!tipo) {
+      return null;
     }
 
-    // Si hay un paginador, ir a la primera página cuando se filtra
+    const valor = tipo
+      .trim()
+      .toUpperCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+
+    switch (valor) {
+      case 'LABORATORIO':
+        return 'LABORATORIO';
+
+      case 'ECOGRAFIA':
+        return 'ECOGRAFIA';
+
+      case 'RAYOS X':
+      case 'RAYOS_X':
+      case 'RAYOSX':
+        return 'RAYOS_X';
+
+      case 'CONSULTA':
+      case 'CONSULTA MEDICA':
+        return 'CONSULTA';
+
+      case 'PROCEDIMIENTO':
+        return 'PROCEDIMIENTO';
+
+      default:
+        return null;
+    }
+  }
+
+  // ====== Mapear maestro a componente ======
+
+  private mapearExamenDisponible(
+    examen: any,
+    tipoExamen: TipoExamenServicio | null,
+  ): any {
+    return {
+      referenciaId: examen?._id ?? null,
+
+      // Legacy temporal.
+      pruebaLabId: tipoExamen === 'LABORATORIO' ? (examen?._id ?? null) : null,
+
+      tipoExamen,
+
+      codExamen:
+        examen?.codPruebaLab ??
+        examen?.codEcografia ??
+        examen?.codRayosX ??
+        examen?.codConsulta ??
+        examen?.codProcedimiento ??
+        examen?.codExamen ??
+        '',
+
+      nombreExamen:
+        examen?.nombrePruebaLab ??
+        examen?.nombreEcografia ??
+        examen?.nombreRayosX ??
+        examen?.nombreConsulta ??
+        examen?.nombreProcedimiento ??
+        examen?.nombreExamen ??
+        '',
+
+      numeroInstancias: 1,
+      modalidadInstancias: 'UNICA',
+      etiquetasInstancias: [],
+    };
+  }
+
+  // ====== Buscar exámenes ======
+
+  buscarExamenes(): void {
+    const termino = this.terminoBusquedaExamenes.value.trim().toLowerCase();
+
+    this.dataSourceExamenesDisponibles.data =
+      this.todasLosExamenesPorTipoMemoria;
+
+    this.dataSourceExamenesDisponibles.filter = termino;
+
     if (this.dataSourceExamenesDisponibles.paginator) {
       this.dataSourceExamenesDisponibles.paginator.firstPage();
     }
   }
 
-  // filtrarExamenes() {
-  //   const termino = this.terminoBusquedaExamenesControl.value || '';
-  //   this.dataSourceExamenesDisponibles.filter = termino.trim().toLowerCase();
-  // }
+  // ====== Agregar examen ======
 
-  // terminoBusquedaExamenes: any;
+  agregarExamen(examen: any): void {
+    const existe = this.examenesServicio.controls.some((control) => {
+      const actual = control.value as IExamenServicio;
 
-  // private inicializarBusquedaServicios(): void {
-  //   this.terminoBusquedaExamenesControl.valueChanges
-  //     .pipe(
-  //       //debounceTime(300), // ⏱️ Espera 300 ms después del último cambio
-  //       distinctUntilChanged(), // 🔄 Solo si el valor cambió
-  //     )
-  //     .subscribe((valor: string | null) => {
-  //       this.terminoBusquedaExamenes = valor;
-  //       this.filtrarExamenes();
-  //     });
-  // }
-
-  agregarExamen(examen: any) {
-    const existe = this.examenesServicio.controls.some(
-      (control) => control.value.codExamen === examen.codExamen,
-    );
+      return (
+        actual.codExamen === examen.codExamen &&
+        actual.tipoExamen === examen.tipoExamen
+      );
+    });
 
     if (existe) {
-      console.log('Servicio ya está agregado');
+      Swal.fire({
+        title: 'Información',
+        text: 'El examen ya se encuentra agregado al servicio.',
+        icon: 'info',
+        confirmButtonText: 'Ok',
+      });
+
       return;
     }
 
     this.examenesServicio.push(this.crearExamenFormGroup(examen));
-    this.dataSourceExamenesSeleccionados.data =
-      this.examenesServicio.controls.map(
-        (control: AbstractControl) => control.value,
-      );
+
+    this.actualizarTablaExamenesSeleccionados();
   }
 
-  private crearExamenFormGroup(examen: any): FormGroup {
+  // ====== Crear FormGroup componente ======
+
+  private crearExamenFormGroup(
+    examen: Partial<IExamenServicio> | any,
+  ): FormGroup {
     return this._fb.group({
-      codExamen: [examen.codExamen, Validators.required],
-      nombreExamen: [examen.nombreExamen, Validators.required],
-      //detalle: [examen.detalle],
+      tipoExamen: [examen?.tipoExamen ?? null],
+
+      referenciaId: [this.obtenerIdReferencia(examen?.referenciaId)],
+
+      // Legacy temporal.
+      pruebaLabId: [this.obtenerIdReferencia(examen?.pruebaLabId)],
+
+      codExamen: [examen?.codExamen ?? '', Validators.required],
+
+      nombreExamen: [examen?.nombreExamen ?? '', Validators.required],
+
+      numeroInstancias: [
+        examen?.numeroInstancias ?? 1,
+        [Validators.required, Validators.min(1)],
+      ],
+
+      modalidadInstancias: [
+        examen?.modalidadInstancias ?? 'UNICA',
+        Validators.required,
+      ],
+
+      etiquetasInstancias: this.crearEtiquetasInstancias(
+        examen?.etiquetasInstancias ?? [],
+      ),
     });
   }
 
-  removerExamen(examen: any) {
-    // Buscar el índice del item en el FormArray
-    const index = this.examenesServicio.controls.findIndex(
-      (control) => control.value.codItemLab === examen.codItemLab,
+  // ====== Crear etiquetas de instancias ======
+
+  private crearEtiquetasInstancias(etiquetas: string[]): FormArray {
+    return this._fb.array(
+      etiquetas.map((etiqueta) =>
+        this._fb.control(etiqueta, Validators.required),
+      ),
     );
+  }
 
-    // Si se encuentra el índice, eliminarlo
-    if (index !== -1) {
-      this.examenesServicio.removeAt(index);
+  // ====== Componente en configuración ======
 
-      // Actualizar el dataSource con los nuevos valores
-      this.dataSourceExamenesSeleccionados.data =
-        this.examenesServicio.controls.map(
-          (control: AbstractControl) => control.value,
-        );
+  componenteConfiguracionIndex: number | null = null;
+
+  get componenteConfiguracionForm(): FormGroup | null {
+    if (this.componenteConfiguracionIndex === null) {
+      return null;
     }
+
+    return this.examenesServicio.at(
+      this.componenteConfiguracionIndex,
+    ) as FormGroup;
   }
 
-  nuevoServicio() {
-    this.myFormServicio.reset(); // Reinicia todos los campos del formulario
-    this.formSubmitted = false; // Restablece el estado de validación del formulario
-    this.terminoBusquedaServicio.reset();
-    this.terminoBusquedaExamenes.reset();
-    this.tipoServicioTabla.reset();
-    this.dataSourceServicios.filter = '';
-    this.examenesServicio.clear();
-    this.profesionesAsociadas.clear();
-    this.especialidadesPorProfesion = {}; // Limpiar especialidades filtradas
-    this.dataSourceExamenesSeleccionados.data = [];
-    this.dataSourceExamenesDisponibles.data = [];
-    this.myFormServicio.get('tipoServicio')?.enable();
-    this.pruebaSeleccionada = false;
-    this.filaSeleccionadaIndex = null; // Reinicia el índice de la fila seleccionada
+  get etiquetasConfiguracion(): FormArray | null {
+    const form = this.componenteConfiguracionForm;
+
+    if (!form) {
+      return null;
+    }
+
+    return form.get('etiquetasInstancias') as FormArray;
   }
 
-  formSubmitted = false;
-  isLoading = false;
+  // ====== Abrir configuración ======
 
-  registraServicio() {
-    if (this.myFormServicio.invalid) {
-      this.myFormServicio.markAllAsTouched();
+  configurarExamen(examen: any): void {
+    const index = this.examenesServicio.controls.findIndex((control) => {
+      const actual = control.getRawValue();
+
+      return (
+        actual.codExamen === examen.codExamen &&
+        actual.tipoExamen === examen.tipoExamen
+      );
+    });
+
+    if (index === -1) {
       return;
     }
 
+    this.componenteConfiguracionIndex = index;
+
+    this.sincronizarConfiguracionInstancias(index);
+  }
+
+  // ====== Cerrar configuración ======
+
+  cerrarConfiguracionExamen(): void {
+    this.componenteConfiguracionIndex = null;
+
+    this.actualizarTablaExamenesSeleccionados();
+  }
+
+  // ====== Cambio modalidad ======
+
+  onModalidadInstanciasChange(): void {
+    if (this.componenteConfiguracionIndex === null) {
+      return;
+    }
+
+    this.sincronizarConfiguracionInstancias(this.componenteConfiguracionIndex);
+
+    this.actualizarTablaExamenesSeleccionados();
+  }
+
+  // ====== Cambio número de instancias ======
+
+  onNumeroInstanciasChange(): void {
+    if (this.componenteConfiguracionIndex === null) {
+      return;
+    }
+
+    this.sincronizarConfiguracionInstancias(this.componenteConfiguracionIndex);
+
+    this.actualizarTablaExamenesSeleccionados();
+  }
+
+  // ====== Sincronizar configuración ======
+
+  private sincronizarConfiguracionInstancias(index: number): void {
+    const form = this.examenesServicio.at(index) as FormGroup;
+
+    const modalidad = form.get('modalidadInstancias')?.value ?? 'UNICA';
+
+    const numeroControl = form.get('numeroInstancias');
+
+    const etiquetas = form.get('etiquetasInstancias') as FormArray;
+
+    let numero = Number(numeroControl?.value) || 1;
+
+    numero = Math.floor(numero);
+
+    // ====== Instancia única ======
+
+    if (modalidad === 'UNICA') {
+      numeroControl?.setValue(1, { emitEvent: false });
+
+      etiquetas.clear();
+
+      return;
+    }
+
+    // ====== Instancias múltiples ======
+
+    if (numero < 2) {
+      numero = 2;
+
+      numeroControl?.setValue(numero, { emitEvent: false });
+    }
+
+    // Eliminar etiquetas sobrantes.
+    while (etiquetas.length > numero) {
+      etiquetas.removeAt(etiquetas.length - 1);
+    }
+
+    // Crear etiquetas faltantes.
+    while (etiquetas.length < numero) {
+      const posicion = etiquetas.length + 1;
+
+      etiquetas.push(
+        this._fb.control(
+          this.obtenerEtiquetaInstanciaDefault(modalidad, posicion),
+          Validators.required,
+        ),
+      );
+    }
+  }
+
+  // ====== Etiqueta por defecto ======
+
+  private obtenerEtiquetaInstanciaDefault(
+    modalidad: string,
+    posicion: number,
+  ): string {
+    if (modalidad === 'MUESTRAS_INDEPENDIENTES') {
+      return `Muestra ${posicion}`;
+    }
+
+    if (modalidad === 'REPETICIONES_MISMA_MUESTRA') {
+      return `Repetición ${posicion}`;
+    }
+
+    return `Instancia ${posicion}`;
+  }
+
+  // ====== Obtener ObjectId ======
+
+  private obtenerIdReferencia(referencia: any): string | null {
+    if (!referencia) {
+      return null;
+    }
+
+    if (typeof referencia === 'string') {
+      return referencia;
+    }
+
+    return referencia?._id ?? null;
+  }
+
+  // ====== Remover componente ======
+
+  removerExamen(examen: any): void {
+    const index = this.examenesServicio.controls.findIndex((control) => {
+      const actual = control.getRawValue();
+
+      return (
+        actual.codExamen === examen.codExamen &&
+        actual.tipoExamen === examen.tipoExamen
+      );
+    });
+
+    if (index === -1) {
+      return;
+    }
+
+    this.examenesServicio.removeAt(index);
+
+    if (this.componenteConfiguracionIndex === index) {
+      this.componenteConfiguracionIndex = null;
+    } else if (
+      this.componenteConfiguracionIndex !== null &&
+      this.componenteConfiguracionIndex > index
+    ) {
+      this.componenteConfiguracionIndex--;
+    }
+
+    this.actualizarTablaExamenesSeleccionados();
+  }
+
+  // ====== Actualizar tabla seleccionados ======
+
+  private actualizarTablaExamenesSeleccionados(): void {
+    this.dataSourceExamenesSeleccionados.data =
+      this.examenesServicio.controls.map((control: AbstractControl) =>
+        control.getRawValue(),
+      );
+  }
+
+  // ====== Nuevo servicio ======
+
+  nuevoServicio(): void {
+    this.formSubmitted = false;
+    this.pruebaSeleccionada = false;
+    this.filaSeleccionadaIndex = null;
+    this.componenteConfiguracionIndex = null;
+    this.myFormServicio.reset({
+      codServicio: '',
+      claseServicio: 'INDIVIDUAL',
+      tipoServicio: '',
+      nombreServicio: '',
+      descripcionServicio: '',
+      precioServicio: null,
+      estadoServicio: true,
+      favoritoServicio: false,
+      favoritoServicioEmpresa: false,
+      requiereSeleccionProfesional: false,
+    });
+
+    this.examenesServicio.clear();
+    this.profesionesAsociadas.clear();
+    this.serviciosIncluidos.clear();
+    this.especialidadesPorProfesion = {};
+    this.terminoBusquedaServicio.setValue('');
+    this.terminoBusquedaExamenes.setValue('');
+    this.tipoServicioTabla.setValue('');
+    this.dataSourceServicios.filter = '';
+    this.dataSourceExamenesSeleccionados.data = [];
+    this.dataSourceExamenesDisponibles.data = [];
+    this.todasLosExamenesPorTipoMemoria = [];
+    this.myFormServicio.get('tipoServicio')?.enable();
+    this.myFormServicio.markAsPristine();
+    this.myFormServicio.markAsUntouched();
+  }
+
+  // ====== Registrar servicio ======
+
+  registraServicio(): void {
     this.formSubmitted = true;
+
+    if (!this.validarFormularioServicio()) {
+      return;
+    }
 
     Swal.fire({
       title: '¿Estás seguro?',
@@ -287,39 +645,162 @@ export class MantServicioComponent implements OnInit, AfterViewInit {
       confirmButtonText: 'Sí, confirmar',
       cancelButtonText: 'Cancelar',
     }).then((result) => {
-      if (result.isConfirmed) {
-        console.log('Procede registro');
-        const formValue = this.myFormServicio.value;
+      if (!result.isConfirmed) {
+        return;
+      }
 
-        const servicio: IServicio = {
-          ...formValue,
-        };
+      const servicio = this.construirServicioPayload();
 
-        this._servicioService.registrarServicio(servicio).subscribe({
+      this.isLoading = true;
+
+      this._servicioService.registrarServicio(servicio).subscribe({
+        next: (res) => {
+          this.isLoading = false;
+
+          if (!res.ok) {
+            const mensaje = res.msg ?? 'Ocurrió un error inesperado.';
+
+            this.mostrarAlertaError(mensaje);
+
+            return;
+          }
+
+          this.mostrarAlertaExito('registrado');
+
+          this.traerServicios();
+
+          this.nuevoServicio();
+        },
+
+        error: (error) => {
+          this.isLoading = false;
+
+          const mensaje = error?.error?.msg ?? 'Error inesperado al registrar.';
+
+          this.mostrarAlertaError(mensaje);
+        },
+      });
+    });
+  }
+
+  // ====== Actualizar servicio ======
+
+  actualizarServicio(): void {
+    this.formSubmitted = true;
+
+    if (!this.validarFormularioServicio()) {
+      return;
+    }
+
+    const codServicio = this.myFormServicio.get('codServicio')?.value;
+
+    if (!codServicio) {
+      this.mostrarAlertaError('No se encontró el código del servicio.');
+
+      return;
+    }
+
+    Swal.fire({
+      title: '¿Estás seguro?',
+      text: '¿Deseas confirmar la actualización de este servicio?',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, confirmar',
+      cancelButtonText: 'Cancelar',
+    }).then((result) => {
+      if (!result.isConfirmed) {
+        return;
+      }
+
+      const servicio = this.construirServicioPayload();
+
+      this.isLoading = true;
+
+      this._servicioService
+        .actualizarServicio(codServicio, servicio)
+        .subscribe({
           next: (res) => {
-            if (res.ok) {
-              this.mostrarAlertaExito('registrado');
-              this.traerServicios();
-              this.nuevoServicio();
-            } else {
-              const mensaje = res.msg || 'Ocurrió un error inesperado.';
+            this.isLoading = false;
+
+            if (!res.ok) {
+              const mensaje = res.msg ?? 'Ocurrió un error inesperado.';
+
               this.mostrarAlertaError(mensaje);
+
+              return;
             }
+
+            this.mostrarAlertaExito('actualizado');
+            this.traerServicios();
+            this.nuevoServicio();
           },
+
           error: (error) => {
+            this.isLoading = false;
+
             const mensaje =
-              error?.error?.msg || 'Error inesperado al registrar.';
+              error?.error?.msg ?? 'Error inesperado al actualizar.';
+
             this.mostrarAlertaError(mensaje);
           },
         });
-      }
     });
   }
+
+  // ====== Validar formulario ======
+
+  private validarFormularioServicio(): boolean {
+    if (this.myFormServicio.invalid) {
+      this.myFormServicio.markAllAsTouched();
+
+      return false;
+    }
+
+    const requiereProfesional = Boolean(
+      this.myFormServicio.get('requiereSeleccionProfesional')?.value,
+    );
+
+    if (requiereProfesional && this.profesionesAsociadas.length === 0) {
+      this.mostrarAlertaError('Debe agregar al menos una profesión asociada.');
+
+      return false;
+    }
+
+    return true;
+  }
+
+  // ====== Construir payload ======
+
+  private construirServicioPayload(): IServicio {
+    const formValue = this.myFormServicio.getRawValue();
+    const claseServicio = formValue.claseServicio ?? 'INDIVIDUAL';
+    const precioServicio = Number(formValue.precioServicio);
+
+    return {
+      codServicio: formValue.codServicio ?? '',
+      claseServicio,
+      tipoServicio: claseServicio === 'PAQUETE' ? null : formValue.tipoServicio,
+      nombreServicio: formValue.nombreServicio?.trim() ?? '',
+      descripcionServicio: formValue.descripcionServicio?.trim() ?? '',
+      precioServicio,
+      estadoServicio: Boolean(formValue.estadoServicio),
+      favoritoServicio: Boolean(formValue.favoritoServicio),
+      favoritoServicioEmpresa: Boolean(formValue.favoritoServicioEmpresa),
+      requiereSeleccionProfesional: Boolean(
+        formValue.requiereSeleccionProfesional,
+      ),
+      profesionesAsociadas: formValue.profesionesAsociadas ?? [],
+      examenesServicio: formValue.examenesServicio ?? [],
+      serviciosIncluidos: formValue.serviciosIncluidos ?? [],
+    };
+  }
+
+  // ====== Alertas ======
 
   private mostrarAlertaExito(tipo: string): void {
     Swal.fire({
       title: 'Confirmado',
-      text: 'Servicio ' + tipo + ' correctamente',
+      text: `Servicio ${tipo} correctamente`,
       icon: 'success',
       confirmButtonText: 'Ok',
     });
@@ -334,182 +815,289 @@ export class MantServicioComponent implements OnInit, AfterViewInit {
     });
   }
 
-  actualizarServicio() {
-    if (this.myFormServicio.invalid) {
-      this.myFormServicio.markAllAsTouched();
-      return;
-    }
+  // ====== Listar servicios ======
 
-    this.formSubmitted = true;
-
-    Swal.fire({
-      title: '¿Estás seguro?',
-      text: '¿Deseas confirmar la actualización de este servicio?',
-      icon: 'question',
-      showCancelButton: true,
-      confirmButtonText: 'Sí, confirmar',
-      cancelButtonText: 'Cancelar',
-    }).then((result) => {
-      if (result.isConfirmed) {
-        console.log('Procede actualización');
-        const formValue = this.myFormServicio.value;
-
-        this._servicioService
-          .actualizarServicio(formValue.codServicio, formValue)
-          .subscribe({
-            next: (res) => {
-              if (res.ok) {
-                this.mostrarAlertaExito('actualizado');
-                this.traerServicios();
-                this.nuevoServicio();
-              } else {
-                const mensaje = res.msg || 'Ocurrió un error inesperado.';
-                this.mostrarAlertaError(mensaje);
-              }
-            },
-            error: (error) => {
-              const mensaje =
-                error?.error?.msg || 'Error inesperado al registrar.';
-              this.mostrarAlertaError(mensaje);
-            },
-          });
-      }
-    });
-  }
-
-  private todasLosServiciosMemoria: IServicio[] = [];
-
-  traerServicios() {
+  traerServicios(): void {
     this._servicioService.getAllServicios().subscribe({
-      next: (res: IServicio[]) => {
-        this.dataSourceServicios.data = res;
-        this.todasLosServiciosMemoria = res;
+      next: (servicios: IServicio[]) => {
+        this.dataSourceServicios.data = servicios;
+        this.todasLosServiciosMemoria = servicios;
       },
-      error: (err) => {
-        console.error('Error al obtener los servicios:', err);
+
+      error: (error) => {
+        console.error('Error al obtener los servicios:', error);
+        this.dataSourceServicios.data = [];
+        this.todasLosServiciosMemoria = [];
       },
     });
   }
 
-  terminoBusquedaServicio = new FormControl('');
+  // ====== Buscar servicio ======
 
-  buscarServicio() {
-    const termino = this.terminoBusquedaServicio?.value?.trim() ?? '';
+  buscarServicio(): void {
+    const termino = this.terminoBusquedaServicio.value.trim().toLowerCase();
+    this.dataSourceServicios.data = this.todasLosServiciosMemoria;
+    this.dataSourceServicios.filter = termino;
 
-    if (termino === '') {
-      // Si no hay término de búsqueda, mostrar todas las pruebas iniciales
-      this.dataSourceServicios.data = this.todasLosServiciosMemoria;
-      this.dataSourceServicios.filter = '';
-    } else {
-      // Si hay término de búsqueda, aplicar filtro del dataSource
-      this.dataSourceServicios.data = this.todasLosServiciosMemoria; // Asegurar que tiene todos los datos
-      this.dataSourceServicios.filter = termino.toLowerCase();
-    }
-
-    // Si hay un paginador, ir a la primera página cuando se filtra
     if (this.dataSourceServicios.paginator) {
       this.dataSourceServicios.paginator.firstPage();
     }
   }
 
-  pruebaSeleccionada = false;
-  filaSeleccionadaIndex: number | null = null;
+  // ====== Cargar servicio ======
 
-  cargarServicio(servicio: IServicio, index: number) {
+  cargarServicio(servicio: IServicio, index: number): void {
     this.filaSeleccionadaIndex = index;
+    this.componenteConfiguracionIndex = null;
     this.pruebaSeleccionada = true;
 
-    this.myFormServicio.get('tipoServicio')?.disable();
+    // ====== Datos generales ======
 
-    this.myFormServicio.patchValue(servicio);
+    this.myFormServicio.patchValue({
+      codServicio: servicio.codServicio ?? '',
+      claseServicio: servicio.claseServicio ?? 'INDIVIDUAL',
+      tipoServicio: servicio.tipoServicio ?? '',
+      nombreServicio: servicio.nombreServicio ?? '',
+      descripcionServicio: servicio.descripcionServicio ?? '',
+      precioServicio: servicio.precioServicio ?? null,
+      estadoServicio: servicio.estadoServicio ?? true,
+      favoritoServicio: servicio.favoritoServicio ?? false,
+      favoritoServicioEmpresa: servicio.favoritoServicioEmpresa ?? false,
+      requiereSeleccionProfesional:
+        servicio.requiereSeleccionProfesional ?? false,
+    });
+
+    // ====== Componentes clínicos ======
 
     this.examenesServicio.clear();
 
-    // Agregar cada teléfono al FormArray
-    servicio.examenesServicio.forEach((servicio: any) => {
-      this.examenesServicio.push(this.crearExamenFormGroup(servicio));
+    const examenes = servicio.examenesServicio ?? [];
+
+    examenes.forEach((examen: any) => {
+      const examenNormalizado = this.normalizarExamenExistente(
+        examen,
+        servicio.tipoServicio,
+      );
+
+      this.examenesServicio.push(this.crearExamenFormGroup(examenNormalizado));
     });
+
+    this.actualizarTablaExamenesSeleccionados();
+
+    // ====== Profesiones ======
 
     this.profesionesAsociadas.clear();
-    servicio.profesionesAsociadas.forEach((profesion: any, index: number) => {
+    this.especialidadesPorProfesion = {};
+    const profesiones = servicio.profesionesAsociadas ?? [];
+
+    profesiones.forEach((profesion: any, indice: number) => {
       const profesionFormGroup = this.crearProfesionAsociada();
       this.profesionesAsociadas.push(profesionFormGroup);
+      const profesionId = this.obtenerIdReferencia(profesion.profesionId);
 
-      // Primero filtrar las especialidades para esta profesión (sin limpiar la especialidad)
-      if (profesion.profesionId) {
-        this.onProfesionChange(profesion.profesionId, index);
+      if (profesionId) {
+        this.onProfesionChange(profesionId, indice, false);
       }
 
-      // Luego cargar los valores (incluyendo la especialidad)
-      profesionFormGroup.patchValue(profesion);
+      profesionFormGroup.patchValue({
+        profesionId,
+        especialidadId: this.obtenerIdReferencia(profesion.especialidadId),
+      });
     });
 
-    this.dataSourceExamenesSeleccionados.data =
-      this.examenesServicio.controls.map(
-        (control: AbstractControl) => control.value,
+    // ====== Paquetes ======
+
+    this.serviciosIncluidos.clear();
+    const incluidos = servicio.serviciosIncluidos ?? [];
+
+    incluidos.forEach((incluido: any) => {
+      this.serviciosIncluidos.push(
+        this.crearServicioIncluidoFormGroup(incluido),
       );
+    });
+
+    // ====== Estado formulario ======
+
+    this.myFormServicio.get('tipoServicio')?.disable();
+    this.formSubmitted = false;
+    this.myFormServicio.markAsPristine();
+    this.myFormServicio.markAsUntouched();
   }
 
-  profesiones: any[] = [];
-  especialidades: any[] = [];
-  especialidadesPorProfesion: { [key: number]: any[] } = {}; // Objeto para almacenar especialidades por índice
+  // ====== Normalizar examen existente ======
 
-  listarProfesiones() {
+  private normalizarExamenExistente(
+    examen: any,
+    tipoServicio: string | null,
+  ): IExamenServicio {
+    const tipoExamen =
+      examen?.tipoExamen ?? this.obtenerTipoExamenServicio(tipoServicio);
+
+    const referenciaId =
+      this.obtenerIdReferencia(examen?.referenciaId) ??
+      this.obtenerIdReferencia(examen?.pruebaLabId);
+
+    return {
+      _id: examen?._id,
+      tipoExamen,
+      referenciaId,
+      pruebaLabId: this.obtenerIdReferencia(examen?.pruebaLabId),
+      codExamen: examen?.codExamen ?? '',
+      nombreExamen: examen?.nombreExamen ?? '',
+      numeroInstancias: examen?.numeroInstancias ?? 1,
+      modalidadInstancias: examen?.modalidadInstancias ?? 'UNICA',
+      etiquetasInstancias: examen?.etiquetasInstancias ?? [],
+    };
+  }
+
+  // ====== Profesiones ======
+
+  listarProfesiones(): void {
     this._profesionService.getAllProfesions().subscribe({
       next: (profesiones) => {
-        this.profesiones = profesiones;
+        this.profesiones = profesiones ?? [];
       },
-      error: () => {
+
+      error: (error) => {
+        console.error('Error al obtener profesiones:', error);
+
         this.profesiones = [];
       },
     });
   }
 
-  listarEspecialidades() {
+  listarEspecialidades(): void {
     this._especialidadService.getAllEspecialidad().subscribe({
       next: (especialidades) => {
-        this.especialidades = especialidades;
+        this.especialidades = especialidades ?? [];
       },
-      error: () => {
-        this.profesiones = [];
+
+      error: (error) => {
+        console.error('Error al obtener especialidades:', error);
+
+        this.especialidades = [];
       },
     });
   }
 
-  onProfesionChange(profesionId: any, index: number): void {
-    // Filtrar especialidades por profesión seleccionada para el índice específico
+  // ====== Cambio profesión ======
+
+  onProfesionChange(
+    profesionId: any,
+    index: number,
+    limpiarEspecialidad = true,
+  ): void {
+    if (!profesionId) {
+      this.especialidadesPorProfesion[index] = [];
+
+      if (limpiarEspecialidad) {
+        this.profesionesAsociadas
+          .at(index)
+          ?.get('especialidadId')
+          ?.setValue(null);
+      }
+
+      return;
+    }
+
     this.especialidadesPorProfesion[index] = this.especialidades.filter(
-      (especialidad) => especialidad.profesionRef._id === profesionId,
+      (especialidad) => {
+        const profesionRef = especialidad?.profesionRef;
+
+        const profesionRefId =
+          typeof profesionRef === 'string' ? profesionRef : profesionRef?._id;
+
+        return profesionRefId === profesionId;
+      },
     );
+
+    if (limpiarEspecialidad) {
+      this.profesionesAsociadas
+        .at(index)
+        ?.get('especialidadId')
+        ?.setValue(null);
+    }
   }
 
-  // Método para obtener las especialidades filtradas por índice
+  // ====== Especialidades por profesión ======
+
   getEspecialidadesPorIndex(index: number): any[] {
-    return this.especialidadesPorProfesion[index] || [];
+    return this.especialidadesPorProfesion[index] ?? [];
   }
 
-  agregarProfesionAsociada() {
+  // ====== Agregar profesión ======
+
+  agregarProfesionAsociada(): void {
     this.profesionesAsociadas.push(this.crearProfesionAsociada());
   }
 
-  eliminarProfesionAsociada(index: number) {
+  // ====== Eliminar profesión ======
+
+  eliminarProfesionAsociada(index: number): void {
     this.profesionesAsociadas.removeAt(index);
+
+    this.reindexarEspecialidadesPorProfesion();
   }
 
-  crearProfesionAsociada(): FormGroup {
+  // ====== Crear profesión ======
+
+  private crearProfesionAsociada(): FormGroup {
     return this._fb.group({
-      profesionId: [],
-      especialidadId: [],
+      profesionId: [null, Validators.required],
+
+      especialidadId: [null],
     });
   }
 
+  // ====== Reindexar especialidades ======
+
+  private reindexarEspecialidadesPorProfesion(): void {
+    const nuevasEspecialidades: {
+      [key: number]: any[];
+    } = {};
+
+    this.profesionesAsociadas.controls.forEach((control, index) => {
+      const profesionId = control.get('profesionId')?.value;
+
+      if (!profesionId) {
+        nuevasEspecialidades[index] = [];
+        return;
+      }
+
+      nuevasEspecialidades[index] = this.especialidades.filter(
+        (especialidad) => {
+          const profesionRef = especialidad?.profesionRef;
+
+          const profesionRefId =
+            typeof profesionRef === 'string' ? profesionRef : profesionRef?._id;
+
+          return profesionRefId === profesionId;
+        },
+      );
+    });
+
+    this.especialidadesPorProfesion = nuevasEspecialidades;
+  }
+
+  // ====== Validar profesiones ======
+
   validaarrayProfesion(): boolean {
-    const profesion = this.myFormServicio.get(
-      'profesionesAsociadas',
-    ) as FormArray;
-    if (profesion.length > 0) {
-      return true;
-    }
-    return false;
+    return this.profesionesAsociadas.length > 0;
+  }
+
+  // ====== Paquetes ======
+
+  private crearServicioIncluidoFormGroup(servicio?: any): FormGroup {
+    return this._fb.group({
+      servicioId: [
+        this.obtenerIdReferencia(servicio?.servicioId),
+        Validators.required,
+      ],
+
+      cantidad: [
+        servicio?.cantidad ?? 1,
+        [Validators.required, Validators.min(1)],
+      ],
+    });
   }
 }
