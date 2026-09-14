@@ -78,7 +78,7 @@ export interface IPruebaLab {
   condPreAnalitPaciente: string;
   condPreAnalitRefer: string;
   tiempoRespuesta: string;
-  observPruebas?: string;
+  observPruebas?: string | null;
   estadoPrueba: EstadoPruebaLab;
 
   // ====== Legacy temporal ======

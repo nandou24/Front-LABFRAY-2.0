@@ -6,6 +6,8 @@ import {
   ICotizacion,
   ICotizacionPostDTO,
   IGetLastCotizacion,
+  IResolverLaboratorioCotizacionResponse,
+  IServicioCotizacion,
 } from '../../../models/Gestion/cotizacionPersona.models';
 import { AuthService } from '../../auth/auth.service';
 
@@ -35,6 +37,22 @@ export class CotizacionPersonalService {
       `${environment.baseUrl}/api/cotizacion/newVersionCotizacionPersona`,
       body,
       { headers: this._auth.getAuthHeaders() },
+    );
+  }
+
+  // ====== Resolver laboratorio de cotización ======
+
+  resolverLaboratorioCotizacion(
+    serviciosCotizacion: IServicioCotizacion[],
+  ): Observable<IResolverLaboratorioCotizacionResponse> {
+    return this._http.post<IResolverLaboratorioCotizacionResponse>(
+      `${environment.baseUrl}/api/servicio/resolver-laboratorio-cotizacion`,
+      {
+        serviciosCotizacion,
+      },
+      {
+        headers: this._auth.getAuthHeaders(),
+      },
     );
   }
 

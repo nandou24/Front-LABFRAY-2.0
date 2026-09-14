@@ -474,40 +474,69 @@ export class GestPagoCotiPersonaComponent implements OnInit {
     return this._fb.group({
       servicioId: [servicio.servicioId, Validators.required],
       codServicio: [servicio.codServicio, Validators.required],
-      tipoServicio: [servicio.tipoServicio, Validators.required],
+
+      // ====== Clasificación ======
+      claseServicio: [
+        servicio.claseServicio ?? 'INDIVIDUAL',
+        Validators.required,
+      ],
+
+      tipoServicio: [servicio.tipoServicio ?? null],
+
       nombreServicio: [servicio.nombreServicio, Validators.required],
+
+      // ====== Configuración profesional ======
+      requiereSeleccionProfesional: [
+        servicio.requiereSeleccionProfesional ??
+          ['Consulta', 'Ecografía', 'Procedimiento'].includes(
+            servicio.tipoServicio ?? '',
+          ),
+      ],
+
+      profesionesAsociadas: [servicio.profesionesAsociadas ?? []],
+
+      medicoAtiende: this._fb.group({
+        medicoId: [servicio.medicoAtiende?.medicoId ?? null],
+        codRecHumano: [servicio.medicoAtiende?.codRecHumano ?? null],
+        apePatRecHumano: [servicio.medicoAtiende?.apePatRecHumano ?? null],
+        apeMatRecHumano: [servicio.medicoAtiende?.apeMatRecHumano ?? null],
+        nombreRecHumano: [servicio.medicoAtiende?.nombreRecHumano ?? null],
+        nroColegiatura: [servicio.medicoAtiende?.nroColegiatura ?? null],
+        rne: [servicio.medicoAtiende?.rne ?? null],
+      }),
+
+      // ====== Snapshot comercial del paquete ======
+      serviciosIncluidos: [servicio.serviciosIncluidos ?? []],
+
+      // ====== Datos comerciales ======
       cantidad: [servicio.cantidad, [Validators.required, Validators.min(1)]],
+
       precioLista: [
         servicio.precioLista,
         [Validators.required, Validators.min(0)],
       ],
+
       diferencia: [servicio.diferencia],
+
       precioVenta: [
         servicio.precioVenta,
         [Validators.required, Validators.min(0)],
       ],
+
       descuentoPorcentaje: [
         servicio.descuentoPorcentaje,
         [Validators.min(0), Validators.max(100)],
       ],
+
       nuevoPrecioVenta: [
         servicio.nuevoPrecioVenta,
         [Validators.required, Validators.min(0)],
       ],
+
       totalUnitario: [
         servicio.totalUnitario,
         [Validators.required, Validators.min(0)],
       ],
-
-      medicoAtiende: this._fb.group({
-        medicoId: [servicio.medicoAtiende?.medicoId],
-        codRecHumano: [servicio.medicoAtiende?.codRecHumano],
-        apePatRecHumano: [servicio.medicoAtiende?.apePatRecHumano],
-        apeMatRecHumano: [servicio.medicoAtiende?.apeMatRecHumano],
-        nombreRecHumano: [servicio.medicoAtiende?.nombreRecHumano],
-        nroColegiatura: [servicio.medicoAtiende?.nroColegiatura],
-        rne: [servicio.medicoAtiende?.rne],
-      }),
     });
   }
 
@@ -701,6 +730,9 @@ export class GestPagoCotiPersonaComponent implements OnInit {
     }
 
     const pago = this.myFormPagoPersona.getRawValue();
+
+    console.log('Servicios enviados al pago:', pago.serviciosCotizacion);
+
     // 🔁 Filtrar solo los nuevos pagos (sin esAntiguo)
     const nuevosPagos = pago.detallePagos.filter((p: any) => !p.esAntiguo);
     // ✅ Enviar solo los nuevos pagos al backend

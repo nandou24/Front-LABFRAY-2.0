@@ -341,6 +341,17 @@ export class GestCotiPersonaComponent implements OnInit {
     // ...
   }
 
+  // ====== Compatibilidad servicios históricos ======
+  private resolverRequiereSeleccionProfesional(servicio: any): boolean {
+    if (typeof servicio?.requiereSeleccionProfesional === 'boolean') {
+      return servicio.requiereSeleccionProfesional;
+    }
+
+    return ['Consulta', 'Ecografía', 'Procedimiento'].includes(
+      servicio?.tipoServicio,
+    );
+  }
+
   seleccionarServicio(servicio: IServicio) {
     const existe = this.serviciosCotizacion.controls.some(
       (control) => control.value.codServicio === servicio.codServicio,
@@ -361,15 +372,36 @@ export class GestCotiPersonaComponent implements OnInit {
     const servicioForm = this._fb.group({
       servicioId: [servicio._id, Validators.required],
       codServicio: [servicio.codServicio, Validators.required],
-      tipoServicio: [servicio.tipoServicio, Validators.required],
+
+      // ====== Clasificación ======
+      claseServicio: [
+        servicio.claseServicio ?? 'INDIVIDUAL',
+        Validators.required,
+      ],
+      tipoServicio: [servicio.tipoServicio ?? null],
+
       nombreServicio: [servicio.nombreServicio, Validators.required],
-      medicoAtiende: [servicio.medicoAtiende || null],
+
+      // ====== Configuración profesional ======
+      requiereSeleccionProfesional: [
+        this.resolverRequiereSeleccionProfesional(servicio),
+      ],
+      profesionesAsociadas: [servicio.profesionesAsociadas ?? []],
+      medicoAtiende: [servicio.medicoAtiende ?? null],
+
+      // ====== Snapshot comercial del paquete ======
+      serviciosIncluidos: [servicio.serviciosIncluidos ?? []],
+
+      // ====== Datos comerciales ======
       cantidad: [1, [Validators.required, Validators.min(1)]],
+
       precioLista: [
         servicio.precioServicio,
         [Validators.required, Validators.min(0)],
       ],
+
       diferencia: [0],
+
       precioVenta: [
         servicio.precioServicio,
         [
@@ -378,21 +410,25 @@ export class GestCotiPersonaComponent implements OnInit {
           Validators.pattern(/^[0-9]+(\.[0-9]{1,2})?$/),
         ],
       ],
+
       descuentoPorcentaje: [0, [Validators.min(0), Validators.max(100)]],
+
       nuevoPrecioVenta: [
         servicio.precioServicio,
         [Validators.required, Validators.min(0)],
       ],
+
       totalUnitario: [
         servicio.precioServicio,
         [Validators.required, Validators.min(0)],
       ],
-      profesionesAsociadas: [servicio.profesionesAsociadas || []],
     });
 
     this.serviciosCotizacion.push(servicioForm);
+
     this.dataSourceServiciosCotizados.data = this.serviciosCotizacion
       .controls as FormGroup[];
+
     this.calcularTotalUnitario(this.serviciosCotizacion.length - 1);
   }
 
@@ -636,24 +672,30 @@ export class GestCotiPersonaComponent implements OnInit {
 
   private validarServiciosMedicoAtiende(): boolean {
     for (const control of this.serviciosCotizacion.controls) {
-      const tipoServicio = control.get('tipoServicio')?.value;
+      const requiereSeleccionProfesional =
+        control.get('requiereSeleccionProfesional')?.value === true;
+
       const medicoAtiende = control.get('medicoAtiende')?.value;
+
+      const nombreServicio =
+        control.get('nombreServicio')?.value || 'servicio seleccionado';
+
       if (
-        (tipoServicio === 'Consulta' ||
-          tipoServicio === 'Ecografía' ||
-          tipoServicio === 'Procedimiento') &&
-        (!medicoAtiende || Object.keys(medicoAtiende).length === 0)
+        requiereSeleccionProfesional &&
+        (!medicoAtiende || !medicoAtiende.medicoId)
       ) {
         Swal.fire({
           icon: 'warning',
-          title: 'Falta médico',
-          text: `Debe seleccionar el médico que atiende para el servicio de tipo ${tipoServicio}.`,
+          title: 'Falta profesional',
+          text: `Debe seleccionar el profesional que atenderá el servicio ${nombreServicio}.`,
           confirmButtonColor: '#3085d6',
           confirmButtonText: 'Entendido',
         });
+
         return false;
       }
     }
+
     return true;
   }
 
@@ -1060,10 +1102,25 @@ export class GestCotiPersonaComponent implements OnInit {
           this._fb.group({
             servicioId: [servicio.servicioId, Validators.required],
             codServicio: [servicio.codServicio, Validators.required],
-            tipoServicio: [servicio.tipoServicio, Validators.required],
+
+            // ====== Clasificación ======
+            claseServicio: [
+              servicio.claseServicio ?? 'INDIVIDUAL',
+              Validators.required,
+            ],
+            tipoServicio: [servicio.tipoServicio ?? null],
+
             nombreServicio: [servicio.nombreServicio, Validators.required],
-            profesionesAsociadas: [servicio.profesionesAsociadas || null],
-            medicoAtiende: [servicio.medicoAtiende || null],
+
+            // ====== Configuración profesional ======
+            requiereSeleccionProfesional: [
+              this.resolverRequiereSeleccionProfesional(servicio),
+            ],
+            profesionesAsociadas: [servicio.profesionesAsociadas ?? []],
+            medicoAtiende: [servicio.medicoAtiende ?? null],
+
+            // ====== Snapshot comercial del paquete ======
+            serviciosIncluidos: [servicio.serviciosIncluidos ?? []],
             cantidad: [
               { value: servicio.cantidad, disabled: true },
               [Validators.required, Validators.min(1)],
@@ -1118,10 +1175,25 @@ export class GestCotiPersonaComponent implements OnInit {
           this._fb.group({
             servicioId: [servicio.servicioId, Validators.required],
             codServicio: [servicio.codServicio, Validators.required],
-            tipoServicio: [servicio.tipoServicio, Validators.required],
+
+            // ====== Clasificación ======
+            claseServicio: [
+              servicio.claseServicio ?? 'INDIVIDUAL',
+              Validators.required,
+            ],
+            tipoServicio: [servicio.tipoServicio ?? null],
+
             nombreServicio: [servicio.nombreServicio, Validators.required],
-            profesionesAsociadas: [servicio.profesionesAsociadas || null],
-            medicoAtiende: [servicio.medicoAtiende || null],
+
+            // ====== Configuración profesional ======
+            requiereSeleccionProfesional: [
+              this.resolverRequiereSeleccionProfesional(servicio),
+            ],
+            profesionesAsociadas: [servicio.profesionesAsociadas ?? []],
+            medicoAtiende: [servicio.medicoAtiende ?? null],
+
+            // ====== Snapshot comercial del paquete ======
+            serviciosIncluidos: [servicio.serviciosIncluidos ?? []],
             cantidad: [
               servicio.cantidad,
               [Validators.required, Validators.min(1)],

@@ -3,14 +3,14 @@ import { inject, Injectable } from '@angular/core';
 import { map, Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import {
+  IGetLaboratorioPorServicios,
   IGetLastServicio,
+  IGetServiciosExpandidos,
   IServicio,
+  IServicioExpandido,
   IServicioPostDTO,
 } from '../../../models/Mantenimiento/servicios.models';
-import {
-  IGetLastPruebasLab,
-  IPruebaLab,
-} from '../../../models/Mantenimiento/pruebaLab.models';
+
 import { AuthService } from '../../auth/auth.service';
 
 @Injectable({
@@ -105,25 +105,41 @@ export class ServiciosService {
     );
   }
 
-  public getPruebasLaboratorioItems(
-    servicios: any[],
-  ): Observable<IPruebaLab[]> {
+  // ====== Obtener servicios expandidos ======
+  public getServiciosExpandidos(
+    servicioIds: string[],
+  ): Observable<IServicioExpandido[]> {
     let params = new HttpParams();
 
-    // Agregar cada servicio como un parámetro separado
-    servicios.forEach((servicio) => {
-      params = params.append('servicioIds', servicio.servicioId);
+    servicioIds.forEach((servicioId) => {
+      params = params.append('servicioIds', servicioId);
     });
 
-    console.log('Parametros para obtener pruebas de laboratorio:', params);
-
     return this._http
-      .get<IGetLastPruebasLab>(
-        `${environment.baseUrl}/api/servicio/pruebaLab-items`,
+      .get<IGetServiciosExpandidos>(
+        `${environment.baseUrl}/api/servicio/expandidos`,
         {
           params,
         },
       )
-      .pipe(map((data) => data.pruebasLab));
+      .pipe(map((data) => data.serviciosExpandidos));
+  }
+
+  // ====== Obtener laboratorio por servicios ======
+  public getPruebasLaboratorioItems(
+    servicioIds: string[],
+  ): Observable<IGetLaboratorioPorServicios> {
+    let params = new HttpParams();
+
+    servicioIds.forEach((servicioId) => {
+      params = params.append('servicioIds', servicioId);
+    });
+
+    return this._http.get<IGetLaboratorioPorServicios>(
+      `${environment.baseUrl}/api/servicio/pruebaLab-items`,
+      {
+        params,
+      },
+    );
   }
 }

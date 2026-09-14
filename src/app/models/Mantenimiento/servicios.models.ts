@@ -1,4 +1,5 @@
 import { IPersonalSaludParaConsultas } from './recursoHumano.models';
+import { IPruebaLab } from './pruebaLab.models';
 
 // ====== Tipos generales ======
 
@@ -69,7 +70,7 @@ export interface IServicio {
   // ====== Datos generales ======
 
   nombreServicio: string;
-  descripcionServicio: string;
+  descripcionServicio: string | null;
   precioServicio: number;
   estadoServicio: boolean;
 
@@ -107,6 +108,82 @@ export interface IServicio {
 
   createdAt?: string | Date;
   updatedAt?: string | Date;
+}
+
+// ====== Origen de servicio expandido ======
+
+export interface IOrigenServicioExpandido {
+  claseServicio: ClaseServicio;
+
+  servicioOrigenId: string;
+  codServicioOrigen: string;
+  nombreServicioOrigen: string;
+}
+
+// ====== Servicio expandido ======
+
+export interface IServicioExpandido {
+  servicioId: string;
+
+  codServicio: string;
+
+  claseServicio: ClaseServicio;
+  tipoServicio: TipoServicio | null;
+
+  nombreServicio: string;
+  descripcionServicio: string | null;
+
+  precioServicio: number;
+  estadoServicio: boolean;
+
+  requiereSeleccionProfesional: boolean;
+  profesionesAsociadas: IProfesionEspecialidad[];
+
+  examenesServicio: IExamenServicio[];
+
+  cantidad: number;
+
+  origen: IOrigenServicioExpandido;
+}
+
+// ====== Respuesta servicios expandidos ======
+
+export interface IGetServiciosExpandidos {
+  ok: boolean;
+  msg?: string;
+  serviciosExpandidos: IServicioExpandido[];
+}
+
+// ====== Componente laboratorio por servicio ======
+
+export interface IComponenteLaboratorioServicio {
+  servicioId: string;
+
+  codServicio: string;
+  nombreServicio: string;
+
+  cantidadServicio: number;
+
+  origenServicio: IOrigenServicioExpandido;
+
+  referenciaId: string;
+
+  codExamen: string;
+  nombreExamen: string;
+
+  numeroInstancias: number;
+  modalidadInstancias: ModalidadInstanciasServicio;
+  etiquetasInstancias: string[];
+}
+
+// ====== Respuesta laboratorio por servicios ======
+
+export interface IGetLaboratorioPorServicios {
+  ok: boolean;
+  msg?: string;
+
+  pruebasLab: IPruebaLab[];
+  componentesLaboratorio: IComponenteLaboratorioServicio[];
 }
 
 // ====== Respuesta crear / actualizar ======
