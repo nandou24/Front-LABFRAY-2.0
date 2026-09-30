@@ -34,6 +34,7 @@ export interface IProgramacionEmpresaSolicitud {
 export interface ISolicitudAtencion {
   _id?: string;
   codSolicitud: string;
+  codigoLaboratorio?: string | null;
   origenAtencion: OrigenAtencion;
 
   // ==========================================

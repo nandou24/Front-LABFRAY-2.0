@@ -1,0 +1,978 @@
+<div class="contenedor-toma-muestras">
+  <h4>Toma de Muestras</h4>
+
+  <!-- ====== Búsqueda ====== -->
+
+  <form [formGroup]="formBusqueda" class="busqueda-container">
+    <mat-form-field appearance="outline">
+      <mat-label> Buscar solicitud o paciente </mat-label>
+
+      <input
+        matInput
+        formControlName="terminoBusqueda"
+        placeholder="Ej. L2609-0004, SOL26090028, DNI o paciente"
+        (keyup.enter)="buscarSolicitudes()"
+      />
+
+      <mat-icon matSuffix> search </mat-icon>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label> Fecha inicio </mat-label>
+
+      <input
+        matInput
+        [matDatepicker]="pickerInicio"
+        formControlName="fechaInicio"
+        readonly
+      />
+
+      <mat-datepicker-toggle
+        matSuffix
+        [for]="pickerInicio"
+      ></mat-datepicker-toggle>
+
+      <mat-datepicker #pickerInicio></mat-datepicker>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label> Fecha fin </mat-label>
+
+      <input
+        matInput
+        [matDatepicker]="pickerFin"
+        formControlName="fechaFin"
+        readonly
+      />
+
+      <mat-datepicker-toggle
+        matSuffix
+        [for]="pickerFin"
+      ></mat-datepicker-toggle>
+
+      <mat-datepicker #pickerFin></mat-datepicker>
+    </mat-form-field>
+
+    <button
+      mat-flat-button
+      type="button"
+      (click)="buscarSolicitudes()"
+      [disabled]="cargando"
+    >
+      <mat-icon>search</mat-icon>
+
+      Buscar
+    </button>
+
+    <button
+      mat-button
+      type="button"
+      (click)="limpiarBusqueda()"
+      [disabled]="cargando"
+    >
+      <mat-icon>refresh</mat-icon>
+
+      Hoy
+    </button>
+  </form>
+
+  <!-- ====== Filtro local ====== -->
+
+  <div class="filtro-local" [formGroup]="formBusqueda">
+    <mat-form-field appearance="outline">
+      <mat-label> Filtrar resultados </mat-label>
+
+      <input
+        matInput
+        formControlName="filtroResultados"
+        placeholder="Código, paciente, documento, empresa..."
+      />
+
+      <mat-icon matSuffix> filter_alt </mat-icon>
+    </mat-form-field>
+  </div>
+
+  <!-- ====== Tabs ====== -->
+
+  <mat-tab-group>
+    <!-- ====== Particulares ====== -->
+
+    <mat-tab>
+      <ng-template mat-tab-label>
+        Particulares ({{ dataSourceParticulares.filteredData.length }})
+      </ng-template>
+
+      <div class="table-container">
+        <table
+          mat-table
+          [dataSource]="dataSourceParticulares"
+          class="mat-elevation-z2"
+          multiTemplateDataRows
+        >
+          <!-- ====== Código laboratorio ====== -->
+
+          <ng-container matColumnDef="codigoLaboratorio">
+            <th mat-header-cell *matHeaderCellDef>Código Lab.</th>
+
+            <td mat-cell *matCellDef="let row">
+              <strong>
+                {{ row.solicitud.codigoLaboratorio || "-" }}
+              </strong>
+            </td>
+          </ng-container>
+
+          <!-- ====== Solicitud ====== -->
+
+          <ng-container matColumnDef="codigoSolicitud">
+            <th mat-header-cell *matHeaderCellDef>Solicitud</th>
+
+            <td mat-cell *matCellDef="let row">
+              {{ row.solicitud.codSolicitud }}
+            </td>
+          </ng-container>
+
+          <!-- ====== Fecha ====== -->
+
+          <ng-container matColumnDef="fechaEmision">
+            <th mat-header-cell *matHeaderCellDef>Fecha</th>
+
+            <td mat-cell *matCellDef="let row">
+              {{ row.solicitud.fechaEmision | date: "dd/MM/yyyy HH:mm" }}
+            </td>
+          </ng-container>
+
+          <!-- ====== HC ====== -->
+
+          <ng-container matColumnDef="hc">
+            <th mat-header-cell *matHeaderCellDef>HC</th>
+
+            <td mat-cell *matCellDef="let row">
+              {{ obtenerHcPaciente(row) }}
+            </td>
+          </ng-container>
+
+          <!-- ====== Documento ====== -->
+
+          <ng-container matColumnDef="documento">
+            <th mat-header-cell *matHeaderCellDef>Documento</th>
+
+            <td mat-cell *matCellDef="let row">
+              {{ obtenerDocumentoPaciente(row) }}
+            </td>
+          </ng-container>
+
+          <!-- ====== Paciente ====== -->
+
+          <ng-container matColumnDef="paciente">
+            <th mat-header-cell *matHeaderCellDef>Paciente</th>
+
+            <td mat-cell *matCellDef="let row">
+              {{ obtenerNombrePaciente(row) }}
+            </td>
+          </ng-container>
+
+          <!-- ====== Estado ====== -->
+
+          <ng-container matColumnDef="estado">
+            <th mat-header-cell *matHeaderCellDef>Estado solicitud</th>
+
+            <td mat-cell *matCellDef="let row">
+              <mat-chip>
+                {{ row.solicitud.estado }}
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <!-- ====== Expandir ====== -->
+
+          <ng-container matColumnDef="expand">
+            <th mat-header-cell *matHeaderCellDef></th>
+
+            <td mat-cell *matCellDef="let row">
+              <button
+                mat-icon-button
+                type="button"
+                aria-label="Mostrar detalle operativo"
+                [attr.aria-expanded]="isExpandedParticular(row)"
+                (click)="toggleParticular(row); $event.stopPropagation()"
+              >
+                <mat-icon>
+                  {{
+                    isExpandedParticular(row)
+                      ? "keyboard_arrow_up"
+                      : "keyboard_arrow_down"
+                  }}
+                </mat-icon>
+              </button>
+            </td>
+          </ng-container>
+
+          <!-- ====== Detalle expandido ====== -->
+
+          <ng-container matColumnDef="expandedDetail">
+            <td
+              mat-cell
+              *matCellDef="let row"
+              [attr.colspan]="columnasParticularesConExpand.length"
+              style="padding: 0"
+            >
+              <ng-container
+                *ngTemplateOutlet="
+                  detalleOperativo;
+                  context: {
+                    $implicit: row,
+                  }
+                "
+              ></ng-container>
+            </td>
+          </ng-container>
+
+          <tr
+            mat-header-row
+            *matHeaderRowDef="columnasParticularesConExpand"
+          ></tr>
+
+          <tr
+            mat-row
+            *matRowDef="let row; columns: columnasParticularesConExpand"
+          ></tr>
+
+          <tr
+            mat-row
+            *matRowDef="let row; columns: ['expandedDetail']"
+            [style.display]="isExpandedParticular(row) ? 'table-row' : 'none'"
+          ></tr>
+        </table>
+
+        <div
+          class="sin-resultados"
+          *ngIf="!cargando && dataSourceParticulares.filteredData.length === 0"
+        >
+          No hay solicitudes de laboratorio particulares para el criterio
+          seleccionado.
+        </div>
+
+        <mat-paginator
+          #paginatorParticulares
+          [pageSize]="25"
+          [pageSizeOptions]="[25, 50, 100]"
+          showFirstLastButtons
+        ></mat-paginator>
+      </div>
+    </mat-tab>
+
+    <!-- ====== Empresas ====== -->
+
+    <mat-tab>
+      <ng-template mat-tab-label>
+        Empresas ({{ dataSourceEmpresas.filteredData.length }})
+      </ng-template>
+
+      <div class="table-container">
+        <table
+          mat-table
+          [dataSource]="dataSourceEmpresas"
+          class="mat-elevation-z2"
+          multiTemplateDataRows
+        >
+          <!-- ====== Código laboratorio ====== -->
+
+          <ng-container matColumnDef="codigoLaboratorio">
+            <th mat-header-cell *matHeaderCellDef>Código Lab.</th>
+
+            <td mat-cell *matCellDef="let row">
+              <strong>
+                {{ row.solicitud.codigoLaboratorio || "-" }}
+              </strong>
+            </td>
+          </ng-container>
+
+          <!-- ====== Solicitud ====== -->
+
+          <ng-container matColumnDef="codigoSolicitud">
+            <th mat-header-cell *matHeaderCellDef>Solicitud</th>
+
+            <td mat-cell *matCellDef="let row">
+              {{ row.solicitud.codSolicitud }}
+            </td>
+          </ng-container>
+
+          <!-- ====== Programación ====== -->
+
+          <ng-container matColumnDef="codigoProgramacion">
+            <th mat-header-cell *matHeaderCellDef>Programación</th>
+
+            <td mat-cell *matCellDef="let row">
+              {{ obtenerEmpresa(row)?.codProgramacion || "-" }}
+            </td>
+          </ng-container>
+
+          <!-- ====== Fecha ====== -->
+
+          <ng-container matColumnDef="fechaEmision">
+            <th mat-header-cell *matHeaderCellDef>Fecha</th>
+
+            <td mat-cell *matCellDef="let row">
+              {{ row.solicitud.fechaEmision | date: "dd/MM/yyyy HH:mm" }}
+            </td>
+          </ng-container>
+
+          <!-- ====== HC ====== -->
+
+          <ng-container matColumnDef="hc">
+            <th mat-header-cell *matHeaderCellDef>HC</th>
+
+            <td mat-cell *matCellDef="let row">
+              {{ obtenerHcPaciente(row) }}
+            </td>
+          </ng-container>
+
+          <!-- ====== Documento ====== -->
+
+          <ng-container matColumnDef="documento">
+            <th mat-header-cell *matHeaderCellDef>Documento</th>
+
+            <td mat-cell *matCellDef="let row">
+              {{ obtenerDocumentoPaciente(row) }}
+            </td>
+          </ng-container>
+
+          <!-- ====== Paciente ====== -->
+
+          <ng-container matColumnDef="paciente">
+            <th mat-header-cell *matHeaderCellDef>Paciente</th>
+
+            <td mat-cell *matCellDef="let row">
+              {{ obtenerNombrePaciente(row) }}
+            </td>
+          </ng-container>
+
+          <!-- ====== Empresa ====== -->
+
+          <ng-container matColumnDef="empresa">
+            <th mat-header-cell *matHeaderCellDef>Empresa</th>
+
+            <td mat-cell *matCellDef="let row">
+              {{ obtenerEmpresa(row)?.razonSocialEmpresa || "-" }}
+            </td>
+          </ng-container>
+
+          <!-- ====== Sede ====== -->
+
+          <ng-container matColumnDef="sede">
+            <th mat-header-cell *matHeaderCellDef>Sede</th>
+
+            <td mat-cell *matCellDef="let row">
+              {{ obtenerEmpresa(row)?.sede || "-" }}
+            </td>
+          </ng-container>
+
+          <!-- ====== Prioridad ====== -->
+
+          <ng-container matColumnDef="prioridad">
+            <th mat-header-cell *matHeaderCellDef>Prioridad</th>
+
+            <td mat-cell *matCellDef="let row">
+              <mat-chip>
+                {{ obtenerEmpresa(row)?.prioridad || "Normal" }}
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <!-- ====== Estado ====== -->
+
+          <ng-container matColumnDef="estado">
+            <th mat-header-cell *matHeaderCellDef>Estado solicitud</th>
+
+            <td mat-cell *matCellDef="let row">
+              <mat-chip>
+                {{ row.solicitud.estado }}
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <!-- ====== Expandir ====== -->
+
+          <ng-container matColumnDef="expand">
+            <th mat-header-cell *matHeaderCellDef></th>
+
+            <td mat-cell *matCellDef="let row">
+              <button
+                mat-icon-button
+                type="button"
+                aria-label="Mostrar detalle operativo"
+                [attr.aria-expanded]="isExpandedEmpresa(row)"
+                (click)="toggleEmpresa(row); $event.stopPropagation()"
+              >
+                <mat-icon>
+                  {{
+                    isExpandedEmpresa(row)
+                      ? "keyboard_arrow_up"
+                      : "keyboard_arrow_down"
+                  }}
+                </mat-icon>
+              </button>
+            </td>
+          </ng-container>
+
+          <!-- ====== Detalle expandido ====== -->
+
+          <ng-container matColumnDef="expandedDetail">
+            <td
+              mat-cell
+              *matCellDef="let row"
+              [attr.colspan]="columnasEmpresasConExpand.length"
+              style="padding: 0"
+            >
+              <ng-container
+                *ngTemplateOutlet="
+                  detalleOperativo;
+                  context: {
+                    $implicit: row,
+                  }
+                "
+              ></ng-container>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="columnasEmpresasConExpand"></tr>
+
+          <tr
+            mat-row
+            *matRowDef="let row; columns: columnasEmpresasConExpand"
+          ></tr>
+
+          <tr
+            mat-row
+            *matRowDef="let row; columns: ['expandedDetail']"
+            [style.display]="isExpandedEmpresa(row) ? 'table-row' : 'none'"
+          ></tr>
+        </table>
+
+        <div
+          class="sin-resultados"
+          *ngIf="!cargando && dataSourceEmpresas.filteredData.length === 0"
+        >
+          No hay solicitudes de laboratorio de empresa para el criterio
+          seleccionado.
+        </div>
+
+        <mat-paginator
+          #paginatorEmpresas
+          [pageSize]="25"
+          [pageSizeOptions]="[25, 50, 100]"
+          showFirstLastButtons
+        ></mat-paginator>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+
+  <!-- ====== Detalle operativo ====== -->
+
+  <ng-template #detalleOperativo let-row>
+    <div
+      style="
+        padding: 18px;
+        background: #f8fafc;
+        border-top: 1px solid #e2e8f0;
+        border-bottom: 1px solid #e2e8f0;
+      "
+    >
+      <div
+        style="
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+          gap: 16px;
+          align-items: stretch;
+        "
+      >
+        <!-- ====== Exámenes solicitados ====== -->
+
+        <mat-card style="box-shadow: none; border: 1px solid #e2e8f0">
+          <mat-card-content style="padding: 18px">
+            <div
+              style="
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-bottom: 16px;
+              "
+            >
+              <mat-icon> science </mat-icon>
+
+              <div>
+                <div style="font-size: 16px; font-weight: 600">
+                  Exámenes solicitados
+                </div>
+
+                <div style="font-size: 12px; color: #64748b; margin-top: 2px">
+                  Pruebas incluidas en la atención
+                </div>
+              </div>
+            </div>
+
+            <div
+              *ngIf="row.solicitud.servicios?.length; else sinServicios"
+              style="display: flex; flex-direction: column; gap: 8px"
+            >
+              <div
+                *ngFor="let servicio of row.solicitud.servicios"
+                style="
+                  display: flex;
+                  align-items: center;
+                  gap: 12px;
+                  padding: 10px 12px;
+                  border: 1px solid #e2e8f0;
+                  border-radius: 8px;
+                  background: #ffffff;
+                "
+              >
+                <div
+                  style="
+                    min-width: 80px;
+                    font-weight: 600;
+                    font-size: 12px;
+                    color: #475569;
+                  "
+                >
+                  {{ servicio.codServicio }}
+                </div>
+
+                <div style="font-size: 14px; font-weight: 500">
+                  {{ servicio.nombreServicio }}
+                </div>
+              </div>
+            </div>
+
+            <ng-template #sinServicios>
+              <div style="padding: 16px; color: #64748b; text-align: center">
+                No se encontraron exámenes asociados.
+              </div>
+            </ng-template>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- ====== Plan de toma ====== -->
+
+        <mat-card style="box-shadow: none; border: 1px solid #e2e8f0">
+          <mat-card-content style="padding: 18px">
+            <div
+              style="
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+                gap: 16px;
+                flex-wrap: wrap;
+                margin-bottom: 16px;
+              "
+            >
+              <div style="display: flex; align-items: center; gap: 10px">
+                <mat-icon> vaccines </mat-icon>
+
+                <div>
+                  <div style="font-size: 16px; font-weight: 600">
+                    Plan de toma
+                  </div>
+
+                  <div style="font-size: 12px; color: #64748b; margin-top: 2px">
+                    Preparación de recipientes
+                  </div>
+                </div>
+              </div>
+
+              <mat-chip>
+                {{ obtenerEstadoGeneralToma(row) }}
+              </mat-chip>
+            </div>
+
+            <!-- ====== No requiere muestra ====== -->
+
+            <div
+              *ngIf="!row.muestras.requiereMuestra"
+              style="
+                padding: 16px;
+                border-radius: 8px;
+                background: #f1f5f9;
+                color: #475569;
+              "
+            >
+              Esta solicitud no requiere toma de muestra.
+            </div>
+
+            <!-- ====== Plan no disponible ====== -->
+
+            <div
+              *ngIf="
+                row.muestras.requiereMuestra &&
+                !row.muestras.planToma.disponible
+              "
+              style="
+                padding: 14px;
+                border-radius: 8px;
+                background: #fff7ed;
+                border: 1px solid #fed7aa;
+              "
+            >
+              <div style="display: flex; gap: 10px; align-items: flex-start">
+                <mat-icon> warning </mat-icon>
+
+                <div>
+                  <strong> Plan de toma no disponible </strong>
+
+                  <div style="margin-top: 4px; font-size: 13px">
+                    {{ row.muestras.planToma.mensaje }}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ====== Plan disponible ====== -->
+
+            <ng-container *ngIf="row.muestras.planToma.disponible">
+              <div
+                style="
+                  display: flex;
+                  align-items: center;
+                  gap: 12px;
+                  margin-bottom: 16px;
+                "
+              >
+                <div style="font-size: 30px; line-height: 1; font-weight: 700">
+                  {{ row.muestras.planToma.totalRecipientes }}
+                </div>
+
+                <div>
+                  <div style="font-size: 14px; font-weight: 600">
+                    {{
+                      row.muestras.planToma.totalRecipientes === 1
+                        ? "recipiente requerido"
+                        : "recipientes requeridos"
+                    }}
+                  </div>
+
+                  <div style="font-size: 12px; color: #64748b">
+                    Total para esta solicitud
+                  </div>
+                </div>
+              </div>
+
+              <!-- ====== Grupos ====== -->
+
+              <div
+                style="
+                  display: grid;
+                  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+                  gap: 12px;
+                "
+              >
+                <div
+                  *ngFor="let grupo of row.muestras.planToma.gruposRecipientes"
+                  style="
+                    position: relative;
+                    padding: 14px;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 10px;
+                    background: #ffffff;
+                  "
+                >
+                  <!-- ====== Cantidad ====== -->
+
+                  <div
+                    style="
+                      position: absolute;
+                      top: 10px;
+                      right: 10px;
+                      min-width: 38px;
+                      height: 30px;
+                      padding: 0 8px;
+                      border-radius: 15px;
+                      background: #e2e8f0;
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      font-weight: 700;
+                    "
+                  >
+                    × {{ grupo.cantidad }}
+                  </div>
+
+                  <!-- ====== Recipiente definido ====== -->
+
+                  <ng-container
+                    *ngIf="
+                      grupo.tipo === 'DEFINIDO' && grupo.opciones.length > 0
+                    "
+                  >
+                    <ng-container *ngIf="grupo.opciones[0] as opcion">
+                      <div
+                        style="
+                          display: flex;
+                          gap: 12px;
+                          padding-right: 44px;
+                          align-items: center;
+                        "
+                      >
+                        <div
+                          [style.background-color]="
+                            resolverColorRecipiente(opcion.tuboEnvase.color)
+                          "
+                          style="
+                            width: 42px;
+                            min-width: 42px;
+                            height: 42px;
+                            border-radius: 50%;
+                            border: 2px solid rgba(15, 23, 42, 0.14);
+                          "
+                        ></div>
+
+                        <div>
+                          <div style="font-size: 14px; font-weight: 600">
+                            {{ opcion.tuboEnvase.nombreTuboEnvase }}
+                          </div>
+
+                          <div
+                            style="
+                              margin-top: 3px;
+                              font-size: 12px;
+                              color: #64748b;
+                            "
+                          >
+                            {{ opcion.tipoMuestra.nombreTipoMuestra }}
+
+                            <ng-container
+                              *ngIf="opcion.tuboEnvase.capacidad !== null"
+                            >
+                              ·
+                              {{ opcion.tuboEnvase.capacidad }}
+                              {{ opcion.tuboEnvase.unidadCapacidad }}
+                            </ng-container>
+                          </div>
+                        </div>
+                      </div>
+                    </ng-container>
+                  </ng-container>
+
+                  <!-- ====== Recipiente alternativo ====== -->
+
+                  <ng-container *ngIf="grupo.tipo === 'ALTERNATIVO'">
+                    <div style="padding-right: 44px; margin-bottom: 10px">
+                      <div style="font-size: 13px; font-weight: 600">
+                        Recipiente con opciones
+                      </div>
+
+                      <div
+                        style="font-size: 12px; color: #64748b; margin-top: 2px"
+                      >
+                        Utilizar una de las opciones permitidas
+                      </div>
+                    </div>
+
+                    <div
+                      style="display: flex; flex-direction: column; gap: 8px"
+                    >
+                      <div
+                        *ngFor="let opcion of grupo.opciones"
+                        style="
+                          display: flex;
+                          gap: 10px;
+                          align-items: center;
+                          padding: 8px;
+                          border-radius: 8px;
+                          background: #f8fafc;
+                        "
+                      >
+                        <div
+                          [style.background-color]="
+                            resolverColorRecipiente(opcion.tuboEnvase.color)
+                          "
+                          style="
+                            width: 28px;
+                            min-width: 28px;
+                            height: 28px;
+                            border-radius: 50%;
+                            border: 1px solid rgba(15, 23, 42, 0.15);
+                          "
+                        ></div>
+
+                        <div>
+                          <div style="font-size: 13px; font-weight: 600">
+                            {{ opcion.tuboEnvase.nombreTuboEnvase }}
+                          </div>
+
+                          <div style="font-size: 11px; color: #64748b">
+                            {{ opcion.tipoMuestra.nombreTipoMuestra }}
+
+                            <ng-container
+                              *ngIf="opcion.tuboEnvase.capacidad !== null"
+                            >
+                              ·
+                              {{ opcion.tuboEnvase.capacidad }}
+                              {{ opcion.tuboEnvase.unidadCapacidad }}
+                            </ng-container>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </ng-container>
+
+                  <!-- ====== Uso del recipiente ====== -->
+
+                  <div
+                    *ngIf="grupo.recipientes?.length"
+                    style="
+                      margin-top: 14px;
+                      padding-top: 12px;
+                      border-top: 1px solid #e2e8f0;
+                    "
+                  >
+                    <div
+                      style="
+                        font-size: 12px;
+                        font-weight: 600;
+                        color: #475569;
+                        margin-bottom: 8px;
+                      "
+                    >
+                      Se utiliza para:
+                    </div>
+
+                    <!-- ====== Un solo recipiente ====== -->
+
+                    <ng-container *ngIf="grupo.recipientes.length === 1">
+                      <div
+                        *ngFor="let examen of grupo.recipientes[0].examenes"
+                        style="
+                          display: flex;
+                          align-items: center;
+                          gap: 7px;
+                          margin-top: 5px;
+                          font-size: 12px;
+                        "
+                      >
+                        <span
+                          style="
+                            width: 5px;
+                            height: 5px;
+                            min-width: 5px;
+                            border-radius: 50%;
+                            background: #475569;
+                          "
+                        ></span>
+
+                        <span>
+                          {{ examen.nombreServicio }}
+                        </span>
+                      </div>
+                    </ng-container>
+
+                    <!-- ====== Varios recipientes ====== -->
+
+                    <ng-container *ngIf="grupo.recipientes.length > 1">
+                      <div
+                        *ngFor="
+                          let recipiente of grupo.recipientes;
+                          let i = index
+                        "
+                        style="padding: 8px 0"
+                      >
+                        <div
+                          style="
+                            font-size: 11px;
+                            font-weight: 600;
+                            color: #64748b;
+                            margin-bottom: 4px;
+                          "
+                        >
+                          Recipiente {{ i + 1 }}
+                        </div>
+
+                        <div
+                          *ngFor="let examen of recipiente.examenes"
+                          style="
+                            display: flex;
+                            align-items: center;
+                            gap: 7px;
+                            margin-top: 4px;
+                            font-size: 12px;
+                          "
+                        >
+                          <span
+                            style="
+                              width: 5px;
+                              height: 5px;
+                              min-width: 5px;
+                              border-radius: 50%;
+                              background: #475569;
+                            "
+                          ></span>
+
+                          <span>
+                            {{ examen.nombreServicio }}
+                          </span>
+                        </div>
+                      </div>
+                    </ng-container>
+                  </div>
+                </div>
+              </div>
+              <!-- ====== Acción ====== -->
+
+              <div
+                style="
+                  display: flex;
+                  justify-content: flex-end;
+                  align-items: center;
+                  gap: 12px;
+                  margin-top: 18px;
+                  padding-top: 14px;
+                  border-top: 1px solid #e2e8f0;
+                "
+              >
+                <!-- ====== Inicializar ====== -->
+
+                <button
+                  *ngIf="
+                    !row.muestras.inicializadas && row.muestras.puedeInicializar
+                  "
+                  mat-flat-button
+                  type="button"
+                  disabled
+                >
+                  <mat-icon> science </mat-icon>
+
+                  Inicializar muestras
+                </button>
+
+                <!-- ====== Falta código laboratorio ====== -->
+
+                <div
+                  *ngIf="
+                    !row.muestras.inicializadas &&
+                    !row.muestras.puedeInicializar &&
+                    !row.solicitud.codigoLaboratorio
+                  "
+                  style="font-size: 13px; color: #64748b"
+                >
+                  Pendiente de código de laboratorio
+                </div>
+
+                <!-- ====== Gestionar ====== -->
+
+                <button
+                  *ngIf="row.muestras.inicializadas"
+                  mat-flat-button
+                  type="button"
+                  disabled
+                >
+                  <mat-icon> vaccines </mat-icon>
+
+                  Gestionar toma
+                </button>
+              </div>
+            </ng-container>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </div>
+  </ng-template>
+</div>
