@@ -95,16 +95,16 @@
   text-overflow: ellipsis;
 }
 
-.mensaje-rechazo {
+.mensaje-anulacion {
   display: flex;
   align-items: flex-start;
   gap: 10px;
   padding: 12px;
   margin-bottom: 16px;
-  border: 1px solid #fecaca;
+  border: 1px solid #fed7aa;
   border-radius: 8px;
-  background: #fef2f2;
-  color: #991b1b;
+  background: #fff7ed;
+  color: #9a3412;
   font-size: 12px;
 }
 
@@ -112,12 +112,8 @@
   width: 100%;
 }
 
-.evidencia-operacion {
-  margin-top: 4px;
-}
-
-.btn-rechazar {
-  background: #b91c1c;
+.btn-anular {
+  background: #c2410c;
   color: #ffffff;
 }
 

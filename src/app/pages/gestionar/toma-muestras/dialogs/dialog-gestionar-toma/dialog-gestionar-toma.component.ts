@@ -27,6 +27,7 @@ import { DialogRecepcionarMuestraComponent } from '../dialog-recepcionar-muestra
 import { DialogAceptarMuestraComponent } from '../dialog-aceptar-muestra/dialog-aceptar-muestra.component';
 import { DialogRechazarMuestraComponent } from '../dialog-rechazar-muestra/dialog-rechazar-muestra.component';
 import { DialogEvidenciasMuestraComponent } from '../dialog-evidencias-muestra/dialog-evidencias-muestra.component';
+import { DialogAnularMuestraComponent } from '../dialog-anular-muestra/dialog-anular-muestra.component';
 
 export interface IGestionarTomaDialogData {
   item: IBandejaTomaMuestrasItem;
@@ -358,6 +359,48 @@ export class DialogGestionarTomaComponent implements OnInit {
     }
 
     const dialogRef = this._dialog.open(DialogRechazarMuestraComponent, {
+      width: '600px',
+      maxWidth: '94vw',
+      maxHeight: '90vh',
+      autoFocus: false,
+      data: {
+        muestra,
+        numeroRecipiente: plan.numeroRecipiente,
+      },
+    });
+
+    dialogRef.afterClosed().subscribe((actualizado: boolean | undefined) => {
+      if (actualizado !== true) {
+        return;
+      }
+
+      this.huboCambios = true;
+      this.cargarMuestras();
+    });
+  }
+
+  // ====== Puede anular muestra ======
+
+  puedeAnularMuestra(plan: IPlanMuestraLaboratorio): boolean {
+    const estado = plan.intentoVigente?.estadoMuestra;
+
+    return (
+      estado === 'PENDIENTE' ||
+      estado === 'RECOLECTADA' ||
+      estado === 'RECEPCIONADA'
+    );
+  }
+
+  // ====== Anular muestra ======
+
+  anularMuestra(plan: IPlanMuestraLaboratorio): void {
+    const muestra = this.obtenerIntentoVigente(plan);
+
+    if (!muestra || !this.puedeAnularMuestra(plan)) {
+      return;
+    }
+
+    const dialogRef = this._dialog.open(DialogAnularMuestraComponent, {
       width: '600px',
       maxWidth: '94vw',
       maxHeight: '90vh',

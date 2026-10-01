@@ -14,18 +14,14 @@ import Swal from 'sweetalert2';
 
 import { IMuestraLaboratorio } from '../../../../../models/Gestion/muestraLaboratorio.models';
 import { MuestraLaboratorioService } from '../../../../../services/gestion/muestraLaboratorio/muestra-laboratorio.service';
-import {
-  CapturaEvidenciaMuestraComponent,
-  IEvidenciaCapturada,
-} from '../../components/captura-evidencia-muestra/captura-evidencia-muestra.component';
 
-export interface IRechazarMuestraDialogData {
+export interface IAnularMuestraDialogData {
   muestra: IMuestraLaboratorio;
   numeroRecipiente: number | null;
 }
 
 @Component({
-  selector: 'app-dialog-rechazar-muestra',
+  selector: 'app-dialog-anular-muestra',
   standalone: true,
   imports: [
     CommonModule,
@@ -35,16 +31,15 @@ export interface IRechazarMuestraDialogData {
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
-    CapturaEvidenciaMuestraComponent,
   ],
-  templateUrl: './dialog-rechazar-muestra.component.html',
-  styleUrl: './dialog-rechazar-muestra.component.scss',
+  templateUrl: './dialog-anular-muestra.component.html',
+  styleUrl: './dialog-anular-muestra.component.scss',
 })
-export class DialogRechazarMuestraComponent {
-  readonly data = inject<IRechazarMuestraDialogData>(MAT_DIALOG_DATA);
+export class DialogAnularMuestraComponent {
+  readonly data = inject<IAnularMuestraDialogData>(MAT_DIALOG_DATA);
 
   private readonly _dialogRef = inject(
-    MatDialogRef<DialogRechazarMuestraComponent>,
+    MatDialogRef<DialogAnularMuestraComponent>,
   );
 
   private readonly _fb = inject(FormBuilder);
@@ -54,11 +49,22 @@ export class DialogRechazarMuestraComponent {
   );
 
   procesando = false;
-  archivoEvidencia: File | null = null;
 
-  readonly formRechazo = this._fb.group({
-    motivoRechazo: ['', [Validators.required]],
+  readonly formAnulacion = this._fb.group({
+    motivoAnulacion: ['', [Validators.required]],
   });
+
+  // ====== Puede anular ======
+
+  puedeAnular(): boolean {
+    const estado = this.data.muestra.estadoMuestra;
+
+    return (
+      estado === 'PENDIENTE' ||
+      estado === 'RECOLECTADA' ||
+      estado === 'RECEPCIONADA'
+    );
+  }
 
   // ====== Cerrar ======
 
@@ -70,69 +76,61 @@ export class DialogRechazarMuestraComponent {
     this._dialogRef.close(false);
   }
 
-  // ====== Cambiar evidencia ======
+  // ====== Anular muestra ======
 
-  cambiarEvidencia(evidencia: IEvidenciaCapturada | null): void {
-    this.archivoEvidencia = evidencia?.archivo ?? null;
-  }
-
-  // ====== Rechazar muestra ======
-
-  async rechazarMuestra(): Promise<void> {
-    if (this.procesando || this.data.muestra.estadoMuestra !== 'RECEPCIONADA') {
+  async anularMuestra(): Promise<void> {
+    if (this.procesando || !this.puedeAnular()) {
       return;
     }
 
-    if (this.formRechazo.invalid) {
-      this.formRechazo.markAllAsTouched();
+    if (this.formAnulacion.invalid) {
+      this.formAnulacion.markAllAsTouched();
       return;
     }
 
-    const motivo = this.formRechazo.controls.motivoRechazo.value?.trim() ?? '';
+    const motivo =
+      this.formAnulacion.controls.motivoAnulacion.value?.trim() ?? '';
 
     if (!motivo) {
-      this.formRechazo.controls.motivoRechazo.setErrors({ required: true });
+      this.formAnulacion.controls.motivoAnulacion.setErrors({
+        required: true,
+      });
+
       return;
     }
 
-    if (!this.archivoEvidencia) {
-      await Swal.fire({
-        icon: 'warning',
-        title: 'Fotografía obligatoria',
-        text: 'Debe tomar o cargar una fotografía de la muestra antes de registrar el rechazo.',
-        confirmButtonText: 'Entendido',
-        confirmButtonColor: '#d97706',
-      });
-      return;
-    }
+    const etiqueta =
+      this.data.muestra.codigoEtiqueta || this.data.muestra.codMuestra;
 
     const confirmacion = await Swal.fire({
       icon: 'warning',
-      title: '¿Rechazar muestra?',
+      title: '¿Anular muestra?',
       html: `
         <div style="text-align: left;">
           <p>
-            La muestra
-            <strong>${
-              this.data.muestra.codigoEtiqueta || this.data.muestra.codMuestra
-            }</strong>
-            será marcada como rechazada.
+            El intento
+            <strong>${etiqueta}</strong>
+            pasará de
+            <strong>${this.data.muestra.estadoMuestra}</strong>
+            a <strong>ANULADA</strong>.
           </p>
+
           <p>
-            El motivo y la fotografía de rechazo se registrarán como parte de
-            la misma operación.
+            No se generará una nueva muestra automáticamente y ningún
+            intento anterior volverá a quedar vigente.
           </p>
+
           <p>
-            Este intento quedará cerrado y la nueva toma se gestionará
-            posteriormente mediante un reintento independiente.
+            Las evidencias ya registradas se conservarán como parte del
+            historial del intento.
           </p>
         </div>
       `,
       showCancelButton: true,
       reverseButtons: true,
-      confirmButtonText: 'Sí, rechazar muestra',
+      confirmButtonText: 'Sí, anular muestra',
       cancelButtonText: 'Cancelar',
-      confirmButtonColor: '#b91c1c',
+      confirmButtonColor: '#c2410c',
       cancelButtonColor: '#6c757d',
     });
 
@@ -143,21 +141,19 @@ export class DialogRechazarMuestraComponent {
     this.procesando = true;
 
     this._muestraLaboratorioService
-      .rechazarMuestra(
-        this.data.muestra._id,
-        motivo,
-        this.archivoEvidencia,
-      )
+      .anularMuestra(this.data.muestra._id, {
+        motivoAnulacion: motivo,
+      })
       .subscribe({
         next: async (response) => {
           this.procesando = false;
 
           await Swal.fire({
             icon: 'success',
-            title: 'Muestra rechazada',
+            title: 'Muestra anulada',
             text:
               response.msg ||
-              'La muestra y su evidencia de rechazo fueron registradas correctamente.',
+              'La muestra fue anulada correctamente y el recipiente quedó sin intento vigente.',
             confirmButtonText: 'Continuar',
             confirmButtonColor: '#3085d6',
           });
@@ -167,14 +163,14 @@ export class DialogRechazarMuestraComponent {
         error: (error) => {
           this.procesando = false;
 
-          console.error('Error al rechazar muestra:', error);
+          console.error('Error al anular muestra:', error);
 
           Swal.fire({
             icon: 'error',
-            title: 'No se pudo rechazar la muestra',
+            title: 'No se pudo anular la muestra',
             text:
               error?.error?.msg ||
-              'Ocurrió un error al registrar el rechazo y su fotografía.',
+              'Ocurrió un error al registrar la anulación de la muestra.',
             confirmButtonText: 'Cerrar',
             confirmButtonColor: '#d33',
           });

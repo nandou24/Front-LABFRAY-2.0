@@ -1,6 +1,6 @@
 <div class="dialog-header" mat-dialog-title>
   <div>
-    <div class="dialog-title">Rechazar muestra</div>
+    <div class="dialog-title">Anular muestra</div>
     <div class="dialog-subtitle">
       Recipiente {{ data.numeroRecipiente || "-" }} ·
       {{ data.muestra.codigoEtiqueta || data.muestra.codMuestra }}
@@ -21,33 +21,45 @@
 <mat-dialog-content>
   <!-- ====== Trazabilidad previa ====== -->
 
-  <section class="trazabilidad-previa">
+  <section
+    *ngIf="
+      data.muestra.fechaRecoleccion ||
+      data.muestra.fechaRecepcion
+    "
+    class="trazabilidad-previa"
+  >
     <div class="trazabilidad-titulo">
       <mat-icon>history</mat-icon>
       <span>Trazabilidad previa</span>
     </div>
 
     <div class="trazabilidad-grid">
-      <div class="trazabilidad-item">
+      <div
+        *ngIf="data.muestra.fechaRecoleccion"
+        class="trazabilidad-item"
+      >
         <span>Recolectada por</span>
-        <strong>{{ data.muestra.usuarioRecoleccion || '-' }}</strong>
+        <strong>{{ data.muestra.usuarioRecoleccion || "-" }}</strong>
         <small>
           {{
             data.muestra.fechaRecoleccion
-              ? (data.muestra.fechaRecoleccion | date: 'dd/MM/yyyy HH:mm')
-              : '-'
+              ? (data.muestra.fechaRecoleccion | date: "dd/MM/yyyy HH:mm")
+              : "-"
           }}
         </small>
       </div>
 
-      <div class="trazabilidad-item">
+      <div
+        *ngIf="data.muestra.fechaRecepcion"
+        class="trazabilidad-item"
+      >
         <span>Recepcionada por</span>
-        <strong>{{ data.muestra.usuarioRecepcion || '-' }}</strong>
+        <strong>{{ data.muestra.usuarioRecepcion || "-" }}</strong>
         <small>
           {{
             data.muestra.fechaRecepcion
-              ? (data.muestra.fechaRecepcion | date: 'dd/MM/yyyy HH:mm')
-              : '-'
+              ? (data.muestra.fechaRecepcion | date: "dd/MM/yyyy HH:mm")
+              : "-"
           }}
         </small>
       </div>
@@ -73,56 +85,54 @@
     </div>
   </div>
 
-  <div class="mensaje-rechazo">
+  <div class="mensaje-anulacion">
     <mat-icon>warning</mat-icon>
+
     <span>
-      El rechazo cerrará este intento como no apto para procesamiento. El motivo
-      y una fotografía de la muestra son obligatorios.
+      Se anulará únicamente este intento. No se eliminarán sus evidencias, no
+      se generará una nueva muestra automáticamente y un intento anterior no
+      volverá a quedar vigente.
     </span>
   </div>
 
-  <form [formGroup]="formRechazo">
+  <form [formGroup]="formAnulacion">
     <mat-form-field appearance="outline" class="campo-completo">
-      <mat-label>Motivo del rechazo</mat-label>
+      <mat-label>Motivo de la anulación</mat-label>
+
       <textarea
         matInput
         rows="4"
-        formControlName="motivoRechazo"
-        placeholder="Ej. Muestra hemolizada, volumen insuficiente..."
+        formControlName="motivoAnulacion"
+        placeholder="Indique por qué debe anularse este intento"
       ></textarea>
 
-      <mat-error *ngIf="formRechazo.controls.motivoRechazo.hasError('required')">
-        El motivo del rechazo es obligatorio
+      <mat-error
+        *ngIf="formAnulacion.controls.motivoAnulacion.hasError('required')"
+      >
+        El motivo de la anulación es obligatorio
       </mat-error>
     </mat-form-field>
   </form>
-
-  <!-- ====== Evidencia obligatoria ====== -->
-
-  <section class="evidencia-operacion">
-    <app-captura-evidencia-muestra
-      titulo="Fotografía de rechazo"
-      descripcion="Obligatoria. Registre una fotografía que documente la condición de la muestra rechazada."
-      [requerido]="true"
-      [disabled]="procesando"
-      (evidenciaChange)="cambiarEvidencia($event)"
-    ></app-captura-evidencia-muestra>
-  </section>
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">
-  <button mat-button type="button" [disabled]="procesando" (click)="cerrar()">
+  <button
+    mat-button
+    type="button"
+    [disabled]="procesando"
+    (click)="cerrar()"
+  >
     Cancelar
   </button>
 
   <button
     mat-flat-button
     type="button"
-    class="btn-rechazar"
-    [disabled]="procesando || formRechazo.invalid || !archivoEvidencia"
-    (click)="rechazarMuestra()"
+    class="btn-anular"
+    [disabled]="procesando || formAnulacion.invalid || !puedeAnular()"
+    (click)="anularMuestra()"
   >
-    <mat-icon>{{ procesando ? 'hourglass_top' : 'block' }}</mat-icon>
-    {{ procesando ? "Rechazando..." : "Rechazar muestra" }}
+    <mat-icon>{{ procesando ? "hourglass_top" : "cancel" }}</mat-icon>
+    {{ procesando ? "Anulando..." : "Anular muestra" }}
   </button>
 </mat-dialog-actions>

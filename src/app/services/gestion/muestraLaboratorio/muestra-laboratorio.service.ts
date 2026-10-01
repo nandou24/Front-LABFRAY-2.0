@@ -17,7 +17,6 @@ import {
   IDetalleMuestraLaboratorioResponse,
   IEvidenciasMuestraResponse,
   IInicializarMuestrasResponse,
-  IRechazarMuestraDTO,
   IRechazarMuestraResponse,
   IRecibirMuestraDTO,
   IRecolectarMuestraDTO,
@@ -121,11 +120,18 @@ export class MuestraLaboratorioService {
 
   rechazarMuestra(
     muestraLaboratorioId: string,
-    body: IRechazarMuestraDTO,
+    motivoRechazo: string,
+    imagen: File,
   ): Observable<IRechazarMuestraResponse> {
+    const formData = new FormData();
+
+    formData.append('motivoRechazo', motivoRechazo.trim());
+
+    formData.append('imagen', imagen);
+
     return this.http.put<IRechazarMuestraResponse>(
       `${this.apiUrl}/${muestraLaboratorioId}/rechazar`,
-      body,
+      formData,
       {
         headers: this.auth.getAuthHeaders(),
       },

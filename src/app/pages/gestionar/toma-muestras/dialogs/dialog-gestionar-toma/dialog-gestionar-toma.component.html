@@ -264,6 +264,17 @@
                   >
                     <strong>Motivo:</strong> {{ intento.motivoRechazo }}
                   </div>
+
+                  <div
+                    *ngIf="
+                      intento.estadoMuestra === 'ANULADA' &&
+                      intento.motivoAnulacion
+                    "
+                    class="historial-motivo historial-motivo-anulacion"
+                  >
+                    <strong>Motivo de anulación:</strong>
+                    {{ intento.motivoAnulacion }}
+                  </div>
                 </div>
               </div>
             </div>
@@ -275,13 +286,26 @@
               class="alerta-operativa"
             >
               <mat-icon>info</mat-icon>
-              <span>
-                Este recipiente no tiene un intento vigente. El último intento
-                está en estado {{ muestra.estadoMuestra }}.
-              </span>
+
+              <div class="alerta-operativa-contenido">
+                <span>
+                  Este recipiente no tiene un intento vigente. El último intento
+                  está en estado {{ muestra.estadoMuestra }}.
+                </span>
+
+                <span
+                  *ngIf="
+                    muestra.estadoMuestra === 'ANULADA' &&
+                    muestra.motivoAnulacion
+                  "
+                  class="alerta-motivo-anulacion"
+                >
+                  <strong>Motivo:</strong> {{ muestra.motivoAnulacion }}
+                </span>
+              </div>
             </div>
 
-            <!-- ====== Acción de recolección ====== -->
+            <!-- ====== Acciones operativas ====== -->
 
             <div class="plan-actions">
               <button
@@ -296,6 +320,17 @@
                 <ng-container *ngIf="contarEvidenciasActivas(muestra) > 0">
                   ({{ contarEvidenciasActivas(muestra) }})
                 </ng-container>
+              </button>
+
+              <button
+                *ngIf="puedeAnularMuestra(plan)"
+                mat-stroked-button
+                type="button"
+                class="btn-anular"
+                (click)="anularMuestra(plan)"
+              >
+                <mat-icon>cancel</mat-icon>
+                Anular muestra
               </button>
 
               <button

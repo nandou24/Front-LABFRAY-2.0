@@ -538,6 +538,8 @@ export interface IAccionMuestraResponse {
 
 export interface IRechazarMuestraResponse extends IAccionMuestraResponse {
   requiereNuevaMuestra: boolean;
+
+  evidencia: IEvidenciaFotograficaMuestra;
 }
 
 // ====== Respuesta anulación ======

@@ -387,3 +387,25 @@
 .btn-evidencia-historial mat-icon {
   font-size: 18px;
 }
+
+// ====== Anulación de muestra ======
+
+.btn-anular {
+  border-color: #fed7aa;
+  color: #c2410c;
+}
+
+.historial-motivo-anulacion {
+  color: #9a3412;
+}
+
+.alerta-operativa-contenido {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.alerta-motivo-anulacion {
+  color: #9a3412;
+}
+
