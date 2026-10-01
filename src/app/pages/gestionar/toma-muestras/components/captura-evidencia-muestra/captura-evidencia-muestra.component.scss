@@ -1,0 +1,224 @@
+.captura-evidencia {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid #dbeafe;
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.captura-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.captura-header > mat-icon {
+  margin-top: 1px;
+}
+
+.captura-titulo {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.requerido {
+  color: #b91c1c;
+}
+
+.captura-descripcion {
+  margin-top: 2px;
+  color: #64748b;
+  font-size: 11px;
+}
+
+.captura-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.mensaje-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  background: #fef2f2;
+  color: #991b1b;
+  font-size: 12px;
+}
+
+.camara-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.camara-panel.oculto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.video-container {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #0f172a;
+  aspect-ratio: 16 / 9;
+}
+
+.video-container video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+}
+
+.camara-indicador {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.72);
+  color: #ffffff;
+  font-size: 11px;
+}
+
+.camara-indicador mat-icon {
+  width: 14px;
+  height: 14px;
+  color: #ef4444;
+  font-size: 14px;
+}
+
+.camara-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.preview-panel {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.9fr) minmax(220px, 1.1fr);
+  gap: 14px;
+  padding: 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+.preview-imagen {
+  overflow: hidden;
+  border-radius: 8px;
+  background: #e2e8f0;
+  aspect-ratio: 4 / 3;
+}
+
+.preview-imagen img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.preview-detalle {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+}
+
+.preview-detalle strong {
+  overflow: hidden;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.preview-origen {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.preview-origen mat-icon {
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
+}
+
+.preview-meta {
+  color: #64748b;
+  font-size: 11px;
+}
+
+.preview-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+
+.btn-quitar {
+  color: #b91c1c;
+}
+
+.estado-vacio {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 72px;
+  padding: 12px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+  color: #64748b;
+}
+
+.estado-vacio > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.estado-vacio strong {
+  color: #475569;
+  font-size: 12px;
+}
+
+.estado-vacio span {
+  font-size: 11px;
+}
+
+@media (max-width: 720px) {
+  .preview-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .camara-actions,
+  .preview-actions {
+    justify-content: stretch;
+  }
+
+  .camara-actions button,
+  .preview-actions button {
+    flex: 1;
+  }
+}

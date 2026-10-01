@@ -1,0 +1,386 @@
+<div class="dialog-header" mat-dialog-title>
+  <!-- ====== Cabecera fija ====== -->
+
+  <div class="dialog-header-top">
+    <div>
+      <div class="dialog-title">Gestionar toma de muestras</div>
+
+      <div class="dialog-subtitle">
+        {{ data.item.solicitud.codigoLaboratorio || "-" }} ·
+        {{ data.item.solicitud.codSolicitud }}
+      </div>
+    </div>
+
+    <button
+      mat-icon-button
+      type="button"
+      aria-label="Cerrar"
+      (click)="cerrar()"
+    >
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- ====== Identificación del paciente ====== -->
+
+  <div class="resumen-solicitud">
+    <div class="resumen-item resumen-paciente">
+      <span class="resumen-label">Paciente</span>
+      <strong>{{ obtenerNombrePaciente() }}</strong>
+    </div>
+
+    <div class="resumen-item">
+      <span class="resumen-label">HC</span>
+      <strong>{{ data.item.solicitud.paciente.hc || "-" }}</strong>
+    </div>
+
+    <div class="resumen-item">
+      <span class="resumen-label">Documento</span>
+      <strong>
+        {{ data.item.solicitud.paciente.tipoDoc || "" }}
+        {{ data.item.solicitud.paciente.nroDoc || "-" }}
+      </strong>
+    </div>
+  </div>
+</div>
+
+<mat-dialog-content class="dialog-content">
+
+  <!-- ====== Cargando ====== -->
+
+  <div *ngIf="cargando" class="estado-carga">
+    <mat-spinner diameter="38"></mat-spinner>
+    <span>Cargando recipientes de la toma...</span>
+  </div>
+
+  <!-- ====== Error ====== -->
+
+  <div *ngIf="!cargando && errorCarga" class="estado-error">
+    <mat-icon>error_outline</mat-icon>
+
+    <div class="estado-error-contenido">
+      <strong>No se pudo cargar la toma</strong>
+      <span>{{ errorCarga }}</span>
+    </div>
+
+    <button mat-stroked-button type="button" (click)="cargarMuestras()">
+      Reintentar
+    </button>
+  </div>
+
+  <!-- ====== Contenido ====== -->
+
+  <ng-container *ngIf="!cargando && consulta as datos">
+    <div class="resumen-operativo">
+      <div>
+        <strong>{{ datos.resumen.recipientesPlanificados }}</strong>
+        <span>
+          {{
+            datos.resumen.recipientesPlanificados === 1
+              ? "recipiente planificado"
+              : "recipientes planificados"
+          }}
+        </span>
+      </div>
+
+      <div>
+        <strong>{{ datos.resumen.vigentes.total }}</strong>
+        <span>vigentes</span>
+      </div>
+
+      <div *ngIf="datos.resumen.documentos.rechazadas > 0">
+        <strong>{{ datos.resumen.documentos.rechazadas }}</strong>
+        <span>rechazados históricos</span>
+      </div>
+    </div>
+
+    <!-- ====== Recipientes ====== -->
+
+    <div *ngIf="datos.planes.length > 0; else sinRecipientes" class="planes">
+      <mat-card
+        *ngFor="let plan of datos.planes; let i = index"
+        class="plan-card"
+      >
+        <ng-container *ngIf="obtenerIntentoMostrar(plan) as muestra">
+          <mat-card-content>
+            <!-- ====== Cabecera recipiente ====== -->
+
+            <div class="plan-header">
+              <div>
+                <div class="plan-titulo">
+                  Recipiente {{ plan.numeroRecipiente || i + 1 }}
+                </div>
+
+                <div class="plan-etiqueta">
+                  {{ muestra.codigoEtiqueta || muestra.codMuestra }}
+                </div>
+              </div>
+
+              <div class="plan-estado">
+                <mat-chip>{{ obtenerEstadoPlan(plan) }}</mat-chip>
+
+                <span *ngIf="plan.totalIntentos > 1" class="intentos">
+                  {{ plan.totalIntentos }} intentos
+                </span>
+              </div>
+            </div>
+
+            <mat-divider></mat-divider>
+
+            <div class="plan-grid">
+              <!-- ====== Recipiente físico ====== -->
+
+              <div class="bloque-operativo">
+                <div class="bloque-titulo">Recipiente</div>
+
+                <!-- ====== Opción ya utilizada ====== -->
+
+                <div
+                  *ngIf="muestra.tuboEnvase && muestra.tipoMuestra; else opcionesPermitidas"
+                  class="opcion-fisica seleccionada"
+                >
+                  <div
+                    class="color-recipiente"
+                    [style.background-color]="
+                      resolverColorRecipiente(muestra.tuboEnvase.color)
+                    "
+                  ></div>
+
+                  <div>
+                    <strong>{{ muestra.tuboEnvase.nombreTuboEnvase }}</strong>
+                    <span>
+                      {{ muestra.tipoMuestra.nombreTipoMuestra }}
+                      <ng-container *ngIf="muestra.tuboEnvase.capacidad !== null">
+                        · {{ muestra.tuboEnvase.capacidad }}
+                        {{ muestra.tuboEnvase.unidadCapacidad }}
+                      </ng-container>
+                    </span>
+
+                    <span *ngIf="muestra.volumenRecolectado !== null">
+                      Recolectado: {{ muestra.volumenRecolectado }}
+                      {{ muestra.unidadVolumenRecolectado }}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- ====== Opciones permitidas ====== -->
+
+                <ng-template #opcionesPermitidas>
+                  <div class="ayuda-opciones">Opciones permitidas para la toma</div>
+
+                  <div class="opciones-lista">
+                    <div
+                      *ngFor="let opcion of obtenerOpcionesComunes(muestra)"
+                      class="opcion-fisica"
+                    >
+                      <div
+                        class="color-recipiente"
+                        [style.background-color]="
+                          resolverColorRecipiente(opcion.tuboEnvase.color)
+                        "
+                      ></div>
+
+                      <div>
+                        <strong>{{ opcion.tuboEnvase.nombreTuboEnvase }}</strong>
+                        <span>
+                          {{ opcion.tipoMuestra.nombreTipoMuestra }}
+                          <ng-container
+                            *ngIf="opcion.tuboEnvase.capacidad !== null"
+                          >
+                            · {{ opcion.tuboEnvase.capacidad }}
+                            {{ opcion.tuboEnvase.unidadCapacidad }}
+                          </ng-container>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </ng-template>
+              </div>
+
+              <!-- ====== Pruebas asociadas ====== -->
+
+              <div class="bloque-operativo">
+                <div class="bloque-titulo">Se utiliza para</div>
+
+                <div class="servicios-lista">
+                  <div
+                    *ngFor="let servicio of obtenerServiciosMuestra(muestra)"
+                    class="servicio-item"
+                  >
+                    <span class="servicio-codigo">
+                      {{ servicio.codServicio }}
+                    </span>
+
+                    <span>{{ servicio.nombreServicio }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ====== Historial de intentos ====== -->
+
+            <div *ngIf="plan.totalIntentos > 1" class="historial-intentos">
+              <div class="historial-titulo">Historial de intentos</div>
+
+              <div class="historial-lista">
+                <div
+                  *ngFor="let intento of plan.intentos"
+                  class="historial-item"
+                  [class.historial-item-vigente]="esIntentoVigente(plan, intento)"
+                >
+                  <div class="historial-identidad">
+                    <strong>Intento {{ intento.numeroIntento }}</strong>
+                    <span>{{ intento.codigoEtiqueta || intento.codMuestra }}</span>
+                  </div>
+
+                  <div class="historial-estado">
+                    <mat-chip>{{ intento.estadoMuestra }}</mat-chip>
+
+                    <span
+                      *ngIf="esIntentoVigente(plan, intento)"
+                      class="historial-vigente"
+                    >
+                      Vigente
+                    </span>
+
+                    <button
+                      *ngIf="
+                        !esIntentoVigente(plan, intento) &&
+                        puedeGestionarEvidencias(intento)
+                      "
+                      mat-icon-button
+                      type="button"
+                      class="btn-evidencia-historial"
+                      aria-label="Gestionar evidencias del intento"
+                      (click)="gestionarEvidencias(intento)"
+                    >
+                      <mat-icon>photo_camera</mat-icon>
+                    </button>
+                  </div>
+
+                  <div
+                    *ngIf="intento.estadoMuestra === 'RECHAZADA' && intento.motivoRechazo"
+                    class="historial-motivo"
+                  >
+                    <strong>Motivo:</strong> {{ intento.motivoRechazo }}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ====== Estado sin vigente ====== -->
+
+            <div
+              *ngIf="!esIntentoVigente(plan, muestra)"
+              class="alerta-operativa"
+            >
+              <mat-icon>info</mat-icon>
+              <span>
+                Este recipiente no tiene un intento vigente. El último intento
+                está en estado {{ muestra.estadoMuestra }}.
+              </span>
+            </div>
+
+            <!-- ====== Acción de recolección ====== -->
+
+            <div class="plan-actions">
+              <button
+                *ngIf="puedeGestionarEvidencias(muestra)"
+                mat-stroked-button
+                type="button"
+                class="btn-evidencias"
+                (click)="gestionarEvidencias(muestra)"
+              >
+                <mat-icon>photo_camera</mat-icon>
+                Evidencias
+                <ng-container *ngIf="contarEvidenciasActivas(muestra) > 0">
+                  ({{ contarEvidenciasActivas(muestra) }})
+                </ng-container>
+              </button>
+
+              <button
+                *ngIf="puedeRegistrarRecoleccion(plan)"
+                mat-flat-button
+                type="button"
+                (click)="registrarRecoleccion(plan)"
+              >
+                <mat-icon>vaccines</mat-icon>
+                Registrar recolección
+              </button>
+
+              <button
+                *ngIf="puedeRegistrarRecepcion(plan)"
+                mat-flat-button
+                type="button"
+                (click)="registrarRecepcion(plan)"
+              >
+                <mat-icon>move_to_inbox</mat-icon>
+                Registrar recepción
+              </button>
+
+              <ng-container *ngIf="puedeEvaluarMuestra(plan)">
+                <button
+                  mat-stroked-button
+                  type="button"
+                  class="btn-rechazar"
+                  (click)="rechazarMuestra(plan)"
+                >
+                  <mat-icon>block</mat-icon>
+                  Rechazar muestra
+                </button>
+
+                <button
+                  mat-flat-button
+                  type="button"
+                  (click)="aceptarMuestra(plan)"
+                >
+                  <mat-icon>check_circle</mat-icon>
+                  Aceptar muestra
+                </button>
+              </ng-container>
+
+              <span
+                *ngIf="plan.intentoVigente?.estadoMuestra === 'ACEPTADA'"
+                class="accion-estado"
+              >
+                Muestra aceptada
+              </span>
+
+              <ng-container *ngIf="puedeGenerarReintento(plan)">
+                <span class="accion-rechazo">
+                  Muestra rechazada · requiere nueva muestra
+                </span>
+
+                <button
+                  mat-flat-button
+                  type="button"
+                  (click)="generarReintento(plan)"
+                  [disabled]="
+                    generandoReintentoMuestraId === plan.intentoVigente?._id
+                  "
+                >
+                  <mat-icon>add_circle</mat-icon>
+                  {{
+                    generandoReintentoMuestraId === plan.intentoVigente?._id
+                      ? 'Generando...'
+                      : 'Generar nueva muestra'
+                  }}
+                </button>
+              </ng-container>
+            </div>
+          </mat-card-content>
+        </ng-container>
+      </mat-card>
+    </div>
+
+    <ng-template #sinRecipientes>
+      <div class="sin-recipientes">
+        No se encontraron recipientes para esta solicitud.
+      </div>
+    </ng-template>
+  </ng-container>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cerrar()">Cerrar</button>
+</mat-dialog-actions>

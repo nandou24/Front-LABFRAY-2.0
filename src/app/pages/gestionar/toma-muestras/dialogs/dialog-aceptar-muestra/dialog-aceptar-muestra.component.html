@@ -1,0 +1,123 @@
+<div class="dialog-header" mat-dialog-title>
+  <div>
+    <div class="dialog-title">Aceptar muestra</div>
+    <div class="dialog-subtitle">
+      Recipiente {{ data.numeroRecipiente || "-" }} ·
+      {{ data.muestra.codigoEtiqueta || data.muestra.codMuestra }}
+    </div>
+  </div>
+
+  <button
+    mat-icon-button
+    type="button"
+    aria-label="Cerrar"
+    [disabled]="procesando"
+    (click)="cerrar()"
+  >
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
+<mat-dialog-content>
+  <!-- ====== Trazabilidad previa ====== -->
+
+  <section class="trazabilidad-previa">
+    <div class="trazabilidad-titulo">
+      <mat-icon>history</mat-icon>
+      <span>Trazabilidad previa</span>
+    </div>
+
+    <div class="trazabilidad-grid">
+      <div class="trazabilidad-item">
+        <span>Recolectada por</span>
+        <strong>{{ data.muestra.usuarioRecoleccion || '-' }}</strong>
+        <small>
+          {{
+            data.muestra.fechaRecoleccion
+              ? (data.muestra.fechaRecoleccion | date: 'dd/MM/yyyy HH:mm')
+              : '-'
+          }}
+        </small>
+      </div>
+
+      <div class="trazabilidad-item">
+        <span>Recepcionada por</span>
+        <strong>{{ data.muestra.usuarioRecepcion || '-' }}</strong>
+        <small>
+          {{
+            data.muestra.fechaRecepcion
+              ? (data.muestra.fechaRecepcion | date: 'dd/MM/yyyy HH:mm')
+              : '-'
+          }}
+        </small>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====== Resumen ====== -->
+
+  <div class="resumen-muestra">
+    <div>
+      <span>Estado actual</span>
+      <strong>{{ data.muestra.estadoMuestra }}</strong>
+    </div>
+
+    <div>
+      <span>Tipo de muestra</span>
+      <strong>{{ data.muestra.tipoMuestra?.nombreTipoMuestra || "-" }}</strong>
+    </div>
+
+    <div>
+      <span>Recipiente utilizado</span>
+      <strong>{{ data.muestra.tuboEnvase?.nombreTuboEnvase || "-" }}</strong>
+    </div>
+  </div>
+
+  <div class="mensaje-evaluacion">
+    <mat-icon>fact_check</mat-icon>
+    <span>
+      Registra la aceptación cuando hayas verificado que la muestra recibida es
+      apta para continuar con el procesamiento.
+    </span>
+  </div>
+
+  <form [formGroup]="formAceptacion">
+    <mat-form-field appearance="outline" class="campo-completo">
+      <mat-label>Observación de aceptación</mat-label>
+      <textarea
+        matInput
+        rows="4"
+        formControlName="observacionAceptacion"
+        placeholder="Opcional"
+      ></textarea>
+    </mat-form-field>
+  </form>
+
+  <!-- ====== Evidencia recomendada ====== -->
+
+  <section class="evidencia-operacion">
+    <app-captura-evidencia-muestra
+      titulo="Fotografía de aceptación"
+      descripcion="Recomendada. Registre una fotografía de la muestra aceptada antes de continuar con el procesamiento."
+      [requerido]="false"
+      [disabled]="procesando"
+      (evidenciaChange)="cambiarEvidencia($event)"
+    ></app-captura-evidencia-muestra>
+  </section>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" [disabled]="procesando" (click)="cerrar()">
+    Cancelar
+  </button>
+
+  <button
+    mat-flat-button
+    type="button"
+    [disabled]="procesando"
+    (click)="aceptarMuestra()"
+  >
+    <mat-icon>{{ procesando ? 'hourglass_top' : 'check_circle' }}</mat-icon>
+    {{ procesando ? "Aceptando..." : "Aceptar muestra" }}
+  </button>
+</mat-dialog-actions>

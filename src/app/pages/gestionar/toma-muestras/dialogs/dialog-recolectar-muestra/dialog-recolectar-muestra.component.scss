@@ -1,0 +1,109 @@
+.dialog-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.dialog-title {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.dialog-subtitle {
+  margin-top: 4px;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.dialog-content {
+  min-width: 0;
+  padding-top: 8px;
+}
+
+.seccion-formulario {
+  padding: 14px 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.seccion-titulo {
+  color: #334155;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.seccion-ayuda {
+  margin-top: 3px;
+  margin-bottom: 12px;
+  color: #64748b;
+  font-size: 11px;
+}
+
+.opciones-radio {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.opcion-radio {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 9px;
+}
+
+.opcion-contenido {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.color-recipiente {
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+  border: 1px solid rgba(15, 23, 42, 0.15);
+  border-radius: 50%;
+}
+
+.opcion-texto {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.opcion-texto strong {
+  font-size: 13px;
+}
+
+.opcion-texto span {
+  color: #64748b;
+  font-size: 11px;
+}
+
+.fila-volumen {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(120px, 1fr);
+  gap: 12px;
+}
+
+.campo-completo {
+  width: 100%;
+}
+
+.mensaje-error {
+  margin-top: 6px;
+  color: #b91c1c;
+  font-size: 11px;
+}
+
+.evidencia-operacion {
+  margin-top: 14px;
+}
+
+@media (max-width: 620px) {
+  .fila-volumen {
+    grid-template-columns: 1fr;
+  }
+}

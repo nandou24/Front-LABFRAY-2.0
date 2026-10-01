@@ -1,0 +1,115 @@
+<div class="dialog-header" mat-dialog-title>
+  <div>
+    <div class="dialog-title">Registrar recepción</div>
+    <div class="dialog-subtitle">
+      Recipiente {{ data.numeroRecipiente || data.muestra.numeroRecipiente }} ·
+      {{ data.muestra.codigoEtiqueta || data.muestra.codMuestra }}
+    </div>
+  </div>
+
+  <button
+    mat-icon-button
+    type="button"
+    aria-label="Cerrar"
+    [disabled]="procesando"
+    (click)="cerrar()"
+  >
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
+<mat-dialog-content class="dialog-content">
+  <!-- ====== Trazabilidad previa ====== -->
+
+  <section class="trazabilidad-previa">
+    <div class="trazabilidad-titulo">
+      <mat-icon>history</mat-icon>
+      <span>Trazabilidad previa</span>
+    </div>
+
+    <div class="trazabilidad-grid">
+      <div class="trazabilidad-item">
+        <span>Recolectada por</span>
+        <strong>{{ data.muestra.usuarioRecoleccion || '-' }}</strong>
+        <small>
+          {{
+            data.muestra.fechaRecoleccion
+              ? (data.muestra.fechaRecoleccion | date: 'dd/MM/yyyy HH:mm')
+              : '-'
+          }}
+        </small>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====== Resumen de la muestra ====== -->
+
+  <section class="resumen-muestra">
+    <div class="resumen-icono">
+      <mat-icon>inventory_2</mat-icon>
+    </div>
+
+    <div class="resumen-datos">
+      <strong>
+        {{ data.muestra.tuboEnvase?.nombreTuboEnvase || 'Recipiente registrado' }}
+      </strong>
+
+      <span>
+        {{ data.muestra.tipoMuestra?.nombreTipoMuestra || '-' }}
+
+        <ng-container *ngIf="data.muestra.volumenRecolectado !== null">
+          · {{ data.muestra.volumenRecolectado }}
+          {{ data.muestra.unidadVolumenRecolectado }}
+        </ng-container>
+      </span>
+    </div>
+  </section>
+
+  <!-- ====== Observación ====== -->
+
+  <form [formGroup]="formRecepcion">
+    <mat-form-field appearance="outline" class="campo-completo">
+      <mat-label>Observación de recepción</mat-label>
+
+      <textarea
+        matInput
+        rows="4"
+        formControlName="observacionRecepcion"
+        placeholder="Opcional"
+      ></textarea>
+    </mat-form-field>
+  </form>
+
+  <!-- ====== Evidencia opcional ====== -->
+
+  <section class="evidencia-operacion">
+    <app-captura-evidencia-muestra
+      titulo="Fotografía de recepción"
+      descripcion="Opcional. Registre una fotografía del recipiente tal como fue recibido."
+      [requerido]="false"
+      [disabled]="procesando"
+      (evidenciaChange)="cambiarEvidencia($event)"
+    ></app-captura-evidencia-muestra>
+  </section>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button
+    mat-button
+    type="button"
+    [disabled]="procesando"
+    (click)="cerrar()"
+  >
+    Cancelar
+  </button>
+
+  <button
+    mat-flat-button
+    type="button"
+    [disabled]="procesando"
+    (click)="registrarRecepcion()"
+  >
+    <mat-icon>{{ procesando ? 'hourglass_top' : 'move_to_inbox' }}</mat-icon>
+    {{ procesando ? 'Registrando...' : 'Registrar recepción' }}
+  </button>
+</mat-dialog-actions>

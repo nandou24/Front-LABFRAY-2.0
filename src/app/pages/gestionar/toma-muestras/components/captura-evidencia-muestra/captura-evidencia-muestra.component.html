@@ -1,0 +1,185 @@
+<div class="captura-evidencia">
+  <!-- ====== Encabezado ====== -->
+
+  <div class="captura-header">
+    <mat-icon>photo_camera</mat-icon>
+
+    <div>
+      <div class="captura-titulo">
+        {{ titulo }}
+        <span *ngIf="requerido" class="requerido">*</span>
+      </div>
+
+      <div class="captura-descripcion">
+        {{ descripcion }}
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== Acciones principales ====== -->
+
+  <div class="captura-actions">
+    <button
+      mat-flat-button
+      type="button"
+      (click)="abrirCamara()"
+      [disabled]="disabled || camaraActiva || procesandoArchivo"
+    >
+      <mat-icon>photo_camera</mat-icon>
+      {{ camaraActiva ? "Cámara activa" : "Tomar foto" }}
+    </button>
+
+    <button
+      mat-stroked-button
+      type="button"
+      (click)="abrirSelectorArchivo()"
+      [disabled]="disabled || procesandoArchivo"
+    >
+      <mat-icon>upload_file</mat-icon>
+      {{ procesandoArchivo ? "Preparando..." : "Cargar archivo" }}
+    </button>
+
+    <input
+      #inputArchivo
+      type="file"
+      hidden
+      accept="image/jpeg,image/png,image/webp"
+      (change)="seleccionarArchivo($event)"
+    />
+  </div>
+
+  <!-- ====== Errores ====== -->
+
+  <div *ngIf="errorCamara" class="mensaje-error">
+    <mat-icon>videocam_off</mat-icon>
+    <span>{{ errorCamara }}</span>
+  </div>
+
+  <div *ngIf="errorArchivo" class="mensaje-error">
+    <mat-icon>error_outline</mat-icon>
+    <span>{{ errorArchivo }}</span>
+  </div>
+
+  <!-- ====== Cámara ====== -->
+
+  <div
+    class="camara-panel"
+    [class.oculto]="!camaraActiva"
+  >
+    <div class="video-container">
+      <video
+        #videoCamara
+        autoplay
+        muted
+        playsinline
+      ></video>
+
+      <div class="camara-indicador">
+        <mat-icon>fiber_manual_record</mat-icon>
+        Cámara activa
+      </div>
+    </div>
+
+    <div class="camara-actions">
+      <button
+        mat-flat-button
+        type="button"
+        (click)="capturarFoto()"
+        [disabled]="disabled || capturando"
+      >
+        <mat-icon>camera</mat-icon>
+        {{ capturando ? "Capturando..." : "Capturar foto" }}
+      </button>
+
+      <button
+        mat-button
+        type="button"
+        (click)="cerrarCamara()"
+        [disabled]="capturando"
+      >
+        Cancelar cámara
+      </button>
+    </div>
+  </div>
+
+  <!-- ====== Vista previa ====== -->
+
+  <div
+    *ngIf="previewUrl && archivoSeleccionado"
+    class="preview-panel"
+  >
+    <div class="preview-imagen">
+      <img
+        [src]="previewUrl"
+        alt="Vista previa de evidencia fotográfica"
+      />
+    </div>
+
+    <div class="preview-detalle">
+      <div class="preview-origen">
+        <mat-icon>
+          {{
+            origenSeleccionado === "CAMARA"
+              ? "photo_camera"
+              : "upload_file"
+          }}
+        </mat-icon>
+
+        <span>
+          {{
+            origenSeleccionado === "CAMARA"
+              ? "Fotografía capturada"
+              : "Archivo seleccionado"
+          }}
+        </span>
+      </div>
+
+      <strong>{{ archivoSeleccionado.name }}</strong>
+
+      <span class="preview-meta">
+        {{ formatearTamano(archivoSeleccionado.size) }} ·
+        {{ archivoSeleccionado.type || "image/jpeg" }}
+      </span>
+
+      <div class="preview-actions">
+        <button
+          *ngIf="origenSeleccionado === 'CAMARA'"
+          mat-stroked-button
+          type="button"
+          (click)="repetirFoto()"
+          [disabled]="disabled"
+        >
+          <mat-icon>replay</mat-icon>
+          Repetir foto
+        </button>
+
+        <button
+          mat-button
+          type="button"
+          class="btn-quitar"
+          (click)="limpiar()"
+          [disabled]="disabled"
+        >
+          <mat-icon>delete_outline</mat-icon>
+          Quitar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== Estado vacío ====== -->
+
+  <div
+    *ngIf="!previewUrl && !camaraActiva"
+    class="estado-vacio"
+  >
+    <mat-icon>add_a_photo</mat-icon>
+
+    <div>
+      <strong>Sin fotografía seleccionada</strong>
+      <span>
+        Use la cámara como opción principal o cargue una imagen JPEG, PNG o WebP.
+      </span>
+    </div>
+  </div>
+</div>

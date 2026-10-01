@@ -1,0 +1,177 @@
+<div class="dialog-header" mat-dialog-title>
+  <div>
+    <div class="dialog-title">Registrar recolección</div>
+    <div class="dialog-subtitle">
+      Recipiente {{ data.numeroRecipiente || data.muestra.numeroRecipiente }} ·
+      {{ data.muestra.codigoEtiqueta || data.muestra.codMuestra }}
+    </div>
+  </div>
+
+  <button
+    mat-icon-button
+    type="button"
+    aria-label="Cerrar"
+    [disabled]="procesando"
+    (click)="cerrar()"
+  >
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
+<mat-dialog-content class="dialog-content">
+  <form [formGroup]="formRecoleccion">
+    <!-- ====== Seleccionar recipiente ====== -->
+
+    <section class="seccion-formulario">
+      <div class="seccion-titulo">Recipiente utilizado</div>
+      <div class="seccion-ayuda">
+        Seleccione la opción física utilizada para esta toma.
+      </div>
+
+      <mat-radio-group
+        formControlName="opcionFisica"
+        class="opciones-radio"
+      >
+        <mat-radio-button
+          *ngFor="let opcion of opciones"
+          [value]="construirClaveOpcion(opcion)"
+          class="opcion-radio"
+        >
+          <div class="opcion-contenido">
+            <div
+              class="color-recipiente"
+              [style.background-color]="
+                resolverColorRecipiente(opcion.tuboEnvase.color)
+              "
+            ></div>
+
+            <div class="opcion-texto">
+              <strong>{{ opcion.tuboEnvase.nombreTuboEnvase }}</strong>
+
+              <span>
+                {{ opcion.tipoMuestra.nombreTipoMuestra }}
+
+                <ng-container *ngIf="opcion.tuboEnvase.capacidad !== null">
+                  · {{ opcion.tuboEnvase.capacidad }}
+                  {{ opcion.tuboEnvase.unidadCapacidad }}
+                </ng-container>
+              </span>
+            </div>
+          </div>
+        </mat-radio-button>
+      </mat-radio-group>
+
+      <div
+        *ngIf="
+          formRecoleccion.controls.opcionFisica.touched &&
+          formRecoleccion.controls.opcionFisica.hasError('required')
+        "
+        class="mensaje-error"
+      >
+        Debe seleccionar el recipiente utilizado.
+      </div>
+    </section>
+
+    <!-- ====== Volumen ====== -->
+
+    <section class="seccion-formulario">
+      <div class="seccion-titulo">Volumen recolectado</div>
+      <div class="seccion-ayuda">
+        Opcional. Si registra un volumen, debe indicar también la unidad.
+      </div>
+
+      <div class="fila-volumen">
+        <mat-form-field appearance="outline">
+          <mat-label>Volumen</mat-label>
+
+          <input
+            matInput
+            type="number"
+            min="0.000001"
+            step="any"
+            formControlName="volumenRecolectado"
+          />
+
+          <mat-error
+            *ngIf="
+              formRecoleccion.controls.volumenRecolectado.hasError('min')
+            "
+          >
+            El volumen debe ser mayor a cero.
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Unidad</mat-label>
+
+          <mat-select formControlName="unidadVolumenRecolectado">
+            <mat-option
+              *ngFor="let unidad of unidadesVolumen"
+              [value]="unidad"
+            >
+              {{ unidad }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <div
+        *ngIf="
+          formRecoleccion.touched &&
+          formRecoleccion.hasError('volumenIncompleto')
+        "
+        class="mensaje-error"
+      >
+        Volumen y unidad deben registrarse juntos.
+      </div>
+    </section>
+
+    <!-- ====== Observación ====== -->
+
+    <section class="seccion-formulario">
+      <mat-form-field appearance="outline" class="campo-completo">
+        <mat-label>Observación de recolección</mat-label>
+
+        <textarea
+          matInput
+          rows="3"
+          formControlName="observacionRecoleccion"
+          placeholder="Opcional"
+        ></textarea>
+      </mat-form-field>
+    </section>
+  </form>
+
+  <!-- ====== Evidencia opcional ====== -->
+
+  <section class="evidencia-operacion">
+    <app-captura-evidencia-muestra
+      titulo="Fotografía de recolección"
+      descripcion="Opcional. Registre una fotografía del recipiente recolectado. La cámara es la opción principal."
+      [requerido]="false"
+      [disabled]="procesando"
+      (evidenciaChange)="cambiarEvidencia($event)"
+    ></app-captura-evidencia-muestra>
+  </section>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button
+    mat-button
+    type="button"
+    [disabled]="procesando"
+    (click)="cerrar()"
+  >
+    Cancelar
+  </button>
+
+  <button
+    mat-flat-button
+    type="button"
+    [disabled]="formRecoleccion.invalid || procesando"
+    (click)="registrarRecoleccion()"
+  >
+    <mat-icon>{{ procesando ? "hourglass_top" : "vaccines" }}</mat-icon>
+    {{ procesando ? "Registrando..." : "Registrar recolección" }}
+  </button>
+</mat-dialog-actions>

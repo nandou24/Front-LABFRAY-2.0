@@ -1,0 +1,73 @@
+<div class="dialog-header" mat-dialog-title>
+  <div>
+    <div class="dialog-title">Rechazar muestra</div>
+    <div class="dialog-subtitle">
+      Recipiente {{ data.numeroRecipiente || "-" }} ·
+      {{ data.muestra.codigoEtiqueta || data.muestra.codMuestra }}
+    </div>
+  </div>
+
+  <button mat-icon-button type="button" aria-label="Cerrar" (click)="cerrar()">
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
+<mat-dialog-content>
+  <div class="resumen-muestra">
+    <div>
+      <span>Estado actual</span>
+      <strong>{{ data.muestra.estadoMuestra }}</strong>
+    </div>
+
+    <div>
+      <span>Tipo de muestra</span>
+      <strong>{{ data.muestra.tipoMuestra?.nombreTipoMuestra || "-" }}</strong>
+    </div>
+
+    <div>
+      <span>Recipiente utilizado</span>
+      <strong>{{ data.muestra.tuboEnvase?.nombreTuboEnvase || "-" }}</strong>
+    </div>
+  </div>
+
+  <div class="mensaje-rechazo">
+    <mat-icon>warning</mat-icon>
+    <span>
+      El rechazo deja este intento como no apto para procesamiento. La nueva
+      toma se gestionará posteriormente como un reintento independiente.
+    </span>
+  </div>
+
+  <form [formGroup]="formRechazo">
+    <mat-form-field appearance="outline" class="campo-completo">
+      <mat-label>Motivo del rechazo</mat-label>
+      <textarea
+        matInput
+        rows="5"
+        formControlName="motivoRechazo"
+        placeholder="Ej. Muestra hemolizada, volumen insuficiente..."
+      ></textarea>
+
+      <mat-error *ngIf="formRechazo.controls.motivoRechazo.hasError('required')">
+        El motivo del rechazo es obligatorio
+      </mat-error>
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" [disabled]="procesando" (click)="cerrar()">
+    Cancelar
+  </button>
+
+  <button
+    mat-flat-button
+    type="button"
+    class="btn-rechazar"
+    [disabled]="procesando"
+    (click)="rechazarMuestra()"
+  >
+    <mat-icon>block</mat-icon>
+    {{ procesando ? "Rechazando..." : "Rechazar muestra" }}
+  </button>
+</mat-dialog-actions>

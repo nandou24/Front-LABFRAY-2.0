@@ -1,0 +1,257 @@
+<div class="dialog-header" mat-dialog-title>
+  <div>
+    <div class="dialog-title">Evidencias fotográficas</div>
+
+    <div class="dialog-subtitle">
+      Recipiente {{ data.numeroRecipiente || data.muestra.numeroRecipiente }} ·
+      {{ data.muestra.codigoEtiqueta || data.muestra.codMuestra }} ·
+      Intento {{ data.muestra.numeroIntento }}
+    </div>
+  </div>
+
+  <button mat-icon-button type="button" aria-label="Cerrar" (click)="cerrar()">
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
+<mat-dialog-content class="dialog-content">
+  <!-- ====== Resumen ====== -->
+
+  <div class="resumen-evidencias">
+    <div>
+      <strong>{{ resumen.activas }}</strong>
+      <span>activas</span>
+    </div>
+
+    <div>
+      <strong>{{ resumen.anuladas }}</strong>
+      <span>anuladas</span>
+    </div>
+
+    <mat-chip>{{ data.muestra.estadoMuestra }}</mat-chip>
+  </div>
+
+  <!-- ====== Registro ====== -->
+
+  <mat-card *ngIf="puedeRegistrarEvidencia()" class="registro-card">
+    <mat-card-content>
+      <div class="seccion-titulo">
+        <mat-icon>add_a_photo</mat-icon>
+        <div>
+          <strong>Registrar evidencia</strong>
+          <span>La fotografía quedará asociada a este intento de muestra.</span>
+        </div>
+      </div>
+
+      <form [formGroup]="form" class="registro-form">
+        <mat-form-field appearance="outline">
+          <mat-label>Etapa</mat-label>
+
+          <mat-select formControlName="etapa">
+            <mat-option
+              *ngFor="let etapa of etapasDisponibles"
+              [value]="etapa.valor"
+            >
+              {{ etapa.etiqueta }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="observacion-field">
+          <mat-label>Observación</mat-label>
+
+          <textarea
+            matInput
+            rows="2"
+            formControlName="observacion"
+            placeholder="Opcional"
+          ></textarea>
+        </mat-form-field>
+      </form>
+
+      <div class="captura-wrapper">
+        <app-captura-evidencia-muestra
+          titulo="Fotografía de evidencia"
+          descripcion="La cámara es la opción principal. También puede cargar una imagen desde el dispositivo."
+          [requerido]="true"
+          [disabled]="subiendo"
+          (evidenciaChange)="cambiarEvidencia($event)"
+        ></app-captura-evidencia-muestra>
+      </div>
+
+      <div class="registro-actions">
+        <button
+          mat-flat-button
+          type="button"
+          (click)="registrarEvidencia()"
+          [disabled]="subiendo || !archivoSeleccionado || form.invalid"
+        >
+          <mat-icon>cloud_upload</mat-icon>
+          {{ subiendo ? "Subiendo..." : "Registrar evidencia" }}
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- ====== Etapa no disponible ====== -->
+
+  <div
+    *ngIf="!puedeRegistrarEvidencia() && data.muestra.estadoMuestra !== 'ANULADA'"
+    class="info-operativa"
+  >
+    <mat-icon>info</mat-icon>
+    <span>
+      Todavía no existe una etapa registrada que permita adjuntar evidencia a
+      este intento.
+    </span>
+  </div>
+
+  <div *ngIf="data.muestra.estadoMuestra === 'ANULADA'" class="info-operativa">
+    <mat-icon>info</mat-icon>
+    <span>
+      La muestra está anulada. Las evidencias existentes se conservan, pero no
+      se pueden registrar nuevas fotografías.
+    </span>
+  </div>
+
+  <!-- ====== Listado ====== -->
+
+  <div class="listado-header">
+    <div>
+      <strong>Evidencias registradas</strong>
+      <span>Las imágenes activas se muestran mediante URL temporal.</span>
+    </div>
+
+    <button
+      mat-stroked-button
+      type="button"
+      (click)="cargarEvidencias()"
+      [disabled]="cargando"
+    >
+      <mat-icon>refresh</mat-icon>
+      Actualizar enlaces
+    </button>
+  </div>
+
+  <!-- ====== Cargando ====== -->
+
+  <div *ngIf="cargando" class="estado-carga">
+    <mat-spinner diameter="36"></mat-spinner>
+    <span>Cargando evidencias...</span>
+  </div>
+
+  <!-- ====== Error ====== -->
+
+  <div *ngIf="!cargando && errorCarga" class="estado-error">
+    <mat-icon>error_outline</mat-icon>
+
+    <div>
+      <strong>No se pudieron cargar las evidencias</strong>
+      <span>{{ errorCarga }}</span>
+    </div>
+
+    <button mat-stroked-button type="button" (click)="cargarEvidencias()">
+      Reintentar
+    </button>
+  </div>
+
+  <!-- ====== Evidencias ====== -->
+
+  <div
+    *ngIf="!cargando && !errorCarga && evidencias.length > 0; else sinEvidencias"
+    class="evidencias-grid"
+  >
+    <mat-card
+      *ngFor="let evidencia of evidencias"
+      class="evidencia-card"
+      [class.evidencia-anulada]="evidencia.estadoEvidencia === 'ANULADA'"
+    >
+      <div class="evidencia-imagen">
+        <img
+          *ngIf="evidencia.estadoEvidencia === 'ACTIVA' && evidencia.urlTemporal; else imagenNoDisponible"
+          [src]="evidencia.urlTemporal"
+          alt="Evidencia fotográfica de la muestra"
+        />
+
+        <ng-template #imagenNoDisponible>
+          <div class="imagen-placeholder">
+            <mat-icon>hide_image</mat-icon>
+            <span>
+              {{
+                evidencia.estadoEvidencia === "ANULADA"
+                  ? "Evidencia anulada"
+                  : "Imagen no disponible"
+              }}
+            </span>
+          </div>
+        </ng-template>
+
+        <mat-chip class="etapa-chip">
+          {{ obtenerEtiquetaEtapa(evidencia.etapa) }}
+        </mat-chip>
+      </div>
+
+      <mat-card-content>
+        <div class="evidencia-meta">
+          <strong>{{ evidencia.nombreArchivo || "Fotografía" }}</strong>
+
+          <span>
+            {{ evidencia.fechaRegistro | date: "dd/MM/yyyy HH:mm" }} ·
+            {{ formatearTamano(evidencia.tamanoBytes) }}
+          </span>
+
+          <span *ngIf="evidencia.usuarioRegistro">
+            Registrada por: {{ evidencia.usuarioRegistro }}
+          </span>
+
+          <p *ngIf="evidencia.observacion">
+            {{ evidencia.observacion }}
+          </p>
+        </div>
+
+        <div
+          *ngIf="evidencia.estadoEvidencia === 'ANULADA'"
+          class="anulacion-detalle"
+        >
+          <strong>ANULADA</strong>
+          <span>{{ evidencia.motivoAnulacion || "Sin motivo informado" }}</span>
+        </div>
+
+        <div class="evidencia-actions">
+          <a
+            *ngIf="evidencia.estadoEvidencia === 'ACTIVA' && evidencia.urlTemporal"
+            mat-stroked-button
+            [href]="evidencia.urlTemporal"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <mat-icon>open_in_new</mat-icon>
+            Ver imagen
+          </a>
+
+          <button
+            *ngIf="evidencia.estadoEvidencia === 'ACTIVA'"
+            mat-button
+            type="button"
+            class="btn-anular"
+            (click)="anularEvidencia(evidencia)"
+          >
+            <mat-icon>block</mat-icon>
+            Anular
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <ng-template #sinEvidencias>
+    <div *ngIf="!cargando && !errorCarga" class="sin-evidencias">
+      <mat-icon>photo_library</mat-icon>
+      <span>Este intento todavía no tiene evidencias fotográficas.</span>
+    </div>
+  </ng-template>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cerrar()">Cerrar</button>
+</mat-dialog-actions>

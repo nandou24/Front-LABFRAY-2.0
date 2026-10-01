@@ -928,19 +928,22 @@
                   border-top: 1px solid #e2e8f0;
                 "
               >
-                <!-- ====== Inicializar ====== -->
-
                 <button
                   *ngIf="
                     !row.muestras.inicializadas && row.muestras.puedeInicializar
                   "
                   mat-flat-button
                   type="button"
-                  disabled
+                  [disabled]="inicializandoSolicitudId === row.solicitud._id"
+                  (click)="inicializarMuestras(row)"
                 >
-                  <mat-icon> science </mat-icon>
+                  <mat-icon> play_arrow </mat-icon>
 
-                  Inicializar muestras
+                  {{
+                    inicializandoSolicitudId === row.solicitud._id
+                      ? "Iniciando..."
+                      : "Iniciar toma de muestras"
+                  }}
                 </button>
 
                 <!-- ====== Falta código laboratorio ====== -->
@@ -962,7 +965,7 @@
                   *ngIf="row.muestras.inicializadas"
                   mat-flat-button
                   type="button"
-                  disabled
+                  (click)="abrirGestionToma(row)"
                 >
                   <mat-icon> vaccines </mat-icon>
 
