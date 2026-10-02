@@ -1,0 +1,153 @@
+:host {
+  display: block;
+}
+
+.etiqueta-fisica {
+  box-sizing: border-box;
+  width: 50mm;
+  height: 25mm;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 1fr 8mm;
+  //border: 0.2mm solid #111827;
+  background: #ffffff;
+  color: #000000;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.etiqueta-cuerpo {
+  min-width: 0;
+  height: 100%;
+  padding: 1.2mm 0mm 1mm 1.3mm;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45mm;
+}
+
+.etiqueta-paciente {
+  display: -webkit-box;
+  min-height: 5.1mm;
+  max-height: 5.1mm;
+  overflow: hidden;
+  font-size: 7.2pt;
+  font-weight: 700;
+  line-height: 2.45mm;
+  text-transform: uppercase;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.etiqueta-documento {
+  height: 2.6mm;
+  overflow: hidden;
+  font-size: 6.6pt;
+  font-weight: 600;
+  line-height: 2.6mm;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.etiqueta-tipo-muestra {
+  height: 2.8mm;
+  overflow: hidden;
+  font-size: 7.3pt;
+  font-weight: 800;
+  line-height: 2.8mm;
+  text-transform: uppercase;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.etiqueta-tipo-muestra.tipo-por-definir {
+  font-size: 6.1pt;
+}
+
+.etiqueta-barcode {
+  flex: 1;
+  width: 100%;
+  min-height: 8.8mm;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+}
+
+.etiqueta-barcode svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.etiqueta-barcode rect {
+  fill: #000000;
+}
+
+// ====== Código lateral ======
+
+.etiqueta-lateral {
+  box-sizing: border-box;
+  position: relative;
+  overflow: hidden;
+  //border-left: 0.2mm solid #111827;
+  padding: 0mm 0.9mm;
+  background: #ffffff;
+}
+
+.etiqueta-lateral-stack {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  //padding: 0mm 0.9mm;
+  writing-mode: vertical-rl;
+  display: grid;
+  justify-items: center;
+  align-items: center;
+}
+
+.etiqueta-lateral-line {
+  white-space: nowrap;
+  line-height: 1;
+  //transform: rotate(90deg);
+  transform-origin: center center;
+  display: inline-block;
+}
+
+.etiqueta-lateral-prefijo {
+  font-size: 6pt;
+  font-weight: 700;
+  letter-spacing: 0.08mm;
+}
+
+.etiqueta-lateral-principal {
+  font-size: 13.5pt;
+  font-weight: 900;
+  letter-spacing: 0.05mm;
+}
+
+.etiqueta-lateral-sufijo {
+  font-size: 6pt;
+  font-weight: 700;
+  letter-spacing: 0.05mm;
+}
+
+.etiqueta-lateral-stack--fallback {
+  grid-template-rows: 1fr;
+}
+
+.etiqueta-lateral-completo {
+  font-size: 6.2pt;
+  font-weight: 800;
+  letter-spacing: 0.08mm;
+}
+
+.codigo-recipiente {
+  min-width: 4.8mm;
+  padding: 0.35mm 0.5mm;
+
+  border: 0.25mm solid #000000;
+  border-radius: 0.7mm;
+
+  font-size: 8.5pt;
+  font-weight: 900;
+  line-height: 1.15;
+  text-align: center;
+}

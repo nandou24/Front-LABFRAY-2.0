@@ -2,7 +2,6 @@ import { CommonModule } from '@angular/common';
 import { Component, inject, OnInit } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
-import { MatChipsModule } from '@angular/material/chips';
 import {
   MAT_DIALOG_DATA,
   MatDialog,
@@ -28,6 +27,11 @@ import { DialogAceptarMuestraComponent } from '../dialog-aceptar-muestra/dialog-
 import { DialogRechazarMuestraComponent } from '../dialog-rechazar-muestra/dialog-rechazar-muestra.component';
 import { DialogEvidenciasMuestraComponent } from '../dialog-evidencias-muestra/dialog-evidencias-muestra.component';
 import { DialogAnularMuestraComponent } from '../dialog-anular-muestra/dialog-anular-muestra.component';
+import { DialogEtiquetasMuestraComponent } from '../dialog-etiquetas-muestra/dialog-etiquetas-muestra.component';
+import {
+  IEtiquetaMuestra,
+  ResolucionTipoMuestraEtiqueta,
+} from '../../../../../models/Gestion/etiqueta-muestra.models';
 
 export interface IGestionarTomaDialogData {
   item: IBandejaTomaMuestrasItem;
@@ -46,7 +50,6 @@ interface IServicioMuestraDialog {
     CommonModule,
     MatButtonModule,
     MatCardModule,
-    MatChipsModule,
     MatDialogModule,
     MatDividerModule,
     MatIconModule,
@@ -151,7 +154,33 @@ export class DialogGestionarTomaComponent implements OnInit {
   // ====== Estado del plan ======
 
   obtenerEstadoPlan(plan: IPlanMuestraLaboratorio): string {
-    return plan.intentoVigente?.estadoMuestra ?? 'SIN VIGENTE';
+    if (plan.intentoVigente?.estadoMuestra) {
+      return plan.intentoVigente.estadoMuestra;
+    }
+
+    const ultimoIntento =
+      plan.intentos.length > 0 ? plan.intentos[plan.intentos.length - 1] : null;
+
+    return ultimoIntento?.estadoMuestra ?? 'SIN MUESTRA';
+  }
+
+  // ====== Clase visual del estado ======
+
+  obtenerClaseEstadoMuestra(estado: string | null | undefined): string {
+    const estadoNormalizado = String(estado ?? '')
+      .trim()
+      .toUpperCase();
+
+    const clases: Record<string, string> = {
+      PENDIENTE: 'estado-chip-pendiente',
+      RECOLECTADA: 'estado-chip-recolectada',
+      RECEPCIONADA: 'estado-chip-recepcionada',
+      ACEPTADA: 'estado-chip-aceptada',
+      RECHAZADA: 'estado-chip-rechazada',
+      ANULADA: 'estado-chip-anulada',
+    };
+
+    return clases[estadoNormalizado] ?? 'estado-chip-neutro';
   }
 
   // ====== Validar intento vigente ======
@@ -503,8 +532,7 @@ export class DialogGestionarTomaComponent implements OnInit {
             ? 'Nueva muestra generada'
             : 'El reintento ya existía',
           text:
-            response.msg ||
-            'El nuevo intento de la muestra quedó disponible.',
+            response.msg || 'El nuevo intento de la muestra quedó disponible.',
           confirmButtonText: 'Continuar',
           confirmButtonColor: '#3085d6',
         });
@@ -588,6 +616,209 @@ export class DialogGestionarTomaComponent implements OnInit {
       // ====== Refrescar metadata de evidencias ======
 
       this.cargarMuestras();
+    });
+  }
+
+  // ====== Etiquetas de muestra ======
+
+  puedeVerEtiqueta(muestra: IMuestraLaboratorio | null | undefined): boolean {
+    if (!muestra || muestra.estadoMuestra === 'ANULADA') {
+      return false;
+    }
+
+    return Boolean(String(muestra.codigoEtiqueta ?? '').trim());
+  }
+
+  cantidadEtiquetasDisponibles(): number {
+    if (!this.consulta) {
+      return 0;
+    }
+
+    return this.consulta.planes.reduce((total, plan) => {
+      const muestra = this.obtenerIntentoMostrar(plan);
+      return total + (this.puedeVerEtiqueta(muestra) ? 1 : 0);
+    }, 0);
+  }
+
+  verEtiqueta(plan: IPlanMuestraLaboratorio): void {
+    const muestra = this.obtenerIntentoMostrar(plan);
+
+    if (!this.puedeVerEtiqueta(muestra) || !muestra) {
+      return;
+    }
+
+    const etiqueta = this.construirEtiquetaMuestra(muestra);
+
+    if (!etiqueta) {
+      this.mostrarErrorEtiqueta();
+      return;
+    }
+
+    this.abrirVistaPreviaEtiquetas([etiqueta]);
+  }
+
+  verTodasEtiquetas(): void {
+    if (!this.consulta) {
+      return;
+    }
+
+    const etiquetas = this.consulta.planes
+      .map((plan) => this.obtenerIntentoMostrar(plan))
+      .filter((muestra): muestra is IMuestraLaboratorio =>
+        this.puedeVerEtiqueta(muestra),
+      )
+      .map((muestra) => this.construirEtiquetaMuestra(muestra))
+      .filter((etiqueta): etiqueta is IEtiquetaMuestra => etiqueta !== null);
+
+    if (etiquetas.length === 0) {
+      this.mostrarErrorEtiqueta();
+      return;
+    }
+
+    this.abrirVistaPreviaEtiquetas(etiquetas);
+  }
+
+  private abrirVistaPreviaEtiquetas(etiquetas: IEtiquetaMuestra[]): void {
+    this._dialog.open(DialogEtiquetasMuestraComponent, {
+      width: '920px',
+      maxWidth: '96vw',
+      maxHeight: '92vh',
+      autoFocus: false,
+      data: {
+        etiquetas,
+      },
+    });
+  }
+
+  private construirEtiquetaMuestra(
+    muestra: IMuestraLaboratorio,
+  ): IEtiquetaMuestra | null {
+    const codigoEtiqueta = String(muestra.codigoEtiqueta ?? '').trim();
+
+    if (!codigoEtiqueta) {
+      return null;
+    }
+
+    const codigoLaboratorio = String(
+      muestra.codigoLaboratorio ??
+        this.data.item.solicitud.codigoLaboratorio ??
+        '',
+    ).trim();
+
+    const partesCodigo = this.separarCodigoLaboratorio(
+      codigoLaboratorio,
+      codigoEtiqueta,
+    );
+
+    const tipoMuestra = this.resolverTipoMuestraEtiqueta(muestra);
+    const paciente = this.data.item.solicitud.paciente;
+
+    return {
+      muestraLaboratorioId: muestra._id,
+      numeroRecipiente: muestra.numeroRecipiente,
+      numeroIntento: muestra.numeroIntento,
+      estadoMuestra: muestra.estadoMuestra,
+      nombrePaciente: this.obtenerNombrePaciente(),
+      tipoDocumento: String(paciente.tipoDoc ?? '').trim() || 'DOC',
+      numeroDocumento: String(paciente.nroDoc ?? '').trim() || '-',
+      codigoLaboratorio,
+      codigoLaboratorioPrefijo: partesCodigo.prefijo,
+      correlativoMensual: partesCodigo.correlativo,
+      codigoEtiqueta,
+      codigoEtiquetaSufijo: partesCodigo.sufijo,
+      tipoMuestra: tipoMuestra.nombre,
+      resolucionTipoMuestra: tipoMuestra.resolucion,
+    };
+  }
+
+  private separarCodigoLaboratorio(
+    codigoLaboratorio: string,
+    codigoEtiqueta: string,
+  ): {
+    prefijo: string;
+    correlativo: string | null;
+    sufijo: string;
+  } {
+    const match = codigoLaboratorio.match(/^(.*)-(\d+)$/);
+
+    if (!match) {
+      return {
+        prefijo: codigoLaboratorio || codigoEtiqueta,
+        correlativo: null,
+        sufijo:
+          codigoLaboratorio && codigoEtiqueta.startsWith(codigoLaboratorio)
+            ? codigoEtiqueta.slice(codigoLaboratorio.length)
+            : '',
+      };
+    }
+
+    const prefijo = match[1];
+    const correlativo = match[2];
+    const sufijo = codigoEtiqueta.startsWith(codigoLaboratorio)
+      ? codigoEtiqueta.slice(codigoLaboratorio.length)
+      : '';
+
+    return {
+      prefijo,
+      correlativo,
+      sufijo,
+    };
+  }
+
+  private resolverTipoMuestraEtiqueta(muestra: IMuestraLaboratorio): {
+    nombre: string;
+    resolucion: ResolucionTipoMuestraEtiqueta;
+  } {
+    const nombreReal = String(
+      muestra.tipoMuestra?.nombreTipoMuestra ?? '',
+    ).trim();
+
+    if (nombreReal) {
+      return {
+        nombre: nombreReal.toUpperCase(),
+        resolucion: 'REAL',
+      };
+    }
+
+    const opciones = this.obtenerOpcionesComunes(muestra);
+    const tipos = new Map<string, string>();
+
+    opciones.forEach((opcion) => {
+      const nombre = String(opcion.tipoMuestra?.nombreTipoMuestra ?? '').trim();
+
+      if (!nombre) {
+        return;
+      }
+
+      const clave = String(opcion.tipoMuestraId || nombre)
+        .trim()
+        .toUpperCase();
+
+      if (!tipos.has(clave)) {
+        tipos.set(clave, nombre);
+      }
+    });
+
+    if (tipos.size === 1) {
+      return {
+        nombre: [...tipos.values()][0].toUpperCase(),
+        resolucion: 'UNICA_OPCION',
+      };
+    }
+
+    return {
+      nombre: 'TIPO POR DEFINIR',
+      resolucion: 'POR_DEFINIR',
+    };
+  }
+
+  private mostrarErrorEtiqueta(): void {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Etiqueta no disponible',
+      text: 'No se encontró un código de etiqueta disponible para este recipiente.',
+      confirmButtonText: 'Cerrar',
+      confirmButtonColor: '#3085d6',
     });
   }
 

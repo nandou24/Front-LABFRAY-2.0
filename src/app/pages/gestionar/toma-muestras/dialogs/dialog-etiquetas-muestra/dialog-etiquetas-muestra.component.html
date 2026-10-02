@@ -1,0 +1,64 @@
+<div class="dialog-header" mat-dialog-title>
+  <div>
+    <div class="dialog-title">
+      {{ data.etiquetas.length === 1 ? 'Vista previa de etiqueta' : 'Vista previa de etiquetas' }}
+    </div>
+
+    <div class="dialog-subtitle">
+      Prototipo 50 × 25 mm · código Code 128
+    </div>
+  </div>
+
+  <button mat-icon-button type="button" aria-label="Cerrar" (click)="cerrar()">
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
+<mat-dialog-content class="dialog-content">
+  <div *ngIf="tieneTiposPorDefinir" class="alerta-tipo">
+    <mat-icon>warning_amber</mat-icon>
+
+    <div>
+      <strong>Hay etiquetas con el tipo de muestra por definir.</strong>
+      <span>
+        El sistema no asigna un tipo cuando las opciones históricas permiten
+        más de un tipo de muestra.
+      </span>
+    </div>
+  </div>
+
+  <div class="etiquetas-grid">
+    <div *ngFor="let etiqueta of data.etiquetas" class="etiqueta-preview-item">
+      <div class="etiqueta-meta">
+        <strong>Recipiente {{ etiqueta.numeroRecipiente }}</strong>
+        <span>{{ etiqueta.estadoMuestra }}</span>
+      </div>
+
+      <div class="etiqueta-preview">
+        <app-etiqueta-muestra [etiqueta]="etiqueta"></app-etiqueta-muestra>
+      </div>
+
+      <div
+        *ngIf="etiqueta.resolucionTipoMuestra === 'UNICA_OPCION'"
+        class="nota-tipo"
+      >
+        Tipo resuelto desde la única opción de muestra compatible.
+      </div>
+
+      <div
+        *ngIf="etiqueta.resolucionTipoMuestra === 'POR_DEFINIR'"
+        class="nota-tipo nota-advertencia"
+      >
+        El tipo deberá definirse antes de la impresión física.
+      </div>
+    </div>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <span class="nota-8a">
+    En 8A solo validamos composición y vista previa. La impresión física se integra en el siguiente bloque.
+  </span>
+
+  <button mat-button type="button" (click)="cerrar()">Cerrar</button>
+</mat-dialog-actions>

@@ -580,9 +580,22 @@
                 </div>
               </div>
 
-              <mat-chip>
+              <span
+                [ngStyle]="obtenerEstiloEstadoGeneralToma(row)"
+                style="
+                  display: inline-flex;
+                  align-items: center;
+                  min-height: 30px;
+                  padding: 0 12px;
+                  border: 1px solid;
+                  border-radius: 9px;
+                  font-size: 12px;
+                  font-weight: 600;
+                  white-space: nowrap;
+                "
+              >
                 {{ obtenerEstadoGeneralToma(row) }}
-              </mat-chip>
+              </span>
             </div>
 
             <!-- ====== No requiere muestra ====== -->

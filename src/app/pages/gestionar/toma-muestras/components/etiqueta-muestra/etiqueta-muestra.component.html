@@ -1,0 +1,66 @@
+<div class="etiqueta-fisica">
+  <div class="etiqueta-cuerpo">
+    <div class="etiqueta-paciente" [title]="etiqueta.nombrePaciente">
+      {{ etiqueta.nombrePaciente }}
+    </div>
+
+    <div class="etiqueta-documento">
+      {{ etiqueta.tipoDocumento }} {{ etiqueta.numeroDocumento }}
+    </div>
+
+    <div
+      class="etiqueta-tipo-muestra"
+      [class.tipo-por-definir]="
+        etiqueta.resolucionTipoMuestra === 'POR_DEFINIR'
+      "
+    >
+      {{ etiqueta.tipoMuestra }}
+    </div>
+
+    <div class="etiqueta-barcode" *ngIf="barrasCodigo128.length > 0">
+      <svg
+        role="img"
+        [attr.aria-label]="'Código de barras ' + etiqueta.codigoEtiqueta"
+        [attr.viewBox]="'0 0 ' + anchoCodigo128 + ' 44'"
+        preserveAspectRatio="none"
+      >
+        <rect
+          *ngFor="let barra of barrasCodigo128"
+          [attr.x]="barra.x"
+          y="0"
+          [attr.width]="barra.width"
+          height="44"
+        ></rect>
+      </svg>
+    </div>
+  </div>
+
+  <div class="etiqueta-lateral">
+    <ng-container
+      *ngIf="etiqueta.correlativoMensual; else codigoCompletoVertical"
+    >
+      <div class="etiqueta-lateral-stack">
+        <div class="etiqueta-lateral-line etiqueta-lateral-prefijo">
+          {{ etiqueta.codigoLaboratorioPrefijo }}
+        </div>
+
+        <div class="etiqueta-lateral-line etiqueta-lateral-principal">
+          {{ etiqueta.correlativoMensual }}
+          <span
+            class="etiqueta-lateral-line etiqueta-lateral-sufijo codigo-recipiente"
+          >
+            {{ obtenerNumeroRecipienteEtiqueta() }}
+          </span>
+        </div>
+      </div>
+    </ng-container>
+
+    <ng-template #codigoCompletoVertical>
+      <div class="etiqueta-lateral-stack etiqueta-lateral-stack--fallback">
+        <div class="etiqueta-lateral-line etiqueta-lateral-completo">
+          {{ etiqueta.codigoEtiqueta }}
+        </div>
+      </div>
+    </ng-template>
+  </div>
+</div>

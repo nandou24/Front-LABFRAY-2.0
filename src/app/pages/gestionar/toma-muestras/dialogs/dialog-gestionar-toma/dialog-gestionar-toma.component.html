@@ -83,14 +83,26 @@
         </span>
       </div>
 
-      <div>
-        <strong>{{ datos.resumen.vigentes.total }}</strong>
-        <span>vigentes</span>
-      </div>
 
       <div *ngIf="datos.resumen.documentos.rechazadas > 0">
         <strong>{{ datos.resumen.documentos.rechazadas }}</strong>
         <span>rechazados históricos</span>
+      </div>
+
+      <div class="resumen-operativo-acciones">
+        <button
+          mat-stroked-button
+          type="button"
+          class="btn-etiquetas-todas"
+          (click)="verTodasEtiquetas()"
+          [disabled]="cantidadEtiquetasDisponibles() === 0"
+        >
+          <mat-icon>label</mat-icon>
+          Ver todas las etiquetas
+          <ng-container *ngIf="cantidadEtiquetasDisponibles() > 0">
+            ({{ cantidadEtiquetasDisponibles() }})
+          </ng-container>
+        </button>
       </div>
     </div>
 
@@ -117,7 +129,12 @@
               </div>
 
               <div class="plan-estado">
-                <mat-chip>{{ obtenerEstadoPlan(plan) }}</mat-chip>
+                <span
+                  class="estado-chip"
+                  [ngClass]="obtenerClaseEstadoMuestra(obtenerEstadoPlan(plan))"
+                >
+                  {{ obtenerEstadoPlan(plan) }}
+                </span>
 
                 <span *ngIf="plan.totalIntentos > 1" class="intentos">
                   {{ plan.totalIntentos }} intentos
@@ -234,13 +251,11 @@
                   </div>
 
                   <div class="historial-estado">
-                    <mat-chip>{{ intento.estadoMuestra }}</mat-chip>
-
                     <span
-                      *ngIf="esIntentoVigente(plan, intento)"
-                      class="historial-vigente"
+                      class="estado-chip estado-chip-historial"
+                      [ngClass]="obtenerClaseEstadoMuestra(intento.estadoMuestra)"
                     >
-                      Vigente
+                      {{ intento.estadoMuestra }}
                     </span>
 
                     <button
@@ -288,10 +303,15 @@
               <mat-icon>info</mat-icon>
 
               <div class="alerta-operativa-contenido">
-                <span>
-                  Este recipiente no tiene un intento vigente. El último intento
-                  está en estado {{ muestra.estadoMuestra }}.
+                <span *ngIf="muestra.estadoMuestra === 'ANULADA'; else sinMuestraActual">
+                  La muestra de este recipiente fue anulada.
                 </span>
+
+                <ng-template #sinMuestraActual>
+                  <span>
+                    Este recipiente no tiene una muestra disponible para continuar.
+                  </span>
+                </ng-template>
 
                 <span
                   *ngIf="
@@ -308,6 +328,17 @@
             <!-- ====== Acciones operativas ====== -->
 
             <div class="plan-actions">
+              <button
+                *ngIf="puedeVerEtiqueta(muestra)"
+                mat-stroked-button
+                type="button"
+                class="btn-etiqueta"
+                (click)="verEtiqueta(plan)"
+              >
+                <mat-icon>label</mat-icon>
+                Etiqueta
+              </button>
+
               <button
                 *ngIf="puedeGestionarEvidencias(muestra)"
                 mat-stroked-button

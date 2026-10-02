@@ -356,11 +356,6 @@
   gap: 7px;
 }
 
-.historial-vigente {
-  color: #1d4ed8;
-  font-size: 10px;
-  font-weight: 700;
-}
 
 .historial-motivo {
   color: #7f1d1d;
@@ -409,3 +404,103 @@
   color: #9a3412;
 }
 
+
+
+// ====== Estados operativos ======
+
+.estado-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 11px;
+  border: 1px solid;
+  border-radius: 9px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.estado-chip-historial {
+  min-height: 27px;
+  padding: 0 9px;
+  font-size: 11px;
+}
+
+.estado-chip-pendiente {
+  border-color: #fcd34d;
+  background: #fffbeb;
+  color: #92400e;
+}
+
+.estado-chip-recolectada {
+  border-color: #67e8f9;
+  background: #ecfeff;
+  color: #155e75;
+}
+
+.estado-chip-recepcionada {
+  border-color: #93c5fd;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.estado-chip-aceptada {
+  border-color: #86efac;
+  background: #f0fdf4;
+  color: #166534;
+}
+
+.estado-chip-rechazada {
+  border-color: #fca5a5;
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.estado-chip-anulada {
+  border-color: #94a3b8;
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.estado-chip-neutro {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+  color: #334155;
+}
+
+
+// ====== Etiquetas ======
+
+.resumen-operativo-acciones {
+  margin-left: auto;
+}
+
+.btn-etiquetas-todas,
+.btn-etiqueta {
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+}
+
+.btn-etiqueta {
+  margin-right: auto;
+}
+
+.btn-evidencias {
+  margin-right: 0;
+}
+
+@media (max-width: 760px) {
+  .resumen-operativo-acciones {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .btn-etiquetas-todas {
+    width: 100%;
+  }
+
+  .btn-etiqueta {
+    margin-right: 0;
+  }
+}

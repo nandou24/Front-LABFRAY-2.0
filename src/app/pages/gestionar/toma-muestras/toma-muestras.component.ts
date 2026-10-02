@@ -611,8 +611,15 @@ export class TomaMuestrasComponent implements OnInit, AfterViewInit {
 
     const vigentes = muestras.resumen.vigentes;
 
-    if (vigentes.total === 0) {
-      return 'SIN MUESTRA VIGENTE';
+    const recipientesPlanificados =
+      muestras.resumen.recipientesPlanificados;
+
+    // ====== Detectar anulaciones del muestreo ======
+
+    if (vigentes.total < recipientesPlanificados) {
+      return vigentes.total === 0
+        ? 'MUESTREO ANULADO'
+        : 'CON MUESTRA ANULADA';
     }
 
     if (vigentes.rechazadas > 0) {
@@ -636,6 +643,81 @@ export class TomaMuestrasComponent implements OnInit, AfterViewInit {
     }
 
     return 'EN PROCESO';
+  }
+
+
+  // ====== Estilo del estado operativo ======
+
+  obtenerEstiloEstadoGeneralToma(
+    item: IBandejaTomaMuestrasItem,
+  ): Record<string, string> {
+    const estado = this.obtenerEstadoGeneralToma(item);
+
+    const estilos: Record<string, Record<string, string>> = {
+      'NO REQUIERE MUESTRA': {
+        background: '#f1f5f9',
+        color: '#475569',
+        borderColor: '#cbd5e1',
+      },
+      'PLAN NO DISPONIBLE': {
+        background: '#f8fafc',
+        color: '#475569',
+        borderColor: '#cbd5e1',
+      },
+      'PENDIENTE DE INICIALIZAR': {
+        background: '#fffbeb',
+        color: '#92400e',
+        borderColor: '#fcd34d',
+      },
+      'MUESTREO ANULADO': {
+        background: '#f1f5f9',
+        color: '#475569',
+        borderColor: '#94a3b8',
+      },
+      'CON MUESTRA ANULADA': {
+        background: '#fff7ed',
+        color: '#c2410c',
+        borderColor: '#fdba74',
+      },
+      'CON INCIDENCIA': {
+        background: '#fef2f2',
+        color: '#b91c1c',
+        borderColor: '#fca5a5',
+      },
+      ACEPTADA: {
+        background: '#f0fdf4',
+        color: '#166534',
+        borderColor: '#86efac',
+      },
+      RECEPCIONADA: {
+        background: '#eff6ff',
+        color: '#1d4ed8',
+        borderColor: '#93c5fd',
+      },
+      RECOLECTADA: {
+        background: '#ecfeff',
+        color: '#155e75',
+        borderColor: '#67e8f9',
+      },
+      PENDIENTE: {
+        background: '#fffbeb',
+        color: '#92400e',
+        borderColor: '#fcd34d',
+      },
+      'EN PROCESO': {
+        background: '#faf5ff',
+        color: '#7e22ce',
+        borderColor: '#d8b4fe',
+      },
+    };
+
+    return (
+      estilos[estado] ?? {
+        background: '#f8fafc',
+        color: '#334155',
+        borderColor: '#cbd5e1',
+      }
+    );
   }
 
   // ====== Color visual de recipiente ======
