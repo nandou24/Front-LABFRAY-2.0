@@ -24,6 +24,13 @@ import {
   IReintentarMuestraResponse,
   EtapaEvidenciaMuestra,
   IBandejaTomaMuestrasResponse,
+  IRecepcionMasivaDisponiblesResponse,
+  IRecibirMuestrasMasivamenteDTO,
+  IRecibirMuestrasMasivamenteResponse,
+  IAceptacionMasivaDisponiblesResponse,
+  IAceptarMuestrasMasivamenteDTO,
+  IAceptarMuestrasMasivamenteResponse,
+  OrigenAtencionBandejaMuestra,
 } from '../../../models/Gestion/muestraLaboratorio.models';
 
 @Injectable({
@@ -67,6 +74,86 @@ export class MuestraLaboratorioService {
       {
         headers: this.auth.getAuthHeaders(),
         params,
+      },
+    );
+  }
+
+  // ====== Obtener candidatos para recepción masiva ======
+
+  obtenerMuestrasRecepcionMasiva(
+    fechaInicio: string,
+    fechaFin: string,
+    origenAtencion?: OrigenAtencionBandejaMuestra,
+    terminoBusqueda = '',
+  ): Observable<IRecepcionMasivaDisponiblesResponse> {
+    let params = new HttpParams()
+      .set('fechaInicio', fechaInicio)
+      .set('fechaFin', fechaFin)
+      .set('terminoBusqueda', terminoBusqueda.trim());
+
+    if (origenAtencion) {
+      params = params.set('origenAtencion', origenAtencion);
+    }
+
+    return this.http.get<IRecepcionMasivaDisponiblesResponse>(
+      `${this.apiUrl}/masiva/recepcion`,
+      {
+        headers: this.auth.getAuthHeaders(),
+        params,
+      },
+    );
+  }
+
+  // ====== Registrar recepción masiva ======
+
+  recibirMuestrasMasivamente(
+    body: IRecibirMuestrasMasivamenteDTO,
+  ): Observable<IRecibirMuestrasMasivamenteResponse> {
+    return this.http.put<IRecibirMuestrasMasivamenteResponse>(
+      `${this.apiUrl}/masiva/recibir`,
+      body,
+      {
+        headers: this.auth.getAuthHeaders(),
+      },
+    );
+  }
+
+  // ====== Obtener candidatos para aceptación masiva ======
+
+  obtenerMuestrasAceptacionMasiva(
+    fechaInicio: string,
+    fechaFin: string,
+    origenAtencion?: OrigenAtencionBandejaMuestra,
+    terminoBusqueda = '',
+  ): Observable<IAceptacionMasivaDisponiblesResponse> {
+    let params = new HttpParams()
+      .set('fechaInicio', fechaInicio)
+      .set('fechaFin', fechaFin)
+      .set('terminoBusqueda', terminoBusqueda.trim());
+
+    if (origenAtencion) {
+      params = params.set('origenAtencion', origenAtencion);
+    }
+
+    return this.http.get<IAceptacionMasivaDisponiblesResponse>(
+      `${this.apiUrl}/masiva/aceptacion`,
+      {
+        headers: this.auth.getAuthHeaders(),
+        params,
+      },
+    );
+  }
+
+  // ====== Registrar aceptación masiva ======
+
+  aceptarMuestrasMasivamente(
+    body: IAceptarMuestrasMasivamenteDTO,
+  ): Observable<IAceptarMuestrasMasivamenteResponse> {
+    return this.http.put<IAceptarMuestrasMasivamenteResponse>(
+      `${this.apiUrl}/masiva/aceptar`,
+      body,
+      {
+        headers: this.auth.getAuthHeaders(),
       },
     );
   }

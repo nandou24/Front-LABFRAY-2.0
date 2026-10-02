@@ -53,6 +53,19 @@
       <mat-datepicker #pickerFin></mat-datepicker>
     </mat-form-field>
 
+    <!-- ====== Filtro local ====== -->
+    <mat-form-field appearance="outline">
+      <mat-label> Filtrar resultados </mat-label>
+
+      <input
+        matInput
+        formControlName="filtroResultados"
+        placeholder="Código, paciente, documento, empresa..."
+      />
+
+      <mat-icon matSuffix> filter_alt </mat-icon>
+    </mat-form-field>
+
     <button
       mat-flat-button
       type="button"
@@ -76,22 +89,6 @@
     </button>
   </form>
 
-  <!-- ====== Filtro local ====== -->
-
-  <div class="filtro-local" [formGroup]="formBusqueda">
-    <mat-form-field appearance="outline">
-      <mat-label> Filtrar resultados </mat-label>
-
-      <input
-        matInput
-        formControlName="filtroResultados"
-        placeholder="Código, paciente, documento, empresa..."
-      />
-
-      <mat-icon matSuffix> filter_alt </mat-icon>
-    </mat-form-field>
-  </div>
-
   <!-- ====== Tabs ====== -->
 
   <mat-tab-group>
@@ -101,6 +98,25 @@
       <ng-template mat-tab-label>
         Particulares ({{ dataSourceParticulares.filteredData.length }})
       </ng-template>
+
+      <div class="acciones-tab">
+        <button
+          mat-flat-button
+          type="button"
+          (click)="abrirRecepcionMasiva('PARTICULAR')"
+        >
+          <mat-icon>inventory_2</mat-icon>
+          Recepción masiva
+        </button>
+        <button
+          mat-flat-button
+          type="button"
+          (click)="abrirAceptacionMasiva('PARTICULAR')"
+        >
+          <mat-icon>task_alt</mat-icon>
+          Aceptación masiva
+        </button>
+      </div>
 
       <div class="table-container">
         <table
@@ -267,6 +283,25 @@
       <ng-template mat-tab-label>
         Empresas ({{ dataSourceEmpresas.filteredData.length }})
       </ng-template>
+
+      <div class="acciones-tab">
+        <button
+          mat-flat-button
+          type="button"
+          (click)="abrirRecepcionMasiva('EMPRESA')"
+        >
+          <mat-icon>inventory_2</mat-icon>
+          Recepción masiva
+        </button>
+        <button
+          mat-flat-button
+          type="button"
+          (click)="abrirAceptacionMasiva('EMPRESA')"
+        >
+          <mat-icon>task_alt</mat-icon>
+          Aceptación masiva
+        </button>
+      </div>
 
       <div class="table-container">
         <table

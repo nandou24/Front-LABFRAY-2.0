@@ -28,10 +28,13 @@ import Swal from 'sweetalert2';
 import {
   IBandejaTomaMuestrasItem,
   IEmpresaBandejaMuestra,
+  OrigenAtencionBandejaMuestra,
 } from '../../../models/Gestion/muestraLaboratorio.models';
 
 import { MuestraLaboratorioService } from '../../../services/gestion/muestraLaboratorio/muestra-laboratorio.service';
 import { DialogGestionarTomaComponent } from './dialogs/dialog-gestionar-toma/dialog-gestionar-toma.component';
+import { DialogRecepcionMasivaComponent } from './dialogs/dialog-recepcion-masiva/dialog-recepcion-masiva.component';
+import { DialogAceptacionMasivaComponent } from './dialogs/dialog-aceptacion-masiva/dialog-aceptacion-masiva.component';
 
 @Component({
   selector: 'app-toma-muestras',
@@ -445,6 +448,114 @@ export class TomaMuestrasComponent implements OnInit, AfterViewInit {
 
   toggleEmpresa(item: IBandejaTomaMuestrasItem): void {
     this.expandedEmpresa = this.isExpandedEmpresa(item) ? null : item;
+  }
+
+  // ====== Abrir recepción masiva ======
+
+  abrirRecepcionMasiva(origenAtencion: OrigenAtencionBandejaMuestra): void {
+    const fechaInicio = this.formBusqueda.controls.fechaInicio.value;
+
+    const fechaFin = this.formBusqueda.controls.fechaFin.value;
+
+    if (!fechaInicio || !fechaFin) {
+      this._snackBar.open('Debe indicar el rango de fechas', 'Cerrar', {
+        duration: 3000,
+      });
+
+      return;
+    }
+
+    const inicio = new Date(fechaInicio);
+
+    inicio.setHours(0, 0, 0, 0);
+
+    const fin = new Date(fechaFin);
+
+    fin.setHours(23, 59, 59, 999);
+
+    if (inicio.getTime() > fin.getTime()) {
+      this._snackBar.open(
+        'La fecha de inicio no puede ser mayor que la fecha fin',
+        'Cerrar',
+        {
+          duration: 3000,
+        },
+      );
+
+      return;
+    }
+
+    const dialogRef = this._dialog.open(DialogRecepcionMasivaComponent, {
+      width: '1180px',
+      maxWidth: '96vw',
+      maxHeight: '92vh',
+      autoFocus: false,
+      data: {
+        origenAtencion,
+        fechaInicio: inicio.toISOString(),
+        fechaFin: fin.toISOString(),
+      },
+    });
+
+    dialogRef.afterClosed().subscribe((actualizarBandeja: boolean | undefined) => {
+      if (actualizarBandeja === true) {
+        this.buscarSolicitudes(null, false);
+      }
+    });
+  }
+
+  // ====== Abrir aceptación masiva ======
+
+  abrirAceptacionMasiva(origenAtencion: OrigenAtencionBandejaMuestra): void {
+    const fechaInicio = this.formBusqueda.controls.fechaInicio.value;
+
+    const fechaFin = this.formBusqueda.controls.fechaFin.value;
+
+    if (!fechaInicio || !fechaFin) {
+      this._snackBar.open('Debe indicar el rango de fechas', 'Cerrar', {
+        duration: 3000,
+      });
+
+      return;
+    }
+
+    const inicio = new Date(fechaInicio);
+
+    inicio.setHours(0, 0, 0, 0);
+
+    const fin = new Date(fechaFin);
+
+    fin.setHours(23, 59, 59, 999);
+
+    if (inicio.getTime() > fin.getTime()) {
+      this._snackBar.open(
+        'La fecha de inicio no puede ser mayor que la fecha fin',
+        'Cerrar',
+        {
+          duration: 3000,
+        },
+      );
+
+      return;
+    }
+
+    const dialogRef = this._dialog.open(DialogAceptacionMasivaComponent, {
+      width: '1180px',
+      maxWidth: '96vw',
+      maxHeight: '92vh',
+      autoFocus: false,
+      data: {
+        origenAtencion,
+        fechaInicio: inicio.toISOString(),
+        fechaFin: fin.toISOString(),
+      },
+    });
+
+    dialogRef.afterClosed().subscribe((actualizarBandeja: boolean | undefined) => {
+      if (actualizarBandeja === true) {
+        this.buscarSolicitudes(null, false);
+      }
+    });
   }
 
   // ====== Gestionar toma ======

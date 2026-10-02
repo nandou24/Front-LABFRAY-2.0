@@ -51,3 +51,11 @@ td {
   text-align: center;
   opacity: 0.7;
 }
+
+.acciones-tab {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 12px 2px 0;
+}
+

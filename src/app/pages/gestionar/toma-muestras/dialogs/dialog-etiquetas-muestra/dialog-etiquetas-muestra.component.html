@@ -56,9 +56,35 @@
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">
-  <span class="nota-8a">
-    En 8A solo validamos composición y vista previa. La impresión física se integra en el siguiente bloque.
+  <span *ngIf="esVistaIndividual" class="nota-8b">
+    Impresión individual · LK-B24 · 50 × 25 mm · escala 100 %
   </span>
+
+  <span *ngIf="!esVistaIndividual" class="nota-8b">
+    Impresión grupal · {{ data.etiquetas.length }} etiquetas · 50 × 25 mm · escala 100 %
+  </span>
+
+  <button
+    *ngIf="esVistaIndividual"
+    mat-flat-button
+    type="button"
+    [disabled]="!puedeImprimirIndividual"
+    (click)="imprimirEtiqueta()"
+  >
+    <mat-icon>print</mat-icon>
+    Imprimir etiqueta
+  </button>
+
+  <button
+    *ngIf="!esVistaIndividual"
+    mat-flat-button
+    type="button"
+    [disabled]="!puedeImprimirTodas"
+    (click)="imprimirTodasEtiquetas()"
+  >
+    <mat-icon>print</mat-icon>
+    Imprimir todas ({{ data.etiquetas.length }})
+  </button>
 
   <button mat-button type="button" (click)="cerrar()">Cerrar</button>
 </mat-dialog-actions>

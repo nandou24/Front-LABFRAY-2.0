@@ -936,3 +936,256 @@ export interface IBandejaTomaMuestrasResponse {
 
   solicitudes: IBandejaTomaMuestrasItem[];
 }
+
+// ====== Recepción masiva ======
+
+export interface IPacienteRecepcionMasivaMuestra {
+  hc: string | null;
+
+  clienteId: string | null;
+
+  tipoDoc: string | null;
+
+  nroDoc: string | null;
+
+  nombreCliente: string;
+
+  apePatCliente: string;
+
+  apeMatCliente: string;
+}
+
+export interface IEmpresaRecepcionMasivaMuestra {
+  programacionEmpresaId: string | null;
+
+  codProgramacion: string | null;
+
+  empresaId: string | null;
+
+  rucEmpresa: string | null;
+
+  razonSocialEmpresa: string;
+
+  sede: string | null;
+}
+
+export interface IMuestraRecepcionMasiva {
+  _id: string;
+
+  solicitudAtencionId: string;
+
+  codSolicitud: string;
+
+  codigoLaboratorio: string | null;
+
+  origenAtencion: OrigenAtencionBandejaMuestra;
+
+  fechaEmision: Date | string | null;
+
+  codigoEtiqueta: string | null;
+
+  codMuestra: string;
+
+  numeroRecipiente: number;
+
+  numeroIntento: number;
+
+  estadoMuestra: 'RECOLECTADA';
+
+  tipoMuestraId: string | null;
+
+  tipoMuestra: ITipoMuestraSnapshot | null;
+
+  tuboEnvaseId: string | null;
+
+  tuboEnvase: ITuboEnvaseSnapshot | null;
+
+  volumenRecolectado: number | null;
+
+  unidadVolumenRecolectado: UnidadVolumenMuestra | null;
+
+  recolectadoPor: string | null;
+
+  usuarioRecoleccion: string | null;
+
+  fechaRecoleccion: Date | string | null;
+
+  paciente: IPacienteRecepcionMasivaMuestra;
+
+  empresa: IEmpresaRecepcionMasivaMuestra | null;
+}
+
+export interface IResumenDisponiblesRecepcionMasiva {
+  totalDisponibles: number;
+
+  particulares: number;
+
+  empresas: number;
+}
+
+export interface IRecepcionMasivaDisponiblesResponse {
+  ok: boolean;
+
+  msg: string;
+
+  resumen: IResumenDisponiblesRecepcionMasiva;
+
+  muestras: IMuestraRecepcionMasiva[];
+}
+
+export interface IRecibirMuestrasMasivamenteDTO {
+  muestraLaboratorioIds: string[];
+
+  observacionRecepcion?: string;
+}
+
+export interface IMuestraRecepcionMasivaProcesada {
+  muestraLaboratorioId: string;
+
+  codigoEtiqueta: string | null;
+
+  estadoMuestra: 'RECEPCIONADA';
+
+  usuarioRecepcion: string | null;
+
+  fechaRecepcion: Date | string | null;
+}
+
+export interface IMuestraRecepcionMasivaNoProcesada {
+  muestraLaboratorioId: string;
+
+  codigoEtiqueta: string | null;
+
+  motivo: string;
+}
+
+export interface IResumenResultadoRecepcionMasiva {
+  solicitadas: number;
+
+  recepcionadas: number;
+
+  noProcesadas: number;
+}
+
+export interface IRecibirMuestrasMasivamenteResponse {
+  ok: boolean;
+
+  msg: string;
+
+  resumen: IResumenResultadoRecepcionMasiva;
+
+  recepcionadas: IMuestraRecepcionMasivaProcesada[];
+
+  noProcesadas: IMuestraRecepcionMasivaNoProcesada[];
+}
+
+// ====== Aceptación masiva ======
+
+export interface IMuestraAceptacionMasiva {
+  _id: string;
+
+  solicitudAtencionId: string;
+
+  codSolicitud: string;
+
+  codigoLaboratorio: string | null;
+
+  origenAtencion: OrigenAtencionBandejaMuestra;
+
+  fechaEmision: Date | string | null;
+
+  codigoEtiqueta: string | null;
+
+  codMuestra: string;
+
+  numeroRecipiente: number;
+
+  numeroIntento: number;
+
+  estadoMuestra: 'RECEPCIONADA';
+
+  tipoMuestraId: string | null;
+
+  tipoMuestra: ITipoMuestraSnapshot | null;
+
+  tuboEnvaseId: string | null;
+
+  tuboEnvase: ITuboEnvaseSnapshot | null;
+
+  volumenRecolectado: number | null;
+
+  unidadVolumenRecolectado: UnidadVolumenMuestra | null;
+
+  recolectadoPor: string | null;
+
+  usuarioRecoleccion: string | null;
+
+  fechaRecoleccion: Date | string | null;
+
+  recibidoPor: string | null;
+
+  usuarioRecepcion: string | null;
+
+  fechaRecepcion: Date | string | null;
+
+  paciente: IPacienteRecepcionMasivaMuestra;
+
+  empresa: IEmpresaRecepcionMasivaMuestra | null;
+}
+
+export interface IAceptacionMasivaDisponiblesResponse {
+  ok: boolean;
+
+  msg: string;
+
+  resumen: IResumenDisponiblesRecepcionMasiva;
+
+  muestras: IMuestraAceptacionMasiva[];
+}
+
+export interface IAceptarMuestrasMasivamenteDTO {
+  muestraLaboratorioIds: string[];
+
+  observacionAceptacion?: string;
+}
+
+export interface IMuestraAceptacionMasivaProcesada {
+  muestraLaboratorioId: string;
+
+  codigoEtiqueta: string | null;
+
+  estadoMuestra: 'ACEPTADA';
+
+  usuarioAceptacion: string | null;
+
+  fechaAceptacion: Date | string | null;
+}
+
+export interface IMuestraAceptacionMasivaNoProcesada {
+  muestraLaboratorioId: string;
+
+  codigoEtiqueta: string | null;
+
+  motivo: string;
+}
+
+export interface IResumenResultadoAceptacionMasiva {
+  solicitadas: number;
+
+  aceptadas: number;
+
+  noProcesadas: number;
+}
+
+export interface IAceptarMuestrasMasivamenteResponse {
+  ok: boolean;
+
+  msg: string;
+
+  resumen: IResumenResultadoAceptacionMasiva;
+
+  aceptadas: IMuestraAceptacionMasivaProcesada[];
+
+  noProcesadas: IMuestraAceptacionMasivaNoProcesada[];
+}
+
