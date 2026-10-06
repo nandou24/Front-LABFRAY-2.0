@@ -143,9 +143,9 @@
             <ng-container matColumnDef="estado">
               <th mat-header-cell *matHeaderCellDef mat-sort-header>Estado</th>
               <td mat-cell *matCellDef="let row">
-                <mat-chip color="primary" [disabled]="true">{{
-                  row.estado
-                }}</mat-chip>
+                <mat-chip [class]="obtenerClaseEstadoSolicitud(row.estado)">
+                  {{ row.estado }}
+                </mat-chip>
               </td>
             </ng-container>
 
@@ -239,12 +239,7 @@
                             </td>
                             <td>
                               <mat-chip
-                                [color]="
-                                  servicio.estado === 'PENDIENTE'
-                                    ? 'warn'
-                                    : 'primary'
-                                "
-                                selected
+                                [class]="obtenerClaseEstadoServicio(servicio.estado)"
                               >
                                 {{ servicio.estado }}
                               </mat-chip>
@@ -424,7 +419,7 @@
               <th mat-header-cell *matHeaderCellDef>Estado</th>
 
               <td mat-cell *matCellDef="let row">
-                <mat-chip color="primary" [disabled]="true">
+                <mat-chip [class]="obtenerClaseEstadoSolicitud(row.estado)">
                   {{ row.estado }}
                 </mat-chip>
               </td>
@@ -516,7 +511,9 @@
                             </td>
 
                             <td>
-                              <mat-chip>
+                              <mat-chip
+                                [class]="obtenerClaseEstadoServicio(servicio.estado)"
+                              >
                                 {{ servicio.estado }}
                               </mat-chip>
                             </td>

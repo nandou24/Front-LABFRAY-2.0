@@ -59,3 +59,52 @@ td {
   padding: 12px 2px 0;
 }
 
+
+
+// ====== Estado operativo ======
+
+.estado-solicitud-operativo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.estado-solicitud-operativo span {
+  font-size: 0.76rem;
+  line-height: 1.15;
+  opacity: 0.8;
+}
+
+// ====== Colores de estado ======
+
+.estado-chip.mat-mdc-chip {
+  min-height: 30px;
+  border: 1px solid;
+  font-weight: 600;
+  --mdc-chip-label-text-color: currentColor;
+}
+
+.estado-generado.mat-mdc-chip {
+  color: #334155;
+  border-color: #cbd5e1;
+  --mdc-chip-elevated-container-color: #f1f5f9;
+}
+
+.estado-en-proceso.mat-mdc-chip {
+  color: #1d4ed8;
+  border-color: #93c5fd;
+  --mdc-chip-elevated-container-color: #dbeafe;
+}
+
+.estado-atendido.mat-mdc-chip {
+  color: #166534;
+  border-color: #86efac;
+  --mdc-chip-elevated-container-color: #dcfce7;
+}
+
+.estado-anulado.mat-mdc-chip {
+  color: #b91c1c;
+  border-color: #fca5a5;
+  --mdc-chip-elevated-container-color: #fee2e2;
+}

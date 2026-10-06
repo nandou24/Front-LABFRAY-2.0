@@ -1,0 +1,182 @@
+<div mat-dialog-title class="dialog-header">
+  <div class="titulo-fila">
+    <div>
+      <h2>{{ soloLectura ? 'Detalle de resultados' : 'Registro de resultados' }}</h2>
+      <div class="paciente-fila">
+        <span><strong>Paciente:</strong> {{ data.paciente.nombreCompleto || '-' }}</span>
+        <span><strong>Documento:</strong> {{ data.paciente.documento || '-' }}</span>
+        <span><strong>HC:</strong> {{ data.paciente.hc || '-' }}</span>
+      </div>
+    </div>
+
+    <div class="navegacion-pruebas">
+      <button
+        mat-icon-button
+        type="button"
+        matTooltip="Prueba anterior (Re Pág)"
+        (click)="irAnterior()"
+        [disabled]="indiceActual === 0 || procesando"
+      >
+        <mat-icon>chevron_left</mat-icon>
+      </button>
+
+      <div class="contador-pruebas">
+        <strong>{{ numeroPruebaActual }} / {{ totalPruebas }}</strong>
+        <span>Pruebas</span>
+      </div>
+
+      <button
+        mat-icon-button
+        type="button"
+        matTooltip="Prueba siguiente (Av Pág)"
+        (click)="irSiguiente()"
+        [disabled]="indiceActual >= totalPruebas - 1 || procesando"
+      >
+        <mat-icon>chevron_right</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <div class="prueba-fila">
+    <div class="prueba-identidad">
+      <strong>{{ resultadoActual.codPruebaLab }}</strong>
+      <span>{{ resultadoActual.nombrePruebaLab }}</span>
+    </div>
+
+    <mat-chip>{{ resultadoActual.estadoResultado }}</mat-chip>
+  </div>
+</div>
+
+<mat-dialog-content>
+  <div
+    class="aviso-muestra"
+    [class.aviso-muestra-bloqueada]="
+      habilitacionMuestraActual?.habilitada === false
+    "
+  >
+    <mat-icon>
+      {{
+        habilitacionMuestraActual?.habilitada === false
+          ? 'warning'
+          : 'task_alt'
+      }}
+    </mat-icon>
+
+    <span>
+      {{
+        habilitacionMuestraActual?.mensaje ||
+          'La prueba no posee una restricción de muestra.'
+      }}
+    </span>
+  </div>
+
+  <form [formGroup]="formResultado" class="form-resultado">
+    <div formArrayName="items" class="lista-items">
+      <div
+        *ngFor="let grupo of itemsForm.controls; let i = index"
+        [formGroupName]="i"
+        class="item-resultado"
+      >
+        <div class="item-identidad">
+          <div>
+            <strong>{{ resultadoActual.resultadosItems[i].nombreInforme }}</strong>
+            <span *ngIf="resultadoActual.resultadosItems[i].codItemLab">
+              {{ resultadoActual.resultadosItems[i].codItemLab }}
+            </span>
+          </div>
+
+          <span class="tipo-resultado">
+            {{ resultadoActual.resultadosItems[i].tipoResultado }}
+          </span>
+        </div>
+
+        <div class="item-captura">
+          <mat-form-field appearance="outline">
+            <mat-label>Resultado</mat-label>
+
+            <input
+              *ngIf="resultadoActual.resultadosItems[i].tipoResultado === 'NUMERICO'"
+              matInput
+              type="number"
+              formControlName="valor"
+            />
+
+            <input
+              *ngIf="resultadoActual.resultadosItems[i].tipoResultado !== 'NUMERICO'"
+              matInput
+              type="text"
+              formControlName="valor"
+            />
+
+            <span matTextSuffix *ngIf="resultadoActual.resultadosItems[i].unidadesRef">
+              {{ resultadoActual.resultadosItems[i].unidadesRef }}
+            </span>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="campo-observacion">
+            <mat-label>Observación</mat-label>
+            <input matInput formControlName="observacion" />
+          </mat-form-field>
+        </div>
+
+        <div
+          class="evaluacion evaluacion-error"
+          *ngIf="obtenerErrorEvaluacion(resultadoActual.resultadosItems[i]) as error"
+        >
+          <mat-icon>error_outline</mat-icon>
+          <span>{{ error }}</span>
+        </div>
+
+        <ng-container
+          *ngIf="obtenerEvaluacionVisible(resultadoActual.resultadosItems[i]) as evaluacion"
+        >
+          <div [class]="obtenerClaseEvaluacion(evaluacion)">
+            <strong>{{ evaluacion.estado }}</strong>
+            <span>{{ evaluacion.mensaje }}</span>
+          </div>
+        </ng-container>
+
+        <ng-container
+          *ngIf="obtenerAlertasVisibles(resultadoActual.resultadosItems[i]) as alertas"
+        >
+          <div class="alertas-item" *ngIf="alertas.length">
+            <div
+              *ngFor="let alerta of alertas"
+              [class]="'alerta alerta-' + alerta.nivelAlerta.toLowerCase()"
+            >
+              <mat-icon>warning</mat-icon>
+              <div>
+                <strong>{{ alerta.nivelAlerta }}</strong>
+                <span>{{ alerta.mensaje || alerta.descripcion }}</span>
+              </div>
+            </div>
+          </div>
+        </ng-container>
+      </div>
+    </div>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions class="dialog-actions">
+  <div class="atajos">
+    <span><kbd>Re Pág</kbd> anterior</span>
+    <span><kbd>Av Pág</kbd> siguiente</span>
+  </div>
+
+  <div class="acciones-finales">
+    <button mat-button type="button" (click)="cerrar()" [disabled]="procesando">
+      Cerrar
+    </button>
+
+    <button
+      *ngIf="!soloLectura"
+      mat-flat-button
+      type="button"
+      (click)="guardar()"
+      [disabled]="procesando || !puedeEditarActual"
+    >
+      <mat-icon>save</mat-icon>
+      {{ procesando ? 'Registrando...' : 'Registrar prueba' }}
+    </button>
+  </div>
+</mat-dialog-actions>

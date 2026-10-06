@@ -40,6 +40,24 @@
       <mat-icon matSuffix>search</mat-icon>
     </mat-form-field>
 
+    <mat-form-field appearance="outline" class="filtro-tipo">
+      <mat-label>Tipo de muestra</mat-label>
+
+      <mat-select
+        formControlName="tipoMuestraId"
+        [disabled]="cargando || procesando"
+      >
+        <mat-option value="">Todos los tipos</mat-option>
+
+        <mat-option
+          *ngFor="let tipo of tiposMuestraDisponibles"
+          [value]="tipo.id"
+        >
+          {{ tipo.nombre }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
     <button
       mat-flat-button
       type="button"
@@ -177,10 +195,26 @@
         <th mat-header-cell *matHeaderCellDef>Recipiente</th>
 
         <td mat-cell *matCellDef="let muestra">
-          {{ muestra.tuboEnvase?.nombreTuboEnvase || "-" }}
+          <div class="recipiente-visual">
+            <span
+              class="color-recipiente"
+              [style.background-color]="
+                resolverColorRecipiente(muestra.tuboEnvase?.color)
+              "
+            ></span>
 
-          <div class="dato-secundario" *ngIf="muestra.tuboEnvase?.color">
-            {{ muestra.tuboEnvase?.color }}
+            <div>
+              <div>
+                {{ muestra.tuboEnvase?.nombreTuboEnvase || "-" }}
+              </div>
+
+              <div
+                class="dato-secundario"
+                *ngIf="muestra.tuboEnvase?.color"
+              >
+                {{ muestra.tuboEnvase?.color }}
+              </div>
+            </div>
           </div>
         </td>
       </ng-container>
@@ -228,6 +262,25 @@
         placeholder="Se aplicará a todas las muestras procesadas"
       ></textarea>
     </mat-form-field>
+  </div>
+
+  <!-- ====== Evidencia grupal opcional de Empresa ====== -->
+
+  <div
+    *ngIf="permiteEvidenciaGrupal"
+    class="evidencia-grupal-container"
+  >
+    <app-captura-evidencia-muestra
+      titulo="Evidencia fotográfica grupal (opcional)"
+      descripcion="Tome o cargue una fotografía grupal para asociarla a las muestras procesadas en esta aceptación."
+      [requerido]="false"
+      [disabled]="procesando"
+      (evidenciaChange)="cambiarEvidenciaGrupal($event)"
+    ></app-captura-evidencia-muestra>
+
+    <div class="evidencia-grupal-ayuda">
+      Si registra una imagen, se almacenará una sola vez y se asociará únicamente a las muestras de Empresa procesadas correctamente.
+    </div>
   </div>
 </mat-dialog-content>
 

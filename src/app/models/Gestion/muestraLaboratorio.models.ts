@@ -1,3 +1,5 @@
+import { IEstadoOperativoSolicitud } from './estadoOperativoSolicitud.models';
+
 // ====== Tipos base ======
 
 export type EstadoMuestraLaboratorio =
@@ -32,6 +34,9 @@ export type EtapaEvidenciaMuestra =
   | 'RECHAZO';
 
 export type EstadoEvidenciaMuestra = 'ACTIVA' | 'ANULADA';
+
+
+export type EstadoCorreccionEvaluacionMuestra = 'ACEPTADA' | 'RECHAZADA';
 
 export type EstadoMaestroSnapshot = 'ACTIVO' | 'INACTIVO';
 
@@ -144,6 +149,34 @@ export interface IEvidenciaFotograficaMuestra {
   urlTemporal?: string | null;
 }
 
+// ====== Corrección de evaluación ======
+
+export interface ICorreccionEvaluacionMuestra {
+  _id: string;
+
+  estadoAnterior: EstadoCorreccionEvaluacionMuestra;
+
+  estadoNuevo: EstadoCorreccionEvaluacionMuestra;
+
+  motivoCorreccion: string;
+
+  ejecutadoPor: string;
+
+  usuarioEjecucion: string | null;
+
+  autorizadoPor: string;
+
+  usuarioAutorizacion: string;
+
+  rolAutorizacionId: string | null;
+
+  rolAutorizacion: string | null;
+
+  fechaCorreccion: Date | string | null;
+
+  evidenciaRechazoId: string | null;
+}
+
 // ====== Muestra de laboratorio ======
 
 export interface IMuestraLaboratorio {
@@ -245,6 +278,10 @@ export interface IMuestraLaboratorio {
 
   evidenciasFotograficas: IEvidenciaFotograficaMuestra[];
 
+  // ====== Correcciones de evaluación ======
+
+  correccionesEvaluacion: ICorreccionEvaluacionMuestra[];
+
   // ====== Auditoría ======
 
   createdBy: string;
@@ -302,6 +339,8 @@ export interface ISolicitudMuestraLaboratorio {
   tipo: string;
 
   estado: string;
+
+  estadoOperativo?: IEstadoOperativoSolicitud;
 
   fechaEmision: Date | string | null;
 
@@ -516,6 +555,16 @@ export interface IRechazarMuestraDTO {
   motivoRechazo: string;
 }
 
+// ====== DTO corrección de evaluación ======
+
+export interface ICorregirEvaluacionMuestraDTO {
+  motivoCorreccion: string;
+
+  nombreUsuarioAutorizador: string;
+
+  passwordAutorizador: string;
+}
+
 // ====== DTO anulación ======
 
 export interface IAnularMuestraDTO {
@@ -540,6 +589,50 @@ export interface IRechazarMuestraResponse extends IAccionMuestraResponse {
   requiereNuevaMuestra: boolean;
 
   evidencia: IEvidenciaFotograficaMuestra;
+}
+
+// ====== Respuesta corrección de evaluación ======
+
+export interface IAutorizacionCorreccionMuestra {
+  autorizadoPor: string;
+
+  usuarioAutorizacion: string;
+
+  rolAutorizacion: string | null;
+
+  fechaCorreccion: Date | string | null;
+}
+
+export interface IEvidenciaCorreccionMuestra {
+  _id: string;
+
+  archivoId: string;
+
+  nombreArchivo: string;
+
+  mimeType: string;
+
+  tamanoBytes: number | null;
+
+  etapa: 'RECHAZO';
+
+  observacion: string;
+
+  estadoEvidencia: EstadoEvidenciaMuestra;
+
+  usuarioRegistro: string | null;
+
+  fechaRegistro: Date | string | null;
+}
+
+export interface ICorregirEvaluacionMuestraResponse extends IAccionMuestraResponse {
+  estadoAnterior: EstadoCorreccionEvaluacionMuestra;
+
+  requiereNuevaMuestra: boolean;
+
+  autorizacion: IAutorizacionCorreccionMuestra;
+
+  evidencia: IEvidenciaCorreccionMuestra | null;
 }
 
 // ====== Respuesta anulación ======
@@ -777,6 +870,8 @@ export interface ISolicitudBandejaMuestra {
 
   estado: string;
 
+  estadoOperativo?: IEstadoOperativoSolicitud;
+
   fechaEmision: Date | string | null;
 
   paciente: IPacienteSolicitudMuestra;
@@ -937,6 +1032,180 @@ export interface IBandejaTomaMuestrasResponse {
   solicitudes: IBandejaTomaMuestrasItem[];
 }
 
+// ====== Recolección masiva ======
+
+export interface IPacienteRecoleccionMasivaMuestra {
+  hc: string | null;
+
+  clienteId: string | null;
+
+  tipoDoc: string | null;
+
+  nroDoc: string | null;
+
+  nombreCliente: string;
+
+  apePatCliente: string;
+
+  apeMatCliente: string;
+}
+
+export interface IEmpresaRecoleccionMasivaMuestra {
+  programacionEmpresaId: string | null;
+
+  codProgramacion: string | null;
+
+  empresaId: string | null;
+
+  rucEmpresa: string | null;
+
+  razonSocialEmpresa: string;
+
+  sede: string | null;
+}
+
+export interface IMuestraRecoleccionMasiva {
+  _id: string;
+
+  solicitudAtencionId: string;
+
+  codSolicitud: string;
+
+  codigoLaboratorio: string | null;
+
+  origenAtencion: OrigenAtencionBandejaMuestra;
+
+  fechaEmision: Date | string | null;
+
+  codigoEtiqueta: string | null;
+
+  codMuestra: string;
+
+  claveMuestraPlan: string;
+
+  numeroRecipiente: number;
+
+  numeroIntento: number;
+
+  estadoMuestra: 'PENDIENTE';
+
+  tipoOpciones: TipoGrupoRecipientePlanToma;
+
+  opcionesPermitidas: IOpcionMuestraSnapshot[];
+
+  examenes: IExamenRecipientePlanToma[];
+
+  paciente: IPacienteRecoleccionMasivaMuestra;
+
+  empresa: IEmpresaRecoleccionMasivaMuestra | null;
+}
+
+export interface IResumenDisponiblesRecoleccionMasiva {
+  totalDisponibles: number;
+
+  particulares: number;
+
+  empresas: number;
+
+  conOpcionDefinida: number;
+
+  conOpcionesAlternativas: number;
+}
+
+export interface IRecoleccionMasivaDisponiblesResponse {
+  ok: boolean;
+
+  msg: string;
+
+  resumen: IResumenDisponiblesRecoleccionMasiva;
+
+  muestras: IMuestraRecoleccionMasiva[];
+}
+
+export interface IRecolectarMuestraMasivaItemDTO {
+  muestraLaboratorioId: string;
+
+  tipoMuestraId: string;
+
+  tuboEnvaseId: string;
+
+  volumenRecolectado?: number | null;
+
+  unidadVolumenRecolectado?: UnidadVolumenMuestra | null;
+}
+
+export interface IRecolectarMuestrasMasivamenteDTO {
+  muestras: IRecolectarMuestraMasivaItemDTO[];
+
+  observacionRecoleccion?: string;
+}
+
+export interface IMuestraRecoleccionMasivaProcesada {
+  muestraLaboratorioId: string;
+
+  codigoEtiqueta: string | null;
+
+  estadoMuestra: 'RECOLECTADA';
+
+  tipoMuestraId: string | null;
+
+  tipoMuestra: ITipoMuestraSnapshot | null;
+
+  tuboEnvaseId: string | null;
+
+  tuboEnvase: ITuboEnvaseSnapshot | null;
+
+  volumenRecolectado: number | null;
+
+  unidadVolumenRecolectado: UnidadVolumenMuestra | null;
+
+  usuarioRecoleccion: string | null;
+
+  fechaRecoleccion: Date | string | null;
+}
+
+export interface IMuestraRecoleccionMasivaNoProcesada {
+  muestraLaboratorioId: string | null;
+
+  codigoEtiqueta: string | null;
+
+  motivo: string;
+}
+
+export interface IResumenResultadoRecoleccionMasiva {
+  solicitadas: number;
+
+  recolectadas: number;
+
+  noProcesadas: number;
+}
+
+export interface IRecolectarMuestrasMasivamenteResponse {
+  ok: boolean;
+
+  msg: string;
+
+  resumen: IResumenResultadoRecoleccionMasiva;
+
+  recolectadas: IMuestraRecoleccionMasivaProcesada[];
+
+  noProcesadas: IMuestraRecoleccionMasivaNoProcesada[];
+}
+
+export interface IEvidenciaGrupalOperacionMasiva {
+  archivoId: string;
+
+  nombreArchivo: string;
+
+  mimeType: string;
+
+  tamanoBytes: number | null;
+
+  etapa: 'RECEPCION' | 'ACEPTACION';
+
+  muestrasAsociadas: number;
+}
+
 // ====== Recepción masiva ======
 
 export interface IPacienteRecepcionMasivaMuestra {
@@ -1065,6 +1334,8 @@ export interface IResumenResultadoRecepcionMasiva {
   recepcionadas: number;
 
   noProcesadas: number;
+
+  evidenciasAsociadas?: number;
 }
 
 export interface IRecibirMuestrasMasivamenteResponse {
@@ -1075,6 +1346,8 @@ export interface IRecibirMuestrasMasivamenteResponse {
   resumen: IResumenResultadoRecepcionMasiva;
 
   recepcionadas: IMuestraRecepcionMasivaProcesada[];
+
+  evidenciaGrupal?: IEvidenciaGrupalOperacionMasiva | null;
 
   noProcesadas: IMuestraRecepcionMasivaNoProcesada[];
 }
@@ -1175,6 +1448,8 @@ export interface IResumenResultadoAceptacionMasiva {
   aceptadas: number;
 
   noProcesadas: number;
+
+  evidenciasAsociadas?: number;
 }
 
 export interface IAceptarMuestrasMasivamenteResponse {
@@ -1185,6 +1460,8 @@ export interface IAceptarMuestrasMasivamenteResponse {
   resumen: IResumenResultadoAceptacionMasiva;
 
   aceptadas: IMuestraAceptacionMasivaProcesada[];
+
+  evidenciaGrupal?: IEvidenciaGrupalOperacionMasiva | null;
 
   noProcesadas: IMuestraAceptacionMasivaNoProcesada[];
 }

@@ -274,6 +274,42 @@ export class SolicitudAtencionComponent implements OnInit, AfterViewInit {
     this.dataSourceEmpresas.filter = termino;
   }
 
+  // ====== Color de estado de solicitud ======
+
+  obtenerClaseEstadoSolicitud(estado: string): string {
+    switch (estado) {
+      case 'EN PROCESO':
+        return 'estado-chip estado-en-proceso';
+
+      case 'ATENDIDO':
+        return 'estado-chip estado-atendido';
+
+      case 'ANULADO':
+        return 'estado-chip estado-anulado';
+
+      default:
+        return 'estado-chip estado-generado';
+    }
+  }
+
+  // ====== Color de estado de servicio ======
+
+  obtenerClaseEstadoServicio(estado: string): string {
+    switch (estado) {
+      case 'EN PROCESO':
+        return 'estado-chip estado-en-proceso';
+
+      case 'TERMINADO':
+        return 'estado-chip estado-atendido';
+
+      case 'ANULADO':
+        return 'estado-chip estado-anulado';
+
+      default:
+        return 'estado-chip servicio-pendiente';
+    }
+  }
+
   async imprimirSolicitud(solicitud: any) {
     console.log('Servicios:', solicitud.servicios);
     // Implementar generación de PDF

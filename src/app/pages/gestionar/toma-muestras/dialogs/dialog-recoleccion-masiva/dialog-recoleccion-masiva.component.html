@@ -1,14 +1,14 @@
 <div class="dialog-header" mat-dialog-title>
   <div>
-    <div class="dialog-title">Recepción masiva</div>
+    <div class="dialog-title">Recolección masiva</div>
 
     <div class="dialog-subtitle">
       {{
         data.origenAtencion === "EMPRESA"
-          ? "Muestras de empresa"
+          ? "Campaña / atención de empresa"
           : "Muestras particulares"
       }}
-      · solo recipientes recolectados
+      · solo recipientes pendientes
     </div>
   </div>
 
@@ -33,7 +33,7 @@
       <input
         matInput
         formControlName="terminoBusqueda"
-        placeholder="Etiqueta, DNI, paciente, empresa..."
+        placeholder="Etiqueta, DNI, paciente, empresa, prueba..."
         (keyup.enter)="buscar()"
       />
 
@@ -91,19 +91,45 @@
       <strong>{{ totalSeleccionadas }}</strong>
       seleccionadas
     </div>
+
+    <div
+      class="resumen-alerta"
+      *ngIf="totalOpcionesPendientesSeleccionadas > 0"
+    >
+      <strong>{{ totalOpcionesPendientesSeleccionadas }}</strong>
+      por definir
+    </div>
   </div>
 
   <!-- ====== Cargando ====== -->
 
-  <div *ngIf="cargando" class="estado-lista">
+  <div class="estado-lista" *ngIf="cargando">
     <mat-icon>hourglass_top</mat-icon>
-    Consultando muestras recolectadas...
+
+    Consultando muestras pendientes...
+  </div>
+
+  <!-- ====== Sin resultados ====== -->
+
+  <div
+    class="estado-lista"
+    *ngIf="!cargando && muestras.length === 0"
+  >
+    <mat-icon>vaccines</mat-icon>
+
+    No existen muestras pendientes disponibles para recolección.
   </div>
 
   <!-- ====== Tabla ====== -->
 
-  <div *ngIf="!cargando && muestras.length > 0" class="tabla-container">
-    <table mat-table [dataSource]="muestras">
+  <div
+    class="tabla-container"
+    *ngIf="!cargando && muestras.length > 0"
+  >
+    <table
+      mat-table
+      [dataSource]="muestras"
+    >
       <!-- ====== Selección ====== -->
 
       <ng-container matColumnDef="seleccion">
@@ -112,7 +138,6 @@
             [checked]="todasSeleccionadas"
             [indeterminate]="seleccionParcial"
             [disabled]="procesando"
-            aria-label="Seleccionar todas las muestras"
             (change)="cambiarSeleccionTodas($event)"
           ></mat-checkbox>
         </th>
@@ -121,7 +146,6 @@
           <mat-checkbox
             [checked]="estaSeleccionada(muestra)"
             [disabled]="procesando"
-            [attr.aria-label]="'Seleccionar ' + muestra.codigoEtiqueta"
             (change)="cambiarSeleccion(muestra, $event)"
           ></mat-checkbox>
         </td>
@@ -133,10 +157,16 @@
         <th mat-header-cell *matHeaderCellDef>Etiqueta</th>
 
         <td mat-cell *matCellDef="let muestra">
-          <strong>{{ muestra.codigoEtiqueta || muestra.codMuestra }}</strong>
+          <strong>
+            {{ muestra.codigoEtiqueta || muestra.codMuestra }}
+          </strong>
 
           <div class="dato-secundario">
-            {{ muestra.codSolicitud }}
+            {{ muestra.codigoLaboratorio || "-" }}
+            · recipiente {{ muestra.numeroRecipiente }}
+            <ng-container *ngIf="muestra.numeroIntento > 1">
+              · intento {{ muestra.numeroIntento }}
+            </ng-container>
           </div>
         </td>
       </ng-container>
@@ -147,7 +177,7 @@
         <th mat-header-cell *matHeaderCellDef>Paciente</th>
 
         <td mat-cell *matCellDef="let muestra">
-          {{ obtenerNombrePaciente(muestra) }}
+          {{ obtenerNombrePaciente(muestra) || "-" }}
 
           <div class="dato-secundario">
             HC {{ muestra.paciente.hc || "-" }}
@@ -195,58 +225,97 @@
         </td>
       </ng-container>
 
-      <!-- ====== Tipo de muestra ====== -->
+      <!-- ====== Opción física ====== -->
 
-      <ng-container matColumnDef="tipoMuestra">
-        <th mat-header-cell *matHeaderCellDef>Tipo</th>
-
-        <td mat-cell *matCellDef="let muestra">
-          <strong>
-            {{ muestra.tipoMuestra?.nombreTipoMuestra || "-" }}
-          </strong>
-        </td>
-      </ng-container>
-
-      <!-- ====== Recipiente ====== -->
-
-      <ng-container matColumnDef="recipiente">
-        <th mat-header-cell *matHeaderCellDef>Recipiente</th>
+      <ng-container matColumnDef="opcionFisica">
+        <th mat-header-cell *matHeaderCellDef>Tipo / recipiente</th>
 
         <td mat-cell *matCellDef="let muestra">
-          <div class="recipiente-visual">
-            <span
-              class="color-recipiente"
-              [style.background-color]="
-                resolverColorRecipiente(muestra.tuboEnvase?.color)
-              "
-            ></span>
+          <!-- ====== Opción definida ====== -->
 
-            <div>
-              <div>
-                {{ muestra.tuboEnvase?.nombreTuboEnvase || "-" }}
+          <ng-container
+            *ngIf="
+              muestra.tipoOpciones === 'DEFINIDO' &&
+                muestra.opcionesPermitidas.length === 1;
+              else opcionAlternativa
+            "
+          >
+            <ng-container *ngIf="muestra.opcionesPermitidas[0] as opcion">
+              <div class="opcion-definida">
+                <span
+                  class="color-recipiente"
+                  [style.background-color]="
+                    resolverColorRecipiente(opcion.tuboEnvase.color)
+                  "
+                ></span>
+
+                <div>
+                  <div class="opcion-principal">
+                    {{ opcion.tipoMuestra.nombreTipoMuestra }}
+                  </div>
+
+                  <div class="dato-secundario">
+                    {{ opcion.tuboEnvase.nombreTuboEnvase }}
+                    <ng-container *ngIf="opcion.tuboEnvase.color">
+                      · {{ opcion.tuboEnvase.color }}
+                    </ng-container>
+                  </div>
+                </div>
               </div>
 
-              <div
-                class="dato-secundario"
-                *ngIf="muestra.tuboEnvase?.color"
+              <div class="badge-definida">
+                Opción definida
+              </div>
+            </ng-container>
+          </ng-container>
+
+          <!-- ====== Opción alternativa ====== -->
+
+          <ng-template #opcionAlternativa>
+            <mat-form-field
+              appearance="outline"
+              class="selector-opcion"
+            >
+              <mat-label>Elegir opción</mat-label>
+
+              <mat-select
+                [formControl]="obtenerControlOpcion(muestra)"
+                [disabled]="procesando"
               >
-                {{ muestra.tuboEnvase?.color }}
-              </div>
+                <mat-option
+                  *ngFor="let opcion of obtenerOpcionesVisibles(muestra)"
+                  [value]="construirClaveOpcion(opcion)"
+                >
+                  {{ opcion.tipoMuestra.nombreTipoMuestra }}
+                  · {{ opcion.tuboEnvase.nombreTuboEnvase }}
+                  <ng-container *ngIf="opcion.tuboEnvase.color">
+                    · {{ opcion.tuboEnvase.color }}
+                  </ng-container>
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <div
+              class="opcion-pendiente"
+              *ngIf="
+                estaSeleccionada(muestra) &&
+                !obtenerOpcionSeleccionada(muestra)
+              "
+            >
+              Debe definir la opción física.
             </div>
-          </div>
+          </ng-template>
         </td>
       </ng-container>
 
-      <!-- ====== Recolección ====== -->
+      <!-- ====== Exámenes ====== -->
 
-      <ng-container matColumnDef="fechaRecoleccion">
-        <th mat-header-cell *matHeaderCellDef>Recolección</th>
+      <ng-container matColumnDef="examenes">
+        <th mat-header-cell *matHeaderCellDef>Uso del recipiente</th>
 
         <td mat-cell *matCellDef="let muestra">
-          {{ muestra.fechaRecoleccion | date: "dd/MM/yyyy HH:mm" }}
-
-          <div class="dato-secundario">
-            {{ muestra.usuarioRecoleccion || "-" }}
+          <div class="examenes">
+            {{ obtenerExamenes(muestra) || "-" }}
           </div>
         </td>
       </ng-container>
@@ -257,57 +326,43 @@
     </table>
   </div>
 
-  <!-- ====== Sin resultados ====== -->
-
-  <div *ngIf="!cargando && muestras.length === 0" class="estado-lista">
-    <mat-icon>inventory_2</mat-icon>
-
-    <div>
-      No hay muestras recolectadas disponibles para recepción con el criterio
-      seleccionado.
-    </div>
-  </div>
-
-  <!-- ====== Observación ====== -->
+  <!-- ====== Observación común ====== -->
 
   <div class="observacion-container" [formGroup]="form">
     <mat-form-field appearance="outline">
-      <mat-label>Observación común de recepción (opcional)</mat-label>
+      <mat-label>Observación común de recolección</mat-label>
 
       <textarea
         matInput
-        formControlName="observacionRecepcion"
         rows="2"
+        formControlName="observacionRecoleccion"
         [disabled]="procesando"
-        placeholder="Se aplicará a todas las muestras procesadas"
+        placeholder="Opcional. Se aplicará a todas las muestras procesadas."
       ></textarea>
     </mat-form-field>
   </div>
 
-  <!-- ====== Evidencia grupal opcional de Empresa ====== -->
-
-  <div
-    *ngIf="permiteEvidenciaGrupal"
-    class="evidencia-grupal-container"
-  >
-    <app-captura-evidencia-muestra
-      titulo="Evidencia fotográfica grupal (opcional)"
-      descripcion="Tome o cargue una fotografía grupal para asociarla a las muestras procesadas en esta recepción."
-      [requerido]="false"
-      [disabled]="procesando"
-      (evidenciaChange)="cambiarEvidenciaGrupal($event)"
-    ></app-captura-evidencia-muestra>
-
-    <div class="evidencia-grupal-ayuda">
-      Si registra una imagen, se almacenará una sola vez y se asociará únicamente a las muestras de Empresa procesadas correctamente.
-    </div>
-  </div>
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">
   <div class="acciones-resumen">
-    {{ totalSeleccionadas }}
-    {{ totalSeleccionadas === 1 ? "seleccionada" : "seleccionadas" }}
+    <ng-container *ngIf="totalSeleccionadas > 0">
+      {{ totalSeleccionadas }}
+      {{
+        totalSeleccionadas === 1
+          ? "muestra seleccionada"
+          : "muestras seleccionadas"
+      }}
+    </ng-container>
+
+    <ng-container *ngIf="totalOpcionesPendientesSeleccionadas > 0">
+      · {{ totalOpcionesPendientesSeleccionadas }}
+      {{
+        totalOpcionesPendientesSeleccionadas === 1
+          ? "opción pendiente"
+          : "opciones pendientes"
+      }}
+    </ng-container>
   </div>
 
   <button
@@ -322,15 +377,11 @@
   <button
     mat-flat-button
     type="button"
-    [disabled]="procesando || cargando || totalSeleccionadas === 0"
-    (click)="registrarRecepcion()"
+    [disabled]="!puedeProcesar"
+    (click)="registrarRecoleccion()"
   >
-    <mat-icon>inventory_2</mat-icon>
+    <mat-icon>vaccines</mat-icon>
 
-    {{
-      procesando
-        ? "Procesando..."
-        : "Registrar recepción (" + totalSeleccionadas + ")"
-    }}
+    {{ procesando ? "Procesando..." : "Registrar recolección" }}
   </button>
 </mat-dialog-actions>

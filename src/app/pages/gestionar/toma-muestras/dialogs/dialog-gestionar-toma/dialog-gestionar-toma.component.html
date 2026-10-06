@@ -405,17 +405,36 @@
                 </button>
               </ng-container>
 
-              <span
+              <ng-container
                 *ngIf="plan.intentoVigente?.estadoMuestra === 'ACEPTADA'"
-                class="accion-estado"
               >
-                Muestra aceptada
-              </span>
+                <span class="accion-estado">Muestra aceptada</span>
+
+                <button
+                  mat-stroked-button
+                  type="button"
+                  class="btn-corregir"
+                  (click)="corregirEvaluacion(plan)"
+                >
+                  <mat-icon>published_with_changes</mat-icon>
+                  Corregir a rechazada
+                </button>
+              </ng-container>
 
               <ng-container *ngIf="puedeGenerarReintento(plan)">
                 <span class="accion-rechazo">
                   Muestra rechazada · requiere nueva muestra
                 </span>
+
+                <button
+                  mat-stroked-button
+                  type="button"
+                  class="btn-corregir"
+                  (click)="corregirEvaluacion(plan)"
+                >
+                  <mat-icon>published_with_changes</mat-icon>
+                  Corregir a aceptada
+                </button>
 
                 <button
                   mat-flat-button

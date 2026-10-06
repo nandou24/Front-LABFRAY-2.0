@@ -24,7 +24,6 @@ import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import Swal from 'sweetalert2';
 import {
   IBandejaTomaMuestrasItem,
   IEmpresaBandejaMuestra,
@@ -35,6 +34,7 @@ import { MuestraLaboratorioService } from '../../../services/gestion/muestraLabo
 import { DialogGestionarTomaComponent } from './dialogs/dialog-gestionar-toma/dialog-gestionar-toma.component';
 import { DialogRecepcionMasivaComponent } from './dialogs/dialog-recepcion-masiva/dialog-recepcion-masiva.component';
 import { DialogAceptacionMasivaComponent } from './dialogs/dialog-aceptacion-masiva/dialog-aceptacion-masiva.component';
+import { DialogRecoleccionMasivaComponent } from './dialogs/dialog-recoleccion-masiva/dialog-recoleccion-masiva.component';
 
 @Component({
   selector: 'app-toma-muestras',
@@ -350,6 +350,7 @@ export class TomaMuestrasComponent implements OnInit, AfterViewInit {
       solicitud.codigoLaboratorio,
       solicitud.codSolicitud,
       solicitud.estado,
+      solicitud.estadoOperativo?.descripcion,
 
       paciente.hc,
       paciente.tipoDoc,
@@ -437,7 +438,13 @@ export class TomaMuestrasComponent implements OnInit, AfterViewInit {
   }
 
   toggleParticular(item: IBandejaTomaMuestrasItem): void {
-    this.expandedParticular = this.isExpandedParticular(item) ? null : item;
+    if (this.isExpandedParticular(item)) {
+      this.expandedParticular = null;
+      return;
+    }
+
+    this.expandedParticular = item;
+    this.asegurarInicializacionAutomatica(item);
   }
 
   // ====== Expandir empresa ======
@@ -447,7 +454,71 @@ export class TomaMuestrasComponent implements OnInit, AfterViewInit {
   }
 
   toggleEmpresa(item: IBandejaTomaMuestrasItem): void {
-    this.expandedEmpresa = this.isExpandedEmpresa(item) ? null : item;
+    if (this.isExpandedEmpresa(item)) {
+      this.expandedEmpresa = null;
+      return;
+    }
+
+    this.expandedEmpresa = item;
+    this.asegurarInicializacionAutomatica(item);
+  }
+
+  // ====== Abrir recolección masiva ======
+
+  abrirRecoleccionMasiva(
+    origenAtencion: OrigenAtencionBandejaMuestra,
+  ): void {
+    const fechaInicio = this.formBusqueda.controls.fechaInicio.value;
+
+    const fechaFin = this.formBusqueda.controls.fechaFin.value;
+
+    if (!fechaInicio || !fechaFin) {
+      this._snackBar.open('Debe indicar el rango de fechas', 'Cerrar', {
+        duration: 3000,
+      });
+
+      return;
+    }
+
+    const inicio = new Date(fechaInicio);
+
+    inicio.setHours(0, 0, 0, 0);
+
+    const fin = new Date(fechaFin);
+
+    fin.setHours(23, 59, 59, 999);
+
+    if (inicio.getTime() > fin.getTime()) {
+      this._snackBar.open(
+        'La fecha de inicio no puede ser mayor que la fecha fin',
+        'Cerrar',
+        {
+          duration: 3000,
+        },
+      );
+
+      return;
+    }
+
+    const dialogRef = this._dialog.open(DialogRecoleccionMasivaComponent, {
+      width: '1240px',
+      maxWidth: '97vw',
+      maxHeight: '92vh',
+      autoFocus: false,
+      data: {
+        origenAtencion,
+        fechaInicio: inicio.toISOString(),
+        fechaFin: fin.toISOString(),
+      },
+    });
+
+    dialogRef.afterClosed().subscribe(
+      (actualizarBandeja: boolean | undefined) => {
+        if (actualizarBandeja === true) {
+          this.buscarSolicitudes(null, false);
+        }
+      },
+    );
   }
 
   // ====== Abrir recepción masiva ======
@@ -578,126 +649,55 @@ export class TomaMuestrasComponent implements OnInit, AfterViewInit {
     });
   }
 
-  // ====== Inicializar muestras ======
+  // ====== Inicialización automática ======
 
-  async inicializarMuestras(item: IBandejaTomaMuestrasItem): Promise<void> {
+  private asegurarInicializacionAutomatica(
+    item: IBandejaTomaMuestrasItem,
+  ): void {
     const solicitud = item.solicitud;
-
     const muestras = item.muestras;
 
     if (
       muestras.inicializadas ||
+      !muestras.requiereMuestra ||
       !muestras.puedeInicializar ||
-      !muestras.planToma.disponible
+      !muestras.planToma.disponible ||
+      this.inicializandoSolicitudId === solicitud._id
     ) {
       return;
     }
 
-    const totalRecipientes = muestras.planToma.totalRecipientes;
-
-    const resultado = await Swal.fire({
-      icon: 'question',
-
-      title: '¿Iniciar toma de muestras?',
-
-      html: `
-        <div style="text-align: left;">
-          <p>
-            Se preparará la toma para
-            <strong>${solicitud.codSolicitud}</strong>.
-          </p>
-
-          <p>
-            El sistema generará
-            <strong>
-              ${totalRecipientes}
-              ${totalRecipientes === 1 ? 'recipiente' : 'recipientes'}
-            </strong>
-            y quedarán listos para registrar
-            la recolección.
-          </p>
-        </div>
-      `,
-
-      showCancelButton: true,
-
-      confirmButtonText: 'Sí, iniciar toma',
-
-      cancelButtonText: 'Cancelar',
-
-      reverseButtons: true,
-
-      confirmButtonColor: '#3085d6',
-
-      cancelButtonColor: '#6c757d',
-    });
-
-    if (!resultado.isConfirmed) {
-      return;
-    }
-
-    // ====== Bloquear solicitud ======
-
     this.inicializandoSolicitudId = solicitud._id;
-
-    Swal.fire({
-      title: 'Preparando toma de muestras',
-
-      text: 'Generando los recipientes de la solicitud...',
-
-      allowOutsideClick: false,
-
-      allowEscapeKey: false,
-
-      showConfirmButton: false,
-
-      didOpen: () => {
-        Swal.showLoading();
-      },
-    });
 
     this._muestraLaboratorioService
       .inicializarMuestras(solicitud._id)
       .subscribe({
-        next: (response) => {
+        next: () => {
           this.inicializandoSolicitudId = null;
 
-          // ====== Refrescar bandeja ======
+          // ====== Mantener expansión actual ======
 
-          this.buscarSolicitudes(solicitud._id, false);
+          const sigueExpandida =
+            this.expandedParticular?.solicitud._id === solicitud._id ||
+            this.expandedEmpresa?.solicitud._id === solicitud._id;
 
-          Swal.fire({
-            icon: 'success',
-
-            title: 'Toma de muestras iniciada',
-
-            text:
-              response.msg || 'Los recipientes fueron generados correctamente.',
-
-            confirmButtonText: 'Continuar',
-
-            confirmButtonColor: '#3085d6',
-          });
+          this.buscarSolicitudes(
+            sigueExpandida ? solicitud._id : null,
+            false,
+          );
         },
 
         error: (error) => {
           this.inicializandoSolicitudId = null;
 
-          console.error('Error al inicializar muestras:', error);
+          console.error('Error al preparar automáticamente la toma:', error);
 
           const mensaje =
-            error?.error?.msg || 'No se pudo iniciar la toma de muestras';
+            error?.error?.msg ||
+            'No se pudo preparar automáticamente el plan de toma';
 
-          Swal.fire({
-            icon: 'error',
-
-            title: 'No se pudo iniciar la toma',
-
-            text: mensaje,
-
-            confirmButtonText: 'Cerrar',
-
-            confirmButtonColor: '#d33',
+          this._snackBar.open(mensaje, 'Cerrar', {
+            duration: 4500,
           });
         },
       });
@@ -717,7 +717,9 @@ export class TomaMuestrasComponent implements OnInit, AfterViewInit {
     }
 
     if (!muestras.inicializadas) {
-      return 'PENDIENTE DE INICIALIZAR';
+      return this.inicializandoSolicitudId === item.solicitud._id
+        ? 'PREPARANDO PLAN'
+        : 'PENDIENTE';
     }
 
     const vigentes = muestras.resumen.vigentes;
@@ -775,10 +777,10 @@ export class TomaMuestrasComponent implements OnInit, AfterViewInit {
         color: '#475569',
         borderColor: '#cbd5e1',
       },
-      'PENDIENTE DE INICIALIZAR': {
-        background: '#fffbeb',
-        color: '#92400e',
-        borderColor: '#fcd34d',
+      'PREPARANDO PLAN': {
+        background: '#eff6ff',
+        color: '#1d4ed8',
+        borderColor: '#93c5fd',
       },
       'MUESTREO ANULADO': {
         background: '#f1f5f9',
@@ -829,6 +831,24 @@ export class TomaMuestrasComponent implements OnInit, AfterViewInit {
         borderColor: '#cbd5e1',
       }
     );
+  }
+
+  // ====== Color de estado de solicitud ======
+
+  obtenerClaseEstadoSolicitud(estado: string): string {
+    switch (estado) {
+      case 'EN PROCESO':
+        return 'estado-chip estado-en-proceso';
+
+      case 'ATENDIDO':
+        return 'estado-chip estado-atendido';
+
+      case 'ANULADO':
+        return 'estado-chip estado-anulado';
+
+      default:
+        return 'estado-chip estado-generado';
+    }
   }
 
   // ====== Color visual de recipiente ======

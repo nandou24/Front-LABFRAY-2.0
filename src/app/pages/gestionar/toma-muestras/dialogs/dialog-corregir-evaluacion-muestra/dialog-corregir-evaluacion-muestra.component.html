@@ -1,0 +1,188 @@
+<div class="dialog-header" mat-dialog-title>
+  <div>
+    <div class="dialog-title">Corregir evaluación de muestra</div>
+    <div class="dialog-subtitle">
+      Recipiente {{ data.numeroRecipiente || '-' }} ·
+      {{ data.muestra.codigoEtiqueta || data.muestra.codMuestra }}
+    </div>
+  </div>
+
+  <button
+    mat-icon-button
+    type="button"
+    aria-label="Cerrar"
+    [disabled]="procesando"
+    (click)="cerrar()"
+  >
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
+<mat-dialog-content>
+  <!-- ====== Cambio solicitado ====== -->
+
+  <section class="cambio-evaluacion">
+    <div class="estado-box estado-actual">
+      <span>Estado actual</span>
+      <strong>{{ data.muestra.estadoMuestra }}</strong>
+    </div>
+
+    <mat-icon>arrow_forward</mat-icon>
+
+    <div
+      class="estado-box"
+      [class.estado-rechazado]="estadoNuevo === 'RECHAZADA'"
+      [class.estado-aceptado]="estadoNuevo === 'ACEPTADA'"
+    >
+      <span>Nuevo estado</span>
+      <strong>{{ estadoNuevo }}</strong>
+    </div>
+  </section>
+
+  <!-- ====== Trazabilidad previa ====== -->
+
+  <section class="trazabilidad-previa">
+    <div class="trazabilidad-titulo">
+      <mat-icon>history</mat-icon>
+      <span>Evaluación registrada</span>
+    </div>
+
+    <div *ngIf="data.muestra.estadoMuestra === 'ACEPTADA'" class="trazabilidad-item">
+      <span>Aceptada por</span>
+      <strong>{{ data.muestra.usuarioAceptacion || '-' }}</strong>
+      <small>
+        {{
+          data.muestra.fechaAceptacion
+            ? (data.muestra.fechaAceptacion | date: 'dd/MM/yyyy HH:mm')
+            : '-'
+        }}
+      </small>
+    </div>
+
+    <div *ngIf="data.muestra.estadoMuestra === 'RECHAZADA'" class="trazabilidad-item">
+      <span>Rechazada por</span>
+      <strong>{{ data.muestra.usuarioRechazo || '-' }}</strong>
+      <small>
+        {{
+          data.muestra.fechaRechazo
+            ? (data.muestra.fechaRechazo | date: 'dd/MM/yyyy HH:mm')
+            : '-'
+        }}
+      </small>
+
+      <small *ngIf="data.muestra.motivoRechazo" class="motivo-previo">
+        Motivo registrado: {{ data.muestra.motivoRechazo }}
+      </small>
+    </div>
+  </section>
+
+  <div class="mensaje-autorizacion">
+    <mat-icon>verified_user</mat-icon>
+    <span>
+      Esta corrección requiere autorización de un usuario distinto al que está
+      ejecutando la operación y con permisos para gestionar toma de muestras.
+    </span>
+  </div>
+
+  <form [formGroup]="formCorreccion" class="form-correccion">
+    <mat-form-field appearance="outline" class="campo-completo">
+      <mat-label>Motivo de la corrección</mat-label>
+      <textarea
+        matInput
+        rows="3"
+        formControlName="motivoCorreccion"
+        placeholder="Describa por qué debe corregirse la evaluación registrada"
+      ></textarea>
+
+      <mat-error
+        *ngIf="formCorreccion.controls.motivoCorreccion.hasError('required')"
+      >
+        El motivo de la corrección es obligatorio
+      </mat-error>
+    </mat-form-field>
+
+    <div class="autorizacion-titulo">
+      <mat-icon>admin_panel_settings</mat-icon>
+      <span>Autorización</span>
+    </div>
+
+    <div class="autorizacion-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>Usuario autorizador</mat-label>
+        <input
+          matInput
+          formControlName="nombreUsuarioAutorizador"
+          autocomplete="off"
+        />
+
+        <mat-error
+          *ngIf="
+            formCorreccion.controls.nombreUsuarioAutorizador.hasError('required')
+          "
+        >
+          El usuario autorizador es obligatorio
+        </mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Contraseña</mat-label>
+        <input
+          matInput
+          [type]="ocultarPassword ? 'password' : 'text'"
+          formControlName="passwordAutorizador"
+          autocomplete="off"
+        />
+
+        <button
+          mat-icon-button
+          matSuffix
+          type="button"
+          [attr.aria-label]="ocultarPassword ? 'Mostrar contraseña' : 'Ocultar contraseña'"
+          (click)="ocultarPassword = !ocultarPassword"
+        >
+          <mat-icon>{{ ocultarPassword ? 'visibility' : 'visibility_off' }}</mat-icon>
+        </button>
+
+        <mat-error
+          *ngIf="formCorreccion.controls.passwordAutorizador.hasError('required')"
+        >
+          La contraseña del autorizador es obligatoria
+        </mat-error>
+      </mat-form-field>
+    </div>
+  </form>
+
+  <!-- ====== Evidencia de nuevo rechazo ====== -->
+
+  <section *ngIf="requiereEvidencia" class="evidencia-operacion">
+    <app-captura-evidencia-muestra
+      titulo="Fotografía de rechazo"
+      descripcion="Obligatoria. Documente la condición de la muestra que será corregida a RECHAZADA."
+      [requerido]="true"
+      [disabled]="procesando"
+      (evidenciaChange)="cambiarEvidencia($event)"
+    ></app-captura-evidencia-muestra>
+  </section>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" [disabled]="procesando" (click)="cerrar()">
+    Cancelar
+  </button>
+
+  <button
+    mat-flat-button
+    type="button"
+    class="btn-corregir"
+    [class.btn-corregir-rechazo]="estadoNuevo === 'RECHAZADA'"
+    [disabled]="
+      procesando ||
+      formCorreccion.invalid ||
+      (requiereEvidencia && !archivoEvidencia)
+    "
+    (click)="corregirEvaluacion()"
+  >
+    <mat-icon>{{ procesando ? 'hourglass_top' : 'published_with_changes' }}</mat-icon>
+    {{ procesando ? 'Corrigiendo...' : 'Corregir a ' + estadoNuevo.toLowerCase() }}
+  </button>
+</mat-dialog-actions>

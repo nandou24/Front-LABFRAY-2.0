@@ -1,11 +1,12 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, switchMap } from 'rxjs';
 
 import { environment } from '../../../../environments/environment';
 import { AuthService } from '../../auth/auth.service';
 
 import {
+  IBandejaResultadosLaboratorioResponse,
   IAnularResultadoDTO,
   IAnularResultadoResponse,
   IInicializarResultadosResponse,
@@ -31,6 +32,26 @@ export class ResultadoLaboratorioService {
 
   private readonly _auth = inject(AuthService);
 
+  // ====== Obtener bandeja de resultados ======
+
+  obtenerBandeja(
+    fechaInicio: string,
+    fechaFin: string,
+    terminoBusqueda = '',
+  ): Observable<IBandejaResultadosLaboratorioResponse> {
+    return this._http.get<IBandejaResultadosLaboratorioResponse>(
+      `${this.apiUrl}/bandeja`,
+      {
+        headers: this._auth.getAuthHeaders(),
+        params: {
+          fechaInicio,
+          fechaFin,
+          ...(terminoBusqueda ? { terminoBusqueda } : {}),
+        },
+      },
+    );
+  }
+
   // ====== Inicializar resultados ======
 
   inicializarResultados(
@@ -42,6 +63,16 @@ export class ResultadoLaboratorioService {
       {
         headers: this._auth.getAuthHeaders(),
       },
+    );
+  }
+
+  // ====== Preparar resultados para gestión ======
+
+  prepararResultadosSolicitud(
+    solicitudAtencionId: string,
+  ): Observable<IResultadosPorSolicitudResponse> {
+    return this.inicializarResultados(solicitudAtencionId).pipe(
+      switchMap(() => this.obtenerResultadosPorSolicitud(solicitudAtencionId)),
     );
   }
 

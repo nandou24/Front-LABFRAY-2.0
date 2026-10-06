@@ -14,6 +14,8 @@ import {
   IAnularMuestraDTO,
   IAnularMuestraResponse,
   IConsultaMuestrasLaboratorioResponse,
+  ICorregirEvaluacionMuestraDTO,
+  ICorregirEvaluacionMuestraResponse,
   IDetalleMuestraLaboratorioResponse,
   IEvidenciasMuestraResponse,
   IInicializarMuestrasResponse,
@@ -24,6 +26,9 @@ import {
   IReintentarMuestraResponse,
   EtapaEvidenciaMuestra,
   IBandejaTomaMuestrasResponse,
+  IRecoleccionMasivaDisponiblesResponse,
+  IRecolectarMuestrasMasivamenteDTO,
+  IRecolectarMuestrasMasivamenteResponse,
   IRecepcionMasivaDisponiblesResponse,
   IRecibirMuestrasMasivamenteDTO,
   IRecibirMuestrasMasivamenteResponse,
@@ -78,6 +83,46 @@ export class MuestraLaboratorioService {
     );
   }
 
+  // ====== Obtener candidatos para recolección masiva ======
+
+  obtenerMuestrasRecoleccionMasiva(
+    fechaInicio: string,
+    fechaFin: string,
+    origenAtencion?: OrigenAtencionBandejaMuestra,
+    terminoBusqueda = '',
+  ): Observable<IRecoleccionMasivaDisponiblesResponse> {
+    let params = new HttpParams()
+      .set('fechaInicio', fechaInicio)
+      .set('fechaFin', fechaFin)
+      .set('terminoBusqueda', terminoBusqueda.trim());
+
+    if (origenAtencion) {
+      params = params.set('origenAtencion', origenAtencion);
+    }
+
+    return this.http.get<IRecoleccionMasivaDisponiblesResponse>(
+      `${this.apiUrl}/masiva/recoleccion`,
+      {
+        headers: this.auth.getAuthHeaders(),
+        params,
+      },
+    );
+  }
+
+  // ====== Registrar recolección masiva ======
+
+  recolectarMuestrasMasivamente(
+    body: IRecolectarMuestrasMasivamenteDTO,
+  ): Observable<IRecolectarMuestrasMasivamenteResponse> {
+    return this.http.put<IRecolectarMuestrasMasivamenteResponse>(
+      `${this.apiUrl}/masiva/recolectar`,
+      body,
+      {
+        headers: this.auth.getAuthHeaders(),
+      },
+    );
+  }
+
   // ====== Obtener candidatos para recepción masiva ======
 
   obtenerMuestrasRecepcionMasiva(
@@ -108,10 +153,37 @@ export class MuestraLaboratorioService {
 
   recibirMuestrasMasivamente(
     body: IRecibirMuestrasMasivamenteDTO,
+    imagenGrupal?: File,
   ): Observable<IRecibirMuestrasMasivamenteResponse> {
+    if (!imagenGrupal) {
+      return this.http.put<IRecibirMuestrasMasivamenteResponse>(
+        `${this.apiUrl}/masiva/recibir`,
+        body,
+        {
+          headers: this.auth.getAuthHeaders(),
+        },
+      );
+    }
+
+    const formData = new FormData();
+
+    formData.append(
+      'muestraLaboratorioIds',
+      JSON.stringify(body.muestraLaboratorioIds),
+    );
+
+    if (body.observacionRecepcion?.trim()) {
+      formData.append(
+        'observacionRecepcion',
+        body.observacionRecepcion.trim(),
+      );
+    }
+
+    formData.append('imagen', imagenGrupal);
+
     return this.http.put<IRecibirMuestrasMasivamenteResponse>(
       `${this.apiUrl}/masiva/recibir`,
-      body,
+      formData,
       {
         headers: this.auth.getAuthHeaders(),
       },
@@ -148,10 +220,37 @@ export class MuestraLaboratorioService {
 
   aceptarMuestrasMasivamente(
     body: IAceptarMuestrasMasivamenteDTO,
+    imagenGrupal?: File,
   ): Observable<IAceptarMuestrasMasivamenteResponse> {
+    if (!imagenGrupal) {
+      return this.http.put<IAceptarMuestrasMasivamenteResponse>(
+        `${this.apiUrl}/masiva/aceptar`,
+        body,
+        {
+          headers: this.auth.getAuthHeaders(),
+        },
+      );
+    }
+
+    const formData = new FormData();
+
+    formData.append(
+      'muestraLaboratorioIds',
+      JSON.stringify(body.muestraLaboratorioIds),
+    );
+
+    if (body.observacionAceptacion?.trim()) {
+      formData.append(
+        'observacionAceptacion',
+        body.observacionAceptacion.trim(),
+      );
+    }
+
+    formData.append('imagen', imagenGrupal);
+
     return this.http.put<IAceptarMuestrasMasivamenteResponse>(
       `${this.apiUrl}/masiva/aceptar`,
-      body,
+      formData,
       {
         headers: this.auth.getAuthHeaders(),
       },
@@ -197,6 +296,35 @@ export class MuestraLaboratorioService {
     return this.http.put<IAccionMuestraResponse>(
       `${this.apiUrl}/${muestraLaboratorioId}/aceptar`,
       body,
+      {
+        headers: this.auth.getAuthHeaders(),
+      },
+    );
+  }
+
+  // ====== Corregir evaluación ======
+
+  corregirEvaluacionMuestra(
+    muestraLaboratorioId: string,
+    body: ICorregirEvaluacionMuestraDTO,
+    imagen?: File,
+  ): Observable<ICorregirEvaluacionMuestraResponse> {
+    const formData = new FormData();
+
+    formData.append('motivoCorreccion', body.motivoCorreccion.trim());
+    formData.append(
+      'nombreUsuarioAutorizador',
+      body.nombreUsuarioAutorizador.trim(),
+    );
+    formData.append('passwordAutorizador', body.passwordAutorizador);
+
+    if (imagen) {
+      formData.append('imagen', imagen);
+    }
+
+    return this.http.put<ICorregirEvaluacionMuestraResponse>(
+      `${this.apiUrl}/${muestraLaboratorioId}/corregir-evaluacion`,
+      formData,
       {
         headers: this.auth.getAuthHeaders(),
       },

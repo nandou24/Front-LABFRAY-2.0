@@ -7,17 +7,17 @@
 
 .dialog-title {
   font-size: 20px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .dialog-subtitle {
-  margin-top: 4px;
+  margin-top: 3px;
   color: #64748b;
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .dialog-content {
-  min-height: 360px;
+  min-height: 420px;
 }
 
 .filtros {
@@ -25,11 +25,11 @@
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
-  margin-top: 4px;
+  padding-top: 4px;
 }
 
 .filtro-busqueda {
-  flex: 1 1 360px;
+  flex: 1 1 380px;
 }
 
 .filtro-tipo {
@@ -39,9 +39,11 @@
 
 .resumen-operativo {
   display: flex;
-  gap: 22px;
-  padding: 10px 0 14px;
-  color: #475569;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  padding: 8px 2px 14px;
+  color: #64748b;
   font-size: 13px;
 }
 
@@ -51,8 +53,13 @@
   font-size: 18px;
 }
 
+.resumen-operativo .resumen-alerta,
+.resumen-operativo .resumen-alerta strong {
+  color: #b45309;
+}
+
 .tabla-container {
-  max-height: 430px;
+  max-height: 470px;
   overflow: auto;
   border: 1px solid #e2e8f0;
   border-radius: 10px;
@@ -60,7 +67,7 @@
 
 table {
   width: 100%;
-  min-width: 980px;
+  min-width: 1180px;
 }
 
 th {
@@ -79,20 +86,6 @@ th {
   font-size: 11px;
 }
 
-.recipiente-visual {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-}
-
-.color-recipiente {
-  width: 24px;
-  min-width: 24px;
-  height: 24px;
-  border: 1px solid rgba(15, 23, 42, 0.16);
-  border-radius: 50%;
-}
-
 .estado-lista {
   min-height: 220px;
   display: flex;
@@ -106,6 +99,58 @@ th {
   border: 1px dashed #cbd5e1;
   border-radius: 10px;
   background: #f8fafc;
+}
+
+.opcion-definida {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 220px;
+}
+
+.color-recipiente {
+  width: 24px;
+  min-width: 24px;
+  height: 24px;
+  border: 1px solid rgba(15, 23, 42, 0.16);
+  border-radius: 50%;
+}
+
+.opcion-principal {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.badge-definida {
+  display: inline-flex;
+  margin-top: 6px;
+  padding: 2px 7px;
+  border: 1px solid #bae6fd;
+  border-radius: 999px;
+  background: #f0f9ff;
+  color: #0369a1;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.selector-opcion {
+  width: 270px;
+  margin-top: 8px;
+  margin-bottom: -14px;
+}
+
+.opcion-pendiente {
+  margin-top: 4px;
+  color: #b45309;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.examenes {
+  min-width: 190px;
+  max-width: 300px;
+  white-space: normal;
+  line-height: 1.35;
 }
 
 .observacion-container {
@@ -139,17 +184,4 @@ mat-dialog-actions {
     width: 100%;
     margin-bottom: 4px;
   }
-}
-
-.evidencia-grupal-container {
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px solid #e2e8f0;
-}
-
-.evidencia-grupal-ayuda {
-  margin-top: 8px;
-  color: #64748b;
-  font-size: 12px;
-  line-height: 1.4;
 }

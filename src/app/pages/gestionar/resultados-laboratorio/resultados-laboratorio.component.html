@@ -1,0 +1,664 @@
+<div class="contenedor-resultados-laboratorio">
+  <div class="encabezado-pagina">
+    <div>
+      <h4>Gestión de Resultados</h4>
+      <p>
+        Consulta el estado general de la solicitud y el avance operativo de sus
+        resultados.
+      </p>
+    </div>
+  </div>
+
+  <!-- ====== Búsqueda ====== -->
+
+  <form [formGroup]="formBusqueda" class="busqueda-container">
+    <mat-form-field appearance="outline" class="campo-busqueda">
+      <mat-label>Buscar solicitud o paciente</mat-label>
+
+      <input
+        matInput
+        formControlName="terminoBusqueda"
+        placeholder="Código Lab., solicitud, DNI, paciente o empresa"
+        (keyup.enter)="buscarSolicitudes(true)"
+      />
+
+      <mat-icon matSuffix>search</mat-icon>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Fecha inicio</mat-label>
+
+      <input
+        matInput
+        [matDatepicker]="pickerInicio"
+        formControlName="fechaInicio"
+        readonly
+      />
+
+      <mat-datepicker-toggle
+        matSuffix
+        [for]="pickerInicio"
+      ></mat-datepicker-toggle>
+
+      <mat-datepicker #pickerInicio></mat-datepicker>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Fecha fin</mat-label>
+
+      <input
+        matInput
+        [matDatepicker]="pickerFin"
+        formControlName="fechaFin"
+        readonly
+      />
+
+      <mat-datepicker-toggle
+        matSuffix
+        [for]="pickerFin"
+      ></mat-datepicker-toggle>
+
+      <mat-datepicker #pickerFin></mat-datepicker>
+    </mat-form-field>
+
+    <button
+      mat-flat-button
+      type="button"
+      (click)="buscarSolicitudes(true)"
+      [disabled]="cargandoBandeja"
+    >
+      <mat-icon>search</mat-icon>
+      Buscar
+    </button>
+
+    <button
+      mat-button
+      type="button"
+      (click)="limpiarBusqueda()"
+      [disabled]="cargandoBandeja"
+    >
+      <mat-icon>refresh</mat-icon>
+      Hoy
+    </button>
+  </form>
+
+  <div class="cargando" *ngIf="cargandoBandeja">
+    <span>Consultando solicitudes...</span>
+  </div>
+
+  <!-- ====== Bandeja ====== -->
+
+  <mat-tab-group *ngIf="!cargandoBandeja">
+    <!-- ====== Particulares ====== -->
+
+    <mat-tab>
+      <ng-template mat-tab-label>
+        Particulares ({{ dataSourceParticulares.data.length }})
+      </ng-template>
+
+      <div class="table-container">
+        <table
+          mat-table
+          [dataSource]="dataSourceParticulares"
+          class="mat-elevation-z2"
+          multiTemplateDataRows
+        >
+          <ng-container matColumnDef="codigoLaboratorio">
+            <th mat-header-cell *matHeaderCellDef>Código Lab.</th>
+            <td mat-cell *matCellDef="let row">
+              <strong>{{ row.solicitud.codigoLaboratorio || "-" }}</strong>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="codigoSolicitud">
+            <th mat-header-cell *matHeaderCellDef>Solicitud</th>
+            <td mat-cell *matCellDef="let row">
+              {{ row.solicitud.codSolicitud }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="fechaEmision">
+            <th mat-header-cell *matHeaderCellDef>Fecha</th>
+            <td mat-cell *matCellDef="let row">
+              {{ row.solicitud.fechaEmision | date: "dd/MM/yyyy HH:mm" }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="hc">
+            <th mat-header-cell *matHeaderCellDef>HC</th>
+            <td mat-cell *matCellDef="let row">
+              {{ row.solicitud.paciente.hc || "-" }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="documento">
+            <th mat-header-cell *matHeaderCellDef>Documento</th>
+            <td mat-cell *matCellDef="let row">
+              {{ obtenerDocumentoPaciente(row) || "-" }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="paciente">
+            <th mat-header-cell *matHeaderCellDef>Paciente</th>
+            <td mat-cell *matCellDef="let row">
+              {{ obtenerNombrePaciente(row) || "-" }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="estado">
+            <th mat-header-cell *matHeaderCellDef>Estado</th>
+            <td mat-cell *matCellDef="let row">
+              <div class="estado-combinado">
+                <mat-chip
+                  [class]="obtenerClaseEstadoPrincipal(row.solicitud.estado)"
+                >
+                  {{ row.solicitud.estado }}
+                </mat-chip>
+
+                <span
+                  [class]="
+                    obtenerClaseEstadoOperativo(
+                      row.solicitud.estadoOperativo.codigo
+                    )
+                  "
+                >
+                  {{ row.solicitud.estadoOperativo.descripcion }}
+                </span>
+              </div>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="resultados">
+            <th mat-header-cell *matHeaderCellDef>Resultados</th>
+            <td mat-cell *matCellDef="let row">
+              <div class="resumen-disponibilidad">
+                <strong>{{ obtenerTextoDisponibilidad(row) }}</strong>
+
+                <span
+                  *ngIf="
+                    row.solicitud.estadoOperativo.hayObligacionPendientePaciente
+                  "
+                >
+                  Muestra pendiente
+                </span>
+
+                <span
+                  *ngIf="
+                    row.solicitud.estadoOperativo.tieneResultadosDisponibles
+                  "
+                >
+                  Ya existen resultados liberados
+                </span>
+              </div>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="acciones">
+            <th mat-header-cell *matHeaderCellDef></th>
+            <td mat-cell *matCellDef="let row">
+              <button
+                mat-stroked-button
+                type="button"
+                (click)="toggleParticular(row); $event.stopPropagation()"
+                [disabled]="row.solicitud.estado === 'ANULADO'"
+              >
+                <mat-icon>
+                  {{ isExpandedParticular(row) ? "expand_less" : "science" }}
+                </mat-icon>
+                {{ isExpandedParticular(row) ? "Cerrar" : "Gestionar" }}
+              </button>
+            </td>
+          </ng-container>
+
+          <!-- ====== Detalle expandido ====== -->
+
+          <ng-container matColumnDef="expandedDetail">
+            <td
+              mat-cell
+              *matCellDef="let row"
+              [attr.colspan]="columnasParticulares.length"
+              class="celda-detalle"
+            >
+              <ng-container
+                *ngTemplateOutlet="
+                  detalleResultados;
+                  context: { $implicit: row }
+                "
+              ></ng-container>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="columnasParticulares"></tr>
+
+          <tr
+            mat-row
+            *matRowDef="let row; columns: columnasParticulares"
+            class="fila-solicitud"
+          ></tr>
+
+          <tr
+            mat-row
+            *matRowDef="let row; columns: ['expandedDetail']"
+            class="fila-detalle"
+            [style.display]="isExpandedParticular(row) ? 'table-row' : 'none'"
+          ></tr>
+        </table>
+
+        <div
+          class="sin-resultados"
+          *ngIf="dataSourceParticulares.data.length === 0"
+        >
+          No hay solicitudes particulares para el criterio seleccionado.
+        </div>
+
+        <mat-paginator
+          #paginatorParticulares
+          [pageSize]="25"
+          [pageSizeOptions]="[25, 50, 100]"
+          showFirstLastButtons
+        ></mat-paginator>
+      </div>
+    </mat-tab>
+
+    <!-- ====== Empresas ====== -->
+
+    <mat-tab>
+      <ng-template mat-tab-label>
+        Empresas ({{ dataSourceEmpresas.data.length }})
+      </ng-template>
+
+      <div class="table-container">
+        <table
+          mat-table
+          [dataSource]="dataSourceEmpresas"
+          class="mat-elevation-z2"
+          multiTemplateDataRows
+        >
+          <ng-container matColumnDef="codigoLaboratorio">
+            <th mat-header-cell *matHeaderCellDef>Código Lab.</th>
+            <td mat-cell *matCellDef="let row">
+              <strong>{{ row.solicitud.codigoLaboratorio || "-" }}</strong>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="codigoSolicitud">
+            <th mat-header-cell *matHeaderCellDef>Solicitud</th>
+            <td mat-cell *matCellDef="let row">
+              {{ row.solicitud.codSolicitud }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="codigoProgramacion">
+            <th mat-header-cell *matHeaderCellDef>Programación</th>
+            <td mat-cell *matCellDef="let row">
+              {{ row.solicitud.empresa?.codProgramacion || "-" }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="fechaEmision">
+            <th mat-header-cell *matHeaderCellDef>Fecha</th>
+            <td mat-cell *matCellDef="let row">
+              {{ row.solicitud.fechaEmision | date: "dd/MM/yyyy HH:mm" }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="hc">
+            <th mat-header-cell *matHeaderCellDef>HC</th>
+            <td mat-cell *matCellDef="let row">
+              {{ row.solicitud.paciente.hc || "-" }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="documento">
+            <th mat-header-cell *matHeaderCellDef>Documento</th>
+            <td mat-cell *matCellDef="let row">
+              {{ obtenerDocumentoPaciente(row) || "-" }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="paciente">
+            <th mat-header-cell *matHeaderCellDef>Paciente</th>
+            <td mat-cell *matCellDef="let row">
+              {{ obtenerNombrePaciente(row) || "-" }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="empresa">
+            <th mat-header-cell *matHeaderCellDef>Empresa</th>
+            <td mat-cell *matCellDef="let row">
+              {{ row.solicitud.empresa?.razonSocialEmpresa || "-" }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="sede">
+            <th mat-header-cell *matHeaderCellDef>Sede</th>
+            <td mat-cell *matCellDef="let row">
+              {{ row.solicitud.empresa?.sede || "-" }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="estado">
+            <th mat-header-cell *matHeaderCellDef>Estado</th>
+            <td mat-cell *matCellDef="let row">
+              <div class="estado-combinado">
+                <mat-chip
+                  [class]="obtenerClaseEstadoPrincipal(row.solicitud.estado)"
+                >
+                  {{ row.solicitud.estado }}
+                </mat-chip>
+
+                <span
+                  [class]="
+                    obtenerClaseEstadoOperativo(
+                      row.solicitud.estadoOperativo.codigo
+                    )
+                  "
+                >
+                  {{ row.solicitud.estadoOperativo.descripcion }}
+                </span>
+              </div>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="resultados">
+            <th mat-header-cell *matHeaderCellDef>Resultados</th>
+            <td mat-cell *matCellDef="let row">
+              <div class="resumen-disponibilidad">
+                <strong>{{ obtenerTextoDisponibilidad(row) }}</strong>
+
+                <span
+                  *ngIf="
+                    row.solicitud.estadoOperativo.hayObligacionPendientePaciente
+                  "
+                >
+                  Muestra pendiente
+                </span>
+
+                <span
+                  *ngIf="
+                    row.solicitud.estadoOperativo.tieneResultadosDisponibles
+                  "
+                >
+                  Ya existen resultados liberados
+                </span>
+              </div>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="acciones">
+            <th mat-header-cell *matHeaderCellDef></th>
+            <td mat-cell *matCellDef="let row">
+              <button
+                mat-stroked-button
+                type="button"
+                (click)="toggleEmpresa(row); $event.stopPropagation()"
+                [disabled]="row.solicitud.estado === 'ANULADO'"
+              >
+                <mat-icon>
+                  {{ isExpandedEmpresa(row) ? "expand_less" : "science" }}
+                </mat-icon>
+                {{ isExpandedEmpresa(row) ? "Cerrar" : "Gestionar" }}
+              </button>
+            </td>
+          </ng-container>
+
+          <!-- ====== Detalle expandido ====== -->
+
+          <ng-container matColumnDef="expandedDetail">
+            <td
+              mat-cell
+              *matCellDef="let row"
+              [attr.colspan]="columnasEmpresas.length"
+              class="celda-detalle"
+            >
+              <ng-container
+                *ngTemplateOutlet="
+                  detalleResultados;
+                  context: { $implicit: row }
+                "
+              ></ng-container>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="columnasEmpresas"></tr>
+
+          <tr
+            mat-row
+            *matRowDef="let row; columns: columnasEmpresas"
+            class="fila-solicitud"
+          ></tr>
+
+          <tr
+            mat-row
+            *matRowDef="let row; columns: ['expandedDetail']"
+            class="fila-detalle"
+            [style.display]="isExpandedEmpresa(row) ? 'table-row' : 'none'"
+          ></tr>
+        </table>
+
+        <div
+          class="sin-resultados"
+          *ngIf="dataSourceEmpresas.data.length === 0"
+        >
+          No hay solicitudes de empresa para el criterio seleccionado.
+        </div>
+
+        <mat-paginator
+          #paginatorEmpresas
+          [pageSize]="25"
+          [pageSizeOptions]="[25, 50, 100]"
+          showFirstLastButtons
+        ></mat-paginator>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+
+  <!-- ====== Detalle reutilizable ====== -->
+
+  <ng-template #detalleResultados let-row>
+    <div class="detalle-expandido">
+      <div class="detalle-encabezado">
+        <div>
+          <strong>
+            {{ row.solicitud.codigoLaboratorio || "-" }} ·
+            {{ row.solicitud.codSolicitud }}
+          </strong>
+
+          <span>{{ obtenerNombrePaciente(row) }}</span>
+        </div>
+
+        <div class="estado-combinado">
+          <mat-chip [class]="obtenerClaseEstadoPrincipal(row.solicitud.estado)">
+            {{ row.solicitud.estado }}
+          </mat-chip>
+
+          <span
+            [class]="
+              obtenerClaseEstadoOperativo(row.solicitud.estadoOperativo.codigo)
+            "
+          >
+            {{ row.solicitud.estadoOperativo.descripcion }}
+          </span>
+        </div>
+      </div>
+
+      <div class="indicadores-operativos">
+        <div>
+          <strong>
+            {{ row.solicitud.estadoOperativo.resultadosDisponibles || 0 }}
+          </strong>
+          <span>Disponibles</span>
+        </div>
+
+        <div>
+          <strong>
+            {{
+              row.solicitud.estadoOperativo.resumen?.resultados?.enProceso || 0
+            }}
+          </strong>
+          <span>En proceso</span>
+        </div>
+
+        <div>
+          <strong>
+            {{
+              row.solicitud.estadoOperativo.resumen?.resultados?.completos || 0
+            }}
+          </strong>
+          <span>Completos</span>
+        </div>
+
+        <div>
+          <strong>
+            {{
+              row.solicitud.estadoOperativo.resumen?.resultados?.validados || 0
+            }}
+          </strong>
+          <span>Validados</span>
+        </div>
+      </div>
+
+      <div
+        class="aviso-operativo aviso-pendiente"
+        *ngIf="row.solicitud.estadoOperativo.hayObligacionPendientePaciente"
+      >
+        <mat-icon>warning</mat-icon>
+        <span>
+          El paciente mantiene una obligación pendiente de muestra. Las demás
+          pruebas pueden continuar su procesamiento de forma independiente.
+        </span>
+      </div>
+
+      <div
+        class="aviso-operativo aviso-disponible"
+        *ngIf="row.solicitud.estadoOperativo.tieneResultadosDisponibles"
+      >
+        <mat-icon>task_alt</mat-icon>
+        <span>
+          Hay {{ row.solicitud.estadoOperativo.resultadosDisponibles }}
+          resultado(s) liberado(s) disponible(s) para visualización o entrega.
+        </span>
+      </div>
+
+      <div class="table-container detalle-table-container">
+        <table
+          mat-table
+          [dataSource]="row.resultados.detalle"
+          class="mat-elevation-z1"
+        >
+          <ng-container matColumnDef="prueba">
+            <th mat-header-cell *matHeaderCellDef>Prueba</th>
+            <td mat-cell *matCellDef="let resultado">
+              <strong>{{ resultado.codPruebaLab }}</strong>
+              <div>{{ resultado.nombrePruebaLab }}</div>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="instancia">
+            <th mat-header-cell *matHeaderCellDef>Instancia</th>
+            <td mat-cell *matCellDef="let resultado">
+              {{ resultado.etiquetaInstancia || resultado.numeroInstancia }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="muestra">
+            <th mat-header-cell *matHeaderCellDef>Muestra</th>
+            <td mat-cell *matCellDef="let resultado">
+              <span
+                [class.bloqueado-muestra]="
+                  resultado.habilitacionMuestra?.habilitada === false
+                "
+              >
+                {{ obtenerEstadoMuestraResultado(resultado) }}
+              </span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="estado">
+            <th mat-header-cell *matHeaderCellDef>Estado resultado</th>
+            <td mat-cell *matCellDef="let resultado">
+              <mat-chip
+                [class]="obtenerClaseEstadoResultado(resultado.estadoResultado)"
+              >
+                {{ resultado.estadoResultado }}
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="items">
+            <th mat-header-cell *matHeaderCellDef>Items</th>
+            <td mat-cell *matCellDef="let resultado">
+              {{ obtenerItemsRegistrados(resultado) }} /
+              {{ resultado.resultadosItems.length }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="alertas">
+            <th mat-header-cell *matHeaderCellDef>Alertas</th>
+            <td mat-cell *matCellDef="let resultado">
+              {{ obtenerTotalAlertas(resultado) }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="acciones">
+            <th mat-header-cell *matHeaderCellDef>Acciones</th>
+            <td mat-cell *matCellDef="let resultado">
+              <div class="acciones-resultado">
+                <button
+                  mat-stroked-button
+                  type="button"
+                  (click)="abrirRegistroResultado(row, resultado)"
+                  [disabled]="
+                    estaProcesandoResultado(resultado) ||
+                    (esResultadoEditable(resultado) &&
+                      resultado.habilitacionMuestra?.habilitada === false)
+                  "
+                >
+                  <mat-icon>
+                    {{
+                      esResultadoEditable(resultado)
+                        ? "edit_note"
+                        : "visibility"
+                    }}
+                  </mat-icon>
+                  {{ obtenerTextoAccionResultado(resultado) }}
+                </button>
+
+                <button
+                  *ngIf="resultado.estadoResultado === 'COMPLETO'"
+                  mat-stroked-button
+                  type="button"
+                  class="accion-validar"
+                  (click)="validarResultado(row, resultado)"
+                  [disabled]="estaProcesandoResultado(resultado)"
+                >
+                  <mat-icon>verified</mat-icon>
+                  Validar
+                </button>
+
+                <button
+                  *ngIf="resultado.estadoResultado === 'VALIDADO'"
+                  mat-flat-button
+                  type="button"
+                  class="accion-liberar"
+                  (click)="liberarResultado(row, resultado)"
+                  [disabled]="estaProcesandoResultado(resultado)"
+                >
+                  <mat-icon>publish</mat-icon>
+                  Liberar
+                </button>
+              </div>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="columnasDetalle"></tr>
+          <tr mat-row *matRowDef="let row; columns: columnasDetalle"></tr>
+        </table>
+
+        <div class="sin-resultados" *ngIf="row.resultados.detalle.length === 0">
+          La solicitud no posee unidades activas para resultados.
+        </div>
+      </div>
+    </div>
+  </ng-template>
+</div>

@@ -32,6 +32,11 @@
   flex: 1 1 360px;
 }
 
+.filtro-tipo {
+  flex: 0 1 230px;
+  min-width: 210px;
+}
+
 .resumen-operativo {
   display: flex;
   gap: 22px;
@@ -72,6 +77,20 @@ th {
   margin-top: 3px;
   color: #64748b;
   font-size: 11px;
+}
+
+.recipiente-visual {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.color-recipiente {
+  width: 24px;
+  min-width: 24px;
+  height: 24px;
+  border: 1px solid rgba(15, 23, 42, 0.16);
+  border-radius: 50%;
 }
 
 .estado-lista {
@@ -120,4 +139,17 @@ mat-dialog-actions {
     width: 100%;
     margin-bottom: 4px;
   }
+}
+
+.evidencia-grupal-container {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.evidencia-grupal-ayuda {
+  margin-top: 8px;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.4;
 }

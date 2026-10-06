@@ -28,6 +28,7 @@ import { DialogRechazarMuestraComponent } from '../dialog-rechazar-muestra/dialo
 import { DialogEvidenciasMuestraComponent } from '../dialog-evidencias-muestra/dialog-evidencias-muestra.component';
 import { DialogAnularMuestraComponent } from '../dialog-anular-muestra/dialog-anular-muestra.component';
 import { DialogEtiquetasMuestraComponent } from '../dialog-etiquetas-muestra/dialog-etiquetas-muestra.component';
+import { DialogCorregirEvaluacionMuestraComponent } from '../dialog-corregir-evaluacion-muestra/dialog-corregir-evaluacion-muestra.component';
 import {
   IEtiquetaMuestra,
   ResolucionTipoMuestraEtiqueta,
@@ -391,6 +392,44 @@ export class DialogGestionarTomaComponent implements OnInit {
       width: '600px',
       maxWidth: '94vw',
       maxHeight: '90vh',
+      autoFocus: false,
+      data: {
+        muestra,
+        numeroRecipiente: plan.numeroRecipiente,
+      },
+    });
+
+    dialogRef.afterClosed().subscribe((actualizado: boolean | undefined) => {
+      if (actualizado !== true) {
+        return;
+      }
+
+      this.huboCambios = true;
+      this.cargarMuestras();
+    });
+  }
+
+  // ====== Puede corregir evaluación ======
+
+  puedeCorregirEvaluacion(plan: IPlanMuestraLaboratorio): boolean {
+    const estado = plan.intentoVigente?.estadoMuestra;
+
+    return estado === 'ACEPTADA' || estado === 'RECHAZADA';
+  }
+
+  // ====== Corregir evaluación ======
+
+  corregirEvaluacion(plan: IPlanMuestraLaboratorio): void {
+    const muestra = this.obtenerIntentoVigente(plan);
+
+    if (!muestra || !this.puedeCorregirEvaluacion(plan)) {
+      return;
+    }
+
+    const dialogRef = this._dialog.open(DialogCorregirEvaluacionMuestraComponent, {
+      width: '680px',
+      maxWidth: '96vw',
+      maxHeight: '92vh',
       autoFocus: false,
       data: {
         muestra,

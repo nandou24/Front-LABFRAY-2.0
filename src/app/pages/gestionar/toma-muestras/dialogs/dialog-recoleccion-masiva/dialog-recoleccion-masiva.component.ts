@@ -1,6 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, OnInit, ViewChild } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { Component, inject, OnInit } from '@angular/core';
+import {
+  FormBuilder,
+  FormControl,
+  ReactiveFormsModule,
+} from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import {
   MatCheckboxChange,
@@ -19,24 +23,21 @@ import { MatTableModule } from '@angular/material/table';
 import Swal from 'sweetalert2';
 
 import {
-  IAceptarMuestrasMasivamenteResponse,
-  IMuestraAceptacionMasiva,
+  IMuestraRecoleccionMasiva,
+  IOpcionMuestraSnapshot,
+  IRecolectarMuestrasMasivamenteResponse,
   OrigenAtencionBandejaMuestra,
 } from '../../../../../models/Gestion/muestraLaboratorio.models';
 import { MuestraLaboratorioService } from '../../../../../services/gestion/muestraLaboratorio/muestra-laboratorio.service';
-import {
-  CapturaEvidenciaMuestraComponent,
-  IEvidenciaCapturada,
-} from '../../components/captura-evidencia-muestra/captura-evidencia-muestra.component';
 
-export interface IDialogAceptacionMasivaData {
+export interface IDialogRecoleccionMasivaData {
   origenAtencion: OrigenAtencionBandejaMuestra;
   fechaInicio: string;
   fechaFin: string;
 }
 
 @Component({
-  selector: 'app-dialog-aceptacion-masiva',
+  selector: 'app-dialog-recoleccion-masiva',
   standalone: true,
   imports: [
     CommonModule,
@@ -49,13 +50,12 @@ export interface IDialogAceptacionMasivaData {
     MatInputModule,
     MatSelectModule,
     MatTableModule,
-    CapturaEvidenciaMuestraComponent,
   ],
-  templateUrl: './dialog-aceptacion-masiva.component.html',
-  styleUrl: './dialog-aceptacion-masiva.component.scss',
+  templateUrl: './dialog-recoleccion-masiva.component.html',
+  styleUrl: './dialog-recoleccion-masiva.component.scss',
 })
-export class DialogAceptacionMasivaComponent implements OnInit {
-  readonly data = inject<IDialogAceptacionMasivaData>(MAT_DIALOG_DATA);
+export class DialogRecoleccionMasivaComponent implements OnInit {
+  readonly data = inject<IDialogRecoleccionMasivaData>(MAT_DIALOG_DATA);
 
   private readonly _fb = inject(FormBuilder);
 
@@ -64,13 +64,13 @@ export class DialogAceptacionMasivaComponent implements OnInit {
   );
 
   private readonly _dialogRef = inject(
-    MatDialogRef<DialogAceptacionMasivaComponent>,
+    MatDialogRef<DialogRecoleccionMasivaComponent>,
   );
 
   readonly form = this._fb.group({
     terminoBusqueda: [''],
     tipoMuestraId: [''],
-    observacionAceptacion: [''],
+    observacionRecoleccion: [''],
   });
 
   readonly columnasParticular: string[] = [
@@ -78,9 +78,8 @@ export class DialogAceptacionMasivaComponent implements OnInit {
     'etiqueta',
     'paciente',
     'documento',
-    'tipoMuestra',
-    'recipiente',
-    'fechaRecepcion',
+    'opcionFisica',
+    'examenes',
   ];
 
   readonly columnasEmpresa: string[] = [
@@ -91,14 +90,13 @@ export class DialogAceptacionMasivaComponent implements OnInit {
     'programacion',
     'empresa',
     'sede',
-    'tipoMuestra',
-    'recipiente',
-    'fechaRecepcion',
+    'opcionFisica',
+    'examenes',
   ];
 
-  muestrasTodas: IMuestraAceptacionMasiva[] = [];
+  muestrasTodas: IMuestraRecoleccionMasiva[] = [];
 
-  muestras: IMuestraAceptacionMasiva[] = [];
+  muestras: IMuestraRecoleccionMasiva[] = [];
 
   tiposMuestraDisponibles: Array<{
     id: string;
@@ -107,16 +105,16 @@ export class DialogAceptacionMasivaComponent implements OnInit {
 
   readonly seleccionadas = new Set<string>();
 
+  readonly controlesOpcion = new Map<
+    string,
+    FormControl<string | null>
+  >();
+
   cargando = false;
 
   procesando = false;
 
   huboCambios = false;
-
-  evidenciaGrupal: IEvidenciaCapturada | null = null;
-
-  @ViewChild(CapturaEvidenciaMuestraComponent)
-  private capturaEvidenciaGrupal?: CapturaEvidenciaMuestraComponent;
 
   ngOnInit(): void {
     this.form.controls.tipoMuestraId.valueChanges.subscribe(() => {
@@ -134,20 +132,18 @@ export class DialogAceptacionMasivaComponent implements OnInit {
       : this.columnasParticular;
   }
 
-  // ====== Evidencia grupal opcional ======
-
-  get permiteEvidenciaGrupal(): boolean {
-    return this.data.origenAtencion === 'EMPRESA';
-  }
-
-  cambiarEvidenciaGrupal(evidencia: IEvidenciaCapturada | null): void {
-    this.evidenciaGrupal = evidencia;
-  }
-
-  // ====== Selección ======
+  // ====== Resumen de selección ======
 
   get totalSeleccionadas(): number {
     return this.seleccionadas.size;
+  }
+
+  get totalOpcionesPendientesSeleccionadas(): number {
+    return this.muestras.filter(
+      (muestra) =>
+        this.seleccionadas.has(muestra._id) &&
+        !this.obtenerOpcionSeleccionada(muestra),
+    ).length;
   }
 
   get todasSeleccionadas(): boolean {
@@ -161,31 +157,154 @@ export class DialogAceptacionMasivaComponent implements OnInit {
     return this.totalSeleccionadas > 0 && !this.todasSeleccionadas;
   }
 
-  estaSeleccionada(muestra: IMuestraAceptacionMasiva): boolean {
+  get puedeProcesar(): boolean {
+    return (
+      !this.procesando &&
+      this.totalSeleccionadas > 0 &&
+      this.totalSeleccionadas <= 500 &&
+      this.totalOpcionesPendientesSeleccionadas === 0
+    );
+  }
+
+  // ====== Selección ======
+
+  estaSeleccionada(muestra: IMuestraRecoleccionMasiva): boolean {
     return this.seleccionadas.has(muestra._id);
   }
 
   cambiarSeleccion(
-    muestra: IMuestraAceptacionMasiva,
+    muestra: IMuestraRecoleccionMasiva,
     cambio: MatCheckboxChange,
   ): void {
     if (cambio.checked) {
+      if (this.seleccionadas.size >= 500) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Límite de recolección',
+          text: 'Solo se pueden procesar hasta 500 muestras por lote.',
+          confirmButtonText: 'Cerrar',
+          confirmButtonColor: '#3085d6',
+        });
+
+        return;
+      }
+
       this.seleccionadas.add(muestra._id);
-    } else {
-      this.seleccionadas.delete(muestra._id);
+
+      return;
     }
+
+    this.seleccionadas.delete(muestra._id);
   }
 
   cambiarSeleccionTodas(cambio: MatCheckboxChange): void {
-    if (cambio.checked) {
-      this.muestras.forEach((muestra) => {
-        this.seleccionadas.add(muestra._id);
+    if (!cambio.checked) {
+      this.seleccionadas.clear();
+
+      return;
+    }
+
+    if (this.muestras.length > 500) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Límite de recolección',
+        text:
+          'La lista contiene más de 500 muestras. Filtre la lista antes de seleccionar todas.',
+        confirmButtonText: 'Cerrar',
+        confirmButtonColor: '#3085d6',
       });
 
       return;
     }
 
-    this.seleccionadas.clear();
+    this.muestras.forEach((muestra) => {
+      this.seleccionadas.add(muestra._id);
+    });
+  }
+
+  // ====== Opción física ======
+
+  construirClaveOpcion(opcion: IOpcionMuestraSnapshot): string {
+    return `${opcion.tipoMuestraId}:${opcion.tuboEnvaseId}`;
+  }
+
+  obtenerControlOpcion(
+    muestra: IMuestraRecoleccionMasiva,
+  ): FormControl<string | null> {
+    const existente = this.controlesOpcion.get(muestra._id);
+
+    if (existente) {
+      return existente;
+    }
+
+    const control = new FormControl<string | null>(null);
+
+    this.controlesOpcion.set(muestra._id, control);
+
+    return control;
+  }
+
+  obtenerOpcionSeleccionada(
+    muestra: IMuestraRecoleccionMasiva,
+  ): IOpcionMuestraSnapshot | null {
+    const valor = this.obtenerControlOpcion(muestra).value;
+
+    if (!valor) {
+      return null;
+    }
+
+    return (
+      muestra.opcionesPermitidas.find(
+        (opcion) => this.construirClaveOpcion(opcion) === valor,
+      ) ?? null
+    );
+  }
+
+  private sincronizarControlesOpcion(): void {
+    this.muestrasTodas.forEach((muestra) => {
+      const control = this.obtenerControlOpcion(muestra);
+
+      const opcionesVisibles = this.obtenerOpcionesVisibles(muestra);
+
+      const clavesVisibles = new Set(
+        opcionesVisibles.map((opcion) =>
+          this.construirClaveOpcion(opcion),
+        ),
+      );
+
+      if (muestra.opcionesPermitidas.length === 1) {
+        control.setValue(
+          this.construirClaveOpcion(muestra.opcionesPermitidas[0]),
+          {
+            emitEvent: false,
+          },
+        );
+
+        return;
+      }
+
+      if (control.value && clavesVisibles.has(control.value)) {
+        return;
+      }
+
+      if (
+        this.form.controls.tipoMuestraId.value &&
+        opcionesVisibles.length === 1
+      ) {
+        control.setValue(
+          this.construirClaveOpcion(opcionesVisibles[0]),
+          {
+            emitEvent: false,
+          },
+        );
+
+        return;
+      }
+
+      control.setValue(null, {
+        emitEvent: false,
+      });
+    });
   }
 
   // ====== Buscar ======
@@ -210,18 +329,20 @@ export class DialogAceptacionMasivaComponent implements OnInit {
     const tipos = new Map<string, string>();
 
     this.muestrasTodas.forEach((muestra) => {
-      if (!muestra.tipoMuestraId) {
-        return;
-      }
+      (muestra.opcionesPermitidas ?? []).forEach((opcion) => {
+        if (!opcion.tipoMuestraId) {
+          return;
+        }
 
-      const nombre =
-        muestra.tipoMuestra?.nombreTipoMuestra?.trim() ||
-        muestra.tipoMuestra?.codTipoMuestra?.trim() ||
-        muestra.tipoMuestraId;
+        const nombre =
+          opcion.tipoMuestra?.nombreTipoMuestra?.trim() ||
+          opcion.tipoMuestra?.codTipoMuestra?.trim() ||
+          opcion.tipoMuestraId;
 
-      if (!tipos.has(muestra.tipoMuestraId)) {
-        tipos.set(muestra.tipoMuestraId, nombre);
-      }
+        if (!tipos.has(opcion.tipoMuestraId)) {
+          tipos.set(opcion.tipoMuestraId, nombre);
+        }
+      });
     });
 
     this.tiposMuestraDisponibles = [...tipos.entries()]
@@ -239,12 +360,33 @@ export class DialogAceptacionMasivaComponent implements OnInit {
       this.form.controls.tipoMuestraId.value?.trim() ?? '';
 
     this.muestras = tipoMuestraId
-      ? this.muestrasTodas.filter(
-          (muestra) => muestra.tipoMuestraId === tipoMuestraId,
+      ? this.muestrasTodas.filter((muestra) =>
+          (muestra.opcionesPermitidas ?? []).some(
+            (opcion) => opcion.tipoMuestraId === tipoMuestraId,
+          ),
         )
       : [...this.muestrasTodas];
 
+    this.sincronizarControlesOpcion();
+
     this.limpiarSeleccionNoVisible();
+  }
+
+  // ====== Opciones visibles ======
+
+  obtenerOpcionesVisibles(
+    muestra: IMuestraRecoleccionMasiva,
+  ): IOpcionMuestraSnapshot[] {
+    const tipoMuestraId =
+      this.form.controls.tipoMuestraId.value?.trim() ?? '';
+
+    if (!tipoMuestraId) {
+      return muestra.opcionesPermitidas ?? [];
+    }
+
+    return (muestra.opcionesPermitidas ?? []).filter(
+      (opcion) => opcion.tipoMuestraId === tipoMuestraId,
+    );
   }
 
   // ====== Limpiar selección oculta ======
@@ -270,7 +412,7 @@ export class DialogAceptacionMasivaComponent implements OnInit {
     this.cargando = true;
 
     this._muestraLaboratorioService
-      .obtenerMuestrasAceptacionMasiva(
+      .obtenerMuestrasRecoleccionMasiva(
         this.data.fechaInicio,
         this.data.fechaFin,
         this.data.origenAtencion,
@@ -289,7 +431,7 @@ export class DialogAceptacionMasivaComponent implements OnInit {
 
         error: (error) => {
           console.error(
-            'Error al consultar muestras para aceptación masiva:',
+            'Error al consultar muestras para recolección masiva:',
             error,
           );
 
@@ -308,7 +450,7 @@ export class DialogAceptacionMasivaComponent implements OnInit {
             title: 'No se pudieron cargar las muestras',
             text:
               error?.error?.msg ||
-              'No se pudo consultar la aceptación masiva.',
+              'No se pudo consultar la recolección masiva.',
             confirmButtonText: 'Cerrar',
             confirmButtonColor: '#d33',
           });
@@ -316,34 +458,80 @@ export class DialogAceptacionMasivaComponent implements OnInit {
       });
   }
 
-  // ====== Registrar aceptación ======
+  // ====== Registrar recolección ======
 
-  async registrarAceptacion(): Promise<void> {
+  async registrarRecoleccion(): Promise<void> {
     if (this.procesando || this.totalSeleccionadas === 0) {
       return;
     }
 
-    const cantidad = this.totalSeleccionadas;
+    if (this.totalSeleccionadas > 500) {
+      await Swal.fire({
+        icon: 'warning',
+        title: 'Límite de recolección',
+        text: 'Solo se pueden procesar hasta 500 muestras por lote.',
+        confirmButtonText: 'Cerrar',
+        confirmButtonColor: '#3085d6',
+      });
+
+      return;
+    }
+
+    if (this.totalOpcionesPendientesSeleccionadas > 0) {
+      await Swal.fire({
+        icon: 'warning',
+        title: 'Falta definir la opción física',
+        text:
+          `${this.totalOpcionesPendientesSeleccionadas} ` +
+          `${
+            this.totalOpcionesPendientesSeleccionadas === 1
+              ? 'muestra seleccionada requiere'
+              : 'muestras seleccionadas requieren'
+          } elegir el tipo de muestra y recipiente.`,
+        confirmButtonText: 'Cerrar',
+        confirmButtonColor: '#3085d6',
+      });
+
+      return;
+    }
+
+    const muestrasSeleccionadas = this.muestras.filter((muestra) =>
+      this.seleccionadas.has(muestra._id),
+    );
+
+    const payload = muestrasSeleccionadas.map((muestra) => {
+      const opcion = this.obtenerOpcionSeleccionada(muestra);
+
+      if (!opcion) {
+        throw new Error(
+          `No se pudo resolver la opción física de ${muestra.codigoEtiqueta || muestra.codMuestra}`,
+        );
+      }
+
+      return {
+        muestraLaboratorioId: muestra._id,
+        tipoMuestraId: opcion.tipoMuestraId,
+        tuboEnvaseId: opcion.tuboEnvaseId,
+      };
+    });
+
+    const cantidad = payload.length;
 
     const confirmacion = await Swal.fire({
       icon: 'question',
-      title: '¿Registrar aceptación masiva?',
+      title: '¿Registrar recolección masiva?',
       html: `
         <div style="text-align: left;">
-          Se aceptarán
+          Se registrará la recolección de
           <strong>${cantidad}</strong>
           ${cantidad === 1 ? 'muestra seleccionada' : 'muestras seleccionadas'}.
-          ${
-            this.permiteEvidenciaGrupal && this.evidenciaGrupal?.archivo
-              ? `<div style="margin-top: 8px; font-size: 13px; color: #64748b;">
-                   La fotografía grupal opcional se almacenará una sola vez y se asociará únicamente a las muestras de Empresa procesadas correctamente.
-                 </div>`
-              : ''
-          }
+          <div style="margin-top: 8px; font-size: 13px; color: #64748b;">
+            Cada recipiente conservará la opción física seleccionada en esta lista.
+          </div>
         </div>
       `,
       showCancelButton: true,
-      confirmButtonText: 'Sí, aceptar',
+      confirmButtonText: 'Sí, recolectar',
       cancelButtonText: 'Cancelar',
       reverseButtons: true,
       confirmButtonColor: '#3085d6',
@@ -355,43 +543,26 @@ export class DialogAceptacionMasivaComponent implements OnInit {
     }
 
     const observacion =
-      this.form.controls.observacionAceptacion.value?.trim() ?? '';
+      this.form.controls.observacionRecoleccion.value?.trim() ?? '';
 
     this.procesando = true;
 
     this._muestraLaboratorioService
-      .aceptarMuestrasMasivamente(
-        {
-          muestraLaboratorioIds: [...this.seleccionadas],
-          observacionAceptacion: observacion || undefined,
-        },
-        this.permiteEvidenciaGrupal
-          ? this.evidenciaGrupal?.archivo
-          : undefined,
-      )
+      .recolectarMuestrasMasivamente({
+        muestras: payload,
+        observacionRecoleccion: observacion || undefined,
+      })
       .subscribe({
         next: async (response) => {
           this.procesando = false;
 
-          if (response.resumen.aceptadas > 0) {
+          if (response.resumen.recolectadas > 0) {
             this.huboCambios = true;
-
-            if (this.evidenciaGrupal?.archivo) {
-              this.capturaEvidenciaGrupal?.limpiar();
-            }
           }
 
           this.seleccionadas.clear();
 
           await this.mostrarResultado(response);
-
-          // ====== Reiniciar filtro de tipo ======
-
-          if (response.resumen.aceptadas > 0) {
-            this.form.controls.tipoMuestraId.setValue('', {
-              emitEvent: false,
-            });
-          }
 
           this.cargarMuestras();
         },
@@ -399,14 +570,14 @@ export class DialogAceptacionMasivaComponent implements OnInit {
         error: (error) => {
           this.procesando = false;
 
-          console.error('Error al registrar aceptación masiva:', error);
+          console.error('Error al registrar recolección masiva:', error);
 
           Swal.fire({
             icon: 'error',
-            title: 'No se pudo registrar la aceptación',
+            title: 'No se pudo registrar la recolección',
             text:
               error?.error?.msg ||
-              'No se pudo completar la aceptación masiva.',
+              'No se pudo completar la recolección masiva.',
             confirmButtonText: 'Cerrar',
             confirmButtonColor: '#d33',
           });
@@ -417,30 +588,28 @@ export class DialogAceptacionMasivaComponent implements OnInit {
   // ====== Mostrar resultado ======
 
   private async mostrarResultado(
-    response: IAceptarMuestrasMasivamenteResponse,
+    response: IRecolectarMuestrasMasivamenteResponse,
   ): Promise<void> {
     const resumen = response.resumen;
-
-    const evidenciasAsociadas = resumen.evidenciasAsociadas ?? 0;
 
     const icono =
       resumen.noProcesadas === 0
         ? 'success'
-        : resumen.aceptadas > 0
+        : resumen.recolectadas > 0
           ? 'warning'
           : 'error';
 
     const titulo =
       resumen.noProcesadas === 0
-        ? 'Aceptación completada'
-        : resumen.aceptadas > 0
-          ? 'Aceptación parcial'
+        ? 'Recolección completada'
+        : resumen.recolectadas > 0
+          ? 'Recolección parcial'
           : 'No se procesaron muestras';
 
     const incidencias = response.noProcesadas
       .map((item) => {
         const etiqueta = this.escaparHtml(
-          item.codigoEtiqueta || item.muestraLaboratorioId,
+          item.codigoEtiqueta || item.muestraLaboratorioId || 'Muestra',
         );
 
         const motivo = this.escaparHtml(item.motivo);
@@ -468,29 +637,13 @@ export class DialogAceptacionMasivaComponent implements OnInit {
       html: `
         <div style="text-align: left;">
           <div>
-            <strong>${resumen.aceptadas}</strong>
+            <strong>${resumen.recolectadas}</strong>
             ${
-              resumen.aceptadas === 1
-                ? 'muestra aceptada.'
-                : 'muestras aceptadas.'
+              resumen.recolectadas === 1
+                ? 'muestra recolectada.'
+                : 'muestras recolectadas.'
             }
           </div>
-
-          ${
-            evidenciasAsociadas > 0
-              ? `
-                <div style="margin-top: 8px;">
-                  Evidencia grupal asociada a
-                  <strong>${evidenciasAsociadas}</strong>
-                  ${
-                    evidenciasAsociadas === 1
-                      ? 'muestra procesada.'
-                      : 'muestras procesadas.'
-                  }
-                </div>
-              `
-              : ''
-          }
 
           ${
             resumen.noProcesadas > 0
@@ -504,7 +657,7 @@ export class DialogAceptacionMasivaComponent implements OnInit {
                   }
                 </div>
 
-                <div style="margin-top: 10px;">
+                <div style="margin-top: 12px; max-height: 240px; overflow: auto;">
                   ${incidencias}
                 </div>
               `
@@ -517,9 +670,9 @@ export class DialogAceptacionMasivaComponent implements OnInit {
     });
   }
 
-  // ====== Nombre paciente ======
+  // ====== Paciente ======
 
-  obtenerNombrePaciente(muestra: IMuestraAceptacionMasiva): string {
+  obtenerNombrePaciente(muestra: IMuestraRecoleccionMasiva): string {
     return [
       muestra.paciente.apePatCliente,
       muestra.paciente.apeMatCliente,
@@ -530,18 +683,25 @@ export class DialogAceptacionMasivaComponent implements OnInit {
       .trim();
   }
 
-  // ====== Documento paciente ======
-
-  obtenerDocumentoPaciente(muestra: IMuestraAceptacionMasiva): string {
+  obtenerDocumentoPaciente(muestra: IMuestraRecoleccionMasiva): string {
     return [muestra.paciente.tipoDoc, muestra.paciente.nroDoc]
       .filter(Boolean)
       .join(' ');
   }
 
-  // ====== Color visual de recipiente ======
+  // ====== Exámenes ======
+
+  obtenerExamenes(muestra: IMuestraRecoleccionMasiva): string {
+    return (muestra.examenes ?? [])
+      .map((examen) => examen.nombrePruebaLab || examen.nombreServicio)
+      .filter(Boolean)
+      .join(', ');
+  }
+
+  // ====== Color recipiente ======
 
   resolverColorRecipiente(color: string | null | undefined): string {
-    const colorNormalizado = String(color ?? '')
+    const normalizado = String(color ?? '')
       .trim()
       .toUpperCase();
 
@@ -560,23 +720,23 @@ export class DialogAceptacionMasivaComponent implements OnInit {
       ROSADO: '#f472b6',
     };
 
-    return colores[colorNormalizado] ?? '#cbd5e1';
-  }
-
-  // ====== Escapar HTML ======
-
-  private escaparHtml(valor: string): string {
-    return String(valor ?? '')
-      .replaceAll('&', '&amp;')
-      .replaceAll('<', '&lt;')
-      .replaceAll('>', '&gt;')
-      .replaceAll('"', '&quot;')
-      .replaceAll("'", '&#039;');
+    return colores[normalizado] ?? '#cbd5e1';
   }
 
   // ====== Cerrar ======
 
   cerrar(): void {
     this._dialogRef.close(this.huboCambios);
+  }
+
+  // ====== Escapar HTML ======
+
+  private escaparHtml(valor: unknown): string {
+    return String(valor ?? '')
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#039;');
   }
 }

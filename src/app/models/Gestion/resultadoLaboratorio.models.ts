@@ -1,3 +1,8 @@
+import {
+  IEstadoOperativoSolicitud,
+  IResumenResultadosEstadoOperativo,
+} from './estadoOperativoSolicitud.models';
+
 // ====== Tipos base ======
 
 export type TipoResultadoLaboratorio = 'NUMERICO' | 'TEXTO' | 'CATEGORICO';
@@ -37,6 +42,15 @@ export type TipoReferenciaLaboratorio =
 
 export type NivelAlertaLaboratorio = 'INFORMATIVA' | 'ADVERTENCIA' | 'CRITICA';
 
+export type CondicionAlertaLaboratorio =
+  | 'MENOR_QUE'
+  | 'MENOR_IGUAL_QUE'
+  | 'MAYOR_QUE'
+  | 'MAYOR_IGUAL_QUE'
+  | 'FUERA_DE_RANGO'
+  | 'IGUAL_A'
+  | 'DISTINTO_DE';
+
 // ====== Referencia aplicada ======
 
 export interface IReferenciaAplicada {
@@ -75,15 +89,7 @@ export interface IEvaluacionReferencia {
 export interface IAlertaDetectada {
   descripcion: string;
 
-  condicion:
-    | 'MENOR_QUE'
-    | 'MENOR_IGUAL_QUE'
-    | 'MAYOR_QUE'
-    | 'MAYOR_IGUAL_QUE'
-    | 'FUERA_DE_RANGO'
-    | 'IGUAL_A'
-    | 'DISTINTO_DE'
-    | null;
+  condicion: CondicionAlertaLaboratorio | null;
 
   valor1: string | number | null;
   valor2: string | number | null;
@@ -93,6 +99,66 @@ export interface IAlertaDetectada {
   mensaje: string;
 
   fechaDeteccion: string;
+}
+
+
+// ====== Configuración clínica histórica precargada ======
+
+export interface IReferenciaResultadoSnapshot {
+  descripcion: string;
+
+  sexo: 'TODOS' | 'MASCULINO' | 'FEMENINO';
+
+  edadMin: number | null;
+  edadMax: number | null;
+
+  unidadEdad: 'DIAS' | 'MESES' | 'ANIOS';
+
+  tipoReferencia: TipoReferenciaLaboratorio;
+
+  valorMin: number | null;
+  valorMax: number | null;
+  valorLimite: number | null;
+
+  valoresPermitidos: string[];
+
+  textoReferencia: string;
+
+  activo: boolean;
+}
+
+export interface IReglaAlertaSnapshot {
+  descripcion: string;
+
+  sexo: 'TODOS' | 'MASCULINO' | 'FEMENINO';
+
+  edadMin: number | null;
+  edadMax: number | null;
+
+  unidadEdad: 'DIAS' | 'MESES' | 'ANIOS';
+
+  condicion: CondicionAlertaLaboratorio;
+
+  valor1: string | number | null;
+  valor2: string | number | null;
+
+  nivelAlerta: NivelAlertaLaboratorio;
+
+  mensaje: string;
+
+  activo: boolean;
+}
+
+export interface IConfiguracionClinicaResultadoItem {
+  tipoResultado: TipoResultadoLaboratorio;
+
+  opcionesResultado: string[];
+
+  permiteValorNoListado: boolean;
+
+  referenciasResultado: IReferenciaResultadoSnapshot[];
+
+  reglasAlerta: IReglaAlertaSnapshot[];
 }
 
 // ====== Item de resultado ======
@@ -130,6 +196,8 @@ export interface IResultadoLaboratorioItem {
 
   alertasDetectadas: IAlertaDetectada[];
 
+  configuracionClinica?: IConfiguracionClinicaResultadoItem | null;
+
   registradoPor?: string | null;
 
   usuarioRegistroResultado?: string | null;
@@ -141,6 +209,59 @@ export interface IResultadoLaboratorioItem {
   usuarioActualizacionResultado?: string | null;
 
   fechaActualizacionResultado?: string | null;
+}
+
+// ====== Habilitación por muestra ======
+
+export type CodigoHabilitacionMuestraResultado =
+  | 'MUESTRAS_ACEPTADAS'
+  | 'MUESTRAS_NO_APTAS'
+  | 'SIN_MUESTRAS'
+  | 'NO_REQUIERE_MUESTRA'
+  | 'UNIDAD_ANULADA';
+
+export interface IMuestraHabilitacionResultado {
+  claveMuestraPlan: string;
+
+  numeroRecipiente: number | null;
+
+  totalIntentos: number;
+
+  muestraVigenteId: string | null;
+
+  codMuestra: string | null;
+
+  codigoEtiqueta: string | null;
+
+  numeroIntento: number | null;
+
+  estadoMuestra: string | null;
+
+  esVigente: boolean;
+
+  aceptada: boolean;
+}
+
+export interface IHabilitacionMuestraResultado {
+  habilitada: boolean;
+
+  codigo: CodigoHabilitacionMuestraResultado;
+
+  requiereMuestra: boolean;
+
+  claveUnidad: string;
+
+  mensaje: string;
+
+  resumen: {
+    totalRecipientes: number;
+
+    aceptados: number;
+
+    pendientes: number;
+  };
+
+  muestras: IMuestraHabilitacionResultado[];
 }
 
 // ====== Resultado de laboratorio ======
@@ -169,6 +290,10 @@ export interface IResultadoLaboratorio {
   observacionGeneral: string;
 
   estadoResultado: EstadoResultadoLaboratorio;
+
+  estadoUnidadLaboratorio?: string | null;
+
+  habilitacionMuestra: IHabilitacionMuestraResultado | null;
 
   // ====== Validación ======
 
@@ -235,6 +360,10 @@ export interface IResumenEstadosResultado {
   liberados: number;
 
   anulados: number;
+
+  habilitadosPorMuestra?: number;
+
+  bloqueadosPorMuestra?: number;
 }
 
 export interface IResumenAlertas {
@@ -260,6 +389,8 @@ export interface IResultadosPorSolicitudResponse {
 
   estadoSolicitud: string;
 
+  estadoOperativo: IEstadoOperativoSolicitud;
+
   resumen: IResumenEstadosResultado;
 
   resultados: IResultadoLaboratorio[];
@@ -271,6 +402,10 @@ export interface IResultadoPorIdResponse {
   ok: boolean;
 
   msg: string;
+
+  estadoSolicitud: string;
+
+  estadoOperativo: IEstadoOperativoSolicitud;
 
   resumenAlertas: IResumenAlertas;
 
@@ -305,6 +440,8 @@ export interface ISolicitudResultadoLiberado {
   codSolicitud: string;
 
   estado: string;
+
+  estadoOperativo: IEstadoOperativoSolicitud;
 
   fechaEmision: string;
 
@@ -342,8 +479,16 @@ export interface IInicializarResultadosResponse {
 
   msg: string;
 
+  estadoSolicitud: string;
+
+  estadoOperativo: IEstadoOperativoSolicitud;
+
   resumen: {
     unidadesLaboratorio: number;
+
+    unidadesActivas?: number;
+
+    unidadesAnuladas?: number;
 
     resultadosCreados: number;
 
@@ -367,6 +512,14 @@ export interface IRegistrarResultadoItemResponse {
   msg: string;
 
   estadoResultado: EstadoResultadoLaboratorio;
+
+  estadoUnidadLaboratorio: string | null;
+
+  estadoSolicitud: string;
+
+  estadoOperativo: IEstadoOperativoSolicitud;
+
+  habilitacionMuestra?: IHabilitacionMuestraResultado;
 
   item: IResultadoLaboratorioItem;
 }
@@ -392,6 +545,14 @@ export interface IRegistrarResultadosMasivosResponse {
 
   estadoResultado: EstadoResultadoLaboratorio;
 
+  estadoUnidadLaboratorio: string | null;
+
+  estadoSolicitud: string;
+
+  estadoOperativo: IEstadoOperativoSolicitud;
+
+  habilitacionMuestra?: IHabilitacionMuestraResultado;
+
   itemsActualizados: number;
 
   items: IResultadoLaboratorioItem[];
@@ -410,6 +571,12 @@ export interface IValidarResultadoResponse {
 
   estadoResultado: EstadoResultadoLaboratorio;
 
+  estadoUnidadLaboratorio: string | null;
+
+  estadoSolicitud: string;
+
+  estadoOperativo: IEstadoOperativoSolicitud;
+
   resumenAlertas: IResumenAlertas;
 
   resultado: IResultadoLaboratorio;
@@ -424,9 +591,126 @@ export interface ILiberarResultadoResponse {
 
   estadoResultado: EstadoResultadoLaboratorio;
 
+  estadoUnidadLaboratorio: string | null;
+
+  estadoSolicitud: string;
+
+  estadoOperativo: IEstadoOperativoSolicitud;
+
   resumenAlertas: IResumenAlertas;
 
   resultado: IResultadoLaboratorio;
+}
+
+
+// ====== Bandeja de Gestión de Resultados ======
+
+export type OrigenAtencionBandejaResultado = 'PARTICULAR' | 'EMPRESA';
+
+export interface IPacienteBandejaResultado {
+  hc: string | null;
+
+  clienteId: string | null;
+
+  tipoDoc: string | null;
+
+  nroDoc: string | null;
+
+  nombreCliente: string;
+
+  apePatCliente: string;
+
+  apeMatCliente: string;
+
+  sexoPaciente: string | null;
+
+  fechaNacimientoPaciente: string | null;
+}
+
+export interface IEmpresaBandejaResultado {
+  programacionEmpresaId: string | null;
+
+  codProgramacion: string | null;
+
+  empresaId: string | null;
+
+  rucEmpresa: string | null;
+
+  razonSocialEmpresa: string;
+
+  sede: string | null;
+
+  prioridad: string | null;
+
+  tipoEvaluacion: string | null;
+
+  tipoAtencion: string | null;
+
+  estadoProgramacion: string | null;
+}
+
+export interface ISolicitudBandejaResultado {
+  _id: string;
+
+  codSolicitud: string;
+
+  codigoLaboratorio: string | null;
+
+  origenAtencion: OrigenAtencionBandejaResultado;
+
+  tipo: string;
+
+  estado: string;
+
+  estadoOperativo: IEstadoOperativoSolicitud;
+
+  fechaEmision: string;
+
+  paciente: IPacienteBandejaResultado;
+
+  empresa: IEmpresaBandejaResultado | null;
+}
+
+export interface IResultadosBandejaSolicitud {
+  inicializados: boolean;
+
+  totalDocumentos: number;
+
+  resumen: IResumenResultadosEstadoOperativo | null;
+
+  detalle: IResultadoLaboratorio[];
+}
+
+export interface IBandejaResultadosLaboratorioItem {
+  solicitud: ISolicitudBandejaResultado;
+
+  resultados: IResultadosBandejaSolicitud;
+}
+
+export interface IResumenBandejaResultadosLaboratorio {
+  totalSolicitudes: number;
+
+  particulares: number;
+
+  empresas: number;
+
+  pendientesMuestras: number;
+
+  resultadosDisponiblesParcialmente: number;
+
+  atendidos: number;
+
+  resultadosInicializadosEnBandeja?: number;
+}
+
+export interface IBandejaResultadosLaboratorioResponse {
+  ok: boolean;
+
+  msg: string;
+
+  resumen: IResumenBandejaResultadosLaboratorio;
+
+  solicitudes: IBandejaResultadosLaboratorioItem[];
 }
 
 // ====== Anulación ======

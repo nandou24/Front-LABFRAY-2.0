@@ -1,0 +1,179 @@
+.dialog-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.dialog-title {
+  font-size: 19px;
+  font-weight: 700;
+}
+
+.dialog-subtitle {
+  margin-top: 4px;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.cambio-evaluacion {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.estado-box {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+.estado-box span {
+  color: #64748b;
+  font-size: 11px;
+}
+
+.estado-box strong {
+  font-size: 14px;
+}
+
+.estado-actual {
+  color: #334155;
+}
+
+.estado-aceptado {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+  color: #166534;
+}
+
+.estado-rechazado {
+  border-color: #fecaca;
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.cambio-evaluacion > mat-icon {
+  color: #64748b;
+}
+
+.trazabilidad-previa {
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border: 1px solid #dbe3ee;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+.trazabilidad-titulo,
+.autorizacion-titulo {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.trazabilidad-titulo {
+  margin-bottom: 10px;
+}
+
+.trazabilidad-titulo mat-icon,
+.autorizacion-titulo mat-icon {
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
+}
+
+.trazabilidad-item {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.trazabilidad-item span,
+.trazabilidad-item small {
+  color: #64748b;
+  font-size: 11px;
+}
+
+.trazabilidad-item strong {
+  color: #0f172a;
+  font-size: 13px;
+}
+
+.motivo-previo {
+  margin-top: 5px;
+  color: #475569 !important;
+}
+
+.mensaje-autorizacion {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin-bottom: 16px;
+  padding: 11px 13px;
+  border-radius: 9px;
+  background: #eff6ff;
+  color: #1e40af;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.mensaje-autorizacion mat-icon {
+  flex: 0 0 auto;
+}
+
+.form-correccion {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.campo-completo {
+  width: 100%;
+}
+
+.autorizacion-titulo {
+  margin: 2px 0 10px;
+}
+
+.autorizacion-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.evidencia-operacion {
+  margin-top: 4px;
+}
+
+.btn-corregir {
+  background: #166534;
+  color: #fff;
+}
+
+.btn-corregir-rechazo {
+  background: #b91c1c;
+}
+
+@media (max-width: 640px) {
+  .cambio-evaluacion,
+  .autorizacion-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cambio-evaluacion > mat-icon {
+    margin: 0 auto;
+    transform: rotate(90deg);
+  }
+}

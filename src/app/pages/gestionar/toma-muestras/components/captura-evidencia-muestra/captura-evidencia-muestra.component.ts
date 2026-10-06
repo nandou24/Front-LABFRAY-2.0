@@ -325,6 +325,12 @@ export class CapturaEvidenciaMuestraComponent implements OnDestroy {
       throw new Error('No se pudo preparar la fotografía');
     }
 
+    // ====== Igualar orientación de vista previa ======
+
+    contexto.save();
+    contexto.translate(canvas.width, 0);
+    contexto.scale(-1, 1);
+
     contexto.drawImage(
       video,
       0,
@@ -332,6 +338,8 @@ export class CapturaEvidenciaMuestraComponent implements OnDestroy {
       canvas.width,
       canvas.height,
     );
+
+    contexto.restore();
 
     return canvas;
   }

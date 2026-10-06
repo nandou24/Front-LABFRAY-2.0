@@ -169,6 +169,13 @@ export const routes: Routes = [
             './pages/gestionar/toma-muestras/toma-muestras.component'
           ).then((m) => m.TomaMuestrasComponent),
       },
+      {
+        path: 'resultados-laboratorio',
+        loadComponent: () =>
+          import(
+            './pages/gestionar/resultados-laboratorio/resultados-laboratorio.component'
+          ).then((m) => m.ResultadosLaboratorioComponent),
+      },
     ],
   },
   {
