@@ -51,18 +51,6 @@ export class AuthService {
     }
   }
 
-  // obtenerRutasDesdeToken(): any[] {
-  //   const token = this.obtenerToken();
-  //   if (!token) return [];
-
-  //   try {
-  //     const decoded: any = jwtDecode(token);
-  //     return decoded.rutasPermitidas || []; // Asegúrate de que en el backend se guarden rutas completas, no solo los _id
-  //   } catch (e) {
-  //     console.error('Error al decodificar el token:', e);
-  //     return [];
-  //   }
-  // }
   obtenerRutasPermitidas(): any[] {
     const token = localStorage.getItem('token');
     if (!token) return [];
@@ -74,6 +62,17 @@ export class AuthService {
       console.error('Token inválido', error);
       return [];
     }
+  }
+
+  // ====== Permisos por acción ======
+
+  obtenerPermisosAcciones(): string[] {
+    const datos = this.obtenerDatosDesdeToken();
+    return Array.isArray(datos?.permisosAcciones) ? datos.permisosAcciones : [];
+  }
+
+  tienePermisoAccion(codigo: string): boolean {
+    return this.obtenerPermisosAcciones().includes(codigo);
   }
 
   obtenerDatosDesdeToken(): any {
@@ -123,10 +122,7 @@ export class AuthService {
     try {
       const decoded: any = jwtDecode(token);
       const exp = decoded.exp;
-
-      // Obtener el tiempo actual en segundos
       const ahora = Math.floor(Date.now() / 1000);
-
       return exp < ahora;
     } catch (error) {
       console.error('Token inválido:', error);

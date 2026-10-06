@@ -10,6 +10,7 @@ import {
   IAnularResultadoDTO,
   IAnularResultadoResponse,
   IInicializarResultadosResponse,
+  ILiberarResultadoDTO,
   ILiberarResultadoResponse,
   IRegistrarResultadoItemDTO,
   IRegistrarResultadoItemResponse,
@@ -165,10 +166,11 @@ export class ResultadoLaboratorioService {
 
   liberarResultado(
     resultadoLaboratorioId: string,
+    body: ILiberarResultadoDTO = {},
   ): Observable<ILiberarResultadoResponse> {
     return this._http.put<ILiberarResultadoResponse>(
       `${this.apiUrl}/${resultadoLaboratorioId}/liberar`,
-      {},
+      body,
       {
         headers: this._auth.getAuthHeaders(),
       },
@@ -179,12 +181,8 @@ export class ResultadoLaboratorioService {
 
   anularResultado(
     resultadoLaboratorioId: string,
-    motivoAnulacion: string,
+    body: IAnularResultadoDTO,
   ): Observable<IAnularResultadoResponse> {
-    const body: IAnularResultadoDTO = {
-      motivoAnulacion,
-    };
-
     return this._http.put<IAnularResultadoResponse>(
       `${this.apiUrl}/${resultadoLaboratorioId}/anular`,
       body,

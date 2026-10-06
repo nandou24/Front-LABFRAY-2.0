@@ -305,6 +305,8 @@ export interface IResultadoLaboratorio {
 
   observacionValidacion?: string;
 
+  confirmoAlertasCriticasValidacion?: boolean;
+
   // ====== Liberación ======
 
   liberadoPor?: string | null;
@@ -312,6 +314,8 @@ export interface IResultadoLaboratorio {
   usuarioLiberacion?: string | null;
 
   fechaLiberacion?: string | null;
+
+  confirmoAlertasCriticasLiberacion?: boolean;
 
   // ====== Anulación ======
 
@@ -324,6 +328,14 @@ export interface IResultadoLaboratorio {
   fechaAnulacion?: string | null;
 
   motivoAnulacion?: string | null;
+
+  autorizacionAnulacionPor?: string | null;
+
+  usuarioAutorizacionAnulacion?: string | null;
+
+  rolAutorizacionAnulacion?: string | null;
+
+  fechaAutorizacionAnulacion?: string | null;
 
   // ====== Auditoría ======
 
@@ -562,6 +574,8 @@ export interface IRegistrarResultadosMasivosResponse {
 
 export interface IValidarResultadoDTO {
   observacionValidacion?: string;
+
+  confirmarAlertasCriticas?: boolean;
 }
 
 export interface IValidarResultadoResponse {
@@ -583,6 +597,10 @@ export interface IValidarResultadoResponse {
 }
 
 // ====== Liberación ======
+
+export interface ILiberarResultadoDTO {
+  confirmarAlertasCriticas?: boolean;
+}
 
 export interface ILiberarResultadoResponse {
   ok: boolean;
@@ -717,6 +735,20 @@ export interface IBandejaResultadosLaboratorioResponse {
 
 export interface IAnularResultadoDTO {
   motivoAnulacion: string;
+
+  nombreUsuarioAutorizador?: string;
+
+  passwordAutorizador?: string;
+}
+
+export interface IAutorizacionAnulacionResultado {
+  autorizacionAnulacionPor: string;
+
+  usuarioAutorizacionAnulacion: string;
+
+  rolAutorizacionAnulacion: string | null;
+
+  fechaAutorizacionAnulacion: string;
 }
 
 export interface IAnularResultadoResponse {
@@ -728,7 +760,15 @@ export interface IAnularResultadoResponse {
 
   estadoResultado: 'ANULADO';
 
+  estadoUnidadLaboratorio: string | null;
+
+  estadoSolicitud: string;
+
+  estadoOperativo: IEstadoOperativoSolicitud;
+
   motivoAnulacion: string;
+
+  autorizacionSegundoUsuario: IAutorizacionAnulacionResultado | null;
 
   resultado: IResultadoLaboratorio;
 }

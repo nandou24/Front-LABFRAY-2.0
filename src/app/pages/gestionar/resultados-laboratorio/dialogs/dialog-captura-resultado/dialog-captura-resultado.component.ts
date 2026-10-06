@@ -49,6 +49,7 @@ export interface IRegistroResultadoDialogData {
   indiceInicial: number;
   paciente: IPacienteRegistroResultadoDialog;
   fechaReferencia: string;
+  soloLecturaForzada?: boolean;
 }
 
 export interface IRegistroResultadoDialogResult {
@@ -162,7 +163,10 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
   }
 
   get soloLectura(): boolean {
-    return !this.esResultadoEditable(this.resultadoActual);
+    return (
+      this.data.soloLecturaForzada === true ||
+      !this.esResultadoEditable(this.resultadoActual)
+    );
   }
 
   get habilitacionMuestraActual(): IHabilitacionMuestraResultado | null {
@@ -171,6 +175,7 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
 
   get puedeEditarActual(): boolean {
     return (
+      this.data.soloLecturaForzada !== true &&
       this.esResultadoEditable(this.resultadoActual) &&
       this.habilitacionMuestraActual?.habilitada !== false
     );
@@ -251,6 +256,7 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
     });
 
     const puedeEditar =
+      this.data.soloLecturaForzada !== true &&
       this.esResultadoEditable(resultado) &&
       resultado?.habilitacionMuestra?.habilitada !== false;
 

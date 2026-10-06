@@ -48,6 +48,31 @@
 </div>
 
 <mat-dialog-content>
+  <div class="aviso-anulacion" *ngIf="resultadoActual.estadoResultado === 'ANULADO'">
+    <mat-icon>block</mat-icon>
+    <div>
+      <strong>Resultado anulado</strong>
+      <span>
+        Estado previo: {{ resultadoActual.estadoPrevioAnulacion || '-' }} ·
+        Motivo: {{ resultadoActual.motivoAnulacion || '-' }}
+      </span>
+      <span *ngIf="resultadoActual.usuarioAnulacion || resultadoActual.fechaAnulacion">
+        Anulado por {{ resultadoActual.usuarioAnulacion || '-' }}
+        <ng-container *ngIf="resultadoActual.fechaAnulacion">
+          · {{ resultadoActual.fechaAnulacion | date: 'dd/MM/yyyy HH:mm' }}
+        </ng-container>
+      </span>
+      <span *ngIf="resultadoActual.usuarioAutorizacionAnulacion">
+        Autorizado por {{ resultadoActual.usuarioAutorizacionAnulacion }}
+        <ng-container *ngIf="resultadoActual.rolAutorizacionAnulacion">
+          ({{ resultadoActual.rolAutorizacionAnulacion }})
+        </ng-container>
+        <ng-container *ngIf="resultadoActual.fechaAutorizacionAnulacion">
+          · {{ resultadoActual.fechaAutorizacionAnulacion | date: 'dd/MM/yyyy HH:mm' }}
+        </ng-container>
+      </span>
+    </div>
+  </div>
   <div
     class="aviso-muestra"
     [class.aviso-muestra-bloqueada]="

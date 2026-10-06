@@ -3,11 +3,6 @@ mat-form-field {
   height: 50%;
 }
 
-// Estilos para tabla con cursor pointer y hover
-// .mat-mdc-row .mat-mdc-cell {
-//   cursor: pointer;
-// }
-
 .mat-mdc-row:hover .mat-mdc-cell {
   background-color: #dfe9f3;
 }
@@ -20,7 +15,6 @@ mat-form-field {
   background-color: rgba(0, 102, 255, 0.15) !important;
 }
 
-// Contenedor de tabla con mensaje de datos vacíos
 .tabla-contenedor {
   position: relative;
 }
@@ -32,9 +26,8 @@ mat-form-field {
   font-style: italic;
 }
 
-// Estilos para botones
 .btn-registrar {
-  background-color: #4caf50 !important; // verde
+  background-color: #4caf50 !important;
   color: white !important;
 
   &:hover {
@@ -48,7 +41,7 @@ mat-form-field {
 }
 
 .btn-actualizar {
-  background-color: #ecb80b !important; // amarillo suave
+  background-color: #ecb80b !important;
   color: #154cb3 !important;
 
   &:hover {
@@ -62,7 +55,7 @@ mat-form-field {
 }
 
 .btn-nuevo {
-  background-color: #8d9097 !important; // gris moderno
+  background-color: #8d9097 !important;
   color: white !important;
 
   &:hover {
@@ -70,7 +63,6 @@ mat-form-field {
   }
 }
 
-//Inicio CARD-----------
 mat-card-title {
   background-color: #0f3369;
   color: white;
@@ -98,11 +90,8 @@ mat-card-content {
   padding: 0 4px;
 }
 
-//Fin CARD--------------
-
-/* Eliminar las flechas en navegadores WebKit (Chrome, Safari, Edge) */
-input[type="number"]::-webkit-inner-spin-button,
-input[type="number"]::-webkit-outer-spin-button {
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
@@ -116,8 +105,8 @@ mat-option {
 }
 
 .mat-mdc-icon-button .mat-mdc-button-touch-target {
-  width: 18px !important; /* Aumenta el tamaño del área de toque */
-  height: 18px !important; /* Aumenta el tamaño del área de toque */
+  width: 18px !important;
+  height: 18px !important;
 }
 
 .flex-item {
@@ -143,6 +132,36 @@ mat-option {
   margin-left: 1rem;
   position: absolute;
   top: -0.6rem;
+}
+
+.permisos-acciones {
+  padding: 1.3rem 1rem 0.75rem;
+}
+
+.permisos-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem 1.25rem;
+}
+
+.permisos-grid mat-checkbox {
+  align-items: flex-start;
+}
+
+.permiso-nombre,
+.permisos-grid small {
+  display: block;
+}
+
+.permiso-nombre {
+  font-weight: 600;
+  color: #263238;
+}
+
+.permisos-grid small {
+  color: #667085;
+  line-height: 1.2;
+  white-space: normal;
 }
 
 .contenedor-flex {
@@ -175,22 +194,24 @@ mat-option {
   }
 }
 
-/* Tablets (2 columnas) */
 @media (max-width: 991px) {
   .flex-item {
-    flex: 1 1 48% !important; /* Cada item ocupará 100% cuando sea pequeño */
+    flex: 1 1 48% !important;
   }
 }
 
-/* Celulares (1 columna) */
 @media (max-width: 767px) {
   .flex-item {
-    flex: 1 1 100% !important; /* Cada item ocupará 100% cuando sea pequeño */
+    flex: 1 1 100% !important;
+  }
+
+  .permisos-grid {
+    grid-template-columns: 1fr;
   }
 }
 
 .quicksand-totales {
-  font-family: "Quicksand", serif;
+  font-family: 'Quicksand', serif;
   font-optical-sizing: auto;
   font-weight: 800;
   font-style: normal;
@@ -199,7 +220,7 @@ mat-option {
 }
 
 .quicksand-subtotal {
-  font-family: "Quicksand", serif;
+  font-family: 'Quicksand', serif;
   font-optical-sizing: auto;
   font-weight: 500;
   font-style: normal;
@@ -214,6 +235,6 @@ mat-option {
 }
 
 .btn-confirmar-anulacion {
-  background-color: #d32f2f !important; // rojo fuerte
+  background-color: #d32f2f !important;
   color: white !important;
 }

@@ -53,10 +53,7 @@
         readonly
       />
 
-      <mat-datepicker-toggle
-        matSuffix
-        [for]="pickerFin"
-      ></mat-datepicker-toggle>
+      <mat-datepicker-toggle matSuffix [for]="pickerFin"></mat-datepicker-toggle>
 
       <mat-datepicker #pickerFin></mat-datepicker>
     </mat-form-field>
@@ -106,7 +103,7 @@
           <ng-container matColumnDef="codigoLaboratorio">
             <th mat-header-cell *matHeaderCellDef>Código Lab.</th>
             <td mat-cell *matCellDef="let row">
-              <strong>{{ row.solicitud.codigoLaboratorio || "-" }}</strong>
+              <strong>{{ row.solicitud.codigoLaboratorio || '-' }}</strong>
             </td>
           </ng-container>
 
@@ -120,28 +117,28 @@
           <ng-container matColumnDef="fechaEmision">
             <th mat-header-cell *matHeaderCellDef>Fecha</th>
             <td mat-cell *matCellDef="let row">
-              {{ row.solicitud.fechaEmision | date: "dd/MM/yyyy HH:mm" }}
+              {{ row.solicitud.fechaEmision | date: 'dd/MM/yyyy HH:mm' }}
             </td>
           </ng-container>
 
           <ng-container matColumnDef="hc">
             <th mat-header-cell *matHeaderCellDef>HC</th>
             <td mat-cell *matCellDef="let row">
-              {{ row.solicitud.paciente.hc || "-" }}
+              {{ row.solicitud.paciente.hc || '-' }}
             </td>
           </ng-container>
 
           <ng-container matColumnDef="documento">
             <th mat-header-cell *matHeaderCellDef>Documento</th>
             <td mat-cell *matCellDef="let row">
-              {{ obtenerDocumentoPaciente(row) || "-" }}
+              {{ obtenerDocumentoPaciente(row) || '-' }}
             </td>
           </ng-container>
 
           <ng-container matColumnDef="paciente">
             <th mat-header-cell *matHeaderCellDef>Paciente</th>
             <td mat-cell *matCellDef="let row">
-              {{ obtenerNombrePaciente(row) || "-" }}
+              {{ obtenerNombrePaciente(row) || '-' }}
             </td>
           </ng-container>
 
@@ -183,9 +180,7 @@
                 </span>
 
                 <span
-                  *ngIf="
-                    row.solicitud.estadoOperativo.tieneResultadosDisponibles
-                  "
+                  *ngIf="row.solicitud.estadoOperativo.tieneResultadosDisponibles"
                 >
                   Ya existen resultados liberados
                 </span>
@@ -200,12 +195,11 @@
                 mat-stroked-button
                 type="button"
                 (click)="toggleParticular(row); $event.stopPropagation()"
-                [disabled]="row.solicitud.estado === 'ANULADO'"
               >
                 <mat-icon>
-                  {{ isExpandedParticular(row) ? "expand_less" : "science" }}
+                  {{ isExpandedParticular(row) ? 'expand_less' : 'science' }}
                 </mat-icon>
-                {{ isExpandedParticular(row) ? "Cerrar" : "Gestionar" }}
+                {{ isExpandedParticular(row) ? 'Cerrar' : 'Gestionar' }}
               </button>
             </td>
           </ng-container>
@@ -220,10 +214,7 @@
               class="celda-detalle"
             >
               <ng-container
-                *ngTemplateOutlet="
-                  detalleResultados;
-                  context: { $implicit: row }
-                "
+                *ngTemplateOutlet="detalleResultados; context: { $implicit: row }"
               ></ng-container>
             </td>
           </ng-container>
@@ -277,7 +268,7 @@
           <ng-container matColumnDef="codigoLaboratorio">
             <th mat-header-cell *matHeaderCellDef>Código Lab.</th>
             <td mat-cell *matCellDef="let row">
-              <strong>{{ row.solicitud.codigoLaboratorio || "-" }}</strong>
+              <strong>{{ row.solicitud.codigoLaboratorio || '-' }}</strong>
             </td>
           </ng-container>
 
@@ -291,49 +282,49 @@
           <ng-container matColumnDef="codigoProgramacion">
             <th mat-header-cell *matHeaderCellDef>Programación</th>
             <td mat-cell *matCellDef="let row">
-              {{ row.solicitud.empresa?.codProgramacion || "-" }}
+              {{ row.solicitud.empresa?.codProgramacion || '-' }}
             </td>
           </ng-container>
 
           <ng-container matColumnDef="fechaEmision">
             <th mat-header-cell *matHeaderCellDef>Fecha</th>
             <td mat-cell *matCellDef="let row">
-              {{ row.solicitud.fechaEmision | date: "dd/MM/yyyy HH:mm" }}
+              {{ row.solicitud.fechaEmision | date: 'dd/MM/yyyy HH:mm' }}
             </td>
           </ng-container>
 
           <ng-container matColumnDef="hc">
             <th mat-header-cell *matHeaderCellDef>HC</th>
             <td mat-cell *matCellDef="let row">
-              {{ row.solicitud.paciente.hc || "-" }}
+              {{ row.solicitud.paciente.hc || '-' }}
             </td>
           </ng-container>
 
           <ng-container matColumnDef="documento">
             <th mat-header-cell *matHeaderCellDef>Documento</th>
             <td mat-cell *matCellDef="let row">
-              {{ obtenerDocumentoPaciente(row) || "-" }}
+              {{ obtenerDocumentoPaciente(row) || '-' }}
             </td>
           </ng-container>
 
           <ng-container matColumnDef="paciente">
             <th mat-header-cell *matHeaderCellDef>Paciente</th>
             <td mat-cell *matCellDef="let row">
-              {{ obtenerNombrePaciente(row) || "-" }}
+              {{ obtenerNombrePaciente(row) || '-' }}
             </td>
           </ng-container>
 
           <ng-container matColumnDef="empresa">
             <th mat-header-cell *matHeaderCellDef>Empresa</th>
             <td mat-cell *matCellDef="let row">
-              {{ row.solicitud.empresa?.razonSocialEmpresa || "-" }}
+              {{ row.solicitud.empresa?.razonSocialEmpresa || '-' }}
             </td>
           </ng-container>
 
           <ng-container matColumnDef="sede">
             <th mat-header-cell *matHeaderCellDef>Sede</th>
             <td mat-cell *matCellDef="let row">
-              {{ row.solicitud.empresa?.sede || "-" }}
+              {{ row.solicitud.empresa?.sede || '-' }}
             </td>
           </ng-container>
 
@@ -375,9 +366,7 @@
                 </span>
 
                 <span
-                  *ngIf="
-                    row.solicitud.estadoOperativo.tieneResultadosDisponibles
-                  "
+                  *ngIf="row.solicitud.estadoOperativo.tieneResultadosDisponibles"
                 >
                   Ya existen resultados liberados
                 </span>
@@ -392,12 +381,11 @@
                 mat-stroked-button
                 type="button"
                 (click)="toggleEmpresa(row); $event.stopPropagation()"
-                [disabled]="row.solicitud.estado === 'ANULADO'"
               >
                 <mat-icon>
-                  {{ isExpandedEmpresa(row) ? "expand_less" : "science" }}
+                  {{ isExpandedEmpresa(row) ? 'expand_less' : 'science' }}
                 </mat-icon>
-                {{ isExpandedEmpresa(row) ? "Cerrar" : "Gestionar" }}
+                {{ isExpandedEmpresa(row) ? 'Cerrar' : 'Gestionar' }}
               </button>
             </td>
           </ng-container>
@@ -412,10 +400,7 @@
               class="celda-detalle"
             >
               <ng-container
-                *ngTemplateOutlet="
-                  detalleResultados;
-                  context: { $implicit: row }
-                "
+                *ngTemplateOutlet="detalleResultados; context: { $implicit: row }"
               ></ng-container>
             </td>
           </ng-container>
@@ -436,10 +421,7 @@
           ></tr>
         </table>
 
-        <div
-          class="sin-resultados"
-          *ngIf="dataSourceEmpresas.data.length === 0"
-        >
+        <div class="sin-resultados" *ngIf="dataSourceEmpresas.data.length === 0">
           No hay solicitudes de empresa para el criterio seleccionado.
         </div>
 
@@ -460,7 +442,7 @@
       <div class="detalle-encabezado">
         <div>
           <strong>
-            {{ row.solicitud.codigoLaboratorio || "-" }} ·
+            {{ row.solicitud.codigoLaboratorio || '-' }} ·
             {{ row.solicitud.codSolicitud }}
           </strong>
 
@@ -492,27 +474,21 @@
 
         <div>
           <strong>
-            {{
-              row.solicitud.estadoOperativo.resumen?.resultados?.enProceso || 0
-            }}
+            {{ row.solicitud.estadoOperativo.resumen?.resultados?.enProceso || 0 }}
           </strong>
           <span>En proceso</span>
         </div>
 
         <div>
           <strong>
-            {{
-              row.solicitud.estadoOperativo.resumen?.resultados?.completos || 0
-            }}
+            {{ row.solicitud.estadoOperativo.resumen?.resultados?.completos || 0 }}
           </strong>
           <span>Completos</span>
         </div>
 
         <div>
           <strong>
-            {{
-              row.solicitud.estadoOperativo.resumen?.resultados?.validados || 0
-            }}
+            {{ row.solicitud.estadoOperativo.resumen?.resultados?.validados || 0 }}
           </strong>
           <span>Validados</span>
         </div>
@@ -610,22 +586,24 @@
                   (click)="abrirRegistroResultado(row, resultado)"
                   [disabled]="
                     estaProcesandoResultado(resultado) ||
-                    (esResultadoEditable(resultado) &&
+                    (row.solicitud.estado !== 'ANULADO' &&
+                      esResultadoEditable(resultado) &&
+                      puedeRegistrarResultados &&
                       resultado.habilitacionMuestra?.habilitada === false)
                   "
                 >
                   <mat-icon>
-                    {{
-                      esResultadoEditable(resultado)
-                        ? "edit_note"
-                        : "visibility"
-                    }}
+                    {{ row.solicitud.estado !== 'ANULADO' && esResultadoEditable(resultado) && puedeRegistrarResultados ? 'edit_note' : 'visibility' }}
                   </mat-icon>
-                  {{ obtenerTextoAccionResultado(resultado) }}
+                  {{ row.solicitud.estado === 'ANULADO' ? 'Ver' : obtenerTextoAccionResultado(resultado) }}
                 </button>
 
                 <button
-                  *ngIf="resultado.estadoResultado === 'COMPLETO'"
+                  *ngIf="
+                    row.solicitud.estado !== 'ANULADO' &&
+                    resultado.estadoResultado === 'COMPLETO' &&
+                    puedeValidarResultados
+                  "
                   mat-stroked-button
                   type="button"
                   class="accion-validar"
@@ -637,7 +615,11 @@
                 </button>
 
                 <button
-                  *ngIf="resultado.estadoResultado === 'VALIDADO'"
+                  *ngIf="
+                    row.solicitud.estado !== 'ANULADO' &&
+                    resultado.estadoResultado === 'VALIDADO' &&
+                    puedeLiberarResultados
+                  "
                   mat-flat-button
                   type="button"
                   class="accion-liberar"
@@ -646,6 +628,22 @@
                 >
                   <mat-icon>publish</mat-icon>
                   Liberar
+                </button>
+
+                <button
+                  *ngIf="
+                    row.solicitud.estado !== 'ANULADO' &&
+                    resultado.estadoResultado !== 'ANULADO' &&
+                    puedeAnularResultados
+                  "
+                  mat-stroked-button
+                  type="button"
+                  class="accion-anular"
+                  (click)="anularResultado(row, resultado)"
+                  [disabled]="estaProcesandoResultado(resultado)"
+                >
+                  <mat-icon>block</mat-icon>
+                  Anular
                 </button>
               </div>
             </td>

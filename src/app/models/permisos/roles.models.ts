@@ -1,12 +1,19 @@
 import { IRuta } from './rutas.models';
 
+export type PermisoAccion =
+  | 'RESULTADOS_REGISTRAR'
+  | 'RESULTADOS_VALIDAR'
+  | 'RESULTADOS_LIBERAR'
+  | 'RESULTADOS_ANULAR';
+
 export interface IRol {
   _id: string;
-  codRol: string; // Código único (ej. 'ROL001')
-  nombreRol: string; // Ej. 'Administrador', 'Recepción', etc.
-  descripcionRol?: string; // Detalle del rol y sus funciones
-  estado: boolean; // ACTIVO / INACTIVO
-  rutasPermitidas: IRuta[]; // rutas asignadas al rol
+  codRol: string;
+  nombreRol: string;
+  descripcionRol?: string;
+  estado: boolean;
+  rutasPermitidas: IRuta[];
+  permisosAcciones?: PermisoAccion[];
 }
 
 export interface IRolPostDTO {

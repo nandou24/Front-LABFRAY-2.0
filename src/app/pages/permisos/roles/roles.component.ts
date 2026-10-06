@@ -9,7 +9,10 @@ import {
 } from '@angular/forms';
 import { RolesService } from '../../../services/permisos/roles/roles.service';
 import { RutasService } from '../../../services/permisos/rutas/rutas.service';
-import { IRol } from '../../../models/permisos/roles.models';
+import {
+  IRol,
+  PermisoAccion,
+} from '../../../models/permisos/roles.models';
 import { IRuta } from '../../../models/permisos/rutas.models';
 import Swal from 'sweetalert2';
 import { MatCardModule } from '@angular/material/card';
@@ -18,10 +21,17 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { CommonModule } from '@angular/common';
 import { MatSelectModule } from '@angular/material/select';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
+
+interface IPermisoAccionDisponible {
+  codigo: PermisoAccion;
+  nombre: string;
+  descripcion: string;
+}
 
 @Component({
   selector: 'app-roles',
@@ -34,6 +44,7 @@ import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
     MatSlideToggleModule,
     MatIconModule,
     MatButtonModule,
+    MatCheckboxModule,
     MatTableModule,
     MatSelectModule,
     MatPaginatorModule,
@@ -46,6 +57,29 @@ export class RolesComponent implements OnInit, AfterViewInit {
   private _rolesService = inject(RolesService);
   private _rutasService = inject(RutasService);
 
+  readonly permisosAccionesDisponibles: IPermisoAccionDisponible[] = [
+    {
+      codigo: 'RESULTADOS_REGISTRAR',
+      nombre: 'Registrar resultados',
+      descripcion: 'Registrar o editar valores de resultados de laboratorio.',
+    },
+    {
+      codigo: 'RESULTADOS_VALIDAR',
+      nombre: 'Validar resultados',
+      descripcion: 'Realizar la validación clínica de resultados completos.',
+    },
+    {
+      codigo: 'RESULTADOS_LIBERAR',
+      nombre: 'Liberar resultados',
+      descripcion: 'Publicar resultados validados para visualización o entrega.',
+    },
+    {
+      codigo: 'RESULTADOS_ANULAR',
+      nombre: 'Anular resultados',
+      descripcion: 'Anular resultados conservando la trazabilidad clínica.',
+    },
+  ];
+
   public formRol: FormGroup = this._fb.group({
     codRol: [null],
     nombreRol: [
@@ -54,14 +88,14 @@ export class RolesComponent implements OnInit, AfterViewInit {
     ],
     descripcionRol: [''],
     estado: [true, Validators.required],
-    rutasPermitidas: this._fb.array([]), // Nuevo control para rutas asignadas
+    rutasPermitidas: this._fb.array([]),
+    permisosAcciones: this._fb.control<PermisoAccion[]>([]),
   });
 
   get rutasPermitidas(): FormArray {
     return this.formRol.get('rutasPermitidas') as FormArray;
   }
 
-  // Array para mantener todos los datos iniciales en memoria
   private todosLosRoles: IRol[] = [];
   public dataSourceRol = new MatTableDataSource<IRol>();
   public columnasTablaRol: string[] = ['codigo', 'nombre', 'estado', 'accion'];
@@ -89,9 +123,8 @@ export class RolesComponent implements OnInit, AfterViewInit {
   listarRoles() {
     this._rolesService.getAllRoles().subscribe({
       next: (roles) => {
-        this.todosLosRoles = roles; // Guardar todos los datos en memoria
+        this.todosLosRoles = roles;
         this.dataSourceRol.data = roles;
-        //console.log('Roles obtenidos:', roles);
       },
       error: () => {
         this.todosLosRoles = [];
@@ -104,16 +137,13 @@ export class RolesComponent implements OnInit, AfterViewInit {
     const termino = this.terminoBusqueda?.value?.trim() ?? '';
 
     if (termino === '') {
-      // Si no hay término de búsqueda, mostrar todos los datos iniciales
       this.dataSourceRol.data = this.todosLosRoles;
       this.dataSourceRol.filter = '';
     } else {
-      // Si hay término de búsqueda, aplicar filtro del dataSource
-      this.dataSourceRol.data = this.todosLosRoles; // Asegurar que tiene todos los datos
+      this.dataSourceRol.data = this.todosLosRoles;
       this.dataSourceRol.filter = termino.toLowerCase();
     }
 
-    // Si hay un paginador, ir a la primera página cuando se filtra
     if (this.dataSourceRol.paginator) {
       this.dataSourceRol.paginator.firstPage();
     }
@@ -140,6 +170,7 @@ export class RolesComponent implements OnInit, AfterViewInit {
       this.formRol.markAllAsTouched();
       return;
     }
+
     Swal.fire({
       title: '¿Registrar rol?',
       text: '¿Está seguro de registrar este rol?',
@@ -158,18 +189,19 @@ export class RolesComponent implements OnInit, AfterViewInit {
     const rol: IRol = {
       ...this.formRol.value,
     };
+
     this._rolesService.registrarRol(rol).subscribe({
       next: () => {
         Swal.fire('Registrado', 'Rol registrado correctamente', 'success');
-        this.formRol.reset({ estado: true });
-        this.listarRoles();
         this.cancelarEdicion();
+        this.listarRoles();
       },
       error: (err) => {
         const mensaje =
           err?.error?.msg ||
           err.message ||
           'No se pudo registrar el rol. Intenta nuevamente.';
+
         Swal.fire({
           title: 'Error',
           text: mensaje,
@@ -185,6 +217,7 @@ export class RolesComponent implements OnInit, AfterViewInit {
       this.formRol.markAllAsTouched();
       return;
     }
+
     Swal.fire({
       title: '¿Actualizar rol?',
       text: '¿Está seguro de actualizar este rol?',
@@ -197,6 +230,7 @@ export class RolesComponent implements OnInit, AfterViewInit {
         const rol: IRol = {
           ...this.formRol.value,
         };
+
         this._rolesService
           .actualizarRol(this.rolSeleccionado!.codRol, rol)
           .subscribe({
@@ -223,7 +257,6 @@ export class RolesComponent implements OnInit, AfterViewInit {
 
     this.rutasPermitidas.clear();
 
-    // Agregar las rutasPermitidas al FormArray
     rol.rutasPermitidas.forEach((ruta) => {
       const grupo = this._fb.group({
         _id: [ruta._id, Validators.required],
@@ -238,6 +271,7 @@ export class RolesComponent implements OnInit, AfterViewInit {
       nombreRol: rol.nombreRol,
       descripcionRol: rol.descripcionRol,
       estado: rol.estado,
+      permisosAcciones: rol.permisosAcciones ?? [],
     });
   }
 
@@ -267,11 +301,14 @@ export class RolesComponent implements OnInit, AfterViewInit {
   cancelarEdicion() {
     this.modoEdicion = false;
     this.rolSeleccionado = null;
-    this.filaSeleccionadaIndex = null; // Resetear la fila seleccionada
-    this.formRol.reset({ estado: true });
+    this.filaSeleccionadaIndex = null;
+    this.formRol.reset({
+      estado: true,
+      permisosAcciones: [],
+    });
     this.rutasPermitidas.clear();
-    this.terminoBusqueda.setValue(''); // Limpiar el campo de búsqueda
-    this.buscarRoles(); // Volver a cargar todos los datos
+    this.terminoBusqueda.setValue('');
+    this.buscarRoles();
   }
 
   agregarRuta() {
@@ -292,7 +329,6 @@ export class RolesComponent implements OnInit, AfterViewInit {
       .at(index)
       .get('codRuta')?.value;
 
-    // Validar si ya fue seleccionada en otra fila
     const yaExiste = this.rutasPermitidas.controls.some((control, i) => {
       return (
         i !== index && control.get('codRuta')?.value === codRutaSeleccionada
@@ -306,7 +342,6 @@ export class RolesComponent implements OnInit, AfterViewInit {
         icon: 'warning',
       });
 
-      // Limpia los valores del select en esa fila
       this.rutasPermitidas.at(index).patchValue({
         codRuta: '',
         urlRuta: '',
@@ -319,6 +354,7 @@ export class RolesComponent implements OnInit, AfterViewInit {
     const ruta = this.rutasDisponibles.find(
       (r) => r.codRuta === codRutaSeleccionada,
     );
+
     this.rutasPermitidas
       .at(index)
       .get('urlRuta')
@@ -327,5 +363,24 @@ export class RolesComponent implements OnInit, AfterViewInit {
       .at(index)
       .get('_id')
       ?.setValue(ruta?._id || '');
+  }
+
+  // ====== Permisos por acción ======
+
+  tienePermisoAccion(codigo: PermisoAccion): boolean {
+    const permisos = this.formRol.controls['permisosAcciones'].value ?? [];
+    return permisos.includes(codigo);
+  }
+
+  cambiarPermisoAccion(codigo: PermisoAccion, habilitado: boolean): void {
+    const control = this.formRol.controls['permisosAcciones'];
+    const actuales = (control.value ?? []) as PermisoAccion[];
+
+    const nuevos = habilitado
+      ? [...new Set([...actuales, codigo])]
+      : actuales.filter((permiso) => permiso !== codigo);
+
+    control.setValue(nuevos);
+    control.markAsDirty();
   }
 }

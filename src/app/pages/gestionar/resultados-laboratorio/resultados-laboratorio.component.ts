@@ -32,6 +32,7 @@ import {
 } from '../../../models/Gestion/resultadoLaboratorio.models';
 import { IEstadoOperativoSolicitud } from '../../../models/Gestion/estadoOperativoSolicitud.models';
 import { ResultadoLaboratorioService } from '../../../services/gestion/resultadosLaboratorio/resultados-laboratorio.service';
+import { AuthService } from '../../../services/auth/auth.service';
 import {
   DialogCapturaResultadoComponent,
   IRegistroResultadoDialogResult,
@@ -70,6 +71,24 @@ export class ResultadosLaboratorioComponent implements OnInit, AfterViewInit {
 
   private readonly _resultadoLaboratorioService = inject(
     ResultadoLaboratorioService,
+  );
+
+  private readonly _authService = inject(AuthService);
+
+  readonly puedeRegistrarResultados = this._authService.tienePermisoAccion(
+    'RESULTADOS_REGISTRAR',
+  );
+
+  readonly puedeValidarResultados = this._authService.tienePermisoAccion(
+    'RESULTADOS_VALIDAR',
+  );
+
+  readonly puedeLiberarResultados = this._authService.tienePermisoAccion(
+    'RESULTADOS_LIBERAR',
+  );
+
+  readonly puedeAnularResultados = this._authService.tienePermisoAccion(
+    'RESULTADOS_ANULAR',
   );
 
   private readonly _snackBar = inject(MatSnackBar);
@@ -252,10 +271,6 @@ export class ResultadosLaboratorioComponent implements OnInit, AfterViewInit {
   }
 
   toggleParticular(item: IBandejaResultadosLaboratorioItem): void {
-    if (item.solicitud.estado === 'ANULADO') {
-      return;
-    }
-
     this.expandedParticularId = this.isExpandedParticular(item)
       ? null
       : item.solicitud._id;
@@ -268,10 +283,6 @@ export class ResultadosLaboratorioComponent implements OnInit, AfterViewInit {
   }
 
   toggleEmpresa(item: IBandejaResultadosLaboratorioItem): void {
-    if (item.solicitud.estado === 'ANULADO') {
-      return;
-    }
-
     this.expandedEmpresaId = this.isExpandedEmpresa(item)
       ? null
       : item.solicitud._id;
@@ -303,6 +314,8 @@ export class ResultadosLaboratorioComponent implements OnInit, AfterViewInit {
             row.solicitud.paciente.fechaNacimientoPaciente ?? null,
         },
         fechaReferencia: row.solicitud.fechaEmision,
+        soloLecturaForzada:
+          row.solicitud.estado === 'ANULADO' || !this.puedeRegistrarResultados,
       },
     });
 
@@ -331,6 +344,7 @@ export class ResultadosLaboratorioComponent implements OnInit, AfterViewInit {
     resultado: IResultadoLaboratorio,
   ): Promise<void> {
     if (
+      !this.puedeValidarResultados ||
       resultado.estadoResultado !== 'COMPLETO' ||
       this.resultadoProcesandoId
     ) {
@@ -338,26 +352,82 @@ export class ResultadosLaboratorioComponent implements OnInit, AfterViewInit {
     }
 
     const totalAlertas = this.obtenerTotalAlertas(resultado);
+    const alertasCriticas = this.obtenerAlertasCriticas(resultado);
 
-    const confirmacion = await Swal.fire({
-      icon: totalAlertas > 0 ? 'warning' : 'question',
-      title: '¿Validar resultado?',
-      html:
-        totalAlertas > 0
-          ? `La prueba <strong>${resultado.codPruebaLab} - ${resultado.nombrePruebaLab}</strong> posee <strong>${totalAlertas}</strong> alerta(s) detectada(s). Revise los valores antes de continuar.`
-          : `Se validará <strong>${resultado.codPruebaLab} - ${resultado.nombrePruebaLab}</strong>.`,
-      input: 'textarea',
-      inputLabel: 'Observación de validación (opcional)',
-      inputPlaceholder: 'Ingrese una observación si corresponde',
-      showCancelButton: true,
-      reverseButtons: true,
-      confirmButtonText: 'Validar resultado',
-      cancelButtonText: 'Cancelar',
-      confirmButtonColor: '#7e22ce',
-    });
+    let observacionValidacion = '';
+    let confirmarAlertasCriticas = false;
 
-    if (!confirmacion.isConfirmed) {
-      return;
+    if (alertasCriticas > 0) {
+      const confirmacion = await Swal.fire({
+        icon: 'warning',
+        title: 'Resultado con alerta crítica',
+        html: `
+          <div style="text-align:left">
+            <p>La prueba <strong>${resultado.codPruebaLab} - ${resultado.nombrePruebaLab}</strong> posee <strong>${alertasCriticas}</strong> alerta(s) CRÍTICA(s).</p>
+            <p>Revise los valores antes de validar.</p>
+            <textarea id="observacion-validacion" class="swal2-textarea" placeholder="Observación de validación (opcional)"></textarea>
+            <label style="display:flex; gap:8px; align-items:flex-start; margin-top:12px">
+              <input id="confirmar-alertas-criticas" type="checkbox" style="margin-top:4px" />
+              <span>Confirmo que revisé las alertas críticas y los valores ingresados.</span>
+            </label>
+          </div>
+        `,
+        showCancelButton: true,
+        reverseButtons: true,
+        confirmButtonText: 'Validar resultado',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#7e22ce',
+        preConfirm: () => {
+          const observacion = document.querySelector<HTMLTextAreaElement>(
+            '#observacion-validacion',
+          );
+          const confirmacionCritica = document.querySelector<HTMLInputElement>(
+            '#confirmar-alertas-criticas',
+          );
+
+          if (!confirmacionCritica?.checked) {
+            Swal.showValidationMessage(
+              'Debe confirmar explícitamente la revisión de las alertas críticas.',
+            );
+            return false;
+          }
+
+          return {
+            observacionValidacion: observacion?.value?.trim() ?? '',
+            confirmarAlertasCriticas: true,
+          };
+        },
+      });
+
+      if (!confirmacion.isConfirmed || !confirmacion.value) {
+        return;
+      }
+
+      observacionValidacion = confirmacion.value.observacionValidacion;
+      confirmarAlertasCriticas = true;
+    } else {
+      const confirmacion = await Swal.fire({
+        icon: totalAlertas > 0 ? 'warning' : 'question',
+        title: '¿Validar resultado?',
+        html:
+          totalAlertas > 0
+            ? `La prueba <strong>${resultado.codPruebaLab} - ${resultado.nombrePruebaLab}</strong> posee <strong>${totalAlertas}</strong> alerta(s) detectada(s). Revise los valores antes de continuar.`
+            : `Se validará <strong>${resultado.codPruebaLab} - ${resultado.nombrePruebaLab}</strong>.`,
+        input: 'textarea',
+        inputLabel: 'Observación de validación (opcional)',
+        inputPlaceholder: 'Ingrese una observación si corresponde',
+        showCancelButton: true,
+        reverseButtons: true,
+        confirmButtonText: 'Validar resultado',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#7e22ce',
+      });
+
+      if (!confirmacion.isConfirmed) {
+        return;
+      }
+
+      observacionValidacion = String(confirmacion.value ?? '').trim();
     }
 
     this.resultadoProcesandoId = resultado._id;
@@ -365,7 +435,8 @@ export class ResultadosLaboratorioComponent implements OnInit, AfterViewInit {
     try {
       const response = await firstValueFrom(
         this._resultadoLaboratorioService.validarResultado(resultado._id, {
-          observacionValidacion: String(confirmacion.value ?? '').trim(),
+          observacionValidacion,
+          confirmarAlertasCriticas,
         }),
       );
 
@@ -408,6 +479,7 @@ export class ResultadosLaboratorioComponent implements OnInit, AfterViewInit {
     resultado: IResultadoLaboratorio,
   ): Promise<void> {
     if (
+      !this.puedeLiberarResultados ||
       resultado.estadoResultado !== 'VALIDADO' ||
       this.resultadoProcesandoId
     ) {
@@ -415,27 +487,67 @@ export class ResultadosLaboratorioComponent implements OnInit, AfterViewInit {
     }
 
     const totalAlertas = this.obtenerTotalAlertas(resultado);
+    const alertasCriticas = this.obtenerAlertasCriticas(resultado);
+    let confirmarAlertasCriticas = false;
 
     const confirmacion = await Swal.fire({
       icon: totalAlertas > 0 ? 'warning' : 'question',
-      title: '¿Liberar resultado?',
-      html: `El resultado de <strong>${resultado.codPruebaLab} - ${resultado.nombrePruebaLab}</strong> quedará disponible para visualización o entrega.${totalAlertas > 0 ? `<br><br>La prueba posee <strong>${totalAlertas}</strong> alerta(s) clínica(s).` : ''}`,
+      title:
+        alertasCriticas > 0
+          ? 'Liberación con alerta crítica'
+          : '¿Liberar resultado?',
+      html: `
+        <div style="text-align:left">
+          <p>El resultado de <strong>${resultado.codPruebaLab} - ${resultado.nombrePruebaLab}</strong> quedará disponible para visualización o entrega.</p>
+          ${
+            totalAlertas > 0
+              ? `<p>La prueba posee <strong>${totalAlertas}</strong> alerta(s) clínica(s), de las cuales <strong>${alertasCriticas}</strong> son críticas.</p>`
+              : ''
+          }
+          ${
+            alertasCriticas > 0
+              ? `<label style="display:flex; gap:8px; align-items:flex-start; margin-top:12px"><input id="confirmar-liberacion-critica" type="checkbox" style="margin-top:4px" /><span>Confirmo que revisé las alertas críticas antes de liberar el resultado.</span></label>`
+              : ''
+          }
+        </div>
+      `,
       showCancelButton: true,
       reverseButtons: true,
       confirmButtonText: 'Liberar resultado',
       cancelButtonText: 'Cancelar',
       confirmButtonColor: '#15803d',
+      preConfirm: () => {
+        if (alertasCriticas <= 0) {
+          return true;
+        }
+
+        const confirmacionCritica = document.querySelector<HTMLInputElement>(
+          '#confirmar-liberacion-critica',
+        );
+
+        if (!confirmacionCritica?.checked) {
+          Swal.showValidationMessage(
+            'Debe confirmar explícitamente la revisión de las alertas críticas.',
+          );
+          return false;
+        }
+
+        return true;
+      },
     });
 
     if (!confirmacion.isConfirmed) {
       return;
     }
 
+    confirmarAlertasCriticas = alertasCriticas > 0;
     this.resultadoProcesandoId = resultado._id;
 
     try {
       const response = await firstValueFrom(
-        this._resultadoLaboratorioService.liberarResultado(resultado._id),
+        this._resultadoLaboratorioService.liberarResultado(resultado._id, {
+          confirmarAlertasCriticas,
+        }),
       );
 
       this.aplicarActualizacionResultado(
@@ -470,6 +582,143 @@ export class ResultadosLaboratorioComponent implements OnInit, AfterViewInit {
     }
   }
 
+  // ====== Anular resultado ======
+
+  async anularResultado(
+    row: IBandejaResultadosLaboratorioItem,
+    resultado: IResultadoLaboratorio,
+  ): Promise<void> {
+    if (
+      !this.puedeAnularResultados ||
+      resultado.estadoResultado === 'ANULADO' ||
+      this.resultadoProcesandoId
+    ) {
+      return;
+    }
+
+    const requiereSegundoUsuario = resultado.estadoResultado === 'LIBERADO';
+    let motivoAnulacion = '';
+    let nombreUsuarioAutorizador: string | undefined;
+    let passwordAutorizador: string | undefined;
+
+    if (requiereSegundoUsuario) {
+      const confirmacion = await Swal.fire({
+        icon: 'warning',
+        title: 'Anular resultado liberado',
+        html: `
+          <div style="text-align:left">
+            <p>La prueba <strong>${resultado.codPruebaLab} - ${resultado.nombrePruebaLab}</strong> ya fue LIBERADA y pudo haber sido entregada.</p>
+            <p>Esta acción requiere autorización de un segundo usuario con permiso de anulación.</p>
+            <textarea id="motivo-anulacion" class="swal2-textarea" placeholder="Motivo obligatorio"></textarea>
+            <input id="usuario-autorizador" class="swal2-input" placeholder="Usuario autorizador" autocomplete="off" />
+            <input id="password-autorizador" class="swal2-input" type="password" placeholder="Contraseña autorizador" autocomplete="new-password" />
+          </div>
+        `,
+        showCancelButton: true,
+        reverseButtons: true,
+        confirmButtonText: 'Anular resultado',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#b91c1c',
+        preConfirm: () => {
+          const motivo = document.querySelector<HTMLTextAreaElement>(
+            '#motivo-anulacion',
+          )?.value?.trim();
+          const usuario = document.querySelector<HTMLInputElement>(
+            '#usuario-autorizador',
+          )?.value?.trim();
+          const password = document.querySelector<HTMLInputElement>(
+            '#password-autorizador',
+          )?.value;
+
+          if (!motivo || !usuario || !password) {
+            Swal.showValidationMessage(
+              'Motivo, usuario autorizador y contraseña son obligatorios.',
+            );
+            return false;
+          }
+
+          return { motivo, usuario, password };
+        },
+      });
+
+      if (!confirmacion.isConfirmed || !confirmacion.value) {
+        return;
+      }
+
+      motivoAnulacion = confirmacion.value.motivo;
+      nombreUsuarioAutorizador = confirmacion.value.usuario;
+      passwordAutorizador = confirmacion.value.password;
+    } else {
+      const confirmacion = await Swal.fire({
+        icon: 'warning',
+        title: '¿Anular resultado?',
+        html: `Se anulará <strong>${resultado.codPruebaLab} - ${resultado.nombrePruebaLab}</strong>. El resultado permanecerá visible en el historial.`,
+        input: 'textarea',
+        inputLabel: 'Motivo de anulación',
+        inputPlaceholder: 'Indique el motivo de la anulación',
+        inputValidator: (value) =>
+          String(value ?? '').trim()
+            ? null
+            : 'El motivo de anulación es obligatorio',
+        showCancelButton: true,
+        reverseButtons: true,
+        confirmButtonText: 'Anular resultado',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#b91c1c',
+      });
+
+      if (!confirmacion.isConfirmed) {
+        return;
+      }
+
+      motivoAnulacion = String(confirmacion.value ?? '').trim();
+    }
+
+    this.resultadoProcesandoId = resultado._id;
+
+    try {
+      const response = await firstValueFrom(
+        this._resultadoLaboratorioService.anularResultado(resultado._id, {
+          motivoAnulacion,
+          ...(nombreUsuarioAutorizador
+            ? { nombreUsuarioAutorizador }
+            : {}),
+          ...(passwordAutorizador ? { passwordAutorizador } : {}),
+        }),
+      );
+
+      this.aplicarActualizacionResultado(
+        row,
+        {
+          ...response.resultado,
+          estadoUnidadLaboratorio: response.estadoUnidadLaboratorio,
+        },
+        response.estadoSolicitud,
+        response.estadoOperativo,
+      );
+
+      await Swal.fire({
+        icon: 'success',
+        title: 'Resultado anulado',
+        text: response.msg,
+        confirmButtonText: 'Continuar',
+      });
+    } catch (error: any) {
+      console.error('Error al anular resultado:', error);
+
+      await Swal.fire({
+        icon: 'error',
+        title: 'No se pudo anular el resultado',
+        text:
+          error?.error?.msg ||
+          'Ocurrió un error al anular el resultado de laboratorio.',
+        confirmButtonText: 'Cerrar',
+      });
+    } finally {
+      this.resultadoProcesandoId = null;
+    }
+  }
+
   // ====== Estado de acciones ======
 
   esResultadoEditable(resultado: IResultadoLaboratorio): boolean {
@@ -483,7 +732,7 @@ export class ResultadosLaboratorioComponent implements OnInit, AfterViewInit {
   }
 
   obtenerTextoAccionResultado(resultado: IResultadoLaboratorio): string {
-    if (!this.esResultadoEditable(resultado)) {
+    if (!this.esResultadoEditable(resultado) || !this.puedeRegistrarResultados) {
       return 'Ver';
     }
 
@@ -621,6 +870,17 @@ export class ResultadosLaboratorioComponent implements OnInit, AfterViewInit {
   obtenerTotalAlertas(resultado: IResultadoLaboratorio): number {
     return (resultado.resultadosItems ?? []).reduce(
       (total, item) => total + (item.alertasDetectadas?.length ?? 0),
+      0,
+    );
+  }
+
+  obtenerAlertasCriticas(resultado: IResultadoLaboratorio): number {
+    return (resultado.resultadosItems ?? []).reduce(
+      (total, item) =>
+        total +
+        (item.alertasDetectadas ?? []).filter(
+          (alerta) => alerta.nivelAlerta === 'CRITICA',
+        ).length,
       0,
     );
   }
