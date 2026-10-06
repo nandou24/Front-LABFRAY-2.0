@@ -271,6 +271,17 @@
                     >
                       <mat-icon>photo_camera</mat-icon>
                     </button>
+
+                    <button
+                      *ngIf="!esIntentoVigente(plan, intento)"
+                      mat-icon-button
+                      type="button"
+                      class="btn-historial-intento"
+                      aria-label="Ver historial del intento"
+                      (click)="verHistorialMuestra(intento)"
+                    >
+                      <mat-icon>history</mat-icon>
+                    </button>
                   </div>
 
                   <div
@@ -351,6 +362,16 @@
                 <ng-container *ngIf="contarEvidenciasActivas(muestra) > 0">
                   ({{ contarEvidenciasActivas(muestra) }})
                 </ng-container>
+              </button>
+
+              <button
+                mat-stroked-button
+                type="button"
+                class="btn-historial"
+                (click)="verHistorialMuestra(muestra)"
+              >
+                <mat-icon>history</mat-icon>
+                Historial
               </button>
 
               <button

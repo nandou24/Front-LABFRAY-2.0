@@ -37,6 +37,7 @@ import {
   DialogCapturaResultadoComponent,
   IRegistroResultadoDialogResult,
 } from './dialogs/dialog-captura-resultado/dialog-captura-resultado.component';
+import { DialogHistorialResultadoComponent } from './dialogs/dialog-historial-resultado/dialog-historial-resultado.component';
 
 @Component({
   selector: 'app-resultados-laboratorio',
@@ -294,6 +295,72 @@ export class ResultadosLaboratorioComponent implements OnInit, AfterViewInit {
     row: IBandejaResultadosLaboratorioItem,
     resultado: IResultadoLaboratorio,
   ): void {
+    const modo =
+      this.puedeRegistrarResultados && this.esResultadoEditable(resultado)
+        ? 'REGISTRO'
+        : 'CONSULTA';
+
+    this.abrirDialogResultado(row, resultado, modo);
+  }
+
+  // ====== Abrir revisión de validación ======
+
+  abrirValidacionResultado(
+    row: IBandejaResultadosLaboratorioItem,
+    resultado: IResultadoLaboratorio,
+  ): void {
+    if (!this.puedeValidarResultados || resultado.estadoResultado !== 'COMPLETO') {
+      return;
+    }
+
+    this.abrirDialogResultado(row, resultado, 'VALIDACION');
+  }
+
+  // ====== Abrir revisión de anulación ======
+
+  abrirAnulacionResultado(
+    row: IBandejaResultadosLaboratorioItem,
+    resultado: IResultadoLaboratorio,
+  ): void {
+    if (!this.puedeAnularResultados || resultado.estadoResultado === 'ANULADO') {
+      return;
+    }
+
+    this.abrirDialogResultado(row, resultado, 'ANULACION');
+  }
+
+  // ====== Abrir resultado anulado para reapertura ======
+
+  abrirReaperturaResultado(
+    row: IBandejaResultadosLaboratorioItem,
+    resultado: IResultadoLaboratorio,
+  ): void {
+    if (!this.puedeAnularResultados || resultado.estadoResultado !== 'ANULADO') {
+      return;
+    }
+
+    this.abrirDialogResultado(row, resultado, 'CONSULTA');
+  }
+
+  // ====== Abrir historial ======
+
+  abrirHistorialResultado(resultado: IResultadoLaboratorio): void {
+    this._dialog.open(DialogHistorialResultadoComponent, {
+      width: '780px',
+      maxWidth: '96vw',
+      maxHeight: '88vh',
+      autoFocus: false,
+      data: { resultado },
+    });
+  }
+
+  // ====== Dialog único de resultado ======
+
+  private abrirDialogResultado(
+    row: IBandejaResultadosLaboratorioItem,
+    resultado: IResultadoLaboratorio,
+    modo: 'REGISTRO' | 'VALIDACION' | 'ANULACION' | 'CONSULTA',
+  ): void {
     const indiceInicial = row.resultados.detalle.findIndex(
       (item) => item._id === resultado._id,
     );
@@ -314,8 +381,13 @@ export class ResultadosLaboratorioComponent implements OnInit, AfterViewInit {
             row.solicitud.paciente.fechaNacimientoPaciente ?? null,
         },
         fechaReferencia: row.solicitud.fechaEmision,
+        modo,
+        puedeRegistrar: this.puedeRegistrarResultados,
+        puedeValidar: this.puedeValidarResultados,
+        puedeAnular: this.puedeAnularResultados,
         soloLecturaForzada:
-          row.solicitud.estado === 'ANULADO' || !this.puedeRegistrarResultados,
+          row.solicitud.estado === 'ANULADO' &&
+          resultado.estadoResultado !== 'ANULADO',
       },
     });
 

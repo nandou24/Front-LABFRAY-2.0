@@ -21,6 +21,9 @@ import {
   IResultadosPorSolicitudResponse,
   IValidarResultadoDTO,
   IValidarResultadoResponse,
+  IValidarResultadosMasivosDTO,
+  IValidarResultadosMasivosResponse,
+  IReabrirResultadoResponse,
 } from '../../../models/Gestion/resultadoLaboratorio.models';
 
 @Injectable({
@@ -147,6 +150,35 @@ export class ResultadoLaboratorioService {
     );
   }
 
+  // ====== Revisar informe antes de validar ======
+
+  revisarResultadoAntesValidacion(
+    resultadoLaboratorioId: string,
+    body: IRegistrarResultadosMasivosDTO,
+  ): Observable<IRegistrarResultadosMasivosResponse> {
+    return this._http.put<IRegistrarResultadosMasivosResponse>(
+      `${this.apiUrl}/${resultadoLaboratorioId}/revision-items`,
+      body,
+      {
+        headers: this._auth.getAuthHeaders(),
+      },
+    );
+  }
+
+  // ====== Validar resultados masivamente ======
+
+  validarResultadosMasivamente(
+    body: IValidarResultadosMasivosDTO,
+  ): Observable<IValidarResultadosMasivosResponse> {
+    return this._http.put<IValidarResultadosMasivosResponse>(
+      `${this.apiUrl}/validar-masivo`,
+      body,
+      {
+        headers: this._auth.getAuthHeaders(),
+      },
+    );
+  }
+
   // ====== Validar resultado ======
 
   validarResultado(
@@ -191,4 +223,19 @@ export class ResultadoLaboratorioService {
       },
     );
   }
+
+  // ====== Reabrir resultado anulado ======
+
+  reabrirResultado(
+    resultadoLaboratorioId: string,
+  ): Observable<IReabrirResultadoResponse> {
+    return this._http.put<IReabrirResultadoResponse>(
+      `${this.apiUrl}/${resultadoLaboratorioId}/reabrir`,
+      {},
+      {
+        headers: this._auth.getAuthHeaders(),
+      },
+    );
+  }
+
 }

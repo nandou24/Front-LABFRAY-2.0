@@ -1,0 +1,63 @@
+<div mat-dialog-title class="historial-header">
+  <div>
+    <h2>Historial del resultado</h2>
+    <div class="subtitulo">
+      <strong>{{ data.resultado.codPruebaLab }}</strong>
+      <span>{{ data.resultado.nombrePruebaLab }}</span>
+      <span>Versión actual: {{ data.resultado.versionResultado || 1 }}</span>
+    </div>
+  </div>
+
+  <button mat-icon-button type="button" (click)="cerrar()" aria-label="Cerrar">
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
+<mat-dialog-content>
+  <div *ngIf="eventos.length > 0; else sinEventos" class="timeline">
+    <div *ngFor="let evento of eventos" class="evento">
+      <div class="evento-icono">
+        <mat-icon>{{ obtenerIcono(evento.tipoEvento) }}</mat-icon>
+      </div>
+
+      <div class="evento-contenido">
+        <div class="evento-cabecera">
+          <strong>{{ obtenerTitulo(evento.tipoEvento) }}</strong>
+          <span>{{ evento.fechaEvento | date: 'dd/MM/yyyy HH:mm:ss' }}</span>
+        </div>
+
+        <div class="evento-meta">
+          <span>Usuario: {{ evento.usuarioEjecucion || '-' }}</span>
+          <span>Versión: {{ evento.versionResultado }}</span>
+          <span *ngIf="evento.estadoAnterior || evento.estadoNuevo">
+            {{ evento.estadoAnterior || '-' }} → {{ evento.estadoNuevo || '-' }}
+          </span>
+        </div>
+
+        <div class="evento-detalle" *ngIf="evento.detalle">
+          {{ evento.detalle }}
+        </div>
+
+        <details
+          class="snapshot"
+          *ngIf="obtenerItemsSnapshot(evento) as itemsSnapshot"
+          [hidden]="itemsSnapshot.length === 0"
+        >
+          <summary>Ver informe conservado de esta versión</summary>
+          <div class="snapshot-item" *ngFor="let item of itemsSnapshot">
+            <span>{{ item.nombreInforme }}</span>
+            <strong>{{ item.valor }} {{ item.unidadesRef }}</strong>
+          </div>
+        </details>
+      </div>
+    </div>
+  </div>
+
+  <ng-template #sinEventos>
+    <div class="sin-eventos">No existen eventos de historial para este resultado.</div>
+  </ng-template>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cerrar()">Cerrar</button>
+</mat-dialog-actions>

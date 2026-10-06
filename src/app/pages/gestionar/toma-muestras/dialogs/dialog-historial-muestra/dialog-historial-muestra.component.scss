@@ -1,0 +1,82 @@
+.historial-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.historial-header h2 {
+  margin: 0 0 4px;
+  font-size: 1.25rem;
+}
+
+.subtitulo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  color: #64748b;
+  font-size: 0.8rem;
+}
+
+mat-dialog-content {
+  width: min(760px, 92vw);
+  max-height: 70vh;
+}
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.evento {
+  display: grid;
+  grid-template-columns: 34px 1fr;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.evento-icono {
+  color: #0b63c7;
+  display: flex;
+  justify-content: center;
+}
+
+.evento-icono mat-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+.evento-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 12px;
+}
+
+.evento-cabecera span,
+.evento-meta,
+.evento-detalle {
+  font-size: 0.78rem;
+}
+
+.evento-cabecera span,
+.evento-meta {
+  color: #64748b;
+}
+
+.evento-detalle {
+  margin-top: 5px;
+  color: #334155;
+}
+
+.sin-eventos {
+  padding: 24px;
+  text-align: center;
+  color: #64748b;
+}

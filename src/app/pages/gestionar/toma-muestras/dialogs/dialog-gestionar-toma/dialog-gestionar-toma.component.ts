@@ -29,6 +29,7 @@ import { DialogEvidenciasMuestraComponent } from '../dialog-evidencias-muestra/d
 import { DialogAnularMuestraComponent } from '../dialog-anular-muestra/dialog-anular-muestra.component';
 import { DialogEtiquetasMuestraComponent } from '../dialog-etiquetas-muestra/dialog-etiquetas-muestra.component';
 import { DialogCorregirEvaluacionMuestraComponent } from '../dialog-corregir-evaluacion-muestra/dialog-corregir-evaluacion-muestra.component';
+import { DialogHistorialMuestraComponent } from '../dialog-historial-muestra/dialog-historial-muestra.component';
 import {
   IEtiquetaMuestra,
   ResolucionTipoMuestraEtiqueta,
@@ -96,6 +97,7 @@ export class DialogGestionarTomaComponent implements OnInit {
       .subscribe({
         next: (response) => {
           this.consulta = response;
+          this.sincronizarEstadoSolicitudPadre(response);
           this.cargando = false;
         },
         error: (error) => {
@@ -108,6 +110,36 @@ export class DialogGestionarTomaComponent implements OnInit {
             'No se pudieron cargar las muestras de la solicitud';
         },
       });
+  }
+
+  // ====== Sincronizar estado visible de la bandeja ======
+
+  private sincronizarEstadoSolicitudPadre(
+    response: IConsultaMuestrasLaboratorioResponse,
+  ): void {
+    const solicitudOrigen = this.data.item.solicitud;
+    const solicitudActual = response.solicitud;
+
+    solicitudOrigen.estado = solicitudActual.estado;
+
+    if (solicitudActual.estadoOperativo) {
+      solicitudOrigen.estadoOperativo = solicitudActual.estadoOperativo;
+    }
+
+    this.data.item.muestras.resumen = response.resumen;
+    this.data.item.muestras.inicializadas = response.planes.length > 0;
+  }
+
+  // ====== Ver historial de muestra ======
+
+  verHistorialMuestra(muestra: IMuestraLaboratorio): void {
+    this._dialog.open(DialogHistorialMuestraComponent, {
+      width: '780px',
+      maxWidth: '96vw',
+      maxHeight: '88vh',
+      autoFocus: false,
+      data: { muestra },
+    });
   }
 
   // ====== Cerrar dialog ======

@@ -1,7 +1,7 @@
 <div mat-dialog-title class="dialog-header">
   <div class="titulo-fila">
     <div>
-      <h2>{{ soloLectura ? 'Detalle de resultados' : 'Registro de resultados' }}</h2>
+      <h2>{{ tituloDialogo }}</h2>
       <div class="paciente-fila">
         <span><strong>Paciente:</strong> {{ data.paciente.nombreCompleto || '-' }}</span>
         <span><strong>Documento:</strong> {{ data.paciente.documento || '-' }}</span>
@@ -193,7 +193,7 @@
     </button>
 
     <button
-      *ngIf="!soloLectura"
+      *ngIf="esModoRegistro && !soloLectura"
       mat-flat-button
       type="button"
       (click)="guardar()"
@@ -201,6 +201,66 @@
     >
       <mat-icon>save</mat-icon>
       {{ procesando ? 'Registrando...' : 'Registrar prueba' }}
+    </button>
+
+    <button
+      *ngIf="esModoValidacion && puedeEditarActual"
+      mat-stroked-button
+      type="button"
+      class="accion-guardar-revision"
+      (click)="guardar()"
+      [disabled]="procesando"
+    >
+      <mat-icon>save</mat-icon>
+      Guardar cambios
+    </button>
+
+    <button
+      *ngIf="esModoValidacion && puedeValidarActual"
+      mat-flat-button
+      type="button"
+      class="accion-validar-dialog"
+      (click)="validarPruebaActual()"
+      [disabled]="procesando"
+    >
+      <mat-icon>verified</mat-icon>
+      Validar prueba
+    </button>
+
+    <button
+      *ngIf="esModoValidacion && cantidadCompletosValidables > 1"
+      mat-flat-button
+      type="button"
+      class="accion-validar-todas"
+      (click)="validarTodasCompletas()"
+      [disabled]="procesando"
+    >
+      <mat-icon>done_all</mat-icon>
+      Validar todas ({{ cantidadCompletosValidables }})
+    </button>
+
+    <button
+      *ngIf="esModoAnulacion && puedeAnularActual"
+      mat-flat-button
+      type="button"
+      class="accion-anular-dialog"
+      (click)="anularPruebaActual()"
+      [disabled]="procesando"
+    >
+      <mat-icon>block</mat-icon>
+      Anular prueba
+    </button>
+
+    <button
+      *ngIf="puedeReabrirActual"
+      mat-flat-button
+      type="button"
+      class="accion-reabrir-dialog"
+      (click)="reabrirPruebaActual()"
+      [disabled]="procesando"
+    >
+      <mat-icon>restart_alt</mat-icon>
+      Reabrir resultado
     </button>
   </div>
 </mat-dialog-actions>

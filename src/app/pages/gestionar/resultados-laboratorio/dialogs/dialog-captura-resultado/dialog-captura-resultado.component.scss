@@ -381,3 +381,37 @@ kbd {
 .aviso-anulacion span {
   font-size: 12px;
 }
+
+// ====== Acciones de revisión ======
+
+.acciones-finales {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.accion-guardar-revision {
+  color: #0b63c7 !important;
+  border-color: #93c5fd !important;
+}
+
+.accion-validar-dialog,
+.accion-validar-todas {
+  background: #7e22ce !important;
+  color: #fff !important;
+}
+
+.accion-validar-todas {
+  background: #6d28d9 !important;
+}
+
+.accion-anular-dialog {
+  background: #b91c1c !important;
+  color: #fff !important;
+}
+
+.accion-reabrir-dialog {
+  background: #0b63c7 !important;
+  color: #fff !important;
+}

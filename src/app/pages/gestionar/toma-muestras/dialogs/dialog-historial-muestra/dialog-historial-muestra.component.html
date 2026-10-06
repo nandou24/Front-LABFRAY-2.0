@@ -1,0 +1,41 @@
+<div mat-dialog-title class="historial-header">
+  <div>
+    <h2>Historial de la muestra</h2>
+    <div class="subtitulo">
+      <strong>{{ data.muestra.codigoEtiqueta || data.muestra.codMuestra }}</strong>
+      <span>Recipiente {{ data.muestra.numeroRecipiente }}</span>
+      <span>Intento {{ data.muestra.numeroIntento }}</span>
+      <span>{{ data.muestra.estadoMuestra }}</span>
+    </div>
+  </div>
+
+  <button mat-icon-button type="button" (click)="cerrar()" aria-label="Cerrar">
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
+<mat-dialog-content>
+  <div *ngIf="eventos.length > 0; else sinEventos" class="timeline">
+    <div *ngFor="let evento of eventos" class="evento">
+      <div class="evento-icono"><mat-icon>{{ evento.icono }}</mat-icon></div>
+
+      <div class="evento-contenido">
+        <div class="evento-cabecera">
+          <strong>{{ evento.titulo }}</strong>
+          <span>{{ evento.fecha | date: 'dd/MM/yyyy HH:mm:ss' }}</span>
+        </div>
+
+        <div class="evento-meta">Usuario: {{ evento.usuario || '-' }}</div>
+        <div class="evento-detalle" *ngIf="evento.detalle">{{ evento.detalle }}</div>
+      </div>
+    </div>
+  </div>
+
+  <ng-template #sinEventos>
+    <div class="sin-eventos">No existen eventos registrados para esta muestra.</div>
+  </ng-template>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cerrar()">Cerrar</button>
+</mat-dialog-actions>

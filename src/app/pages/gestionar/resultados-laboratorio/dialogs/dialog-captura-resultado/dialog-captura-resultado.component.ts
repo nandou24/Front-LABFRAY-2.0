@@ -19,7 +19,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { distinctUntilChanged, startWith, Subscription } from 'rxjs';
+import { distinctUntilChanged, firstValueFrom, startWith, Subscription } from 'rxjs';
 import Swal from 'sweetalert2';
 
 import { IEstadoOperativoSolicitud } from '../../../../../models/Gestion/estadoOperativoSolicitud.models';
@@ -44,12 +44,22 @@ export interface IPacienteRegistroResultadoDialog {
   fechaNacimientoPaciente: string | null;
 }
 
+export type ModoDialogResultado =
+  | 'REGISTRO'
+  | 'VALIDACION'
+  | 'ANULACION'
+  | 'CONSULTA';
+
 export interface IRegistroResultadoDialogData {
   resultados: IResultadoLaboratorio[];
   indiceInicial: number;
   paciente: IPacienteRegistroResultadoDialog;
   fechaReferencia: string;
   soloLecturaForzada?: boolean;
+  modo?: ModoDialogResultado;
+  puedeRegistrar?: boolean;
+  puedeValidar?: boolean;
+  puedeAnular?: boolean;
 }
 
 export interface IRegistroResultadoDialogResult {
@@ -143,6 +153,9 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
     Math.max(this.resultados.length - 1, 0),
   );
 
+  modoActual: ModoDialogResultado =
+    this.data.modo ?? (this.data.soloLecturaForzada ? 'CONSULTA' : 'REGISTRO');
+
   procesando = false;
 
   ultimoEstadoSolicitud: string | null = null;
@@ -162,11 +175,48 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
     return this.indiceActual + 1;
   }
 
+  get esModoRegistro(): boolean {
+    return this.modoActual === 'REGISTRO';
+  }
+
+  get esModoValidacion(): boolean {
+    return this.modoActual === 'VALIDACION';
+  }
+
+  get esModoAnulacion(): boolean {
+    return this.modoActual === 'ANULACION';
+  }
+
+  get tituloDialogo(): string {
+    if (this.esModoValidacion) {
+      return 'Revisión y validación de resultados';
+    }
+
+    if (this.esModoAnulacion) {
+      return 'Revisión para anulación';
+    }
+
+    if (this.esModoRegistro) {
+      return 'Registro de resultados';
+    }
+
+    return 'Detalle de resultados';
+  }
+
   get soloLectura(): boolean {
-    return (
-      this.data.soloLecturaForzada === true ||
-      !this.esResultadoEditable(this.resultadoActual)
-    );
+    if (this.data.soloLecturaForzada === true) {
+      return true;
+    }
+
+    if (this.esModoAnulacion || this.modoActual === 'CONSULTA') {
+      return true;
+    }
+
+    if (this.esModoValidacion) {
+      return this.resultadoActual?.estadoResultado !== 'COMPLETO';
+    }
+
+    return !this.esResultadoEditable(this.resultadoActual);
   }
 
   get habilitacionMuestraActual(): IHabilitacionMuestraResultado | null {
@@ -174,10 +224,51 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
   }
 
   get puedeEditarActual(): boolean {
+    if (this.data.soloLecturaForzada === true) {
+      return false;
+    }
+
+    if (this.esModoValidacion) {
+      return (
+        this.data.puedeValidar === true &&
+        this.resultadoActual?.estadoResultado === 'COMPLETO' &&
+        this.habilitacionMuestraActual?.habilitada !== false
+      );
+    }
+
     return (
-      this.data.soloLecturaForzada !== true &&
+      this.esModoRegistro &&
+      this.data.puedeRegistrar !== false &&
       this.esResultadoEditable(this.resultadoActual) &&
       this.habilitacionMuestraActual?.habilitada !== false
+    );
+  }
+
+  get puedeValidarActual(): boolean {
+    return (
+      this.esModoValidacion &&
+      this.data.puedeValidar === true &&
+      this.resultadoActual?.estadoResultado === 'COMPLETO'
+    );
+  }
+
+  get cantidadCompletosValidables(): number {
+    return this.resultados.filter(
+      (resultado) => resultado.estadoResultado === 'COMPLETO',
+    ).length;
+  }
+
+  get puedeAnularActual(): boolean {
+    return (
+      this.data.puedeAnular === true &&
+      this.resultadoActual?.estadoResultado !== 'ANULADO'
+    );
+  }
+
+  get puedeReabrirActual(): boolean {
+    return (
+      this.data.puedeAnular === true &&
+      this.resultadoActual?.estadoResultado === 'ANULADO'
     );
   }
 
@@ -257,8 +348,13 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
 
     const puedeEditar =
       this.data.soloLecturaForzada !== true &&
-      this.esResultadoEditable(resultado) &&
-      resultado?.habilitacionMuestra?.habilitada !== false;
+      resultado?.habilitacionMuestra?.habilitada !== false &&
+      ((this.esModoRegistro &&
+        this.data.puedeRegistrar !== false &&
+        this.esResultadoEditable(resultado)) ||
+        (this.esModoValidacion &&
+          this.data.puedeValidar === true &&
+          resultado?.estadoResultado === 'COMPLETO'));
 
     if (!puedeEditar) {
       form.disable({ emitEvent: false });
@@ -1042,9 +1138,17 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
 
     this.procesando = true;
 
-    this._resultadoLaboratorioService
-      .registrarResultadosMasivos(resultado._id, { items })
-      .subscribe({
+    const solicitudRegistro$ = this.esModoValidacion
+      ? this._resultadoLaboratorioService.revisarResultadoAntesValidacion(
+          resultado._id,
+          { items },
+        )
+      : this._resultadoLaboratorioService.registrarResultadosMasivos(
+          resultado._id,
+          { items },
+        );
+
+    solicitudRegistro$.subscribe({
         next: (response) => {
           const resultadoActualizado = this.construirResultadoActualizado(
             resultado,
@@ -1064,9 +1168,11 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
           this.formResultado = this.crearFormularioActual();
 
           this._snackBar.open(
-            response.estadoResultado === 'COMPLETO'
-              ? 'Prueba completa. Ya puede validarse.'
-              : 'Resultados registrados correctamente.',
+            this.esModoValidacion
+              ? 'Cambios del informe guardados para validación.'
+              : response.estadoResultado === 'COMPLETO'
+                ? 'Prueba completa. Ya puede validarse.'
+                : 'Resultados registrados correctamente.',
             'Cerrar',
             {
               duration: 2200,
@@ -1076,18 +1182,557 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
         error: async (error) => {
           this.procesando = false;
 
-          console.error('Error al registrar resultados:', error);
+          console.error('Error al guardar resultados:', error);
 
           await Swal.fire({
             icon: 'error',
-            title: 'No se pudieron registrar los resultados',
+            title: this.esModoValidacion
+              ? 'No se pudo actualizar el informe'
+              : 'No se pudieron registrar los resultados',
             text:
               error?.error?.msg ||
-              'Ocurrió un error al registrar los resultados de laboratorio.',
+              (this.esModoValidacion
+                ? 'Ocurrió un error al actualizar el informe durante la validación.'
+                : 'Ocurrió un error al registrar los resultados de laboratorio.'),
             confirmButtonText: 'Cerrar',
           });
         },
       });
+  }
+
+  // ====== Cambios de un resultado durante validación ======
+
+  private construirItemsModificadosDesdeBorrador(
+    resultado: IResultadoLaboratorio,
+  ): Array<{ itemResultadoId: string; valor: string | number; observacion: string }> {
+    const borrador = this._borradores.get(resultado._id);
+
+    if (!borrador) {
+      return [];
+    }
+
+    return resultado.resultadosItems
+      .map((item, indice) => {
+        const itemBorrador = borrador[indice];
+
+        if (!itemBorrador) {
+          return null;
+        }
+
+        const valor = this.normalizarValorFormulario(itemBorrador.valor, item);
+        const valorOriginal = this.normalizarValorFormulario(item.valor, item);
+        const observacion = String(itemBorrador.observacion ?? '').trim();
+        const observacionOriginal = String(item.observacion ?? '').trim();
+
+        if (
+          valor === null ||
+          (this.sonValoresEquivalentes(valor, valorOriginal) &&
+            observacion === observacionOriginal)
+        ) {
+          return null;
+        }
+
+        return {
+          itemResultadoId: item._id,
+          valor,
+          observacion,
+        };
+      })
+      .filter(
+        (
+          item,
+        ): item is {
+          itemResultadoId: string;
+          valor: string | number;
+          observacion: string;
+        } => item !== null,
+      );
+  }
+
+  private async guardarCambiosValidacionIndice(indice: number): Promise<void> {
+    const resultado = this.resultados[indice];
+
+    if (!resultado || resultado.estadoResultado !== 'COMPLETO') {
+      return;
+    }
+
+    const items = this.construirItemsModificadosDesdeBorrador(resultado);
+
+    if (items.length === 0) {
+      return;
+    }
+
+    const response = await firstValueFrom(
+      this._resultadoLaboratorioService.revisarResultadoAntesValidacion(
+        resultado._id,
+        { items },
+      ),
+    );
+
+    const actualizado = this.construirResultadoActualizado(resultado, response);
+    this.resultados[indice] = actualizado;
+    this._resultadosActualizados.set(actualizado._id, actualizado);
+    this._borradores.delete(actualizado._id);
+    this.ultimoEstadoSolicitud = response.estadoSolicitud;
+    this.ultimoEstadoOperativo = response.estadoOperativo;
+  }
+
+  private fusionarResultadoCompleto(
+    origen: IResultadoLaboratorio,
+    actualizado: IResultadoLaboratorio,
+  ): IResultadoLaboratorio {
+    const itemsOrigen = new Map(
+      origen.resultadosItems.map((item) => [item._id, item]),
+    );
+
+    return {
+      ...origen,
+      ...actualizado,
+      habilitacionMuestra:
+        actualizado.habilitacionMuestra ?? origen.habilitacionMuestra,
+      resultadosItems: actualizado.resultadosItems.map((item) => ({
+        ...itemsOrigen.get(item._id),
+        ...item,
+        configuracionClinica:
+          item.configuracionClinica ?? itemsOrigen.get(item._id)?.configuracionClinica,
+      })),
+    };
+  }
+
+  private obtenerCriticasResultado(resultado: IResultadoLaboratorio): number {
+    return resultado.resultadosItems.reduce(
+      (total, item) =>
+        total +
+        (item.alertasDetectadas ?? []).filter(
+          (alerta) => alerta.nivelAlerta === 'CRITICA',
+        ).length,
+      0,
+    );
+  }
+
+  private async confirmarValidacion(
+    resultados: IResultadoLaboratorio[],
+  ): Promise<{
+    confirmado: boolean;
+    observacionValidacion: string;
+    confirmarAlertasCriticas: boolean;
+  }> {
+    const totalCriticas = resultados.reduce(
+      (total, resultado) => total + this.obtenerCriticasResultado(resultado),
+      0,
+    );
+
+    const nombres = resultados
+      .map((resultado) => `${resultado.codPruebaLab} - ${resultado.nombrePruebaLab}`)
+      .join('<br>');
+
+    const confirmacion = await Swal.fire({
+      icon: totalCriticas > 0 ? 'warning' : 'question',
+      title:
+        resultados.length > 1
+          ? `Validar ${resultados.length} resultados`
+          : totalCriticas > 0
+            ? 'Resultado con alerta crítica'
+            : 'Validar resultado',
+      html: `
+        <div style="text-align:left">
+          <p>${nombres}</p>
+          ${
+            totalCriticas > 0
+              ? `<p>Se detectaron <strong>${totalCriticas}</strong> alerta(s) CRÍTICA(s). Revise los valores antes de validar.</p>`
+              : '<p>Confirme la revisión clínica del informe.</p>'
+          }
+          <textarea id="observacion-validacion-dialog" class="swal2-textarea" placeholder="Observación de validación (opcional)"></textarea>
+          ${
+            totalCriticas > 0
+              ? `<label style="display:flex; gap:8px; align-items:flex-start; margin-top:12px"><input id="confirmar-criticas-dialog" type="checkbox" style="margin-top:4px" /><span>Confirmo que revisé las alertas críticas y los valores ingresados.</span></label>`
+              : ''
+          }
+        </div>
+      `,
+      showCancelButton: true,
+      reverseButtons: true,
+      confirmButtonText:
+        resultados.length > 1 ? 'Validar resultados' : 'Validar resultado',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#7e22ce',
+      preConfirm: () => {
+        const observacion = document.querySelector<HTMLTextAreaElement>(
+          '#observacion-validacion-dialog',
+        );
+        const confirmacionCritica = document.querySelector<HTMLInputElement>(
+          '#confirmar-criticas-dialog',
+        );
+
+        if (totalCriticas > 0 && !confirmacionCritica?.checked) {
+          Swal.showValidationMessage(
+            'Debe confirmar explícitamente la revisión de las alertas críticas.',
+          );
+          return false;
+        }
+
+        return {
+          observacionValidacion: observacion?.value?.trim() ?? '',
+          confirmarAlertasCriticas: totalCriticas > 0,
+        };
+      },
+    });
+
+    if (!confirmacion.isConfirmed || !confirmacion.value) {
+      return {
+        confirmado: false,
+        observacionValidacion: '',
+        confirmarAlertasCriticas: false,
+      };
+    }
+
+    return {
+      confirmado: true,
+      ...confirmacion.value,
+    };
+  }
+
+  // ====== Validar prueba actual ======
+
+  async validarPruebaActual(): Promise<void> {
+    if (!this.puedeValidarActual || this.procesando) {
+      return;
+    }
+
+    this.guardarBorradorActual();
+    this.procesando = true;
+
+    try {
+      await this.guardarCambiosValidacionIndice(this.indiceActual);
+      const resultado = this.resultadoActual;
+      const confirmacion = await this.confirmarValidacion([resultado]);
+
+      if (!confirmacion.confirmado) {
+        return;
+      }
+
+      const response = await firstValueFrom(
+        this._resultadoLaboratorioService.validarResultado(resultado._id, {
+          observacionValidacion: confirmacion.observacionValidacion,
+          confirmarAlertasCriticas: confirmacion.confirmarAlertasCriticas,
+        }),
+      );
+
+      const actualizado = this.fusionarResultadoCompleto(
+        resultado,
+        response.resultado,
+      );
+
+      this.resultados[this.indiceActual] = actualizado;
+      this._resultadosActualizados.set(actualizado._id, actualizado);
+      this.ultimoEstadoSolicitud = response.estadoSolicitud;
+      this.ultimoEstadoOperativo = response.estadoOperativo;
+      this._borradores.delete(actualizado._id);
+      this.formResultado = this.crearFormularioActual();
+
+      this._snackBar.open('Resultado validado correctamente.', 'Cerrar', {
+        duration: 2200,
+      });
+    } catch (error: any) {
+      await Swal.fire({
+        icon: 'error',
+        title: 'No se pudo validar el resultado',
+        text:
+          error?.error?.msg ||
+          'Ocurrió un error al revisar o validar el resultado.',
+        confirmButtonText: 'Cerrar',
+      });
+    } finally {
+      this.procesando = false;
+    }
+  }
+
+  // ====== Validar todas las pruebas completas ======
+
+  async validarTodasCompletas(): Promise<void> {
+    if (
+      !this.esModoValidacion ||
+      this.data.puedeValidar !== true ||
+      this.cantidadCompletosValidables === 0 ||
+      this.procesando
+    ) {
+      return;
+    }
+
+    this.guardarBorradorActual();
+    this.procesando = true;
+
+    try {
+      for (let indice = 0; indice < this.resultados.length; indice += 1) {
+        if (this.resultados[indice].estadoResultado === 'COMPLETO') {
+          await this.guardarCambiosValidacionIndice(indice);
+        }
+      }
+
+      const candidatos = this.resultados.filter(
+        (resultado) => resultado.estadoResultado === 'COMPLETO',
+      );
+
+      if (candidatos.length === 0) {
+        this._snackBar.open('No quedan resultados COMPLETOS por validar.', 'Cerrar', {
+          duration: 2200,
+        });
+        return;
+      }
+
+      const confirmacion = await this.confirmarValidacion(candidatos);
+
+      if (!confirmacion.confirmado) {
+        return;
+      }
+
+      const response = await firstValueFrom(
+        this._resultadoLaboratorioService.validarResultadosMasivamente({
+          resultadoIds: candidatos.map((resultado) => resultado._id),
+          observacionValidacion: confirmacion.observacionValidacion,
+          confirmarAlertasCriticas: confirmacion.confirmarAlertasCriticas,
+        }),
+      );
+
+      response.resultados.forEach((resultadoBackend) => {
+        const indice = this.resultados.findIndex(
+          (resultado) => resultado._id === resultadoBackend._id,
+        );
+
+        if (indice < 0) {
+          return;
+        }
+
+        const actualizado = this.fusionarResultadoCompleto(
+          this.resultados[indice],
+          resultadoBackend,
+        );
+        this.resultados[indice] = actualizado;
+        this._resultadosActualizados.set(actualizado._id, actualizado);
+        this._borradores.delete(actualizado._id);
+      });
+
+      this.ultimoEstadoSolicitud = response.estadoSolicitud;
+      this.ultimoEstadoOperativo = response.estadoOperativo;
+      this.formResultado = this.crearFormularioActual();
+
+      this._snackBar.open(response.msg, 'Cerrar', { duration: 2400 });
+    } catch (error: any) {
+      await Swal.fire({
+        icon: 'error',
+        title: 'No se pudieron validar los resultados',
+        text:
+          error?.error?.msg ||
+          'Ocurrió un error durante la validación masiva.',
+        confirmButtonText: 'Cerrar',
+      });
+    } finally {
+      this.procesando = false;
+    }
+  }
+
+  // ====== Anular prueba desde la revisión ======
+
+  async anularPruebaActual(): Promise<void> {
+    const resultado = this.resultadoActual;
+
+    if (!this.puedeAnularActual || this.procesando) {
+      return;
+    }
+
+    const requiereSegundoUsuario = resultado.estadoResultado === 'LIBERADO';
+    let motivoAnulacion = '';
+    let nombreUsuarioAutorizador: string | undefined;
+    let passwordAutorizador: string | undefined;
+
+    if (requiereSegundoUsuario) {
+      const confirmacion = await Swal.fire({
+        icon: 'warning',
+        title: 'Anular resultado liberado',
+        html: `
+          <div style="text-align:left">
+            <p>Está revisando <strong>${resultado.codPruebaLab} - ${resultado.nombrePruebaLab}</strong>.</p>
+            <p>El resultado ya fue LIBERADO y pudo haber sido entregado. Se requiere autorización de un segundo usuario.</p>
+            <textarea id="motivo-anulacion-dialog" class="swal2-textarea" placeholder="Motivo obligatorio"></textarea>
+            <input id="usuario-autorizador-dialog" class="swal2-input" placeholder="Usuario autorizador" autocomplete="off" />
+            <input id="password-autorizador-dialog" class="swal2-input" type="password" placeholder="Contraseña autorizador" autocomplete="new-password" />
+          </div>
+        `,
+        showCancelButton: true,
+        reverseButtons: true,
+        confirmButtonText: 'Anular resultado',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#b91c1c',
+        preConfirm: () => {
+          const motivo = document.querySelector<HTMLTextAreaElement>(
+            '#motivo-anulacion-dialog',
+          )?.value?.trim();
+          const usuario = document.querySelector<HTMLInputElement>(
+            '#usuario-autorizador-dialog',
+          )?.value?.trim();
+          const password = document.querySelector<HTMLInputElement>(
+            '#password-autorizador-dialog',
+          )?.value;
+
+          if (!motivo || !usuario || !password) {
+            Swal.showValidationMessage(
+              'Motivo, usuario autorizador y contraseña son obligatorios.',
+            );
+            return false;
+          }
+
+          return { motivo, usuario, password };
+        },
+      });
+
+      if (!confirmacion.isConfirmed || !confirmacion.value) {
+        return;
+      }
+
+      motivoAnulacion = confirmacion.value.motivo;
+      nombreUsuarioAutorizador = confirmacion.value.usuario;
+      passwordAutorizador = confirmacion.value.password;
+    } else {
+      const confirmacion = await Swal.fire({
+        icon: 'warning',
+        title: 'Anular resultado',
+        html: `Se anulará <strong>${resultado.codPruebaLab} - ${resultado.nombrePruebaLab}</strong>. Los valores actuales se conservarán en el historial.`,
+        input: 'textarea',
+        inputLabel: 'Motivo de anulación',
+        inputValidator: (value) =>
+          String(value ?? '').trim()
+            ? null
+            : 'El motivo de anulación es obligatorio',
+        showCancelButton: true,
+        reverseButtons: true,
+        confirmButtonText: 'Anular resultado',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#b91c1c',
+      });
+
+      if (!confirmacion.isConfirmed) {
+        return;
+      }
+
+      motivoAnulacion = String(confirmacion.value ?? '').trim();
+    }
+
+    this.procesando = true;
+
+    try {
+      const response = await firstValueFrom(
+        this._resultadoLaboratorioService.anularResultado(resultado._id, {
+          motivoAnulacion,
+          ...(nombreUsuarioAutorizador
+            ? { nombreUsuarioAutorizador }
+            : {}),
+          ...(passwordAutorizador ? { passwordAutorizador } : {}),
+        }),
+      );
+
+      const actualizado = this.fusionarResultadoCompleto(
+        resultado,
+        response.resultado,
+      );
+      this.resultados[this.indiceActual] = actualizado;
+      this._resultadosActualizados.set(actualizado._id, actualizado);
+      this.ultimoEstadoSolicitud = response.estadoSolicitud;
+      this.ultimoEstadoOperativo = response.estadoOperativo;
+      this.formResultado = this.crearFormularioActual();
+
+      await Swal.fire({
+        icon: 'success',
+        title: 'Resultado anulado',
+        text: response.msg,
+        confirmButtonText: 'Continuar',
+      });
+    } catch (error: any) {
+      await Swal.fire({
+        icon: 'error',
+        title: 'No se pudo anular el resultado',
+        text:
+          error?.error?.msg ||
+          'Ocurrió un error al anular el resultado.',
+        confirmButtonText: 'Cerrar',
+      });
+    } finally {
+      this.procesando = false;
+    }
+  }
+
+  // ====== Reabrir resultado anulado ======
+
+  async reabrirPruebaActual(): Promise<void> {
+    const resultado = this.resultadoActual;
+
+    if (!this.puedeReabrirActual || this.procesando) {
+      return;
+    }
+
+    const confirmacion = await Swal.fire({
+      icon: 'question',
+      title: 'Reabrir resultado',
+      html: `
+        <div style="text-align:left">
+          <p>Se iniciará un nuevo ciclo de registro para <strong>${resultado.codPruebaLab} - ${resultado.nombrePruebaLab}</strong>.</p>
+          <p>El informe anulado permanecerá íntegro en el historial. La muestra física no será modificada.</p>
+          <p>Si la muestra vigente continúa ACEPTADA, podrá registrar los nuevos resultados inmediatamente.</p>
+        </div>
+      `,
+      showCancelButton: true,
+      reverseButtons: true,
+      confirmButtonText: 'Reabrir resultado',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#0b63c7',
+    });
+
+    if (!confirmacion.isConfirmed) {
+      return;
+    }
+
+    this.procesando = true;
+
+    try {
+      const response = await firstValueFrom(
+        this._resultadoLaboratorioService.reabrirResultado(resultado._id),
+      );
+
+      const actualizado = this.fusionarResultadoCompleto(
+        resultado,
+        response.resultado,
+      );
+      this.resultados[this.indiceActual] = actualizado;
+      this._resultadosActualizados.set(actualizado._id, actualizado);
+      this.ultimoEstadoSolicitud = response.estadoSolicitud;
+      this.ultimoEstadoOperativo = response.estadoOperativo;
+      this._borradores.delete(actualizado._id);
+
+      if (this.data.puedeRegistrar !== false) {
+        this.modoActual = 'REGISTRO';
+      } else {
+        this.modoActual = 'CONSULTA';
+      }
+
+      this.formResultado = this.crearFormularioActual();
+
+      await Swal.fire({
+        icon: 'success',
+        title: 'Resultado reabierto',
+        text: response.msg,
+        confirmButtonText: 'Continuar',
+      });
+    } catch (error: any) {
+      await Swal.fire({
+        icon: 'error',
+        title: 'No se pudo reabrir el resultado',
+        text:
+          error?.error?.msg ||
+          'Ocurrió un error al reabrir el resultado.',
+        confirmButtonText: 'Cerrar',
+      });
+    } finally {
+      this.procesando = false;
+    }
   }
 
   // ====== Cerrar ======
@@ -1248,6 +1893,10 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
       estadoUnidadLaboratorio: response.estadoUnidadLaboratorio,
       habilitacionMuestra:
         response.habilitacionMuestra ?? resultadoOrigen.habilitacionMuestra,
+      versionResultado:
+        response.versionResultado ?? resultadoOrigen.versionResultado,
+      historialEventos:
+        response.historialEventos ?? resultadoOrigen.historialEventos,
       resultadosItems: resultadoOrigen.resultadosItems.map((item) => {
         const actualizado = itemsActualizados.get(item._id);
 

@@ -264,6 +264,33 @@ export interface IHabilitacionMuestraResultado {
   muestras: IMuestraHabilitacionResultado[];
 }
 
+
+// ====== Historial del resultado ======
+
+export type TipoEventoHistorialResultado =
+  | 'INICIALIZACION'
+  | 'REGISTRO'
+  | 'MODIFICACION'
+  | 'REVISION_VALIDACION'
+  | 'VALIDACION'
+  | 'LIBERACION'
+  | 'ANULACION'
+  | 'REAPERTURA';
+
+export interface IHistorialEventoResultado {
+  _id?: string;
+  tipoEvento: TipoEventoHistorialResultado;
+  versionResultado: number;
+  estadoAnterior: string | null;
+  estadoNuevo: string | null;
+  ejecutadoPor: string | null;
+  usuarioEjecucion: string | null;
+  fechaEvento: string;
+  detalle: string;
+  metadatos?: Record<string, unknown> | null;
+  snapshotResultado?: Record<string, unknown> | null;
+}
+
 // ====== Resultado de laboratorio ======
 
 export interface IResultadoLaboratorio {
@@ -307,7 +334,7 @@ export interface IResultadoLaboratorio {
 
   confirmoAlertasCriticasValidacion?: boolean;
 
-  // ====== Liberación ======
+// ====== Liberación ======
 
   liberadoPor?: string | null;
 
@@ -336,6 +363,12 @@ export interface IResultadoLaboratorio {
   rolAutorizacionAnulacion?: string | null;
 
   fechaAutorizacionAnulacion?: string | null;
+
+  // ====== Versionado e historial ======
+
+  versionResultado?: number;
+
+  historialEventos?: IHistorialEventoResultado[];
 
   // ====== Auditoría ======
 
@@ -534,6 +567,9 @@ export interface IRegistrarResultadoItemResponse {
   habilitacionMuestra?: IHabilitacionMuestraResultado;
 
   item: IResultadoLaboratorioItem;
+
+  versionResultado?: number;
+  historialEventos?: IHistorialEventoResultado[];
 }
 
 // ====== Captura masiva ======
@@ -568,6 +604,9 @@ export interface IRegistrarResultadosMasivosResponse {
   itemsActualizados: number;
 
   items: IResultadoLaboratorioItem[];
+
+  versionResultado?: number;
+  historialEventos?: IHistorialEventoResultado[];
 }
 
 // ====== Validación ======
@@ -594,6 +633,23 @@ export interface IValidarResultadoResponse {
   resumenAlertas: IResumenAlertas;
 
   resultado: IResultadoLaboratorio;
+}
+
+// ====== Validación masiva ======
+
+export interface IValidarResultadosMasivosDTO {
+  resultadoIds: string[];
+  observacionValidacion?: string;
+  confirmarAlertasCriticas?: boolean;
+}
+
+export interface IValidarResultadosMasivosResponse {
+  ok: boolean;
+  msg: string;
+  estadoSolicitud: string;
+  estadoOperativo: IEstadoOperativoSolicitud;
+  resumenAlertas: IResumenAlertas;
+  resultados: IResultadoLaboratorio[];
 }
 
 // ====== Liberación ======
@@ -772,3 +828,15 @@ export interface IAnularResultadoResponse {
 
   resultado: IResultadoLaboratorio;
 }
+// ====== Reapertura ======
+
+export interface IReabrirResultadoResponse {
+  ok: boolean;
+  msg: string;
+  estadoResultado: EstadoResultadoLaboratorio;
+  estadoUnidadLaboratorio: string | null;
+  estadoSolicitud: string;
+  estadoOperativo: IEstadoOperativoSolicitud;
+  resultado: IResultadoLaboratorio;
+}
+
