@@ -259,11 +259,14 @@
           <tr
             mat-row
             *matRowDef="let row; columns: columnasParticularesConExpand"
+            class="fila-solicitud"
+            [class.fila-expandida-activa]="isExpandedParticular(row)"
           ></tr>
 
           <tr
             mat-row
             *matRowDef="let row; columns: ['expandedDetail']"
+            class="fila-detalle-expandida"
             [style.display]="isExpandedParticular(row) ? 'table-row' : 'none'"
           ></tr>
         </table>
@@ -499,11 +502,14 @@
           <tr
             mat-row
             *matRowDef="let row; columns: columnasEmpresasConExpand"
+            class="fila-solicitud"
+            [class.fila-expandida-activa]="isExpandedEmpresa(row)"
           ></tr>
 
           <tr
             mat-row
             *matRowDef="let row; columns: ['expandedDetail']"
+            class="fila-detalle-expandida"
             [style.display]="isExpandedEmpresa(row) ? 'table-row' : 'none'"
           ></tr>
         </table>
@@ -529,14 +535,7 @@
   <!-- ====== Detalle operativo ====== -->
 
   <ng-template #detalleOperativo let-row>
-    <div
-      style="
-        padding: 18px;
-        background: #f8fafc;
-        border-top: 1px solid #e2e8f0;
-        border-bottom: 1px solid #e2e8f0;
-      "
-    >
+    <div class="detalle-operativo-expandido">
       <div
         style="
           display: grid;

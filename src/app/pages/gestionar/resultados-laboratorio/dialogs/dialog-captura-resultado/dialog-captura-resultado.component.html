@@ -111,6 +111,9 @@
         *ngFor="let grupo of itemsForm.controls; let i = index"
         [formGroupName]="i"
         class="item-resultado"
+        [class.item-activo]="itemActivoIndex === i"
+        (focusin)="marcarItemActivo(i)"
+        (click)="marcarItemActivo(i)"
       >
         <div class="item-identidad">
           <div>

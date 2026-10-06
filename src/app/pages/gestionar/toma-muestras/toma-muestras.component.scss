@@ -108,3 +108,38 @@ td {
   border-color: #fca5a5;
   --mdc-chip-elevated-container-color: #fee2e2;
 }
+
+
+// ====== Resaltar solicitud expandida ======
+.fila-solicitud {
+  transition: background-color 120ms ease;
+}
+
+.fila-solicitud:hover td {
+  background: #f8fafc;
+}
+
+.fila-expandida-activa td {
+  background: #eef6ff !important;
+  border-top-color: #bfdbfe;
+  border-bottom-color: #bfdbfe;
+}
+
+.fila-expandida-activa td:first-child {
+  box-shadow: inset 4px 0 0 #2563eb;
+}
+
+.fila-detalle-expandida td {
+  padding: 0 !important;
+  border-bottom: 0;
+}
+
+.detalle-operativo-expandido {
+  margin: 0 8px 12px;
+  padding: 18px;
+  background: #f8fbff;
+  border: 1px solid #bfdbfe;
+  border-top: 0;
+  border-radius: 0 0 10px 10px;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+}

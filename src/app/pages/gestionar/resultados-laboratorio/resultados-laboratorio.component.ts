@@ -99,6 +99,27 @@ export class ResultadosLaboratorioComponent implements OnInit, AfterViewInit {
 
   private readonly _dialog = inject(MatDialog);
 
+  // ====== Teclado estándar en confirmaciones ======
+  private readonly _swal = Swal.mixin({
+    allowEnterKey: true,
+    allowEscapeKey: true,
+    keydownListenerCapture: true,
+    didOpen: (popup) => {
+      popup.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter' || event.shiftKey) {
+          return;
+        }
+
+        const target = event.target as HTMLElement | null;
+
+        if (target?.tagName === 'TEXTAREA') {
+          event.preventDefault();
+          Swal.clickConfirm();
+        }
+      });
+    },
+  });
+
   private readonly _adapter =
     inject<DateAdapter<unknown, unknown>>(DateAdapter);
 
@@ -394,6 +415,21 @@ export class ResultadosLaboratorioComponent implements OnInit, AfterViewInit {
       },
     });
 
+    // ====== Cierre por backdrop / Escape ======
+    dialogRef.backdropClick().subscribe(() => {
+      void dialogRef.componentInstance.cerrar();
+    });
+
+    dialogRef.keydownEvents().subscribe((event) => {
+      if (event.key !== 'Escape') {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+      void dialogRef.componentInstance.cerrar();
+    });
+
     dialogRef
       .afterClosed()
       .subscribe((salida: IRegistroResultadoDialogResult | undefined) => {
@@ -433,7 +469,7 @@ export class ResultadosLaboratorioComponent implements OnInit, AfterViewInit {
     let confirmarAlertasCriticas = false;
 
     if (alertasCriticas > 0) {
-      const confirmacion = await Swal.fire({
+      const confirmacion = await this._swal.fire({
         icon: 'warning',
         title: 'Resultado con alerta crítica',
         html: `
@@ -481,7 +517,7 @@ export class ResultadosLaboratorioComponent implements OnInit, AfterViewInit {
       observacionValidacion = confirmacion.value.observacionValidacion;
       confirmarAlertasCriticas = true;
     } else {
-      const confirmacion = await Swal.fire({
+      const confirmacion = await this._swal.fire({
         icon: totalAlertas > 0 ? 'warning' : 'question',
         title: '¿Validar resultado?',
         html:
@@ -525,7 +561,7 @@ export class ResultadosLaboratorioComponent implements OnInit, AfterViewInit {
         response.estadoOperativo,
       );
 
-      await Swal.fire({
+      await this._swal.fire({
         icon: response.resumenAlertas.criticas > 0 ? 'warning' : 'success',
         title: 'Resultado validado',
         text: response.msg,
@@ -534,7 +570,7 @@ export class ResultadosLaboratorioComponent implements OnInit, AfterViewInit {
     } catch (error: any) {
       console.error('Error al validar resultado:', error);
 
-      await Swal.fire({
+      await this._swal.fire({
         icon: 'error',
         title: 'No se pudo validar el resultado',
         text:
@@ -565,7 +601,7 @@ export class ResultadosLaboratorioComponent implements OnInit, AfterViewInit {
     const alertasCriticas = this.obtenerAlertasCriticas(resultado);
     let confirmarAlertasCriticas = false;
 
-    const confirmacion = await Swal.fire({
+    const confirmacion = await this._swal.fire({
       icon: totalAlertas > 0 ? 'warning' : 'question',
       title:
         alertasCriticas > 0
@@ -635,7 +671,7 @@ export class ResultadosLaboratorioComponent implements OnInit, AfterViewInit {
         response.estadoOperativo,
       );
 
-      await Swal.fire({
+      await this._swal.fire({
         icon: response.resumenAlertas.criticas > 0 ? 'warning' : 'success',
         title: 'Resultado liberado',
         text: response.msg,
@@ -644,7 +680,7 @@ export class ResultadosLaboratorioComponent implements OnInit, AfterViewInit {
     } catch (error: any) {
       console.error('Error al liberar resultado:', error);
 
-      await Swal.fire({
+      await this._swal.fire({
         icon: 'error',
         title: 'No se pudo liberar el resultado',
         text:
@@ -677,7 +713,7 @@ export class ResultadosLaboratorioComponent implements OnInit, AfterViewInit {
     let passwordAutorizador: string | undefined;
 
     if (requiereSegundoUsuario) {
-      const confirmacion = await Swal.fire({
+      const confirmacion = await this._swal.fire({
         icon: 'warning',
         title: 'Anular resultado liberado',
         html: `
@@ -724,7 +760,7 @@ export class ResultadosLaboratorioComponent implements OnInit, AfterViewInit {
       nombreUsuarioAutorizador = confirmacion.value.usuario;
       passwordAutorizador = confirmacion.value.password;
     } else {
-      const confirmacion = await Swal.fire({
+      const confirmacion = await this._swal.fire({
         icon: 'warning',
         title: '¿Anular resultado?',
         html: `Se anulará <strong>${resultado.codPruebaLab} - ${resultado.nombrePruebaLab}</strong>. El resultado permanecerá visible en el historial.`,
@@ -772,7 +808,7 @@ export class ResultadosLaboratorioComponent implements OnInit, AfterViewInit {
         response.estadoOperativo,
       );
 
-      await Swal.fire({
+      await this._swal.fire({
         icon: 'success',
         title: 'Resultado anulado',
         text: response.msg,
@@ -781,7 +817,7 @@ export class ResultadosLaboratorioComponent implements OnInit, AfterViewInit {
     } catch (error: any) {
       console.error('Error al anular resultado:', error);
 
-      await Swal.fire({
+      await this._swal.fire({
         icon: 'error',
         title: 'No se pudo anular el resultado',
         text:

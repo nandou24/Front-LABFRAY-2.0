@@ -123,6 +123,27 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
 
   private readonly _snackBar = inject(MatSnackBar);
 
+  // ====== Teclado estándar en confirmaciones ======
+  private readonly _swal = Swal.mixin({
+    allowEnterKey: true,
+    allowEscapeKey: true,
+    keydownListenerCapture: true,
+    didOpen: (popup) => {
+      popup.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter' || event.shiftKey) {
+          return;
+        }
+
+        const target = event.target as HTMLElement | null;
+
+        if (target?.tagName === 'TEXTAREA') {
+          event.preventDefault();
+          Swal.clickConfirm();
+        }
+      });
+    },
+  });
+
   private readonly _resultadoLaboratorioService = inject(
     ResultadoLaboratorioService,
   );
@@ -159,6 +180,8 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
     Math.max(Number(this.data.indiceInicial ?? 0), 0),
     Math.max(this.resultados.length - 1, 0),
   );
+
+  itemActivoIndex: number | null = null;
 
   modoActual: ModoDialogResultado =
     this.data.modo ?? (this.data.soloLecturaForzada ? 'CONSULTA' : 'REGISTRO');
@@ -330,6 +353,11 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
     return this.formResultado.controls.items;
   }
 
+  // ====== Resaltar Item activo ======
+  marcarItemActivo(index: number): void {
+    this.itemActivoIndex = index;
+  }
+
   ngOnDestroy(): void {
     this.limpiarSuscripcionesEvaluacion();
   }
@@ -377,6 +405,7 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
     this.guardarBorradorActual();
     this.indiceActual = indice;
     this.formResultado = this.crearFormularioActual();
+    this.itemActivoIndex = null;
   }
 
   // ====== Crear formulario ======
@@ -1344,7 +1373,7 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
 
           console.error('Error al guardar resultados:', error);
 
-          await Swal.fire({
+          await this._swal.fire({
             icon: 'error',
             title: this.esModoValidacion
               ? 'No se pudo actualizar el informe'
@@ -1486,7 +1515,7 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
       .map((resultado) => `${resultado.codPruebaLab} - ${resultado.nombrePruebaLab}`)
       .join('<br>');
 
-    const confirmacion = await Swal.fire({
+    const confirmacion = await this._swal.fire({
       icon: totalCriticas > 0 ? 'warning' : 'question',
       title:
         resultados.length > 1
@@ -1595,7 +1624,7 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
         duration: 2200,
       });
     } catch (error: any) {
-      await Swal.fire({
+      await this._swal.fire({
         icon: 'error',
         title: 'No se pudo validar el resultado',
         text:
@@ -1689,7 +1718,7 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
 
       this._snackBar.open(response.msg, 'Cerrar', { duration: 2400 });
     } catch (error: any) {
-      await Swal.fire({
+      await this._swal.fire({
         icon: 'error',
         title: 'No se pudieron validar los resultados',
         text:
@@ -1717,7 +1746,7 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
     let passwordAutorizador: string | undefined;
 
     if (requiereSegundoUsuario) {
-      const confirmacion = await Swal.fire({
+      const confirmacion = await this._swal.fire({
         icon: 'warning',
         title: 'Anular resultado liberado',
         html: `
@@ -1764,7 +1793,7 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
       nombreUsuarioAutorizador = confirmacion.value.usuario;
       passwordAutorizador = confirmacion.value.password;
     } else {
-      const confirmacion = await Swal.fire({
+      const confirmacion = await this._swal.fire({
         icon: 'warning',
         title: 'Anular resultado',
         html: `Se anulará <strong>${resultado.codPruebaLab} - ${resultado.nombrePruebaLab}</strong>. Los valores actuales se conservarán en el historial.`,
@@ -1811,14 +1840,14 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
       this.ultimoEstadoOperativo = response.estadoOperativo;
       this.formResultado = this.crearFormularioActual();
 
-      await Swal.fire({
+      await this._swal.fire({
         icon: 'success',
         title: 'Resultado anulado',
         text: response.msg,
         confirmButtonText: 'Continuar',
       });
     } catch (error: any) {
-      await Swal.fire({
+      await this._swal.fire({
         icon: 'error',
         title: 'No se pudo anular el resultado',
         text:
@@ -1840,7 +1869,7 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
       return;
     }
 
-    const confirmacion = await Swal.fire({
+    const confirmacion = await this._swal.fire({
       icon: 'question',
       title: 'Reabrir resultado',
       html: `
@@ -1886,14 +1915,14 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
 
       this.formResultado = this.crearFormularioActual();
 
-      await Swal.fire({
+      await this._swal.fire({
         icon: 'success',
         title: 'Resultado reabierto',
         text: response.msg,
         confirmButtonText: 'Continuar',
       });
     } catch (error: any) {
-      await Swal.fire({
+      await this._swal.fire({
         icon: 'error',
         title: 'No se pudo reabrir el resultado',
         text:
@@ -1916,7 +1945,7 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
     this.guardarBorradorActual();
 
     if (this.hayCambiosSinGuardar()) {
-      const confirmacion = await Swal.fire({
+      const confirmacion = await this._swal.fire({
         icon: 'warning',
         title: 'Hay cambios sin guardar',
         text: 'Los valores digitados que no fueron registrados se perderán al cerrar.',
