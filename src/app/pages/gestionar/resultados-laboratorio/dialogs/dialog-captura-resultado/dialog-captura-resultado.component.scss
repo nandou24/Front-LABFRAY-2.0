@@ -218,9 +218,19 @@ mat-dialog-content {
   color: #166534;
 }
 
-.evaluacion-alerta {
-  background: #fff7ed;
-  color: #b45309;
+.evaluacion-precaucion {
+  background: #fffbeb;
+  color: #a16207;
+}
+
+.evaluacion-critica {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.evaluacion-neutra {
+  background: #f1f5f9;
+  color: #475569;
 }
 
 .evaluacion-error {

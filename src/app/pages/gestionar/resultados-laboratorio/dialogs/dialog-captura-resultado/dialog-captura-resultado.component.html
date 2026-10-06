@@ -131,8 +131,7 @@
           *ngIf="obtenerEvaluacionVisible(resultadoActual.resultadosItems[i]) as evaluacion"
         >
           <div [class]="obtenerClaseEvaluacion(evaluacion)">
-            <strong>{{ evaluacion.estado }}</strong>
-            <span>{{ evaluacion.mensaje }}</span>
+            <strong>{{ obtenerTextoEvaluacion(evaluacion) }}</strong>
           </div>
         </ng-container>
 

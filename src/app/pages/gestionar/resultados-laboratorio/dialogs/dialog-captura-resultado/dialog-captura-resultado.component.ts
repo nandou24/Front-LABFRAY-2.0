@@ -811,7 +811,7 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
             : 'DENTRO_REFERENCIA',
         referenciaAplicada: this.construirReferenciaAplicada(referencia),
         mensaje: referencia.descripcion
-          ? `Resultado clasificado en referencia: ${referencia.descripcion}`
+          ? `Resultado clasificado como: ${referencia.descripcion}`
           : 'Resultado dentro de la referencia clínica',
       };
     }
@@ -1267,26 +1267,109 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
     );
   }
 
-  // ====== Clases de evaluación ======
+  // ====== Presentación de evaluación ======
 
-  obtenerClaseEvaluacion(evaluacion: IEvaluacionReferencia | null): string {
-    const estado = evaluacion?.estado;
-
-    if (
-      estado &&
-      ['ALTO', 'BAJO', 'FUERA_REFERENCIA', 'VALOR_NO_PERMITIDO'].includes(estado)
-    ) {
-      return 'evaluacion evaluacion-alerta';
+  obtenerTextoEvaluacion(evaluacion: IEvaluacionReferencia | null): string {
+    if (!evaluacion) {
+      return '';
     }
 
+    const descripcion = String(
+      evaluacion.referenciaAplicada?.descripcion ?? '',
+    ).trim();
+
+    if (descripcion) {
+      return `Resultado clasificado como: ${descripcion}`;
+    }
+
+    const textosPorEstado: Partial<
+      Record<IEvaluacionReferencia['estado'], string>
+    > = {
+      ALTO: 'Resultado clasificado como: Alto',
+      BAJO: 'Resultado clasificado como: Bajo',
+      FUERA_REFERENCIA: 'Resultado fuera de referencia',
+      VALOR_NO_PERMITIDO: 'Resultado no permitido por la referencia',
+      VALOR_PERMITIDO: 'Resultado clasificado como: Permitido',
+      DENTRO_REFERENCIA: 'Resultado dentro de referencia',
+      NO_APLICA: 'No existe una referencia clínica aplicable al paciente',
+      PENDIENTE: evaluacion.mensaje || 'Evaluación clínica pendiente',
+    };
+
+    return textosPorEstado[evaluacion.estado] ?? evaluacion.mensaje ?? '';
+  }
+
+  obtenerClaseEvaluacion(evaluacion: IEvaluacionReferencia | null): string {
+    if (!evaluacion) {
+      return 'evaluacion evaluacion-neutra';
+    }
+
+    const estado = evaluacion.estado;
+
     if (
-      estado &&
-      ['DENTRO_REFERENCIA', 'VALOR_PERMITIDO'].includes(estado)
+      ['ALTO', 'BAJO', 'FUERA_REFERENCIA', 'VALOR_NO_PERMITIDO'].includes(
+        estado,
+      )
     ) {
+      return 'evaluacion evaluacion-critica';
+    }
+
+    const descripcion = this.normalizarClasificacionVisual(
+      evaluacion.referenciaAplicada?.descripcion ?? '',
+    );
+
+    if (descripcion) {
+      if (
+        [
+          'MUY ALTO',
+          'MUY ELEVADO',
+          'ALTO',
+          'ELEVADO',
+          'CRITICO',
+          'CRITICA',
+          'SEVERO',
+          'SEVERA',
+        ].some((termino) => descripcion.includes(termino))
+      ) {
+        return 'evaluacion evaluacion-critica';
+      }
+
+      if (
+        [
+          'INTERMEDIO',
+          'LIMITROFE',
+          'LIMITE',
+          'MODERADO',
+          'MODERADA',
+          'BORDERLINE',
+        ].some((termino) => descripcion.includes(termino))
+      ) {
+        return 'evaluacion evaluacion-precaucion';
+      }
+
+      if (
+        ['NORMAL', 'DESEABLE', 'OPTIMO', 'OPTIMA', 'ADECUADO', 'ADECUADA'].some(
+          (termino) => descripcion.includes(termino),
+        )
+      ) {
+        return 'evaluacion evaluacion-normal';
+      }
+
+      return 'evaluacion evaluacion-neutra';
+    }
+
+    if (['DENTRO_REFERENCIA', 'VALOR_PERMITIDO'].includes(estado)) {
       return 'evaluacion evaluacion-normal';
     }
 
-    return 'evaluacion';
+    return 'evaluacion evaluacion-neutra';
+  }
+
+  private normalizarClasificacionVisual(valor: string): string {
+    return String(valor ?? '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim()
+      .toUpperCase();
   }
 
   private limpiarSuscripcionesEvaluacion(): void {
