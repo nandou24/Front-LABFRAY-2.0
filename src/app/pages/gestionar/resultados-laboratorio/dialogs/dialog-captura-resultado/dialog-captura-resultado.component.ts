@@ -8,6 +8,8 @@ import {
   ReactiveFormsModule,
 } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatOptionModule } from '@angular/material/core';
 import { MatChipsModule } from '@angular/material/chips';
 import {
   MAT_DIALOG_DATA,
@@ -17,6 +19,7 @@ import {
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { distinctUntilChanged, firstValueFrom, startWith, Subscription } from 'rxjs';
@@ -71,6 +74,7 @@ export interface IRegistroResultadoDialogResult {
 
 interface IItemResultadoForm {
   itemResultadoId: FormControl<string>;
+  selectorResultado: FormControl<string>;
   valor: FormControl<string | number | null>;
   observacion: FormControl<string>;
 }
@@ -94,11 +98,14 @@ interface IEvaluacionLocalItem {
     CommonModule,
     ReactiveFormsModule,
     MatButtonModule,
+    MatCheckboxModule,
     MatChipsModule,
     MatDialogModule,
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
+    MatOptionModule,
+    MatSelectModule,
     MatSnackBarModule,
     MatTooltipModule,
   ],
@@ -155,6 +162,15 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
 
   modoActual: ModoDialogResultado =
     this.data.modo ?? (this.data.soloLecturaForzada ? 'CONSULTA' : 'REGISTRO');
+
+  readonly valorOtroResultado = '__OTRO_RESULTADO__';
+
+  private readonly _seleccionValidacion = new Set<string>(
+    this.modoActual === 'VALIDACION' &&
+      this.resultados[this.indiceActual]?.estadoResultado === 'COMPLETO'
+      ? [this.resultados[this.indiceActual]._id]
+      : [],
+  );
 
   procesando = false;
 
@@ -256,6 +272,44 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
     return this.resultados.filter(
       (resultado) => resultado.estadoResultado === 'COMPLETO',
     ).length;
+  }
+
+  get cantidadSeleccionadosValidacion(): number {
+    return this.resultados.filter(
+      (resultado) =>
+        resultado.estadoResultado === 'COMPLETO' &&
+        this._seleccionValidacion.has(resultado._id),
+    ).length;
+  }
+
+  estaSeleccionadoParaValidar(resultado: IResultadoLaboratorio): boolean {
+    return this._seleccionValidacion.has(resultado._id);
+  }
+
+  cambiarSeleccionValidacion(
+    resultado: IResultadoLaboratorio,
+    seleccionado: boolean,
+  ): void {
+    if (resultado.estadoResultado !== 'COMPLETO') {
+      this._seleccionValidacion.delete(resultado._id);
+      return;
+    }
+
+    if (seleccionado) {
+      this._seleccionValidacion.add(resultado._id);
+    } else {
+      this._seleccionValidacion.delete(resultado._id);
+    }
+  }
+
+  seleccionarTodosValidables(): void {
+    this.resultados
+      .filter((resultado) => resultado.estadoResultado === 'COMPLETO')
+      .forEach((resultado) => this._seleccionValidacion.add(resultado._id));
+  }
+
+  limpiarSeleccionValidacion(): void {
+    this._seleccionValidacion.clear();
   }
 
   get puedeAnularActual(): boolean {
@@ -369,15 +423,96 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
     item: IResultadoLaboratorioItem,
     borrador?: IBorradorItemResultado,
   ): FormGroup<IItemResultadoForm> {
+    const valorInicial = borrador
+      ? borrador.valor
+      : this.obtenerValorInicialResultado(item);
+
     return this._fb.group<IItemResultadoForm>({
       itemResultadoId: this._fb.nonNullable.control(item._id),
-      valor: this._fb.control<string | number | null>(
-        borrador ? borrador.valor : (item.valor ?? ''),
+      selectorResultado: this._fb.nonNullable.control(
+        this.obtenerSeleccionInicialResultado(item, valorInicial),
       ),
+      valor: this._fb.control<string | number | null>(valorInicial),
       observacion: this._fb.nonNullable.control(
         borrador ? borrador.observacion : (item.observacion ?? ''),
       ),
     });
+  }
+
+  // ====== Valor inicial y opciones de captura ======
+
+  private obtenerValorInicialResultado(
+    item: IResultadoLaboratorioItem,
+  ): string | number | null {
+    if (item.valor !== null && item.valor !== undefined && item.valor !== '') {
+      return item.valor;
+    }
+
+    if (item.tipoResultado !== 'TEXTO') {
+      return '';
+    }
+
+    const referenciaTexto = (
+      item.configuracionClinica?.referenciasResultado ?? []
+    ).find(
+      (referencia) =>
+        referencia.activo !== false &&
+        referencia.tipoReferencia === 'TEXTO' &&
+        String(referencia.textoReferencia ?? '').trim(),
+    );
+
+    return String(referenciaTexto?.textoReferencia ?? '').trim();
+  }
+
+  usaSelectorResultado(item: IResultadoLaboratorioItem): boolean {
+    return (
+      item.tipoResultado !== 'NUMERICO' &&
+      (item.configuracionClinica?.opcionesResultado?.length ?? 0) > 0
+    );
+  }
+
+  obtenerOpcionesResultado(item: IResultadoLaboratorioItem): string[] {
+    return item.configuracionClinica?.opcionesResultado ?? [];
+  }
+
+  permiteOtroResultado(item: IResultadoLaboratorioItem): boolean {
+    return item.configuracionClinica?.permiteValorNoListado === true;
+  }
+
+  mostrarIngresoManualResultado(
+    item: IResultadoLaboratorioItem,
+    grupo: FormGroup<IItemResultadoForm>,
+  ): boolean {
+    return (
+      this.usaSelectorResultado(item) &&
+      grupo.controls.selectorResultado.value === this.valorOtroResultado
+    );
+  }
+
+  private obtenerSeleccionInicialResultado(
+    item: IResultadoLaboratorioItem,
+    valor: string | number | null,
+  ): string {
+    if (!this.usaSelectorResultado(item)) {
+      return '';
+    }
+
+    const texto = String(valor ?? '').trim();
+
+    if (!texto) {
+      return '';
+    }
+
+    const encontrada = this.obtenerOpcionesResultado(item).find(
+      (opcion) =>
+        String(opcion).trim().toUpperCase() === texto.toUpperCase(),
+    );
+
+    if (encontrada !== undefined) {
+      return encontrada;
+    }
+
+    return this.permiteOtroResultado(item) ? this.valorOtroResultado : '';
   }
 
   // ====== Evaluación clínica local en tiempo real ======
@@ -391,6 +526,31 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
 
     form.controls.items.controls.forEach((grupo, indice) => {
       const item = resultado.resultadosItems[indice];
+
+      if (this.usaSelectorResultado(item)) {
+        const suscripcionSelector = grupo.controls.selectorResultado.valueChanges
+          .pipe(distinctUntilChanged())
+          .subscribe((seleccion) => {
+            if (seleccion === this.valorOtroResultado) {
+              const valorActual = String(grupo.controls.valor.value ?? '').trim();
+              const correspondeALista = this.obtenerOpcionesResultado(item).some(
+                (opcion) =>
+                  String(opcion).trim().toUpperCase() ===
+                  valorActual.toUpperCase(),
+              );
+
+              if (correspondeALista) {
+                grupo.controls.valor.setValue('', { emitEvent: true });
+              }
+
+              return;
+            }
+
+            grupo.controls.valor.setValue(seleccion || '', { emitEvent: true });
+          });
+
+        this._suscripcionesEvaluacion.push(suscripcionSelector);
+      }
 
       const suscripcion = grupo.controls.valor.valueChanges
         .pipe(
@@ -475,7 +635,7 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
 
     if (!configuracion) {
       throw new Error(
-        'La configuración clínica histórica del Item no está precargada. Actualice la bandeja.',
+        'La configuración clínica histórica del Item no está disponible para evaluación local.',
       );
     }
 
@@ -1425,6 +1585,7 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
 
       this.resultados[this.indiceActual] = actualizado;
       this._resultadosActualizados.set(actualizado._id, actualizado);
+      this._seleccionValidacion.delete(actualizado._id);
       this.ultimoEstadoSolicitud = response.estadoSolicitud;
       this.ultimoEstadoOperativo = response.estadoOperativo;
       this._borradores.delete(actualizado._id);
@@ -1447,13 +1608,13 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
     }
   }
 
-  // ====== Validar todas las pruebas completas ======
+  // ====== Validar pruebas seleccionadas ======
 
-  async validarTodasCompletas(): Promise<void> {
+  async validarSeleccionadas(): Promise<void> {
     if (
       !this.esModoValidacion ||
       this.data.puedeValidar !== true ||
-      this.cantidadCompletosValidables === 0 ||
+      this.cantidadSeleccionadosValidacion === 0 ||
       this.procesando
     ) {
       return;
@@ -1463,18 +1624,27 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
     this.procesando = true;
 
     try {
+      const idsSeleccionados = new Set(this._seleccionValidacion);
+
       for (let indice = 0; indice < this.resultados.length; indice += 1) {
-        if (this.resultados[indice].estadoResultado === 'COMPLETO') {
+        const resultado = this.resultados[indice];
+
+        if (
+          resultado.estadoResultado === 'COMPLETO' &&
+          idsSeleccionados.has(resultado._id)
+        ) {
           await this.guardarCambiosValidacionIndice(indice);
         }
       }
 
       const candidatos = this.resultados.filter(
-        (resultado) => resultado.estadoResultado === 'COMPLETO',
+        (resultado) =>
+          resultado.estadoResultado === 'COMPLETO' &&
+          idsSeleccionados.has(resultado._id),
       );
 
       if (candidatos.length === 0) {
-        this._snackBar.open('No quedan resultados COMPLETOS por validar.', 'Cerrar', {
+        this._snackBar.open('No quedan resultados seleccionados por validar.', 'Cerrar', {
           duration: 2200,
         });
         return;
@@ -1510,6 +1680,7 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
         this.resultados[indice] = actualizado;
         this._resultadosActualizados.set(actualizado._id, actualizado);
         this._borradores.delete(actualizado._id);
+        this._seleccionValidacion.delete(actualizado._id);
       });
 
       this.ultimoEstadoSolicitud = response.estadoSolicitud;
@@ -1531,7 +1702,7 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
     }
   }
 
-  // ====== Anular prueba desde la revisión ======
+  // ====== Anular resultado desde la revisión ======
 
   async anularPruebaActual(): Promise<void> {
     const resultado = this.resultadoActual;
@@ -1923,6 +2094,54 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
   }
 
   // ====== Presentación de evaluación ======
+
+  obtenerTextoEvaluacionItem(
+    item: IResultadoLaboratorioItem,
+    evaluacion: IEvaluacionReferencia | null,
+  ): string {
+    if (!evaluacion) {
+      return '';
+    }
+
+    if (item.tipoResultado === 'TEXTO') {
+      const esperado = String(
+        evaluacion.referenciaAplicada?.textoReferencia ?? '',
+      ).trim();
+
+      if (evaluacion.estado === 'FUERA_REFERENCIA' && esperado) {
+        return `Resultado diferente al valor esperado: ${esperado}`;
+      }
+
+      return '';
+    }
+
+    if (
+      item.tipoResultado === 'CATEGORICO' &&
+      evaluacion.referenciaAplicada?.descripcion === 'Valor de referencia'
+    ) {
+      return evaluacion.estado === 'VALOR_PERMITIDO'
+        ? 'Resultado esperado'
+        : evaluacion.estado === 'VALOR_NO_PERMITIDO'
+          ? 'Resultado fuera de los valores esperados'
+          : this.obtenerTextoEvaluacion(evaluacion);
+    }
+
+    return this.obtenerTextoEvaluacion(evaluacion);
+  }
+
+  obtenerClaseEvaluacionItem(
+    item: IResultadoLaboratorioItem,
+    evaluacion: IEvaluacionReferencia | null,
+  ): string {
+    if (
+      item.tipoResultado === 'TEXTO' &&
+      evaluacion?.estado === 'FUERA_REFERENCIA'
+    ) {
+      return 'evaluacion evaluacion-precaucion';
+    }
+
+    return this.obtenerClaseEvaluacion(evaluacion);
+  }
 
   obtenerTextoEvaluacion(evaluacion: IEvaluacionReferencia | null): string {
     if (!evaluacion) {

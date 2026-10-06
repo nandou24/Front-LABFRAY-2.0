@@ -43,7 +43,17 @@
       <span>{{ resultadoActual.nombrePruebaLab }}</span>
     </div>
 
-    <mat-chip>{{ resultadoActual.estadoResultado }}</mat-chip>
+    <div class="estado-y-seleccion">
+      <mat-checkbox
+        *ngIf="esModoValidacion && resultadoActual.estadoResultado === 'COMPLETO'"
+        [checked]="estaSeleccionadoParaValidar(resultadoActual)"
+        (change)="cambiarSeleccionValidacion(resultadoActual, $event.checked)"
+      >
+        Seleccionar para validar
+      </mat-checkbox>
+
+      <mat-chip>{{ resultadoActual.estadoResultado }}</mat-chip>
+    </div>
   </div>
 </div>
 
@@ -116,27 +126,68 @@
         </div>
 
         <div class="item-captura">
-          <mat-form-field appearance="outline">
-            <mat-label>Resultado</mat-label>
-
-            <input
+          <div class="campo-resultado">
+            <mat-form-field
+              appearance="outline"
               *ngIf="resultadoActual.resultadosItems[i].tipoResultado === 'NUMERICO'"
-              matInput
-              type="number"
-              formControlName="valor"
-            />
+            >
+              <mat-label>Resultado</mat-label>
+              <input matInput type="number" formControlName="valor" />
+              <span
+                matTextSuffix
+                *ngIf="resultadoActual.resultadosItems[i].unidadesRef"
+              >
+                {{ resultadoActual.resultadosItems[i].unidadesRef }}
+              </span>
+            </mat-form-field>
 
-            <input
-              *ngIf="resultadoActual.resultadosItems[i].tipoResultado !== 'NUMERICO'"
-              matInput
-              type="text"
-              formControlName="valor"
-            />
+            <mat-form-field
+              appearance="outline"
+              *ngIf="usaSelectorResultado(resultadoActual.resultadosItems[i])"
+            >
+              <mat-label>Resultado</mat-label>
+              <mat-select formControlName="selectorResultado">
+                <mat-option value="">Seleccione...</mat-option>
+                <mat-option
+                  *ngFor="let opcion of obtenerOpcionesResultado(resultadoActual.resultadosItems[i])"
+                  [value]="opcion"
+                >
+                  {{ opcion }}
+                </mat-option>
+                <mat-option
+                  *ngIf="permiteOtroResultado(resultadoActual.resultadosItems[i])"
+                  [value]="valorOtroResultado"
+                >
+                  Otro resultado...
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
 
-            <span matTextSuffix *ngIf="resultadoActual.resultadosItems[i].unidadesRef">
-              {{ resultadoActual.resultadosItems[i].unidadesRef }}
-            </span>
-          </mat-form-field>
+            <mat-form-field
+              appearance="outline"
+              *ngIf="
+                mostrarIngresoManualResultado(
+                  resultadoActual.resultadosItems[i],
+                  grupo
+                )
+              "
+              class="campo-otro-resultado"
+            >
+              <mat-label>Otro resultado</mat-label>
+              <input matInput type="text" formControlName="valor" />
+            </mat-form-field>
+
+            <mat-form-field
+              appearance="outline"
+              *ngIf="
+                resultadoActual.resultadosItems[i].tipoResultado !== 'NUMERICO' &&
+                !usaSelectorResultado(resultadoActual.resultadosItems[i])
+              "
+            >
+              <mat-label>Resultado</mat-label>
+              <input matInput type="text" formControlName="valor" />
+            </mat-form-field>
+          </div>
 
           <mat-form-field appearance="outline" class="campo-observacion">
             <mat-label>Observación</mat-label>
@@ -155,8 +206,11 @@
         <ng-container
           *ngIf="obtenerEvaluacionVisible(resultadoActual.resultadosItems[i]) as evaluacion"
         >
-          <div [class]="obtenerClaseEvaluacion(evaluacion)">
-            <strong>{{ obtenerTextoEvaluacion(evaluacion) }}</strong>
+          <div
+            *ngIf="obtenerTextoEvaluacionItem(resultadoActual.resultadosItems[i], evaluacion) as textoEvaluacion"
+            [class]="obtenerClaseEvaluacionItem(resultadoActual.resultadosItems[i], evaluacion)"
+          >
+            <strong>{{ textoEvaluacion }}</strong>
           </div>
         </ng-container>
 
@@ -229,14 +283,24 @@
 
     <button
       *ngIf="esModoValidacion && cantidadCompletosValidables > 1"
+      mat-button
+      type="button"
+      (click)="seleccionarTodosValidables()"
+      [disabled]="procesando"
+    >
+      Seleccionar todas
+    </button>
+
+    <button
+      *ngIf="esModoValidacion && cantidadSeleccionadosValidacion > 0"
       mat-flat-button
       type="button"
       class="accion-validar-todas"
-      (click)="validarTodasCompletas()"
+      (click)="validarSeleccionadas()"
       [disabled]="procesando"
     >
       <mat-icon>done_all</mat-icon>
-      Validar todas ({{ cantidadCompletosValidables }})
+      Validar seleccionadas ({{ cantidadSeleccionadosValidacion }})
     </button>
 
     <button
@@ -248,7 +312,7 @@
       [disabled]="procesando"
     >
       <mat-icon>block</mat-icon>
-      Anular prueba
+      Anular resultado
     </button>
 
     <button

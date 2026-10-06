@@ -30,7 +30,10 @@ import {
   IBandejaResultadosLaboratorioItem,
   IResultadoLaboratorio,
 } from '../../../models/Gestion/resultadoLaboratorio.models';
-import { IEstadoOperativoSolicitud } from '../../../models/Gestion/estadoOperativoSolicitud.models';
+import {
+  IEstadoOperativoSolicitud,
+  IResumenResultadosEstadoOperativo,
+} from '../../../models/Gestion/estadoOperativoSolicitud.models';
 import { ResultadoLaboratorioService } from '../../../services/gestion/resultadosLaboratorio/resultados-laboratorio.service';
 import { AuthService } from '../../../services/auth/auth.service';
 import {
@@ -824,9 +827,28 @@ export class ResultadosLaboratorioComponent implements OnInit, AfterViewInit {
         return resultado;
       }
 
+      const itemsAnteriores = new Map(
+        (resultado.resultadosItems ?? []).map((item) => [item._id, item]),
+      );
+
+      const itemsActualizados = (resultadoActualizado.resultadosItems ?? []).map(
+        (item) => ({
+          ...itemsAnteriores.get(item._id),
+          ...item,
+          configuracionClinica:
+            item.configuracionClinica ??
+            itemsAnteriores.get(item._id)?.configuracionClinica ??
+            null,
+        }),
+      );
+
       return {
         ...resultado,
         ...resultadoActualizado,
+        resultadosItems:
+          itemsActualizados.length > 0
+            ? itemsActualizados
+            : resultado.resultadosItems,
         habilitacionMuestra:
           resultadoActualizado.habilitacionMuestra ??
           resultado.habilitacionMuestra,
@@ -838,14 +860,133 @@ export class ResultadosLaboratorioComponent implements OnInit, AfterViewInit {
 
     row.resultados.totalDocumentos = row.resultados.detalle.length;
     row.resultados.inicializados = row.resultados.detalle.length > 0;
-    row.resultados.resumen =
-      estadoOperativo.resumen?.resultados ?? row.resultados.resumen;
+
+    const resumenLocal = this.construirResumenResultadosLocal(
+      row.resultados.detalle,
+    );
+
+    row.resultados.resumen = resumenLocal;
 
     row.solicitud.estado = estadoSolicitud;
-    row.solicitud.estadoOperativo = estadoOperativo;
+
+    const estadoOperativoLocal = this.ajustarEstadoOperativoLocal(
+      estadoOperativo,
+      estadoSolicitud,
+      resumenLocal,
+    );
+
+    row.solicitud.estadoOperativo = {
+      ...estadoOperativoLocal,
+      tieneResultadosDisponibles: resumenLocal.disponibles > 0,
+      resultadosDisponibles: resumenLocal.disponibles,
+      resumen: estadoOperativoLocal.resumen
+        ? {
+            ...estadoOperativoLocal.resumen,
+            resultados: resumenLocal,
+          }
+        : estadoOperativoLocal.resumen,
+    };
 
     this.dataSourceParticulares.data = [...this.dataSourceParticulares.data];
     this.dataSourceEmpresas.data = [...this.dataSourceEmpresas.data];
+  }
+
+  // ====== Recalcular resumen en memoria ======
+
+  private construirResumenResultadosLocal(
+    resultados: IResultadoLaboratorio[],
+  ) {
+    const estados = resultados.map((resultado) => resultado.estadoResultado);
+    const total = resultados.length;
+    const anulados = estados.filter((estado) => estado === 'ANULADO').length;
+
+    return {
+      total,
+      totalDocumentos: total,
+      sinInicializar: 0,
+      pendientes: estados.filter((estado) => estado === 'PENDIENTE').length,
+      enProceso: estados.filter((estado) => estado === 'EN PROCESO').length,
+      completos: estados.filter((estado) => estado === 'COMPLETO').length,
+      validados: estados.filter((estado) => estado === 'VALIDADO').length,
+      liberados: estados.filter((estado) => estado === 'LIBERADO').length,
+      anulados,
+      disponibles: estados.filter((estado) => estado === 'LIBERADO').length,
+    };
+  }
+
+  // ====== Ajustar estado operativo en memoria ======
+
+  private ajustarEstadoOperativoLocal(
+    estadoOperativo: IEstadoOperativoSolicitud,
+    estadoSolicitud: string,
+    resumen: IResumenResultadosEstadoOperativo,
+  ): IEstadoOperativoSolicitud {
+    if (estadoSolicitud === 'ANULADO') {
+      return {
+        ...estadoOperativo,
+        codigo: 'ANULADO',
+        descripcion: 'Solicitud anulada',
+        estadoPrincipalSugerido: 'ANULADO',
+      };
+    }
+
+    // La obligación de muestra mantiene prioridad operativa.
+    if (estadoOperativo.hayObligacionPendientePaciente === true) {
+      return estadoOperativo;
+    }
+
+    const totalActivos = Math.max(resumen.total - resumen.anulados, 0);
+
+    if (totalActivos > 0 && resumen.liberados === totalActivos) {
+      return {
+        ...estadoOperativo,
+        codigo: 'RESULTADOS_LIBERADOS',
+        descripcion: 'Resultados liberados',
+        estadoPrincipalSugerido: estadoSolicitud,
+      };
+    }
+
+    if (resumen.liberados > 0) {
+      return {
+        ...estadoOperativo,
+        codigo: 'RESULTADOS_DISPONIBLES_PARCIALMENTE',
+        descripcion: 'Resultados disponibles parcialmente',
+        estadoPrincipalSugerido: estadoSolicitud,
+      };
+    }
+
+    if (totalActivos > 0 && resumen.validados === totalActivos) {
+      return {
+        ...estadoOperativo,
+        codigo: 'RESULTADOS_VALIDADOS',
+        descripcion: 'Resultados validados',
+        estadoPrincipalSugerido: estadoSolicitud,
+      };
+    }
+
+    if (totalActivos > 0 && resumen.completos === totalActivos) {
+      return {
+        ...estadoOperativo,
+        codigo: 'RESULTADOS_COMPLETOS',
+        descripcion: 'Resultados completos',
+        estadoPrincipalSugerido: estadoSolicitud,
+      };
+    }
+
+    if (
+      resumen.enProceso > 0 ||
+      resumen.completos > 0 ||
+      resumen.validados > 0
+    ) {
+      return {
+        ...estadoOperativo,
+        codigo: 'RESULTADOS_EN_PROCESO',
+        descripcion: 'Resultados en proceso',
+        estadoPrincipalSugerido: estadoSolicitud,
+      };
+    }
+
+    return estadoOperativo;
   }
 
   // ====== Datos visibles ======

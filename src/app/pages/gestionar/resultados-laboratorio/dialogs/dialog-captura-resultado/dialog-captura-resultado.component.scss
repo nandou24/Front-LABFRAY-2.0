@@ -415,3 +415,32 @@ kbd {
   background: #0b63c7 !important;
   color: #fff !important;
 }
+
+// ====== Captura por tipo de resultado ======
+.estado-y-seleccion {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.campo-resultado {
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+}
+
+.campo-resultado mat-form-field {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.campo-otro-resultado {
+  flex: 1 1 48%;
+}
+
+@media (max-width: 720px) {
+  .campo-resultado,
+  .estado-y-seleccion {
+    flex-wrap: wrap;
+  }
+}
