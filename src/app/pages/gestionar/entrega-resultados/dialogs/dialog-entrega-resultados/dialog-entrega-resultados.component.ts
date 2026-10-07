@@ -58,7 +58,6 @@ export class DialogEntregaResultadosComponent implements OnInit {
   informe: IInformeEntregable | null = null;
   seleccionados = new Set<string>();
 
-  readonly incluirLogo = this._fb.nonNullable.control(true);
 
   readonly formEntrega = this._fb.nonNullable.group({
     receptorNombre: ['', [Validators.maxLength(180)]],
@@ -181,7 +180,6 @@ export class DialogEntregaResultadosComponent implements OnInit {
       await this._pdf.imprimir(
         this.informe,
         this.resultadosSeleccionados,
-        this.incluirLogo.value,
       );
     } catch (error) {
       console.error('Error al generar informe de laboratorio:', error);
@@ -205,7 +203,6 @@ export class DialogEntregaResultadosComponent implements OnInit {
       await this._pdf.descargar(
         this.informe,
         this.resultadosSeleccionados,
-        this.incluirLogo.value,
       );
     } catch (error) {
       console.error('Error al descargar informe de laboratorio:', error);

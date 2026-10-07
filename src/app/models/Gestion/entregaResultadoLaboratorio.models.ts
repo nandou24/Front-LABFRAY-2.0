@@ -4,6 +4,8 @@ export interface IPacienteEntrega {
   nombreCompleto: string;
   hc: string;
   documento: string;
+  sexo?: string | null;
+  fechaNacimiento?: string | null;
 }
 
 export interface IResumenEntrega {
@@ -30,6 +32,29 @@ export interface IBandejaEntregaResponse {
   total: number;
 }
 
+export interface IReferenciaAplicadaEntrega {
+  descripcion?: string;
+  sexo?: string;
+  edadMin?: number | null;
+  edadMax?: number | null;
+  unidadEdad?: 'DIAS' | 'MESES' | 'ANIOS' | string;
+  tipoReferencia?:
+    | 'RANGO'
+    | 'MENOR_QUE'
+    | 'MENOR_IGUAL_QUE'
+    | 'MAYOR_QUE'
+    | 'MAYOR_IGUAL_QUE'
+    | 'VALORES_PERMITIDOS'
+    | 'TEXTO'
+    | string
+    | null;
+  valorMin?: number | null;
+  valorMax?: number | null;
+  valorLimite?: number | null;
+  valoresPermitidos?: string[];
+  textoReferencia?: string;
+}
+
 export interface IItemInformeEntrega {
   nombreInforme: string;
   codItemLab: string | null;
@@ -40,7 +65,7 @@ export interface IItemInformeEntrega {
   ordenItem: number;
   evaluacionReferencia?: {
     estado?: string;
-    referenciaAplicada?: { descripcion?: string } | null;
+    referenciaAplicada?: IReferenciaAplicadaEntrega | null;
   } | null;
   alertasDetectadas?: Array<{ nivelAlerta: string; mensaje: string }>;
 }
@@ -52,6 +77,7 @@ export interface IPruebaInformeEntrega {
   numeroInstancia: number;
   etiquetaInstancia: string | null;
   versionResultado: number;
+  fechaValidacion?: string | null;
   fechaLiberacion: string | null;
   usuarioLiberacion: string | null;
   observacionGeneral: string;
@@ -75,6 +101,7 @@ export interface IInformeEntregable {
     codSolicitud: string;
     codigoLaboratorio: string | null;
     fechaEmision: string;
+    fechaAtencion?: string | null;
     origenAtencion: 'PARTICULAR' | 'EMPRESA';
     paciente: IPacienteEntrega;
   };

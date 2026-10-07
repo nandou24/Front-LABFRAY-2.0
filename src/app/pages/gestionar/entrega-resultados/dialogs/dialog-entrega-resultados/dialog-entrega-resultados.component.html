@@ -58,9 +58,8 @@
 
     <div class="acciones-informe" *ngIf="informe.resultados.length">
       <div class="opciones-impresion">
-        <mat-checkbox [formControl]="incluirLogo">Incluir logo</mat-checkbox>
         <span>
-          Informe {{ tipoEntregaPreparada.toLowerCase() }} ·
+          Descarga digital con membrete · Impresión en fondo blanco ·
           {{ resultadosSeleccionados.length }} de
           {{ informe.resumen.totalPruebas }} prueba(s)
         </span>
