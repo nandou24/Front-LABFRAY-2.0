@@ -80,11 +80,11 @@ export class InformeLaboratorioPdfService {
     const altoPagina = doc.internal.pageSize.getHeight();
     const margen = 16;
     const margenInferiorTabla = modo === 'DIGITAL' ? 29 : 20;
-    const encabezadoImpresion =
+    const logoImpresion =
       modo === 'IMPRESION' && incluirLogoImpresion
-        ? await this.cargarImagen('/images/Encabezado.jpg')
+        ? await this.cargarImagen('/images/logo labfray.png')
         : null;
-    const margenSuperiorNuevaPagina = 50;
+    const margenSuperiorNuevaPagina = 43;
 
     this.aplicarPlantillaPagina(doc, modo);
 
@@ -92,7 +92,7 @@ export class InformeLaboratorioPdfService {
       doc,
       informe,
       modo,
-      encabezadoImpresion,
+      logoImpresion,
     );
 
     // ====== Pruebas liberadas seleccionadas ======
@@ -102,10 +102,10 @@ export class InformeLaboratorioPdfService {
       if (y > limiteInicioPrueba) {
         doc.addPage();
         this.aplicarPlantillaPagina(doc, modo);
-        this.aplicarEncabezadoImpresionPagina(
+        this.aplicarLogoImpresionPagina(
           doc,
           modo,
-          encabezadoImpresion,
+          logoImpresion,
         );
         y = margenSuperiorNuevaPagina;
       }
@@ -135,11 +135,6 @@ export class InformeLaboratorioPdfService {
       doc.setFontSize(7.5);
       doc.setTextColor(65, 65, 65);
 
-      if (prueba.metodo) {
-        doc.text(`Método: ${prueba.metodo}`, margen, y);
-        y += 3.8;
-      }
-
       doc.text(
         `Fecha de validación: ${this.formatearFechaHoraValor(prueba.fechaValidacion)}`,
         margen,
@@ -152,6 +147,7 @@ export class InformeLaboratorioPdfService {
 
         return {
           determinacion: item.nombreInforme,
+          metodo: item.metodo || '',
           resultado:
             item.valor === null || item.valor === undefined
               ? '-'
@@ -204,15 +200,26 @@ export class InformeLaboratorioPdfService {
           unidad: { cellWidth: 26, halign: 'center' },
         },
         didParseCell: (data) => {
-          if (data.section !== 'body' || data.column.dataKey !== 'resultado') {
+          if (data.section !== 'body') {
             return;
           }
 
           const raw = data.row.raw as {
+            metodo?: string;
             fueraReferencia?: boolean;
           };
 
-          if (raw.fueraReferencia) {
+          if (data.column.dataKey === 'determinacion' && raw.metodo) {
+            data.cell.styles.valign = 'top';
+            data.cell.styles.cellPadding = {
+              top: 2,
+              right: 2,
+              bottom: 5.2,
+              left: 2,
+            };
+          }
+
+          if (data.column.dataKey === 'resultado' && raw.fueraReferencia) {
             data.cell.styles.fontStyle = 'bold';
           }
         },
@@ -232,15 +239,34 @@ export class InformeLaboratorioPdfService {
             );
           }
 
-          if (!esCuerpo || data.column.dataKey !== 'resultado') {
+          if (!esCuerpo) {
             return;
           }
 
           const raw = data.row.raw as {
+            metodo?: string;
             resultado?: string;
             indicador?: IndicadorResultado;
             fueraReferencia?: boolean;
           };
+
+          // ====== Método propio de cada determinación ======
+          if (data.column.dataKey === 'determinacion' && raw.metodo) {
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(6.5);
+            doc.setTextColor(85, 85, 85);
+            doc.text(
+              `Método: ${raw.metodo}`,
+              data.cell.x + 2,
+              data.cell.y + data.cell.height - 2.1,
+              { maxWidth: data.cell.width - 4 },
+            );
+            doc.setTextColor(0, 0, 0);
+          }
+
+          if (data.column.dataKey !== 'resultado') {
+            return;
+          }
 
           if (!raw.fueraReferencia) {
             return;
@@ -278,11 +304,11 @@ export class InformeLaboratorioPdfService {
         willDrawPage: (data) => {
           if (data.pageNumber > 1) {
             this.aplicarPlantillaPagina(doc, modo);
-            this.aplicarEncabezadoImpresionPagina(
-          doc,
-          modo,
-          encabezadoImpresion,
-        );
+            this.aplicarLogoImpresionPagina(
+              doc,
+              modo,
+              logoImpresion,
+            );
           }
         },
       });
@@ -371,17 +397,21 @@ export class InformeLaboratorioPdfService {
     doc.addImage('/images/Encabezado.jpg', 'JPEG', 18.1, 13.9, 159.64, 24.13);
   }
 
-  // ====== Encabezado opcional para impresión ======
-  private aplicarEncabezadoImpresionPagina(
+  // ====== Logo opcional para impresión ======
+  private aplicarLogoImpresionPagina(
     doc: jsPDF,
     modo: ModoInformePdf,
-    encabezado: string | null,
+    logo: string | null,
   ): void {
-    if (modo !== 'IMPRESION' || !encabezado) {
+    if (modo !== 'IMPRESION' || !logo) {
       return;
     }
 
-    doc.addImage(encabezado, 'JPEG', 18.1, 13.9, 159.64, 24.13);
+    try {
+      doc.addImage(logo, 'PNG', 16, 13.5, 15, 16);
+    } catch {
+      doc.addImage(logo, 'JPEG', 16, 13.5, 15, 16);
+    }
   }
 
   // ====== Cabecera clínica compacta ======
@@ -393,9 +423,9 @@ export class InformeLaboratorioPdfService {
   ): number {
     const anchoPagina = doc.internal.pageSize.getWidth();
     const margen = 16;
-    let y = modo === 'DIGITAL' ? 43 : 25;
+    let y = 43;
 
-    this.aplicarEncabezadoImpresionPagina(doc, modo, logo);
+    this.aplicarLogoImpresionPagina(doc, modo, logo);
 
     const paciente = informe.solicitud.paciente;
     const fechaAtencion =

@@ -107,9 +107,6 @@
         <span>Instancia {{ prueba.numeroInstancia }} · v{{ prueba.versionResultado }}</span>
       </div>
 
-      <p class="metadato" *ngIf="prueba.metodo">
-        Método: {{ prueba.metodo }}
-      </p>
       <p class="metadato">
         Liberado: {{ prueba.fechaLiberacion | date: 'dd/MM/yyyy HH:mm' }}
       </p>
@@ -125,7 +122,12 @@
         </thead>
         <tbody>
           <tr *ngFor="let item of prueba.items">
-            <td>{{ item.nombreInforme }}</td>
+            <td class="determinacion">
+              <div class="determinacion-nombre">{{ item.nombreInforme }}</div>
+              <div class="metodo-item" *ngIf="item.metodo">
+                Método: {{ item.metodo }}
+              </div>
+            </td>
             <td class="valor" [class.fuera-referencia]="fueraReferencia(item)">
               <strong>{{ item.valor ?? '-' }}</strong>
               <mat-icon class="indicador" *ngIf="indicadorIcono(item) as icono">

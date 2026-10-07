@@ -58,6 +58,7 @@ export interface IReferenciaAplicadaEntrega {
 export interface IItemInformeEntrega {
   nombreInforme: string;
   codItemLab: string | null;
+  metodo?: string | null;
   valor: string | number | null;
   unidadesRef: string;
   observacion: string;
@@ -78,7 +79,6 @@ export interface IPruebaInformeEntrega {
   numeroInstancia: number;
   etiquetaInstancia: string | null;
   versionResultado: number;
-  metodo?: string | null;
   fechaValidacion?: string | null;
   fechaLiberacion: string | null;
   usuarioLiberacion: string | null;
