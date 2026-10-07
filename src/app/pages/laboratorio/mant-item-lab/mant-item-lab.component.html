@@ -168,11 +168,31 @@
       >
         <mat-card-title>
           <div class="row-flex align-items-center">
-            REFERENCIA DEL RESULTADO
+            VALOR POR DEFECTO Y REFERENCIA
           </div>
         </mat-card-title>
 
         <mat-card-content>
+          <!-- Valor por defecto -->
+          <div class="row-flex mt-3">
+            <div [style.flex]="setFlex(70, '%')" class="flex-item">
+              <mat-form-field appearance="outline" class="w-100">
+                <mat-label> Valor por defecto </mat-label>
+
+                <textarea
+                  matInput
+                  rows="2"
+                  formControlName="valorPorDefectoResultado"
+                  placeholder="Ej. No se observan estructuras parasitarias"
+                ></textarea>
+
+                <mat-hint>
+                  Se precargará al registrar resultados y podrá modificarse antes de guardar.
+                </mat-hint>
+              </mat-form-field>
+            </div>
+          </div>
+
           <!-- Switch -->
           <div class="row-flex mt-3">
             <div [style.flex]="setFlex(25, '%')" class="flex-item mb-3">
@@ -298,6 +318,36 @@
               <span style="font-size: 12px; color: #dc3545">
                 Aún no se han agregado opciones de resultado.
               </span>
+            </div>
+          </div>
+
+          <!-- =====================================================
+              VALOR POR DEFECTO
+          ====================================================== -->
+
+          <div
+            class="row-flex mt-3"
+            *ngIf="obtenerOpcionesResultado().length > 0"
+          >
+            <div [style.flex]="setFlex(55, '%')" class="flex-item">
+              <mat-form-field appearance="outline" class="w-100">
+                <mat-label> Valor por defecto </mat-label>
+
+                <mat-select formControlName="valorPorDefectoResultado">
+                  <mat-option value=""> Sin valor por defecto </mat-option>
+
+                  <mat-option
+                    *ngFor="let opcion of obtenerOpcionesResultado()"
+                    [value]="opcion"
+                  >
+                    {{ opcion }}
+                  </mat-option>
+                </mat-select>
+
+                <mat-hint>
+                  Se seleccionará automáticamente al abrir la captura de resultados.
+                </mat-hint>
+              </mat-form-field>
             </div>
           </div>
 

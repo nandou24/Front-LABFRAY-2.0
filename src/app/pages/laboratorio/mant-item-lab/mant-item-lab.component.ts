@@ -162,6 +162,7 @@ export class MantItemLabComponent implements OnInit {
     contextoAnalitico: ['', [Validators.maxLength(150)]],
     tipoResultado: ['TEXTO', [Validators.required]],
     opcionesResultado: [[]],
+    valorPorDefectoResultado: [''],
     permiteValorNoListado: [false],
     valoresReferenciaCategorica: [[]],
     poseeReferenciaTexto: [false],
@@ -551,6 +552,17 @@ export class MantItemLabComponent implements OnInit {
       );
 
     // ========================================================
+    // LIMPIAR VALOR POR DEFECTO SI ERA LA OPCIÓN ELIMINADA
+    // ========================================================
+
+    if (
+      this.myFormItemLab.get('valorPorDefectoResultado')?.value ===
+      opcionEliminada
+    ) {
+      this.myFormItemLab.get('valorPorDefectoResultado')?.setValue('');
+    }
+
+    // ========================================================
     // ELIMINAR DE REGLAS DE ALERTA
     // ========================================================
 
@@ -596,6 +608,21 @@ export class MantItemLabComponent implements OnInit {
         Swal.fire({
           title: 'Opciones de resultado requeridas',
           text: 'Un Item categórico debe tener al menos una opción de resultado.',
+          icon: 'warning',
+          confirmButtonText: 'Ok',
+        });
+
+        return false;
+      }
+
+      const valorPorDefecto = String(
+        this.myFormItemLab.get('valorPorDefectoResultado')?.value ?? '',
+      ).trim();
+
+      if (valorPorDefecto && !opciones.includes(valorPorDefecto)) {
+        Swal.fire({
+          title: 'Valor por defecto inválido',
+          text: 'El valor por defecto debe existir entre las opciones configuradas.',
           icon: 'warning',
           confirmButtonText: 'Ok',
         });
@@ -861,6 +888,7 @@ export class MantItemLabComponent implements OnInit {
       contextoAnalitico: item.contextoAnalitico ?? '',
       tipoResultado: tipoItem,
       opcionesResultado: item.opcionesResultado ?? [],
+      valorPorDefectoResultado: item.valorPorDefectoResultado ?? '',
       permiteValorNoListado: item.permiteValorNoListado ?? false,
       valoresReferenciaCategorica: valoresReferenciaCategorica,
       poseeReferenciaTexto: poseeReferenciaTexto,
@@ -1222,6 +1250,11 @@ export class MantItemLabComponent implements OnInit {
       contextoAnalitico: formValue.contextoAnalitico ?? '',
       tipoResultado: formValue.tipoResultado ?? 'TEXTO',
       opcionesResultado: formValue.opcionesResultado ?? [],
+      valorPorDefectoResultado:
+        formValue.tipoResultado === 'TEXTO' ||
+        formValue.tipoResultado === 'CATEGORICO'
+          ? String(formValue.valorPorDefectoResultado ?? '').trim()
+          : '',
       permiteValorNoListado:
         formValue.tipoResultado === 'CATEGORICO'
           ? (formValue.permiteValorNoListado ?? false)
@@ -1534,6 +1567,7 @@ export class MantItemLabComponent implements OnInit {
       contextoAnalitico: '',
       tipoResultado: 'TEXTO',
       opcionesResultado: [],
+      valorPorDefectoResultado: '',
       permiteValorNoListado: false,
       valoresReferenciaCategorica: [],
       poseeReferenciaTexto: false,

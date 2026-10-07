@@ -496,20 +496,16 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
       return item.valor;
     }
 
-    if (item.tipoResultado !== 'TEXTO') {
+    if (
+      item.tipoResultado !== 'TEXTO' &&
+      item.tipoResultado !== 'CATEGORICO'
+    ) {
       return '';
     }
 
-    const referenciaTexto = (
-      item.configuracionClinica?.referenciasResultado ?? []
-    ).find(
-      (referencia) =>
-        referencia.activo !== false &&
-        referencia.tipoReferencia === 'TEXTO' &&
-        String(referencia.textoReferencia ?? '').trim(),
-    );
-
-    return String(referenciaTexto?.textoReferencia ?? '').trim();
+    return String(
+      item.configuracionClinica?.valorPorDefectoResultado ?? '',
+    ).trim();
   }
 
   usaSelectorResultado(item: IResultadoLaboratorioItem): boolean {

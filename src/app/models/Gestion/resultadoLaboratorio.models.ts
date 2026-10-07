@@ -154,6 +154,8 @@ export interface IConfiguracionClinicaResultadoItem {
 
   opcionesResultado: string[];
 
+  valorPorDefectoResultado: string;
+
   permiteValorNoListado: boolean;
 
   referenciasResultado: IReferenciaResultadoSnapshot[];
