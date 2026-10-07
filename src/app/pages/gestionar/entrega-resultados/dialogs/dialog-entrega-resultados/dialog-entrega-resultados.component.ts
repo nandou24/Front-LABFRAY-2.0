@@ -18,6 +18,7 @@ import {
   IInformeEntregable,
   IItemInformeEntrega,
   IPruebaInformeEntrega,
+  IReferenciaAplicadaEntrega,
 } from '../../../../../models/Gestion/entregaResultadoLaboratorio.models';
 import { EntregaResultadosService } from '../../../../../services/gestion/entregaResultados/entrega-resultados.service';
 import { InformeLaboratorioPdfService } from '../../../../../services/utilitarios/pdf/laboratorio/informe-laboratorio-pdf.service';
@@ -58,6 +59,7 @@ export class DialogEntregaResultadosComponent implements OnInit {
   informe: IInformeEntregable | null = null;
   seleccionados = new Set<string>();
 
+  readonly incluirLogoImpresion = this._fb.nonNullable.control(true);
 
   readonly formEntrega = this._fb.nonNullable.group({
     receptorNombre: ['', [Validators.maxLength(180)]],
@@ -146,20 +148,153 @@ export class DialogEntregaResultadosComponent implements OnInit {
   }
 
   // ====== Indicadores clínicos compactos ======
-  indicador(item: IItemInformeEntrega): '↑' | '↓' | '' {
+  indicadorDireccion(item: IItemInformeEntrega): 'ALTO' | 'BAJO' | '' {
     const estado = item.evaluacionReferencia?.estado || '';
+    const aplicada = item.evaluacionReferencia?.referenciaAplicada ?? null;
+    const descripcion = String(aplicada?.descripcion ?? '').trim().toUpperCase();
 
-    if (estado === 'ALTO') return '↑';
-    if (estado === 'BAJO') return '↓';
+    // ====== Normal no lleva indicador ======
+    if (/\b(NORMAL|DESEABLE)\b/.test(descripcion)) return '';
 
-    const descripcion = (
-      item.evaluacionReferencia?.referenciaAplicada?.descripcion || ''
-    ).toUpperCase();
+    if (estado === 'ALTO') return 'ALTO';
+    if (estado === 'BAJO') return 'BAJO';
 
-    if (/\b(ALTO|ELEVADO|CR[IÍ]TICO)\b/.test(descripcion)) return '↑';
-    if (/\b(BAJO|DISMINUIDO)\b/.test(descripcion)) return '↓';
+    // ====== Resolver desvío respecto de la banda normal ======
+    const direccionPorNormal = this.direccionRespectoReferenciaNormal(item);
+    if (direccionPorNormal) return direccionPorNormal;
+
+    if (/\b(ALTO|ELEVADO|INTERMEDIO|L[IÍ]MITE ALTO|CR[IÍ]TICO)\b/.test(descripcion)) {
+      return 'ALTO';
+    }
+    if (/\b(BAJO|DISMINUIDO|L[IÍ]MITE BAJO)\b/.test(descripcion)) return 'BAJO';
 
     return '';
+  }
+
+  private direccionRespectoReferenciaNormal(
+    item: IItemInformeEntrega,
+  ): 'ALTO' | 'BAJO' | '' {
+    const valor = Number(item.valor);
+    if (!Number.isFinite(valor)) return '';
+
+    const normales = (item.referenciasConfiguradas || []).filter((referencia) =>
+      /\b(NORMAL|DESEABLE)\b/.test(
+        String(referencia.descripcion ?? '').trim().toUpperCase(),
+      ),
+    );
+
+    for (const referencia of normales) {
+      const direccion = this.compararConReferenciaNormal(valor, referencia);
+      if (direccion) return direccion;
+    }
+
+    return '';
+  }
+
+  private compararConReferenciaNormal(
+    valor: number,
+    referencia: IReferenciaAplicadaEntrega,
+  ): 'ALTO' | 'BAJO' | '' {
+    const tipo = referencia.tipoReferencia;
+
+    if (tipo === 'RANGO') {
+      const minimo = Number(referencia.valorMin);
+      const maximo = Number(referencia.valorMax);
+      if (Number.isFinite(minimo) && valor < minimo) return 'BAJO';
+      if (Number.isFinite(maximo) && valor > maximo) return 'ALTO';
+      return '';
+    }
+
+    const limite = Number(referencia.valorLimite);
+    if (!Number.isFinite(limite)) return '';
+
+    if (tipo === 'MENOR_QUE') return valor >= limite ? 'ALTO' : '';
+    if (tipo === 'MENOR_IGUAL_QUE') return valor > limite ? 'ALTO' : '';
+    if (tipo === 'MAYOR_QUE') return valor <= limite ? 'BAJO' : '';
+    if (tipo === 'MAYOR_IGUAL_QUE') return valor < limite ? 'BAJO' : '';
+
+    return '';
+  }
+
+  indicadorIcono(item: IItemInformeEntrega): 'arrow_upward' | 'arrow_downward' | '' {
+    const direccion = this.indicadorDireccion(item);
+
+    if (direccion === 'ALTO') return 'arrow_upward';
+    if (direccion === 'BAJO') return 'arrow_downward';
+
+    return '';
+  }
+
+  fueraReferencia(item: IItemInformeEntrega): boolean {
+    const estado = item.evaluacionReferencia?.estado || '';
+
+    return (
+      !!this.indicadorDireccion(item) ||
+      ['FUERA_REFERENCIA', 'VALOR_NO_PERMITIDO'].includes(estado)
+    );
+  }
+
+  referenciasItem(item: IItemInformeEntrega): string[] {
+    const configuradas = item.referenciasConfiguradas || [];
+
+    if (configuradas.length) {
+      return configuradas
+        .map((referencia) => this.formatearReferencia(referencia, true))
+        .filter(Boolean);
+    }
+
+    const aplicada = item.evaluacionReferencia?.referenciaAplicada;
+    if (!aplicada) return [];
+
+    const texto = this.formatearReferencia(aplicada, true);
+    return texto ? [texto] : [];
+  }
+
+  private formatearReferencia(
+    referencia: IReferenciaAplicadaEntrega,
+    incluirDescripcion: boolean,
+  ): string {
+    const descripcion = String(referencia.descripcion || '').trim();
+    let valor = '';
+
+    switch (referencia.tipoReferencia) {
+      case 'RANGO':
+        if (this.tieneNumero(referencia.valorMin) && this.tieneNumero(referencia.valorMax)) {
+          valor = `${referencia.valorMin} - ${referencia.valorMax}`;
+        }
+        break;
+
+      case 'MENOR_QUE':
+        if (this.tieneNumero(referencia.valorLimite)) valor = `< ${referencia.valorLimite}`;
+        break;
+
+      case 'MENOR_IGUAL_QUE':
+        if (this.tieneNumero(referencia.valorLimite)) valor = `≤ ${referencia.valorLimite}`;
+        break;
+
+      case 'MAYOR_QUE':
+        if (this.tieneNumero(referencia.valorLimite)) valor = `> ${referencia.valorLimite}`;
+        break;
+
+      case 'MAYOR_IGUAL_QUE':
+        if (this.tieneNumero(referencia.valorLimite)) valor = `≥ ${referencia.valorLimite}`;
+        break;
+
+      case 'VALORES_PERMITIDOS':
+        valor = (referencia.valoresPermitidos || []).join(', ');
+        break;
+
+      case 'TEXTO':
+        valor = String(referencia.textoReferencia || '').trim();
+        break;
+    }
+
+    if (incluirDescripcion && descripcion && valor) return `${descripcion}: ${valor}`;
+    return valor || descripcion;
+  }
+
+  private tieneNumero(valor: number | null | undefined): valor is number {
+    return valor !== null && valor !== undefined && Number.isFinite(Number(valor));
   }
 
   tieneCritica(item: IItemInformeEntrega): boolean {
@@ -180,6 +315,7 @@ export class DialogEntregaResultadosComponent implements OnInit {
       await this._pdf.imprimir(
         this.informe,
         this.resultadosSeleccionados,
+        this.incluirLogoImpresion.value,
       );
     } catch (error) {
       console.error('Error al generar informe de laboratorio:', error);

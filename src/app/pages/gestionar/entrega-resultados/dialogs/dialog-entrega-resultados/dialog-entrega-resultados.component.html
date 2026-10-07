@@ -58,8 +58,11 @@
 
     <div class="acciones-informe" *ngIf="informe.resultados.length">
       <div class="opciones-impresion">
+        <mat-checkbox [formControl]="incluirLogoImpresion">
+          Incluir logo al imprimir
+        </mat-checkbox>
         <span>
-          Descarga digital con membrete · Impresión en fondo blanco ·
+          Descarga digital con membrete ·
           {{ resultadosSeleccionados.length }} de
           {{ informe.resumen.totalPruebas }} prueba(s)
         </span>
@@ -104,6 +107,9 @@
         <span>Instancia {{ prueba.numeroInstancia }} · v{{ prueba.versionResultado }}</span>
       </div>
 
+      <p class="metadato" *ngIf="prueba.metodo">
+        Método: {{ prueba.metodo }}
+      </p>
       <p class="metadato">
         Liberado: {{ prueba.fechaLiberacion | date: 'dd/MM/yyyy HH:mm' }}
       </p>
@@ -113,28 +119,31 @@
           <tr>
             <th>Determinación</th>
             <th>Resultado</th>
-            <th>Unidad</th>
-            <th>Referencia / indicador</th>
+            <th>Valor referencial</th>
+            <th>Unidades</th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let item of prueba.items">
             <td>{{ item.nombreInforme }}</td>
-            <td class="valor">
+            <td class="valor" [class.fuera-referencia]="fueraReferencia(item)">
               <strong>{{ item.valor ?? '-' }}</strong>
-              <span class="indicador" *ngIf="indicador(item)">
-                {{ indicador(item) }}
-              </span>
+              <mat-icon class="indicador" *ngIf="indicadorIcono(item) as icono">
+                {{ icono }}
+              </mat-icon>
             </td>
-            <td>{{ item.unidadesRef || '-' }}</td>
-            <td>
-              <span>
-                {{ item.evaluacionReferencia?.referenciaAplicada?.descripcion || '' }}
+            <td class="referencias">
+              <span
+                *ngFor="let referencia of referenciasItem(item)"
+                class="referencia-linea"
+              >
+                {{ referencia }}
               </span>
               <span class="critica" *ngIf="tieneCritica(item)">
-                · Alerta crítica
+                Alerta crítica
               </span>
             </td>
+            <td class="unidad">{{ item.unidadesRef || '-' }}</td>
           </tr>
         </tbody>
       </table>

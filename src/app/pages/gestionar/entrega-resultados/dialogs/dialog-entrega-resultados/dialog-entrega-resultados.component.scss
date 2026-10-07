@@ -142,15 +142,46 @@ th {
   color: #475569;
 }
 
+th:nth-child(2),
+th:nth-child(3),
+th:nth-child(4),
+td:nth-child(2),
+td:nth-child(3),
+td:nth-child(4) {
+  text-align: center;
+}
+
 .valor {
   white-space: nowrap;
 }
 
-.indicador {
-  font-size: 1.1rem;
+.valor.fuera-referencia strong {
   font-weight: 800;
-  margin-left: 7px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.indicador {
+  width: 18px;
+  height: 18px;
+  line-height: 18px;
+  font-size: 18px;
+  font-weight: 800;
+  margin-left: 4px;
+  vertical-align: middle;
   color: #b91c1c;
+}
+
+.referencias {
+  line-height: 1.35;
+}
+
+.referencia-linea {
+  display: block;
+}
+
+.unidad {
+  white-space: nowrap;
 }
 
 .critica {

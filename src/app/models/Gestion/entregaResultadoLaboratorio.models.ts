@@ -67,6 +67,7 @@ export interface IItemInformeEntrega {
     estado?: string;
     referenciaAplicada?: IReferenciaAplicadaEntrega | null;
   } | null;
+  referenciasConfiguradas?: IReferenciaAplicadaEntrega[];
   alertasDetectadas?: Array<{ nivelAlerta: string; mensaje: string }>;
 }
 
@@ -77,6 +78,7 @@ export interface IPruebaInformeEntrega {
   numeroInstancia: number;
   etiquetaInstancia: string | null;
   versionResultado: number;
+  metodo?: string | null;
   fechaValidacion?: string | null;
   fechaLiberacion: string | null;
   usuarioLiberacion: string | null;

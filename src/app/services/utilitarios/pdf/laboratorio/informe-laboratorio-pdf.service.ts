@@ -6,6 +6,7 @@ import {
   IInformeEntregable,
   IItemInformeEntrega,
   IPruebaInformeEntrega,
+  IReferenciaAplicadaEntrega,
 } from '../../../../models/Gestion/entregaResultadoLaboratorio.models';
 
 type ModoInformePdf = 'DIGITAL' | 'IMPRESION';
@@ -13,15 +14,21 @@ type IndicadorResultado = 'ALTO' | 'BAJO' | '';
 
 @Injectable({ providedIn: 'root' })
 export class InformeLaboratorioPdfService {
-  // ====== Imprimir en plantilla blanca ======
+  // ====== Imprimir con encabezado opcional ======
   async imprimir(
     informe: IInformeEntregable,
     pruebas: IPruebaInformeEntrega[],
+    incluirLogo = true,
   ): Promise<void> {
     const ventana = window.open('', '_blank');
 
     try {
-      const doc = await this.construirDocumento(informe, pruebas, 'IMPRESION');
+      const doc = await this.construirDocumento(
+        informe,
+        pruebas,
+        'IMPRESION',
+        incluirLogo,
+      );
       doc.autoPrint();
 
       const url = URL.createObjectURL(doc.output('blob'));
@@ -44,7 +51,7 @@ export class InformeLaboratorioPdfService {
     informe: IInformeEntregable,
     pruebas: IPruebaInformeEntrega[],
   ): Promise<void> {
-    const doc = await this.construirDocumento(informe, pruebas, 'DIGITAL');
+    const doc = await this.construirDocumento(informe, pruebas, 'DIGITAL', true);
     const paciente = this.normalizarNombreArchivo(
       informe.solicitud.paciente.nombreCompleto || 'PACIENTE',
     );
@@ -62,6 +69,7 @@ export class InformeLaboratorioPdfService {
     informe: IInformeEntregable,
     pruebas: IPruebaInformeEntrega[],
     modo: ModoInformePdf,
+    incluirLogoImpresion: boolean,
   ): Promise<jsPDF> {
     if (!pruebas.length) {
       throw new Error('Debe seleccionar al menos un resultado para el informe');
@@ -70,18 +78,22 @@ export class InformeLaboratorioPdfService {
     const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
     const anchoPagina = doc.internal.pageSize.getWidth();
     const altoPagina = doc.internal.pageSize.getHeight();
-    const margen = modo === 'DIGITAL' ? 16 : 14;
+    const margen = 16;
     const margenInferiorTabla = modo === 'DIGITAL' ? 29 : 20;
-    const margenSuperiorNuevaPagina = modo === 'DIGITAL' ? 42 : 18;
-    const logo =
-      modo === 'IMPRESION'
-        ? await this.cargarImagen('/images/logo labfray.png')
+    const encabezadoImpresion =
+      modo === 'IMPRESION' && incluirLogoImpresion
+        ? await this.cargarImagen('/images/Encabezado.jpg')
         : null;
-    const tipo = this.tipoInforme(informe, pruebas);
+    const margenSuperiorNuevaPagina = 50;
 
     this.aplicarPlantillaPagina(doc, modo);
 
-    let y = this.dibujarCabeceraPrincipal(doc, informe, modo, logo, tipo);
+    let y = this.dibujarCabeceraPrincipal(
+      doc,
+      informe,
+      modo,
+      encabezadoImpresion,
+    );
 
     // ====== Pruebas liberadas seleccionadas ======
     pruebas.forEach((prueba) => {
@@ -90,6 +102,11 @@ export class InformeLaboratorioPdfService {
       if (y > limiteInicioPrueba) {
         doc.addPage();
         this.aplicarPlantillaPagina(doc, modo);
+        this.aplicarEncabezadoImpresionPagina(
+          doc,
+          modo,
+          encabezadoImpresion,
+        );
         y = margenSuperiorNuevaPagina;
       }
 
@@ -117,12 +134,18 @@ export class InformeLaboratorioPdfService {
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(7.5);
       doc.setTextColor(65, 65, 65);
+
+      if (prueba.metodo) {
+        doc.text(`Método: ${prueba.metodo}`, margen, y);
+        y += 3.8;
+      }
+
       doc.text(
         `Fecha de validación: ${this.formatearFechaHoraValor(prueba.fechaValidacion)}`,
         margen,
         y,
       );
-      y += 2;
+      y += 2.3;
 
       const filas = prueba.items.map((item) => {
         const indicador = this.indicador(item);
@@ -133,7 +156,7 @@ export class InformeLaboratorioPdfService {
             item.valor === null || item.valor === undefined
               ? '-'
               : String(item.valor),
-          referencia: this.referencia(item),
+          referencia: this.referencias(item),
           unidad: item.unidadesRef || '',
           indicador,
           fueraReferencia: this.fueraReferencia(item, indicador),
@@ -148,7 +171,7 @@ export class InformeLaboratorioPdfService {
           left: margen,
           right: margen,
         },
-        theme: 'grid',
+        theme: 'plain',
         tableWidth: 'auto',
         columns: [
           { header: 'Determinación', dataKey: 'determinacion' },
@@ -161,23 +184,24 @@ export class InformeLaboratorioPdfService {
           font: 'helvetica',
           fontSize: 8,
           textColor: [0, 0, 0],
-          lineColor: [170, 170, 170],
-          lineWidth: 0.15,
-          cellPadding: 2,
-          fillColor: [255, 255, 255],
+          lineWidth: 0,
+          cellPadding: { top: 2, right: 2, bottom: 2, left: 2 },
+          fillColor: false,
+          overflow: 'linebreak',
+          valign: 'middle',
         },
         headStyles: {
           fontStyle: 'bold',
           textColor: [0, 0, 0],
-          fillColor: modo === 'DIGITAL' ? [235, 244, 248] : [240, 240, 240],
-          lineColor: [100, 100, 100],
-          lineWidth: 0.2,
+          fillColor: false,
+          lineWidth: 0,
+          valign: 'middle',
         },
         columnStyles: {
-          determinacion: { cellWidth: 62 },
-          resultado: { cellWidth: 34 },
-          referencia: { cellWidth: 52 },
-          unidad: { cellWidth: 30 },
+          determinacion: { cellWidth: 58, halign: 'left' },
+          resultado: { cellWidth: 28, halign: 'center' },
+          referencia: { cellWidth: 66, halign: 'center' },
+          unidad: { cellWidth: 26, halign: 'center' },
         },
         didParseCell: (data) => {
           if (data.section !== 'body' || data.column.dataKey !== 'resultado') {
@@ -193,7 +217,22 @@ export class InformeLaboratorioPdfService {
           }
         },
         didDrawCell: (data) => {
-          if (data.section !== 'body' || data.column.dataKey !== 'resultado') {
+          // ====== Solo separadores horizontales ======
+          const esCabecera = data.section === 'head';
+          const esCuerpo = data.section === 'body';
+
+          if (esCabecera || esCuerpo) {
+            doc.setDrawColor(esCabecera ? 90 : 190);
+            doc.setLineWidth(esCabecera ? 0.3 : 0.12);
+            doc.line(
+              data.cell.x,
+              data.cell.y + data.cell.height,
+              data.cell.x + data.cell.width,
+              data.cell.y + data.cell.height,
+            );
+          }
+
+          if (!esCuerpo || data.column.dataKey !== 'resultado') {
             return;
           }
 
@@ -210,19 +249,26 @@ export class InformeLaboratorioPdfService {
           const texto = String(raw.resultado || '-');
           const anchoTexto = Math.min(
             doc.getTextWidth(texto),
-            Math.max(5, data.cell.width - 11),
+            Math.max(5, data.cell.width - 12),
           );
-          const xTexto = data.cell.x + 2;
-          const ySubrayado = data.cell.y + data.cell.height - 2.1;
+          const centroX = data.cell.x + data.cell.width / 2;
+          const inicioTexto = centroX - anchoTexto / 2;
+          const finTexto = centroX + anchoTexto / 2;
+          const ySubrayado = data.cell.y + data.cell.height / 2 + 2.6;
 
           doc.setDrawColor(0, 0, 0);
           doc.setLineWidth(0.25);
-          doc.line(xTexto, ySubrayado, xTexto + anchoTexto, ySubrayado);
+          doc.line(inicioTexto, ySubrayado, finTexto, ySubrayado);
 
           if (raw.indicador) {
+            const xFlecha = Math.min(
+              data.cell.x + data.cell.width - 3.5,
+              finTexto + 4,
+            );
+
             this.dibujarFlecha(
               doc,
-              data.cell.x + data.cell.width - 5,
+              xFlecha,
               data.cell.y + data.cell.height / 2,
               raw.indicador,
             );
@@ -231,6 +277,11 @@ export class InformeLaboratorioPdfService {
         willDrawPage: (data) => {
           if (data.pageNumber > 1) {
             this.aplicarPlantillaPagina(doc, modo);
+            this.aplicarEncabezadoImpresionPagina(
+          doc,
+          modo,
+          encabezadoImpresion,
+        );
           }
         },
       });
@@ -263,7 +314,8 @@ export class InformeLaboratorioPdfService {
       doc.setTextColor(70, 70, 70);
 
       if (modo === 'IMPRESION') {
-        doc.setDrawColor(170);
+        doc.setDrawColor(190);
+        doc.setLineWidth(0.15);
         doc.line(margen, altoPagina - 13, anchoPagina - margen, altoPagina - 13);
         doc.text(
           `Solicitud: ${informe.solicitud.codSolicitud}`,
@@ -318,49 +370,31 @@ export class InformeLaboratorioPdfService {
     doc.addImage('/images/Encabezado.jpg', 'JPEG', 18.1, 13.9, 159.64, 24.13);
   }
 
-  // ====== Cabecera clínica ======
+  // ====== Encabezado opcional para impresión ======
+  private aplicarEncabezadoImpresionPagina(
+    doc: jsPDF,
+    modo: ModoInformePdf,
+    encabezado: string | null,
+  ): void {
+    if (modo !== 'IMPRESION' || !encabezado) {
+      return;
+    }
+
+    doc.addImage(encabezado, 'JPEG', 18.1, 13.9, 159.64, 24.13);
+  }
+
+  // ====== Cabecera clínica compacta ======
   private dibujarCabeceraPrincipal(
     doc: jsPDF,
     informe: IInformeEntregable,
     modo: ModoInformePdf,
     logo: string | null,
-    tipo: 'PARCIAL' | 'FINAL',
   ): number {
     const anchoPagina = doc.internal.pageSize.getWidth();
-    const margen = modo === 'DIGITAL' ? 16 : 14;
-    let y = modo === 'DIGITAL' ? 44 : 14;
+    const margen = 16;
+    let y = modo === 'DIGITAL' ? 43 : 25;
 
-    if (modo === 'IMPRESION' && logo) {
-      try {
-        doc.addImage(logo, 'PNG', margen, y, 15, 16);
-      } catch {
-        doc.addImage(logo, 'JPEG', margen, y, 15, 16);
-      }
-    }
-
-    doc.setTextColor(0, 0, 0);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(13);
-    const yTitulo = modo === 'DIGITAL' ? y : y + 5;
-
-    doc.text(
-      'INFORME DE RESULTADOS DE LABORATORIO',
-      anchoPagina / 2,
-      yTitulo,
-      { align: 'center' },
-    );
-
-    doc.setFontSize(8.5);
-    doc.text(`INFORME ${tipo}`, anchoPagina / 2, yTitulo + 5, {
-      align: 'center',
-    });
-
-    y = modo === 'DIGITAL' ? y + 11 : y + 27;
-
-    doc.setDrawColor(90);
-    doc.setLineWidth(0.25);
-    doc.line(margen, y, anchoPagina - margen, y);
-    y += 5;
+    this.aplicarLogoImpresionPagina(doc, modo, logo);
 
     const paciente = informe.solicitud.paciente;
     const fechaAtencion =
@@ -370,7 +404,9 @@ export class InformeLaboratorioPdfService {
       fechaAtencion,
     );
 
+    doc.setTextColor(0, 0, 0);
     doc.setFontSize(8.3);
+
     y = this.dibujarDatoDoble(
       doc,
       y,
@@ -405,13 +441,14 @@ export class InformeLaboratorioPdfService {
     doc.setFont('helvetica', 'bold');
     doc.text('Solicitud:', margen, y);
     doc.setFont('helvetica', 'normal');
-    doc.text(informe.solicitud.codSolicitud || '-', margen + 18, y);
-    y += 5;
+    doc.text(informe.solicitud.codSolicitud || '-', margen + 22, y);
+    y += 4.5;
 
-    doc.setDrawColor(150);
+    doc.setDrawColor(145);
+    doc.setLineWidth(0.2);
     doc.line(margen, y, anchoPagina - margen, y);
 
-    return y + 6;
+    return y + 5;
   }
 
   private dibujarDatoDoble(
@@ -427,7 +464,9 @@ export class InformeLaboratorioPdfService {
     doc.setFont('helvetica', 'bold');
     doc.text(etiquetaIzquierda, xIzquierda, y);
     doc.setFont('helvetica', 'normal');
-    doc.text(valorIzquierda, xIzquierda + 22, y, { maxWidth: 82 });
+    doc.text(valorIzquierda, xIzquierda + 22, y, {
+      maxWidth: Math.max(35, xDerecha - (xIzquierda + 27)),
+    });
 
     doc.setFont('helvetica', 'bold');
     doc.text(etiquetaDerecha, xDerecha, y);
@@ -437,29 +476,71 @@ export class InformeLaboratorioPdfService {
     return y + 5;
   }
 
-
-  private tipoInforme(
-    informe: IInformeEntregable,
-    pruebas: IPruebaInformeEntrega[],
-  ): 'PARCIAL' | 'FINAL' {
-    return pruebas.length > 0 && pruebas.length === informe.resumen.totalPruebas
-      ? 'FINAL'
-      : 'PARCIAL';
-  }
-
   // ====== Indicador clínico ======
   private indicador(item: IItemInformeEntrega): IndicadorResultado {
     const estado = item.evaluacionReferencia?.estado || '';
+    const aplicada = item.evaluacionReferencia?.referenciaAplicada ?? null;
+    const descripcion = String(aplicada?.descripcion ?? '').trim().toUpperCase();
+
+    // ====== Normal no lleva indicador ======
+    if (/\b(NORMAL|DESEABLE)\b/.test(descripcion)) return '';
 
     if (estado === 'ALTO') return 'ALTO';
     if (estado === 'BAJO') return 'BAJO';
 
-    const descripcion = (
-      item.evaluacionReferencia?.referenciaAplicada?.descripcion || ''
-    ).toUpperCase();
+    // ====== Resolver desvío respecto de la banda normal ======
+    const direccionPorNormal = this.direccionRespectoReferenciaNormal(item);
+    if (direccionPorNormal) return direccionPorNormal;
 
-    if (/\b(ALTO|ELEVADO|CR[IÍ]TICO)\b/.test(descripcion)) return 'ALTO';
-    if (/\b(BAJO|DISMINUIDO)\b/.test(descripcion)) return 'BAJO';
+    if (/\b(ALTO|ELEVADO|INTERMEDIO|L[IÍ]MITE ALTO|CR[IÍ]TICO)\b/.test(descripcion)) {
+      return 'ALTO';
+    }
+    if (/\b(BAJO|DISMINUIDO|L[IÍ]MITE BAJO)\b/.test(descripcion)) return 'BAJO';
+
+    return '';
+  }
+
+  private direccionRespectoReferenciaNormal(
+    item: IItemInformeEntrega,
+  ): IndicadorResultado {
+    const valor = Number(item.valor);
+    if (!Number.isFinite(valor)) return '';
+
+    const normales = (item.referenciasConfiguradas || []).filter((referencia) =>
+      /\b(NORMAL|DESEABLE)\b/.test(
+        String(referencia.descripcion ?? '').trim().toUpperCase(),
+      ),
+    );
+
+    for (const referencia of normales) {
+      const direccion = this.compararConReferenciaNormal(valor, referencia);
+      if (direccion) return direccion;
+    }
+
+    return '';
+  }
+
+  private compararConReferenciaNormal(
+    valor: number,
+    referencia: IReferenciaAplicadaEntrega,
+  ): IndicadorResultado {
+    const tipo = referencia.tipoReferencia;
+
+    if (tipo === 'RANGO') {
+      const minimo = Number(referencia.valorMin);
+      const maximo = Number(referencia.valorMax);
+      if (Number.isFinite(minimo) && valor < minimo) return 'BAJO';
+      if (Number.isFinite(maximo) && valor > maximo) return 'ALTO';
+      return '';
+    }
+
+    const limite = Number(referencia.valorLimite);
+    if (!Number.isFinite(limite)) return '';
+
+    if (tipo === 'MENOR_QUE') return valor >= limite ? 'ALTO' : '';
+    if (tipo === 'MENOR_IGUAL_QUE') return valor > limite ? 'ALTO' : '';
+    if (tipo === 'MAYOR_QUE') return valor <= limite ? 'BAJO' : '';
+    if (tipo === 'MAYOR_IGUAL_QUE') return valor < limite ? 'BAJO' : '';
 
     return '';
   }
@@ -476,50 +557,62 @@ export class InformeLaboratorioPdfService {
     );
   }
 
-  // ====== Mostrar el valor referencial real ======
-  private referencia(item: IItemInformeEntrega): string {
-    const referencia = item.evaluacionReferencia?.referenciaAplicada;
+  // ====== Reconstruir referencias configuradas del Item ======
+  private referencias(item: IItemInformeEntrega): string {
+    const configuradas = item.referenciasConfiguradas || [];
 
-    if (!referencia) {
-      return '';
+    if (configuradas.length) {
+      return configuradas
+        .map((referencia) => this.formatearReferencia(referencia, true))
+        .filter(Boolean)
+        .join('\n');
     }
+
+    const aplicada = item.evaluacionReferencia?.referenciaAplicada;
+    return aplicada ? this.formatearReferencia(aplicada, true) : '';
+  }
+
+  private formatearReferencia(
+    referencia: IReferenciaAplicadaEntrega,
+    incluirDescripcion: boolean,
+  ): string {
+    const descripcion = String(referencia.descripcion || '').trim();
+    let valor = '';
 
     switch (referencia.tipoReferencia) {
       case 'RANGO':
-        return this.tieneNumero(referencia.valorMin) &&
-          this.tieneNumero(referencia.valorMax)
-          ? `${referencia.valorMin} - ${referencia.valorMax}`
-          : referencia.descripcion?.trim() || '';
+        if (this.tieneNumero(referencia.valorMin) && this.tieneNumero(referencia.valorMax)) {
+          valor = `${referencia.valorMin} - ${referencia.valorMax}`;
+        }
+        break;
 
       case 'MENOR_QUE':
-        return this.tieneNumero(referencia.valorLimite)
-          ? `< ${referencia.valorLimite}`
-          : referencia.descripcion?.trim() || '';
+        if (this.tieneNumero(referencia.valorLimite)) valor = `< ${referencia.valorLimite}`;
+        break;
 
       case 'MENOR_IGUAL_QUE':
-        return this.tieneNumero(referencia.valorLimite)
-          ? `<= ${referencia.valorLimite}`
-          : referencia.descripcion?.trim() || '';
+        if (this.tieneNumero(referencia.valorLimite)) valor = `<= ${referencia.valorLimite}`;
+        break;
 
       case 'MAYOR_QUE':
-        return this.tieneNumero(referencia.valorLimite)
-          ? `> ${referencia.valorLimite}`
-          : referencia.descripcion?.trim() || '';
+        if (this.tieneNumero(referencia.valorLimite)) valor = `> ${referencia.valorLimite}`;
+        break;
 
       case 'MAYOR_IGUAL_QUE':
-        return this.tieneNumero(referencia.valorLimite)
-          ? `>= ${referencia.valorLimite}`
-          : referencia.descripcion?.trim() || '';
+        if (this.tieneNumero(referencia.valorLimite)) valor = `>= ${referencia.valorLimite}`;
+        break;
 
       case 'VALORES_PERMITIDOS':
-        return (referencia.valoresPermitidos || []).join(', ');
+        valor = (referencia.valoresPermitidos || []).join(', ');
+        break;
 
       case 'TEXTO':
-        return referencia.textoReferencia?.trim() || '';
-
-      default:
-        return referencia.descripcion?.trim() || '';
+        valor = String(referencia.textoReferencia || '').trim();
+        break;
     }
+
+    if (incluirDescripcion && descripcion && valor) return `${descripcion}: ${valor}`;
+    return valor || descripcion;
   }
 
   private tieneNumero(valor: number | null | undefined): valor is number {
@@ -533,18 +626,43 @@ export class InformeLaboratorioPdfService {
     direccion: 'ALTO' | 'BAJO',
   ): void {
     doc.setDrawColor(0, 0, 0);
-    doc.setLineWidth(0.4);
+    doc.setLineWidth(0.3);
+
+    // ====== Flecha compacta ======
+    const medioLargo = 1.1;
+    const anchoPunta = 0.75;
+    const retrocesoPunta = 0.55;
 
     if (direccion === 'ALTO') {
-      doc.line(x, y + 2.5, x, y - 2.5);
-      doc.line(x, y - 2.5, x - 1.6, y - 0.7);
-      doc.line(x, y - 2.5, x + 1.6, y - 0.7);
+      doc.line(x, y + medioLargo, x, y - medioLargo);
+      doc.line(
+        x,
+        y - medioLargo,
+        x - anchoPunta,
+        y - medioLargo + retrocesoPunta,
+      );
+      doc.line(
+        x,
+        y - medioLargo,
+        x + anchoPunta,
+        y - medioLargo + retrocesoPunta,
+      );
       return;
     }
 
-    doc.line(x, y - 2.5, x, y + 2.5);
-    doc.line(x, y + 2.5, x - 1.6, y + 0.7);
-    doc.line(x, y + 2.5, x + 1.6, y + 0.7);
+    doc.line(x, y - medioLargo, x, y + medioLargo);
+    doc.line(
+      x,
+      y + medioLargo,
+      x - anchoPunta,
+      y + medioLargo - retrocesoPunta,
+    );
+    doc.line(
+      x,
+      y + medioLargo,
+      x + anchoPunta,
+      y + medioLargo - retrocesoPunta,
+    );
   }
 
   // ====== Edad al momento de la atención ======
