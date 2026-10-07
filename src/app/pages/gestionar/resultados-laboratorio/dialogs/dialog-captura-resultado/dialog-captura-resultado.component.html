@@ -72,13 +72,13 @@
           · {{ resultadoActual.fechaAnulacion | date: 'dd/MM/yyyy HH:mm' }}
         </ng-container>
       </span>
-      <span *ngIf="resultadoActual.usuarioAutorizacionAnulacion">
-        Autorizado por {{ resultadoActual.usuarioAutorizacionAnulacion }}
-        <ng-container *ngIf="resultadoActual.rolAutorizacionAnulacion">
-          ({{ resultadoActual.rolAutorizacionAnulacion }})
+      <span *ngIf="autorizacionAnulacionActual.usuario">
+        Autorizado por {{ autorizacionAnulacionActual.usuario }}
+        <ng-container *ngIf="autorizacionAnulacionActual.rol">
+          ({{ autorizacionAnulacionActual.rol }})
         </ng-container>
-        <ng-container *ngIf="resultadoActual.fechaAutorizacionAnulacion">
-          · {{ resultadoActual.fechaAutorizacionAnulacion | date: 'dd/MM/yyyy HH:mm' }}
+        <ng-container *ngIf="autorizacionAnulacionActual.fecha">
+          · {{ autorizacionAnulacionActual.fecha | date: 'dd/MM/yyyy HH:mm' }}
         </ng-container>
       </span>
     </div>

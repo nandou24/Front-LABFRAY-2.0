@@ -258,6 +258,25 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
     return !this.esResultadoEditable(this.resultadoActual);
   }
 
+  // ====== Datos de autorización de la anulación ======
+  get autorizacionAnulacionActual(): {
+    usuario: string | null;
+    rol: string | null;
+    fecha: string | null;
+  } {
+    const datos = this.resultadoActual as IResultadoLaboratorio & {
+      usuarioAutorizacionAnulacion?: string | null;
+      rolAutorizacionAnulacion?: string | null;
+      fechaAutorizacionAnulacion?: string | null;
+    };
+
+    return {
+      usuario: datos.usuarioAutorizacionAnulacion ?? null,
+      rol: datos.rolAutorizacionAnulacion ?? null,
+      fecha: datos.fechaAutorizacionAnulacion ?? null,
+    };
+  }
+
   get habilitacionMuestraActual(): IHabilitacionMuestraResultado | null {
     return this.resultadoActual?.habilitacionMuestra ?? null;
   }

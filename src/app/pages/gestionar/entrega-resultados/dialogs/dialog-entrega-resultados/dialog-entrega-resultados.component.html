@@ -1,0 +1,249 @@
+<div class="cabecera" mat-dialog-title>
+  <div>
+    <h2>Resultados disponibles</h2>
+    <div class="identidad" *ngIf="informe">
+      <strong>{{ informe.solicitud.paciente.nombreCompleto }}</strong>
+      <span>{{ informe.solicitud.paciente.documento }}</span>
+      <span>HC: {{ informe.solicitud.paciente.hc }}</span>
+      <span>{{ informe.solicitud.codigoLaboratorio || informe.solicitud.codSolicitud }}</span>
+    </div>
+  </div>
+
+  <button
+    mat-icon-button
+    type="button"
+    aria-label="Cerrar"
+    (click)="cerrar()"
+  >
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
+<mat-dialog-content>
+  <div class="cargando" *ngIf="cargando">
+    <mat-spinner diameter="28"></mat-spinner>
+    Consultando resultados vigentes...
+  </div>
+
+  <ng-container *ngIf="informe && !cargando">
+    <div
+      class="estado-entrega"
+      [class.completa]="informe.resumen.tipoDisponibilidad === 'COMPLETA'"
+    >
+      <strong>
+        {{
+          informe.resumen.tipoDisponibilidad === 'COMPLETA'
+            ? 'DISPONIBILIDAD COMPLETA'
+            : 'DISPONIBILIDAD PARCIAL'
+        }}
+      </strong>
+      <span>
+        {{ informe.resumen.liberados }} de {{ informe.resumen.totalPruebas }}
+        pruebas liberadas.
+      </span>
+      <span *ngIf="informe.resumen.pendientes">
+        Quedan {{ informe.resumen.pendientes }} prueba(s) pendientes de liberar.
+      </span>
+    </div>
+
+    <div class="herramientas">
+      <strong>Preparación del informe</strong>
+      <button mat-button type="button" (click)="seleccionarTodas()">
+        Seleccionar disponibles
+      </button>
+      <button mat-button type="button" (click)="desmarcarTodas()">
+        Quitar selección
+      </button>
+    </div>
+
+    <div class="acciones-informe" *ngIf="informe.resultados.length">
+      <div class="opciones-impresion">
+        <mat-checkbox [formControl]="incluirLogo">Incluir logo</mat-checkbox>
+        <span>
+          Informe {{ tipoEntregaPreparada.toLowerCase() }} ·
+          {{ resultadosSeleccionados.length }} de
+          {{ informe.resumen.totalPruebas }} prueba(s)
+        </span>
+      </div>
+
+      <div class="botones-informe">
+        <button
+          mat-stroked-button
+          type="button"
+          [disabled]="!puedeGenerarInforme || generandoPdf"
+          (click)="descargarInforme()"
+        >
+          <mat-icon>picture_as_pdf</mat-icon>
+          Descargar PDF
+        </button>
+
+        <button
+          mat-flat-button
+          color="primary"
+          type="button"
+          [disabled]="!puedeGenerarInforme || generandoPdf"
+          (click)="imprimirInforme()"
+        >
+          <mat-icon>print</mat-icon>
+          Imprimir
+        </button>
+      </div>
+    </div>
+
+    <section
+      *ngFor="let prueba of informe.resultados"
+      class="prueba"
+      [class.elegida]="seleccionados.has(prueba._id)"
+    >
+      <div class="prueba-cabecera">
+        <mat-checkbox
+          [checked]="seleccionados.has(prueba._id)"
+          (change)="cambiarSeleccion(prueba._id, $event.checked)"
+        >
+          <strong>{{ prueba.codPruebaLab }} · {{ prueba.nombrePruebaLab }}</strong>
+        </mat-checkbox>
+        <span>Instancia {{ prueba.numeroInstancia }} · v{{ prueba.versionResultado }}</span>
+      </div>
+
+      <p class="metadato">
+        Liberado: {{ prueba.fechaLiberacion | date: 'dd/MM/yyyy HH:mm' }}
+      </p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Determinación</th>
+            <th>Resultado</th>
+            <th>Unidad</th>
+            <th>Referencia / indicador</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of prueba.items">
+            <td>{{ item.nombreInforme }}</td>
+            <td class="valor">
+              <strong>{{ item.valor ?? '-' }}</strong>
+              <span class="indicador" *ngIf="indicador(item)">
+                {{ indicador(item) }}
+              </span>
+            </td>
+            <td>{{ item.unidadesRef || '-' }}</td>
+            <td>
+              <span>
+                {{ item.evaluacionReferencia?.referenciaAplicada?.descripcion || '' }}
+              </span>
+              <span class="critica" *ngIf="tieneCritica(item)">
+                · Alerta crítica
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p class="observacion" *ngIf="prueba.observacionGeneral">
+        Observación: {{ prueba.observacionGeneral }}
+      </p>
+    </section>
+
+    <div class="vacio" *ngIf="!informe.resultados.length">
+      No existen resultados liberados vigentes.
+    </div>
+
+    <section class="registro-opcional" *ngIf="informe.resultados.length">
+      <div class="registro-opcional-cabecera">
+        <div>
+          <strong>Registro de entrega (opcional)</strong>
+          <p>
+            Imprimir o descargar no marca el informe como entregado. Si desea dejar
+            constancia, registre principalmente el medio utilizado.
+          </p>
+        </div>
+
+        <button
+          mat-stroked-button
+          type="button"
+          (click)="alternarRegistroEntrega()"
+        >
+          <mat-icon>{{ mostrarRegistroEntrega ? 'expand_less' : 'history' }}</mat-icon>
+          {{ mostrarRegistroEntrega ? 'Ocultar' : 'Registrar entrega' }}
+        </button>
+      </div>
+
+      <form
+        *ngIf="mostrarRegistroEntrega"
+        [formGroup]="formEntrega"
+        class="datos-entrega"
+        (ngSubmit)="registrarEntrega()"
+      >
+        <label>
+          <span>Medio</span>
+          <select formControlName="medio">
+            <option value="PRESENCIAL">Presencial</option>
+            <option value="WHATSAPP">WhatsApp</option>
+            <option value="CORREO">Correo</option>
+            <option value="OTRO">Otro</option>
+          </select>
+        </label>
+
+        <label>
+          <span>Recibido por (opcional)</span>
+          <input
+            formControlName="receptorNombre"
+            placeholder="Por defecto: paciente"
+            maxlength="180"
+          />
+        </label>
+
+        <label class="observaciones">
+          <span>Observación (opcional)</span>
+          <input formControlName="observacion" maxlength="1000" />
+        </label>
+
+        <div class="accion-registro-entrega">
+          <span>
+            ENTREGA {{ tipoEntregaPreparada }} ·
+            {{ resultadosSeleccionados.length }} prueba(s)
+          </span>
+          <button
+            mat-flat-button
+            color="primary"
+            type="submit"
+            [disabled]="
+              procesando ||
+              !seleccionados.size ||
+              formEntrega.invalid
+            "
+          >
+            <mat-icon>fact_check</mat-icon>
+            Registrar entrega
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <section class="historial" *ngIf="informe.entregas.length">
+      <h3>Entregas registradas (solo lectura)</h3>
+      <div *ngFor="let entrega of informe.entregas" class="evento">
+        <strong>{{ entrega.tipoEntrega }}</strong>
+        · {{ entrega.fechaEntrega | date: 'dd/MM/yyyy HH:mm' }}
+        · {{ entrega.pruebasEntregadas }} prueba(s)
+        · {{ medioTexto(entrega.medio) }}
+        <ng-container *ngIf="entrega.receptorNombre">
+          · Receptor: {{ entrega.receptorNombre }}
+        </ng-container>
+        · Usuario: {{ entrega.usuarioEntrega }}
+      </div>
+    </section>
+  </ng-container>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button
+    mat-button
+    type="button"
+    (click)="cerrar()"
+    [disabled]="procesando || generandoPdf"
+  >
+    Cerrar
+  </button>
+</mat-dialog-actions>

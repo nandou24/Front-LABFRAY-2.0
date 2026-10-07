@@ -176,6 +176,13 @@ export const routes: Routes = [
             './pages/gestionar/resultados-laboratorio/resultados-laboratorio.component'
           ).then((m) => m.ResultadosLaboratorioComponent),
       },
+      {
+        path: 'entrega-resultados',
+        loadComponent: () =>
+          import(
+            './pages/gestionar/entrega-resultados/entrega-resultados.component'
+          ).then((m) => m.EntregaResultadosComponent),
+      },
     ],
   },
   {

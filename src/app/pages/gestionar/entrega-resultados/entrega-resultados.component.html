@@ -1,0 +1,124 @@
+<section class="modulo-entregas">
+  <header>
+    <h2>Consulta y Entrega de Resultados</h2>
+  </header>
+
+  <form [formGroup]="formBusqueda" (ngSubmit)="buscar()" class="busqueda">
+    <label class="buscador">
+      <span>Solicitud, código laboratorio, DNI o paciente</span>
+      <input
+        type="search"
+        formControlName="terminoBusqueda"
+        placeholder="Buscar solicitud o paciente"
+      />
+    </label>
+    <label
+      ><span>Desde</span><input type="date" formControlName="fechaInicio"
+    /></label>
+    <label
+      ><span>Hasta</span><input type="date" formControlName="fechaFin"
+    /></label>
+    <button mat-flat-button color="primary" type="submit" [disabled]="cargando">
+      <mat-icon>search</mat-icon> Buscar
+    </button>
+    <button
+      mat-button
+      type="button"
+      (click)="hoyBuscar()"
+      [disabled]="cargando"
+    >
+      <mat-icon>refresh</mat-icon> Hoy
+    </button>
+  </form>
+
+  <div class="cargando" *ngIf="cargando">
+    <mat-spinner diameter="28"></mat-spinner> Consultando resultados
+    liberados...
+  </div>
+
+  <mat-tab-group
+    [selectedIndex]="tabActivo"
+    (selectedIndexChange)="cambiarTab($event)"
+    *ngIf="!cargando"
+  >
+    <mat-tab
+      [label]="'Particulares (' + totalOrigen('PARTICULAR') + ')'"
+    ></mat-tab>
+    <mat-tab [label]="'Empresas (' + totalOrigen('EMPRESA') + ')'"></mat-tab>
+  </mat-tab-group>
+
+  <div class="tabla-scroll" *ngIf="!cargando">
+    <table>
+      <thead>
+        <tr>
+          <th>Código Lab.</th>
+          <th>Solicitud</th>
+          <th>Fecha</th>
+          <th>HC</th>
+          <th>Documento</th>
+          <th>Paciente</th>
+          <th>Disponibilidad</th>
+          <th>Acción</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+          *ngFor="let fila of visibles"
+          [class.completa]="fila.resumen.tipoDisponibilidad === 'COMPLETA'"
+        >
+          <td>
+            <strong>{{ fila.codigoLaboratorio || "-" }}</strong>
+          </td>
+          <td>{{ fila.codSolicitud }}</td>
+          <td>{{ fila.fechaEmision | date: "dd/MM/yyyy HH:mm" }}</td>
+          <td>{{ fila.paciente.hc }}</td>
+          <td>{{ fila.paciente.documento }}</td>
+          <td>{{ fila.paciente.nombreCompleto }}</td>
+          <td>
+            <span
+              class="estado"
+              [class.final]="fila.resumen.tipoDisponibilidad === 'COMPLETA'"
+            >
+              {{
+                fila.resumen.tipoDisponibilidad === "COMPLETA"
+                  ? "COMPLETA"
+                  : fila.resumen.tipoDisponibilidad === "SIN_VIGENTES"
+                    ? "HISTÓRICO"
+                    : "PARCIAL"
+              }}
+            </span>
+            <div class="contador">
+              {{ fila.resumen.liberados }} de
+              {{ fila.resumen.totalPruebas }} liberados
+            </div>
+          </td>
+          <td>
+            <button
+              mat-stroked-button
+              type="button"
+              (click)="abrirInforme(fila)"
+            >
+              <mat-icon>description</mat-icon>
+              {{ fila.resumen.liberados ? "Ver informe" : "Ver historial" }}
+            </button>
+          </td>
+        </tr>
+        <tr *ngIf="filtradas.length === 0">
+          <td colspan="8" class="vacio">
+            No hay resultados liberados para este criterio.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <mat-paginator
+    *ngIf="!cargando && filtradas.length > 0"
+    [length]="filtradas.length"
+    [pageSize]="tamanoPagina"
+    [pageIndex]="pagina"
+    [pageSizeOptions]="[25, 50, 100]"
+    (page)="cambiarPagina($event)"
+    showFirstLastButtons
+  >
+  </mat-paginator>
+</section>
