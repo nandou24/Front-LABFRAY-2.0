@@ -271,6 +271,7 @@ export class InformeLaboratorioPdfService {
               xFlecha,
               data.cell.y + data.cell.height / 2,
               raw.indicador,
+              modo,
             );
           }
         },
@@ -394,7 +395,7 @@ export class InformeLaboratorioPdfService {
     const margen = 16;
     let y = modo === 'DIGITAL' ? 43 : 25;
 
-    this.aplicarLogoImpresionPagina(doc, modo, logo);
+    this.aplicarEncabezadoImpresionPagina(doc, modo, logo);
 
     const paciente = informe.solicitud.paciente;
     const fechaAtencion =
@@ -624,8 +625,19 @@ export class InformeLaboratorioPdfService {
     x: number,
     y: number,
     direccion: 'ALTO' | 'BAJO',
+    modo: ModoInformePdf,
   ): void {
-    doc.setDrawColor(0, 0, 0);
+    // ====== Color solo para versión digital ======
+    if (modo === 'DIGITAL') {
+      if (direccion === 'ALTO') {
+        doc.setDrawColor(190, 45, 45);
+      } else {
+        doc.setDrawColor(25, 90, 170);
+      }
+    } else {
+      doc.setDrawColor(0, 0, 0);
+    }
+
     doc.setLineWidth(0.3);
 
     // ====== Flecha compacta ======
