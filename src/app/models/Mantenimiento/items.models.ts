@@ -34,8 +34,93 @@
 // TIPOS GENERALES
 // ==========================================================
 
-export type TipoResultadoItem = 'NUMERICO' | 'TEXTO' | 'CATEGORICO';
+export type TipoResultadoItem =
+  | 'NUMERICO'
+  | 'TEXTO'
+  | 'CATEGORICO'
+  | 'ESTRUCTURADO';
+export type FormatoCapturaNumerica =
+  | 'VALOR'
+  | 'RANGO'
+  | 'MAYOR_QUE'
+  | 'MAYOR_IGUAL_QUE'
+  | 'MENOR_QUE'
+  | 'MENOR_IGUAL_QUE';
 export type EstadoItem = 'ACTIVO' | 'INACTIVO';
+export type PrecisionNumericaItem = 'ENTERO' | 'DECIMAL';
+export interface IValorNumericoRangoItem {
+  tipo: 'RANGO';
+  desde: number;
+  hasta: number;
+}
+
+export interface IValorNumericoOperadorItem {
+  tipo:
+    | 'MAYOR_QUE'
+    | 'MAYOR_IGUAL_QUE'
+    | 'MENOR_QUE'
+    | 'MENOR_IGUAL_QUE';
+  valor: number;
+}
+
+export interface IValorCualitativoNumericoItem {
+  tipo: 'CUALITATIVO';
+  valor: string;
+}
+
+export type TipoCuantificacionHallazgoItem = 'CATEGORICA' | 'NUMERICA';
+
+export interface IValorHallazgoCategoricoItem {
+  tipo: 'CATEGORICO';
+  valor: string;
+}
+
+export type ValorCuantificacionHallazgoItem =
+  | IValorHallazgoCategoricoItem
+  | IValorNumericoRangoItem
+  | IValorNumericoOperadorItem
+  | number;
+
+export interface IHallazgoResultadoEstructuradoItem {
+  hallazgo: string;
+  valor: ValorCuantificacionHallazgoItem;
+}
+
+export interface IValorEstructuradoHallazgosItem {
+  tipo: 'HALLAZGOS';
+  modo: 'AUSENCIA' | 'DETALLE';
+  valorAusencia?: string;
+  hallazgos: IHallazgoResultadoEstructuradoItem[];
+}
+
+export interface IConfiguracionCuantificacionHallazgoItem {
+  tipo: TipoCuantificacionHallazgoItem;
+  precisionNumerica?: PrecisionNumericaItem;
+  opciones?: string[];
+  formatosCapturaNumerica?: FormatoCapturaNumerica[];
+  formatoCapturaNumericaDefault?: FormatoCapturaNumerica;
+}
+
+export interface IConfiguracionEstructuradaItem {
+  subtipo: 'HALLAZGOS';
+  permiteMultiples: boolean;
+  valorAusencia: string;
+  ausenciaEsReferencia: boolean;
+  hallazgosNormales?: string[];
+  permitirOtroHallazgo: boolean;
+  hallazgos: string[];
+  cuantificacion: IConfiguracionCuantificacionHallazgoItem;
+}
+
+export type ValorPorDefectoResultadoItem =
+  | string
+  | number
+  | IValorNumericoRangoItem
+  | IValorNumericoOperadorItem
+  | IValorCualitativoNumericoItem
+  | IValorEstructuradoHallazgosItem
+  | null;
+
 export type SexoReferencia = 'TODOS' | 'MASCULINO' | 'FEMENINO';
 export type UnidadEdad = 'DIAS' | 'MESES' | 'ANIOS';
 
@@ -163,8 +248,16 @@ export interface IItemLab {
   contextoAnalitico?: string;
   tipoResultado?: TipoResultadoItem;
   opcionesResultado?: string[];
-  valorPorDefectoResultado?: string;
+  valorPorDefectoResultado?: ValorPorDefectoResultadoItem;
+  formatosCapturaNumerica?: FormatoCapturaNumerica[];
+  formatoCapturaNumericaDefault?: FormatoCapturaNumerica;
+  precisionNumerica?: PrecisionNumericaItem;
+  valoresCualitativosAlternativos?: string[];
+  valoresCualitativosReferencia?: string[];
+  configuracionEstructurada?: IConfiguracionEstructuradaItem | null;
   permiteValorNoListado?: boolean;
+  esOpcional?: boolean;
+  mostrarReferenciaInforme?: boolean;
   estadoItem?: EstadoItem;
   referenciasResultado?: IReferenciaResultado[];
   reglasAlerta?: IReglaAlerta[];

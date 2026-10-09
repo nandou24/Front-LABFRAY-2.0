@@ -17,8 +17,10 @@ import Swal from 'sweetalert2';
 import {
   IInformeEntregable,
   IItemInformeEntrega,
+  IValorEstructuradoInformeEntrega,
   IPruebaInformeEntrega,
   IReferenciaAplicadaEntrega,
+  ValorInformeEntrega,
 } from '../../../../../models/Gestion/entregaResultadoLaboratorio.models';
 import { EntregaResultadosService } from '../../../../../services/gestion/entregaResultados/entrega-resultados.service';
 import { InformeLaboratorioPdfService } from '../../../../../services/utilitarios/pdf/laboratorio/informe-laboratorio-pdf.service';
@@ -234,20 +236,184 @@ export class DialogEntregaResultadosComponent implements OnInit {
     );
   }
 
+  formatearValorItem(item: IItemInformeEntrega): string {
+    return this.formatearValorInforme(item.valor, ' · ');
+  }
+
+  // ====== Hallazgos estructurados para presentación ======
+  esResultadoEstructuradoDetalle(item: IItemInformeEntrega): boolean {
+    const valor = item.valor;
+
+    return Boolean(
+      item.tipoResultado === 'ESTRUCTURADO' &&
+        valor &&
+        typeof valor === 'object' &&
+        !Array.isArray(valor) &&
+        valor.tipo === 'HALLAZGOS' &&
+        valor.modo === 'DETALLE' &&
+        Array.isArray(valor.hallazgos) &&
+        valor.hallazgos.length,
+    );
+  }
+
+  lineasHallazgosItem(
+    item: IItemInformeEntrega,
+  ): Array<{ texto: string; fueraReferencia: boolean }> {
+    if (!this.esResultadoEstructuradoDetalle(item)) return [];
+
+    const valor = item.valor as IValorEstructuradoInformeEntrega;
+    const normales = new Set(
+      (item.hallazgosNormales ?? [])
+        .map((hallazgo) => String(hallazgo ?? '').trim().toUpperCase())
+        .filter(Boolean),
+    );
+
+    return valor.hallazgos
+      .map((hallazgo) => {
+        const nombre = String(hallazgo?.hallazgo ?? '').trim();
+        const cuantificacion = this.formatearValorInforme(hallazgo?.valor, ' · ');
+        const texto =
+          nombre && cuantificacion !== '-'
+            ? `${nombre}: ${cuantificacion}`
+            : nombre || cuantificacion;
+
+        return {
+          texto,
+          fueraReferencia: Boolean(nombre) && !normales.has(nombre.toUpperCase()),
+        };
+      })
+      .filter((linea) => linea.texto && linea.texto !== '-');
+  }
+
+  // ====== Formatear valores complejos del informe ======
+  private formatearValorInforme(
+    valor: ValorInformeEntrega | unknown,
+    separadorHallazgos: string,
+  ): string {
+    if (valor === null || valor === undefined || valor === '') return '-';
+    if (typeof valor !== 'object') return String(valor);
+
+    const dato = valor as {
+      tipo?: string;
+      valor?: unknown;
+      desde?: unknown;
+      hasta?: unknown;
+      modo?: string;
+      valorAusencia?: unknown;
+      hallazgos?: Array<{ hallazgo?: unknown; valor?: unknown }>;
+    };
+    const tipo = String(dato.tipo ?? '').trim().toUpperCase();
+
+    if (tipo === 'RANGO') {
+      return `${dato.desde ?? '-'} - ${dato.hasta ?? '-'}`;
+    }
+
+    if (tipo === 'CUALITATIVO' || tipo === 'CATEGORICO') {
+      const texto = String(dato.valor ?? '').trim();
+      return texto || '-';
+    }
+
+    if (tipo === 'HALLAZGOS') {
+      if (String(dato.modo ?? '').toUpperCase() === 'AUSENCIA') {
+        const ausencia = String(dato.valorAusencia ?? '').trim();
+        return ausencia || 'NO SE OBSERVAN';
+      }
+
+      const hallazgos = Array.isArray(dato.hallazgos) ? dato.hallazgos : [];
+      const lineas = hallazgos
+        .map((hallazgo) => {
+          const nombre = String(hallazgo?.hallazgo ?? '').trim();
+          const cuantificacion = this.formatearValorInforme(
+            hallazgo?.valor,
+            separadorHallazgos,
+          );
+
+          if (nombre && cuantificacion !== '-') return `${nombre}: ${cuantificacion}`;
+          return nombre || cuantificacion;
+        })
+        .filter((linea) => linea && linea !== '-');
+
+      return lineas.length ? lineas.join(separadorHallazgos) : '-';
+    }
+
+    const simbolos: Record<string, string> = {
+      MAYOR_QUE: '>',
+      MAYOR_IGUAL_QUE: '>=',
+      MENOR_QUE: '<',
+      MENOR_IGUAL_QUE: '<=',
+    };
+
+    if (simbolos[tipo]) {
+      const texto = String(dato.valor ?? '').trim();
+      return texto ? `${simbolos[tipo]} ${texto}` : '-';
+    }
+
+    if (Object.prototype.hasOwnProperty.call(dato, 'valor')) {
+      const texto = String(dato.valor ?? '').trim();
+      return texto || '-';
+    }
+
+    return '-';
+  }
+
+  comentariosGrupoPrueba(prueba: IPruebaInformeEntrega): Array<{
+    nombreGrupo: string;
+    comentario: string;
+  }> {
+    const comentarios = new Map<string, string>();
+
+    for (const item of prueba.items) {
+      const comentario = String(item.comentarioReferenciaGrupo || '').trim();
+      if (!comentario) continue;
+      const nombreGrupo = String(item.nombreGrupo || '').trim();
+      const clave = `${nombreGrupo}::${comentario}`;
+      comentarios.set(clave, comentario);
+    }
+
+    return [...comentarios.entries()].map(([clave, comentario]) => ({
+      nombreGrupo: clave.split('::')[0],
+      comentario,
+    }));
+  }
+
+  mostrarColumnaReferencia(prueba: IPruebaInformeEntrega): boolean {
+    return (prueba.items || []).some(
+      (item) => item.mostrarReferenciaInforme !== false,
+    );
+  }
+
   referenciasItem(item: IItemInformeEntrega): string[] {
+    if (item.mostrarReferenciaInforme === false) return ['—'];
+
     const configuradas = item.referenciasConfiguradas || [];
 
+    if (item.tipoResultado === 'CATEGORICO') {
+      const esperadas = configuradas
+        .filter((referencia) => referencia.tipoReferencia === 'VALORES_PERMITIDOS')
+        .flatMap((referencia) => referencia.valoresPermitidos || []);
+      return esperadas.length === 1 ? [esperadas[0]] : ['-'];
+    }
+
+    if (item.tipoResultado === 'TEXTO') {
+      const texto = configuradas
+        .filter((referencia) => referencia.tipoReferencia === 'TEXTO')
+        .map((referencia) => String(referencia.textoReferencia || '').trim())
+        .find(Boolean);
+      return [texto || '-'];
+    }
+
     if (configuradas.length) {
-      return configuradas
+      const referencias = configuradas
         .map((referencia) => this.formatearReferencia(referencia, true))
         .filter(Boolean);
+      return referencias.length ? referencias : ['-'];
     }
 
     const aplicada = item.evaluacionReferencia?.referenciaAplicada;
-    if (!aplicada) return [];
+    if (!aplicada) return ['-'];
 
     const texto = this.formatearReferencia(aplicada, true);
-    return texto ? [texto] : [];
+    return [texto || '-'];
   }
 
   private formatearReferencia(

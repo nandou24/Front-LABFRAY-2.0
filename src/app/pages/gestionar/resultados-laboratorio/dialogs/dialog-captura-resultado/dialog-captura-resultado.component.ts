@@ -21,12 +21,20 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { distinctUntilChanged, firstValueFrom, startWith, Subscription } from 'rxjs';
+import {
+  distinctUntilChanged,
+  firstValueFrom,
+  merge,
+  Observable,
+  Subscription,
+} from 'rxjs';
 import Swal from 'sweetalert2';
 
 import { IEstadoOperativoSolicitud } from '../../../../../models/Gestion/estadoOperativoSolicitud.models';
 import {
+  FormatoCapturaNumericaLaboratorio,
   IAlertaDetectada,
   IEvaluacionReferencia,
   IHabilitacionMuestraResultado,
@@ -36,6 +44,7 @@ import {
   IReglaAlertaSnapshot,
   IResultadoLaboratorio,
   IResultadoLaboratorioItem,
+  ValorResultadoLaboratorio,
 } from '../../../../../models/Gestion/resultadoLaboratorio.models';
 import { ResultadoLaboratorioService } from '../../../../../services/gestion/resultadosLaboratorio/resultados-laboratorio.service';
 
@@ -72,21 +81,43 @@ export interface IRegistroResultadoDialogResult {
   estadoOperativo: IEstadoOperativoSolicitud;
 }
 
+interface IHallazgoResultadoForm {
+  hallazgo: FormControl<string>;
+  formatoNumerico: FormControl<FormatoCapturaNumericaLaboratorio>;
+  valor: FormControl<string | number | null>;
+  valorDesde: FormControl<number | null>;
+  valorHasta: FormControl<number | null>;
+}
+
 interface IItemResultadoForm {
   itemResultadoId: FormControl<string>;
   selectorResultado: FormControl<string>;
+  selectorCualitativoNumerico: FormControl<string>;
+  formatoNumerico: FormControl<FormatoCapturaNumericaLaboratorio>;
   valor: FormControl<string | number | null>;
+  valorDesde: FormControl<number | null>;
+  valorHasta: FormControl<number | null>;
+  modoEstructurado: FormControl<string>;
+  hallazgosEstructurados: FormArray<FormGroup<IHallazgoResultadoForm>>;
+  observacionActiva: FormControl<boolean>;
   observacion: FormControl<string>;
 }
 
 interface IBorradorItemResultado {
-  valor: string | number | null;
+  valor: ValorResultadoLaboratorio;
+  observacionActiva: boolean;
   observacion: string;
 }
 
+interface IIntervaloNumericoLocal {
+  minimo: number;
+  maximo: number;
+  incluyeMinimo: boolean;
+  incluyeMaximo: boolean;
+}
 
 interface IEvaluacionLocalItem {
-  valorNormalizado: string | number;
+  valorNormalizado: Exclude<ValorResultadoLaboratorio, null>;
   evaluacionReferencia: IEvaluacionReferencia;
   alertasDetectadas: IAlertaDetectada[];
 }
@@ -107,6 +138,7 @@ interface IEvaluacionLocalItem {
     MatOptionModule,
     MatSelectModule,
     MatSnackBarModule,
+    MatSlideToggleModule,
     MatTooltipModule,
   ],
   templateUrl: './dialog-captura-resultado.component.html',
@@ -152,7 +184,10 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
 
   private readonly _borradores = new Map<string, IBorradorItemResultado[]>();
 
-  private readonly _previsualizaciones = new Map<string, IEvaluacionLocalItem>();
+  private readonly _previsualizaciones = new Map<
+    string,
+    IEvaluacionLocalItem
+  >();
 
   private readonly _erroresPrevisualizacion = new Map<string, string>();
 
@@ -188,9 +223,11 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
 
   readonly valorOtroResultado = '__OTRO_RESULTADO__';
 
+  private readonly _seleccionRegistro = new Set<string>();
+
   private readonly _seleccionValidacion = new Set<string>(
     this.modoActual === 'VALIDACION' &&
-      this.resultados[this.indiceActual]?.estadoResultado === 'COMPLETO'
+    this.resultados[this.indiceActual]?.estadoResultado === 'COMPLETO'
       ? [this.resultados[this.indiceActual]._id]
       : [],
   );
@@ -310,6 +347,173 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
     );
   }
 
+  // ====== Selección para registro múltiple ======
+
+  get cantidadCompletosRegistrables(): number {
+    return this.resultados.filter((resultado, indice) =>
+      this.puedeSeleccionarParaRegistro(resultado, indice),
+    ).length;
+  }
+
+  get cantidadSeleccionadosRegistro(): number {
+    return this.resultados.filter(
+      (resultado, indice) =>
+        this._seleccionRegistro.has(resultado._id) &&
+        this.puedeSeleccionarParaRegistro(resultado, indice),
+    ).length;
+  }
+
+  estaSeleccionadoParaRegistrar(resultado: IResultadoLaboratorio): boolean {
+    return this._seleccionRegistro.has(resultado._id);
+  }
+
+  cambiarSeleccionRegistro(
+    resultado: IResultadoLaboratorio,
+    seleccionado: boolean,
+  ): void {
+    this.guardarBorradorActual();
+
+    const indice = this.resultados.findIndex(
+      (resultadoActual) => resultadoActual._id === resultado._id,
+    );
+
+    if (
+      !seleccionado ||
+      indice < 0 ||
+      !this.puedeSeleccionarParaRegistro(resultado, indice)
+    ) {
+      this._seleccionRegistro.delete(resultado._id);
+      return;
+    }
+
+    this._seleccionRegistro.add(resultado._id);
+  }
+
+  seleccionarTodosRegistrables(): void {
+    this.guardarBorradorActual();
+
+    this.resultados.forEach((resultado, indice) => {
+      if (this.puedeSeleccionarParaRegistro(resultado, indice)) {
+        this._seleccionRegistro.add(resultado._id);
+      }
+    });
+  }
+
+  puedeSeleccionarParaRegistro(
+    resultado: IResultadoLaboratorio,
+    indiceResultado?: number,
+  ): boolean {
+    if (
+      !this.esModoRegistro ||
+      this.data.soloLecturaForzada === true ||
+      this.data.puedeRegistrar === false ||
+      !this.esResultadoEditable(resultado) ||
+      resultado.habilitacionMuestra?.habilitada === false
+    ) {
+      return false;
+    }
+
+    const indice =
+      indiceResultado ??
+      this.resultados.findIndex(
+        (resultadoActual) => resultadoActual._id === resultado._id,
+      );
+
+    if (indice < 0) {
+      return false;
+    }
+
+    const completa = resultado.resultadosItems.every((item, indiceItem) => {
+      if (item.esOpcional === true) {
+        return true;
+      }
+
+      return (
+        this.obtenerValorEfectivoParaRegistro(resultado, indice, indiceItem) !==
+        null
+      );
+    });
+
+    return completa && this.tieneCambiosPendientesRegistro(resultado, indice);
+  }
+
+  private tieneCambiosPendientesRegistro(
+    resultado: IResultadoLaboratorio,
+    indiceResultado: number,
+  ): boolean {
+    if (indiceResultado !== this.indiceActual) {
+      return this.construirItemsModificadosDesdeBorrador(resultado).length > 0;
+    }
+
+    return resultado.resultadosItems.some((item, indiceItem) => {
+      const grupo = this.itemsForm.controls[indiceItem];
+
+      if (!grupo) {
+        return false;
+      }
+
+      try {
+        const raw = grupo.getRawValue();
+        const valor = this.normalizarValorFormulario(
+          this.construirValorDesdeGrupo(grupo, item),
+          item,
+        );
+        const valorOriginal = this.normalizarValorFormulario(item.valor, item);
+        const observacion = this.esItemObservaciones(item)
+          ? String(item.observacion ?? '').trim()
+          : raw.observacionActiva
+            ? raw.observacion.trim()
+            : '';
+        const observacionOriginal = String(item.observacion ?? '').trim();
+
+        return (
+          !this.sonValoresEquivalentes(valor, valorOriginal) ||
+          observacion !== observacionOriginal ||
+          (item.estado === 'PENDIENTE' && valor !== null)
+        );
+      } catch {
+        return false;
+      }
+    });
+  }
+
+  private obtenerValorEfectivoParaRegistro(
+    resultado: IResultadoLaboratorio,
+    indiceResultado: number,
+    indiceItem: number,
+  ): ValorResultadoLaboratorio {
+    const item = resultado.resultadosItems[indiceItem];
+
+    if (!item) {
+      return null;
+    }
+
+    if (indiceResultado === this.indiceActual) {
+      const grupo = this.itemsForm.controls[indiceItem];
+
+      if (!grupo) {
+        return null;
+      }
+
+      try {
+        return this.normalizarValorFormulario(
+          this.construirValorDesdeGrupo(grupo, item),
+          item,
+        );
+      } catch {
+        return null;
+      }
+    }
+
+    const borrador = this._borradores.get(resultado._id)?.[indiceItem];
+
+    if (borrador) {
+      return this.normalizarValorFormulario(borrador.valor, item);
+    }
+
+    return this.normalizarValorFormulario(item.valor, item);
+  }
+
   get cantidadCompletosValidables(): number {
     return this.resultados.filter(
       (resultado) => resultado.estadoResultado === 'COMPLETO',
@@ -370,6 +574,26 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
 
   get itemsForm(): FormArray<FormGroup<IItemResultadoForm>> {
     return this.formResultado.controls.items;
+  }
+
+  // ====== Clase visual del estado ======
+  claseEstadoResultado(estado: string | null | undefined): string {
+    switch (estado) {
+      case 'PENDIENTE':
+        return 'estado-pendiente';
+      case 'EN PROCESO':
+        return 'estado-en-proceso';
+      case 'COMPLETO':
+        return 'estado-completo';
+      case 'VALIDADO':
+        return 'estado-validado';
+      case 'LIBERADO':
+        return 'estado-liberado';
+      case 'ANULADO':
+        return 'estado-anulado';
+      default:
+        return 'estado-neutro';
+    }
   }
 
   // ====== Resaltar Item activo ======
@@ -474,43 +698,446 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
     const valorInicial = borrador
       ? borrador.valor
       : this.obtenerValorInicialResultado(item);
+    const numerico = this.descomponerValorNumericoFormulario(
+      item,
+      valorInicial,
+    );
+    const estructurado = this.descomponerValorEstructuradoFormulario(
+      item,
+      valorInicial,
+    );
+    const valorCampo: string | number | null =
+      item.tipoResultado === 'NUMERICO'
+        ? numerico.valor
+        : typeof valorInicial === 'string' || typeof valorInicial === 'number'
+          ? valorInicial
+          : null;
+
+    const observacionInicial = borrador
+      ? borrador.observacion
+      : (item.observacion ?? '');
+
+    const observacionActivaInicial =
+      !this.esItemObservaciones(item) &&
+      (borrador
+        ? borrador.observacionActiva
+        : Boolean(String(observacionInicial).trim()));
 
     return this._fb.group<IItemResultadoForm>({
       itemResultadoId: this._fb.nonNullable.control(item._id),
       selectorResultado: this._fb.nonNullable.control(
         this.obtenerSeleccionInicialResultado(item, valorInicial),
       ),
-      valor: this._fb.control<string | number | null>(valorInicial),
-      observacion: this._fb.nonNullable.control(
-        borrador ? borrador.observacion : (item.observacion ?? ''),
+      selectorCualitativoNumerico: this._fb.nonNullable.control(
+        this.obtenerSeleccionCualitativaNumericaInicial(item, valorInicial),
       ),
+      formatoNumerico: this._fb.nonNullable.control(numerico.formato),
+      valor: this._fb.control<string | number | null>(valorCampo),
+      valorDesde: this._fb.control<number | null>(numerico.desde),
+      valorHasta: this._fb.control<number | null>(numerico.hasta),
+      modoEstructurado: this._fb.nonNullable.control(estructurado.modo),
+      hallazgosEstructurados: this._fb.array(
+        estructurado.hallazgos.map((hallazgo) =>
+          this.crearHallazgoEstructuradoForm(item, hallazgo),
+        ),
+      ),
+      observacionActiva: this._fb.nonNullable.control(observacionActivaInicial),
+      observacion: this._fb.nonNullable.control(observacionInicial),
     });
+  }
+
+  // ====== Item de observaciones ======
+
+  esItemObservaciones(item: IResultadoLaboratorioItem): boolean {
+    const nombre = String(item?.nombreInforme ?? '')
+      .trim()
+      .toUpperCase();
+
+    return nombre === 'OBSERVACION' || nombre === 'OBSERVACIONES';
+  }
+
+  // ====== Referencia compartida del grupo ======
+
+  comentarioReferenciaGrupo(item: IResultadoLaboratorioItem): string {
+    return String(item?.comentarioReferenciaGrupo ?? '').trim();
+  }
+
+  esUltimoItemGrupo(indiceItem: number): boolean {
+    const items = this.resultadoActual?.resultadosItems ?? [];
+    const actual = items[indiceItem];
+
+    if (!actual) return false;
+
+    const siguiente = items[indiceItem + 1];
+    return !siguiente || siguiente.indiceGrupo !== actual.indiceGrupo;
   }
 
   // ====== Valor inicial y opciones de captura ======
 
   private obtenerValorInicialResultado(
     item: IResultadoLaboratorioItem,
-  ): string | number | null {
+  ): ValorResultadoLaboratorio {
     if (item.valor !== null && item.valor !== undefined && item.valor !== '') {
       return item.valor;
     }
 
+    const valorDefault =
+      item.configuracionClinica?.valorPorDefectoResultado ?? null;
+
+    if (valorDefault === null || valorDefault === undefined) {
+      return null;
+    }
+
+    if (typeof valorDefault === 'string') {
+      const texto = valorDefault.trim();
+      return texto || null;
+    }
+
+    return valorDefault;
+  }
+
+  obtenerFormatosCapturaNumerica(
+    item: IResultadoLaboratorioItem,
+  ): FormatoCapturaNumericaLaboratorio[] {
+    const configurados =
+      item.configuracionClinica?.formatosCapturaNumerica ?? [];
+
+    return configurados.length > 0 ? configurados : ['VALOR'];
+  }
+
+  etiquetaFormatoNumerico(formato: FormatoCapturaNumericaLaboratorio): string {
+    const etiquetas: Record<FormatoCapturaNumericaLaboratorio, string> = {
+      VALOR: 'Valor único',
+      RANGO: 'Rango',
+      MAYOR_QUE: 'Mayor que (>)',
+      MAYOR_IGUAL_QUE: 'Mayor o igual que (>=)',
+      MENOR_QUE: 'Menor que (<)',
+      MENOR_IGUAL_QUE: 'Menor o igual que (<=)',
+    };
+
+    return etiquetas[formato];
+  }
+
+  simboloFormatoNumerico(formato: FormatoCapturaNumericaLaboratorio): string {
+    const simbolos: Partial<Record<FormatoCapturaNumericaLaboratorio, string>> =
+      {
+        MAYOR_QUE: '>',
+        MAYOR_IGUAL_QUE: '>=',
+        MENOR_QUE: '<',
+        MENOR_IGUAL_QUE: '<=',
+      };
+
+    return simbolos[formato] ?? '';
+  }
+
+  esFormatoNumericoRango(grupo: FormGroup<IItemResultadoForm>): boolean {
+    return grupo.controls.formatoNumerico.value === 'RANGO';
+  }
+
+  esNumericoSoloEnteros(item: IResultadoLaboratorioItem): boolean {
+    return item.configuracionClinica?.precisionNumerica === 'ENTERO';
+  }
+
+  esHallazgoNumericoSoloEnteros(item: IResultadoLaboratorioItem): boolean {
+    return (
+      item.configuracionClinica?.configuracionEstructurada?.cuantificacion
+        ?.precisionNumerica === 'ENTERO'
+    );
+  }
+
+  pasoNumerico(
+    item: IResultadoLaboratorioItem,
+    estructurado = false,
+  ): number | string {
+    const soloEnteros = estructurado
+      ? this.esHallazgoNumericoSoloEnteros(item)
+      : this.esNumericoSoloEnteros(item);
+
+    return soloEnteros ? 1 : 'any';
+  }
+
+  bloquearSeparadorDecimal(event: KeyboardEvent, soloEnteros: boolean): void {
+    if (!soloEnteros) return;
+
+    if (['.', ',', 'Decimal'].includes(event.key)) {
+      event.preventDefault();
+    }
+  }
+
+  private validarPrecisionNumericaLocal(
+    numero: number,
+    item: IResultadoLaboratorioItem,
+    estructurado = false,
+  ): void {
+    const soloEnteros = estructurado
+      ? this.esHallazgoNumericoSoloEnteros(item)
+      : this.esNumericoSoloEnteros(item);
+
+    if (soloEnteros && !Number.isInteger(numero)) {
+      throw new Error('Este Item solo permite valores enteros.');
+    }
+  }
+
+  private descomponerValorNumericoFormulario(
+    item: IResultadoLaboratorioItem,
+    valor: ValorResultadoLaboratorio,
+  ): {
+    formato: FormatoCapturaNumericaLaboratorio;
+    valor: number | null;
+    desde: number | null;
+    hasta: number | null;
+  } {
+    const permitidos = this.obtenerFormatosCapturaNumerica(item);
+    const formatoDefault =
+      item.configuracionClinica?.formatoCapturaNumericaDefault ??
+      permitidos[0] ??
+      'VALOR';
+
+    if (item.tipoResultado !== 'NUMERICO') {
+      return {
+        formato: 'VALOR',
+        valor: null,
+        desde: null,
+        hasta: null,
+      };
+    }
+
+    if (typeof valor === 'number') {
+      return {
+        formato: 'VALOR',
+        valor,
+        desde: null,
+        hasta: null,
+      };
+    }
+
+    if (valor && typeof valor === 'object') {
+      if (valor.tipo === 'CUALITATIVO') {
+        return {
+          formato: permitidos.includes(formatoDefault)
+            ? formatoDefault
+            : permitidos[0],
+          valor: null,
+          desde: null,
+          hasta: null,
+        };
+      }
+
+      if (valor.tipo === 'RANGO') {
+        return {
+          formato: 'RANGO',
+          valor: null,
+          desde: Number(valor.desde),
+          hasta: Number(valor.hasta),
+        };
+      }
+
+      if ('valor' in valor) {
+        return {
+          formato: valor.tipo,
+          valor: Number(valor.valor),
+          desde: null,
+          hasta: null,
+        };
+      }
+    }
+
+    return {
+      formato: permitidos.includes(formatoDefault)
+        ? formatoDefault
+        : permitidos[0],
+      valor: null,
+      desde: null,
+      hasta: null,
+    };
+  }
+
+  // ====== Alternativas cualitativas de Items numéricos ======
+
+  obtenerValoresCualitativosNumericos(
+    item: IResultadoLaboratorioItem,
+  ): string[] {
+    return item.configuracionClinica?.valoresCualitativosAlternativos ?? [];
+  }
+
+  tieneAlternativasCualitativasNumericas(
+    item: IResultadoLaboratorioItem,
+  ): boolean {
+    return (
+      item.tipoResultado === 'NUMERICO' &&
+      this.obtenerValoresCualitativosNumericos(item).length > 0
+    );
+  }
+
+  private obtenerSeleccionCualitativaNumericaInicial(
+    item: IResultadoLaboratorioItem,
+    valor: ValorResultadoLaboratorio,
+  ): string {
     if (
-      item.tipoResultado !== 'TEXTO' &&
-      item.tipoResultado !== 'CATEGORICO'
+      item.tipoResultado !== 'NUMERICO' ||
+      !valor ||
+      typeof valor !== 'object' ||
+      Array.isArray(valor) ||
+      valor.tipo !== 'CUALITATIVO'
     ) {
       return '';
     }
 
-    return String(
-      item.configuracionClinica?.valorPorDefectoResultado ?? '',
-    ).trim();
+    return String(valor.valor ?? '').trim();
+  }
+
+  // ====== Resultado estructurado / hallazgos ======
+
+  private obtenerConfiguracionEstructurada(item: IResultadoLaboratorioItem) {
+    return item.configuracionClinica?.configuracionEstructurada ?? null;
+  }
+
+  esResultadoEstructurado(item: IResultadoLaboratorioItem): boolean {
+    return item.tipoResultado === 'ESTRUCTURADO';
+  }
+
+  esCuantificacionEstructuradaNumerica(
+    item: IResultadoLaboratorioItem,
+  ): boolean {
+    return (
+      this.obtenerConfiguracionEstructurada(item)?.cuantificacion?.tipo ===
+      'NUMERICA'
+    );
+  }
+
+  obtenerHallazgosPermitidos(item: IResultadoLaboratorioItem): string[] {
+    return this.obtenerConfiguracionEstructurada(item)?.hallazgos ?? [];
+  }
+
+  obtenerOpcionesCuantificacionEstructurada(
+    item: IResultadoLaboratorioItem,
+  ): string[] {
+    return (
+      this.obtenerConfiguracionEstructurada(item)?.cuantificacion?.opciones ??
+      []
+    );
+  }
+
+  obtenerFormatosHallazgoNumerico(
+    item: IResultadoLaboratorioItem,
+  ): FormatoCapturaNumericaLaboratorio[] {
+    const formatos =
+      this.obtenerConfiguracionEstructurada(item)?.cuantificacion
+        ?.formatosCapturaNumerica ?? [];
+    return formatos.length ? formatos : ['VALOR'];
+  }
+
+  private descomponerValorEstructuradoFormulario(
+    item: IResultadoLaboratorioItem,
+    valor: ValorResultadoLaboratorio,
+  ): { modo: string; hallazgos: any[] } {
+    if (
+      item.tipoResultado !== 'ESTRUCTURADO' ||
+      !valor ||
+      typeof valor !== 'object' ||
+      Array.isArray(valor) ||
+      valor.tipo !== 'HALLAZGOS'
+    ) {
+      return { modo: '', hallazgos: [] };
+    }
+
+    return {
+      modo: valor.modo ?? '',
+      hallazgos: Array.isArray(valor.hallazgos) ? valor.hallazgos : [],
+    };
+  }
+
+  private crearHallazgoEstructuradoForm(
+    item: IResultadoLaboratorioItem,
+    entrada: any = {},
+  ): FormGroup<IHallazgoResultadoForm> {
+    const configuracion = this.obtenerConfiguracionEstructurada(item);
+    const formatoDefault =
+      configuracion?.cuantificacion?.formatoCapturaNumericaDefault ?? 'VALOR';
+
+    let formato = formatoDefault;
+    let valor: string | number | null = null;
+    let desde: number | null = null;
+    let hasta: number | null = null;
+
+    const valorEntrada = entrada?.valor;
+
+    if (configuracion?.cuantificacion?.tipo === 'CATEGORICA') {
+      valor =
+        valorEntrada && typeof valorEntrada === 'object'
+          ? String(valorEntrada.valor ?? '')
+          : String(valorEntrada ?? '');
+    } else if (typeof valorEntrada === 'number') {
+      formato = 'VALOR';
+      valor = valorEntrada;
+    } else if (valorEntrada && typeof valorEntrada === 'object') {
+      if (valorEntrada.tipo === 'RANGO') {
+        formato = 'RANGO';
+        desde = Number.isFinite(Number(valorEntrada.desde))
+          ? Number(valorEntrada.desde)
+          : null;
+        hasta = Number.isFinite(Number(valorEntrada.hasta))
+          ? Number(valorEntrada.hasta)
+          : null;
+      } else if ('valor' in valorEntrada) {
+        formato = valorEntrada.tipo ?? formatoDefault;
+        valor = Number.isFinite(Number(valorEntrada.valor))
+          ? Number(valorEntrada.valor)
+          : null;
+      }
+    }
+
+    return this._fb.group<IHallazgoResultadoForm>({
+      hallazgo: this._fb.nonNullable.control(String(entrada?.hallazgo ?? '')),
+      formatoNumerico: this._fb.nonNullable.control(formato),
+      valor: this._fb.control<string | number | null>(valor),
+      valorDesde: this._fb.control<number | null>(desde),
+      valorHasta: this._fb.control<number | null>(hasta),
+    });
+  }
+
+  agregarHallazgoEstructuradoResultado(indiceItem: number): void {
+    const item = this.resultadoActual.resultadosItems[indiceItem];
+    const grupo = this.itemsForm.at(indiceItem);
+    const configuracion = this.obtenerConfiguracionEstructurada(item);
+
+    if (
+      configuracion?.permiteMultiples === false &&
+      grupo.controls.hallazgosEstructurados.length > 0
+    ) {
+      return;
+    }
+
+    grupo.controls.hallazgosEstructurados.push(
+      this.crearHallazgoEstructuradoForm(item),
+    );
+  }
+
+  eliminarHallazgoEstructuradoResultado(
+    indiceItem: number,
+    indiceHallazgo: number,
+  ): void {
+    this.itemsForm
+      .at(indiceItem)
+      .controls.hallazgosEstructurados.removeAt(indiceHallazgo);
+  }
+
+  esHallazgoNumericoRango(
+    grupoHallazgo: FormGroup<IHallazgoResultadoForm>,
+  ): boolean {
+    return grupoHallazgo.controls.formatoNumerico.value === 'RANGO';
+  }
+
+  valorAusenciaEstructurada(item: IResultadoLaboratorioItem): string {
+    return (
+      this.obtenerConfiguracionEstructurada(item)?.valorAusencia ||
+      'NO SE OBSERVAN'
+    );
   }
 
   usaSelectorResultado(item: IResultadoLaboratorioItem): boolean {
     return (
-      item.tipoResultado !== 'NUMERICO' &&
+      item.tipoResultado === 'CATEGORICO' &&
       (item.configuracionClinica?.opcionesResultado?.length ?? 0) > 0
     );
   }
@@ -535,7 +1162,7 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
 
   private obtenerSeleccionInicialResultado(
     item: IResultadoLaboratorioItem,
-    valor: string | number | null,
+    valor: ValorResultadoLaboratorio,
   ): string {
     if (!this.usaSelectorResultado(item)) {
       return '';
@@ -548,8 +1175,7 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
     }
 
     const encontrada = this.obtenerOpcionesResultado(item).find(
-      (opcion) =>
-        String(opcion).trim().toUpperCase() === texto.toUpperCase(),
+      (opcion) => String(opcion).trim().toUpperCase() === texto.toUpperCase(),
     );
 
     if (encontrada !== undefined) {
@@ -572,42 +1198,59 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
       const item = resultado.resultadosItems[indice];
 
       if (this.usaSelectorResultado(item)) {
-        const suscripcionSelector = grupo.controls.selectorResultado.valueChanges
-          .pipe(distinctUntilChanged())
-          .subscribe((seleccion) => {
-            if (seleccion === this.valorOtroResultado) {
-              const valorActual = String(grupo.controls.valor.value ?? '').trim();
-              const correspondeALista = this.obtenerOpcionesResultado(item).some(
-                (opcion) =>
-                  String(opcion).trim().toUpperCase() ===
-                  valorActual.toUpperCase(),
-              );
+        const suscripcionSelector =
+          grupo.controls.selectorResultado.valueChanges
+            .pipe(distinctUntilChanged())
+            .subscribe((seleccion) => {
+              if (seleccion === this.valorOtroResultado) {
+                const valorActual = String(
+                  grupo.controls.valor.value ?? '',
+                ).trim();
+                const correspondeALista = this.obtenerOpcionesResultado(
+                  item,
+                ).some(
+                  (opcion) =>
+                    String(opcion).trim().toUpperCase() ===
+                    valorActual.toUpperCase(),
+                );
 
-              if (correspondeALista) {
-                grupo.controls.valor.setValue('', { emitEvent: true });
+                if (correspondeALista) {
+                  grupo.controls.valor.setValue('', { emitEvent: true });
+                }
+
+                return;
               }
 
-              return;
-            }
-
-            grupo.controls.valor.setValue(seleccion || '', { emitEvent: true });
-          });
+              grupo.controls.valor.setValue(seleccion || '', {
+                emitEvent: true,
+              });
+            });
 
         this._suscripcionesEvaluacion.push(suscripcionSelector);
       }
 
-      const suscripcion = grupo.controls.valor.valueChanges
-        .pipe(
-          startWith(grupo.controls.valor.value),
-          distinctUntilChanged((anterior, actual) =>
-            this.sonValoresEquivalentes(anterior, actual),
-          ),
-        )
-        .subscribe((valorFormulario) => {
-          const valor = this.normalizarValorFormulario(valorFormulario, item);
-          const valorOriginal = this.normalizarValorFormulario(item.valor, item);
+      const cambiosResultado$: Observable<unknown> =
+        item.tipoResultado === 'ESTRUCTURADO'
+          ? grupo.valueChanges
+          : item.tipoResultado === 'NUMERICO'
+            ? merge(
+                grupo.controls.selectorCualitativoNumerico.valueChanges,
+                grupo.controls.formatoNumerico.valueChanges,
+                grupo.controls.valor.valueChanges,
+                grupo.controls.valorDesde.valueChanges,
+                grupo.controls.valorHasta.valueChanges,
+              )
+            : grupo.controls.valor.valueChanges;
 
-          this._erroresPrevisualizacion.delete(item._id);
+      const procesarCambio = (): void => {
+        this._erroresPrevisualizacion.delete(item._id);
+
+        try {
+          const valor = this.construirValorDesdeGrupo(grupo, item);
+          const valorOriginal = this.normalizarValorFormulario(
+            item.valor,
+            item,
+          );
 
           if (this.sonValoresEquivalentes(valor, valorOriginal)) {
             this._itemsModificados.delete(item._id);
@@ -622,19 +1265,22 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
             return;
           }
 
-          try {
-            const previsualizacion = this.evaluarItemLocal(item, valor);
+          const previsualizacion = this.evaluarItemLocal(item, valor);
+          this._previsualizaciones.set(item._id, previsualizacion);
+        } catch (error: any) {
+          this._previsualizaciones.delete(item._id);
+          this._erroresPrevisualizacion.set(
+            item._id,
+            error?.message ||
+              'No se pudo evaluar la configuración clínica histórica del Item.',
+          );
+        }
+      };
 
-            this._previsualizaciones.set(item._id, previsualizacion);
-          } catch (error: any) {
-            this._previsualizaciones.delete(item._id);
-            this._erroresPrevisualizacion.set(
-              item._id,
-              error?.message ||
-                'No se pudo evaluar la configuración clínica histórica del Item.',
-            );
-          }
-        });
+      // ====== Evaluar estado inicial y cambios posteriores ======
+      procesarCambio();
+
+      const suscripcion = cambiosResultado$.subscribe(() => procesarCambio());
 
       this._suscripcionesEvaluacion.push(suscripcion);
     });
@@ -648,7 +1294,9 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
     item: IResultadoLaboratorioItem,
   ): IEvaluacionReferencia | null {
     if (this._itemsModificados.has(item._id)) {
-      return this._previsualizaciones.get(item._id)?.evaluacionReferencia ?? null;
+      return (
+        this._previsualizaciones.get(item._id)?.evaluacionReferencia ?? null
+      );
     }
 
     if (
@@ -673,7 +1321,7 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
 
   private evaluarItemLocal(
     item: IResultadoLaboratorioItem,
-    valor: string | number,
+    valor: Exclude<ValorResultadoLaboratorio, null>,
   ): IEvaluacionLocalItem {
     const configuracion = item.configuracionClinica;
 
@@ -690,6 +1338,127 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
     }
 
     const valorNormalizado = this.normalizarValorClinico(item, valor);
+
+    if (item.tipoResultado === 'ESTRUCTURADO') {
+      const configuracionEstructurada = configuracion.configuracionEstructurada;
+      const hallazgosNormales = Array.isArray(
+        configuracionEstructurada?.hallazgosNormales,
+      )
+        ? configuracionEstructurada.hallazgosNormales
+            .map((hallazgo) => String(hallazgo ?? '').trim().toUpperCase())
+            .filter(Boolean)
+        : [];
+      const ausenciaEsReferencia =
+        configuracionEstructurada?.ausenciaEsReferencia === true;
+
+      if (!ausenciaEsReferencia && hallazgosNormales.length === 0) {
+        return {
+          valorNormalizado,
+          evaluacionReferencia: {
+            estado: 'NO_APLICA',
+            referenciaAplicada: null,
+            mensaje: 'No existe una referencia estructurada configurada',
+          },
+          alertasDetectadas: [],
+        };
+      }
+
+      const modo =
+        valorNormalizado &&
+        typeof valorNormalizado === 'object' &&
+        !Array.isArray(valorNormalizado) &&
+        'modo' in valorNormalizado
+          ? String(valorNormalizado.modo ?? '')
+              .trim()
+              .toUpperCase()
+          : '';
+      const valorEsperado = String(
+        configuracionEstructurada?.valorAusencia || 'NO SE OBSERVAN',
+      ).trim();
+
+      if (modo === 'AUSENCIA') {
+        return {
+          valorNormalizado,
+          evaluacionReferencia: {
+            estado: ausenciaEsReferencia
+              ? 'VALOR_PERMITIDO'
+              : 'VALOR_NO_PERMITIDO',
+            referenciaAplicada: null,
+            mensaje: ausenciaEsReferencia
+              ? `Resultado estructurado dentro del valor esperado: ${valorEsperado}`
+              : `El resultado de ausencia no está configurado como valor esperado: ${valorEsperado}`,
+          },
+          alertasDetectadas: [],
+        };
+      }
+
+      const hallazgos =
+        valorNormalizado &&
+        typeof valorNormalizado === 'object' &&
+        !Array.isArray(valorNormalizado) &&
+        'hallazgos' in valorNormalizado &&
+        Array.isArray(valorNormalizado.hallazgos)
+          ? valorNormalizado.hallazgos
+          : [];
+      const fueraReferencia = hallazgos
+        .map((hallazgo) => String(hallazgo?.hallazgo ?? '').trim())
+        .filter(Boolean)
+        .filter(
+          (hallazgo) => !hallazgosNormales.includes(hallazgo.toUpperCase()),
+        );
+
+      return {
+        valorNormalizado,
+        evaluacionReferencia: {
+          estado:
+            fueraReferencia.length === 0 && hallazgos.length > 0
+              ? 'VALOR_PERMITIDO'
+              : 'VALOR_NO_PERMITIDO',
+          referenciaAplicada: null,
+          mensaje:
+            fueraReferencia.length === 0 && hallazgos.length > 0
+              ? 'Los hallazgos registrados están considerados dentro de los valores esperados'
+              : fueraReferencia.length
+                ? `Hallazgos fuera del valor esperado: ${fueraReferencia.join(', ')}`
+                : `Se registraron hallazgos. Valor esperado: ${valorEsperado}`,
+        },
+        alertasDetectadas: [],
+      };
+    }
+
+    if (
+      item.tipoResultado === 'NUMERICO' &&
+      valorNormalizado &&
+      typeof valorNormalizado === 'object' &&
+      !Array.isArray(valorNormalizado) &&
+      valorNormalizado.tipo === 'CUALITATIVO'
+    ) {
+      const referencias = configuracion.valoresCualitativosReferencia ?? [];
+      const valorTexto = String(valorNormalizado.valor ?? '')
+        .trim()
+        .toUpperCase();
+      const coincide = referencias.some(
+        (referencia) => String(referencia).trim().toUpperCase() === valorTexto,
+      );
+
+      return {
+        valorNormalizado,
+        evaluacionReferencia: {
+          estado: referencias.length
+            ? coincide
+              ? 'VALOR_PERMITIDO'
+              : 'VALOR_NO_PERMITIDO'
+            : 'NO_APLICA',
+          referenciaAplicada: null,
+          mensaje: referencias.length
+            ? coincide
+              ? 'Resultado cualitativo dentro de la referencia clínica'
+              : 'Resultado cualitativo fuera de la referencia clínica'
+            : 'No existe una referencia cualitativa configurada',
+        },
+        alertasDetectadas: [],
+      };
+    }
 
     const evaluacionReferencia = this.evaluarReferenciaLocal(
       configuracion.referenciasResultado ?? [],
@@ -709,22 +1478,240 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
     };
   }
 
+  // ====== Construir valor desde formulario ======
+
+  private construirValorDesdeGrupo(
+    grupo: FormGroup<IItemResultadoForm>,
+    item: IResultadoLaboratorioItem,
+  ): ValorResultadoLaboratorio {
+    if (item.tipoResultado === 'ESTRUCTURADO') {
+      const modo = grupo.controls.modoEstructurado.value;
+
+      if (!modo) return null;
+
+      if (modo === 'AUSENCIA') {
+        return {
+          tipo: 'HALLAZGOS',
+          modo: 'AUSENCIA',
+          valorAusencia: this.valorAusenciaEstructurada(item),
+          hallazgos: [],
+        };
+      }
+
+      if (modo !== 'DETALLE') {
+        throw new Error('Seleccione el modo del resultado estructurado.');
+      }
+
+      const hallazgos = grupo.controls.hallazgosEstructurados.controls.map(
+        (hallazgoGrupo) =>
+          this.construirValorHallazgoEstructurado(item, hallazgoGrupo),
+      );
+
+      if (!hallazgos.length) {
+        throw new Error('Debe registrar al menos un hallazgo.');
+      }
+
+      const clavesHallazgo = hallazgos.map((entrada) =>
+        String(entrada.hallazgo).trim().toUpperCase(),
+      );
+      if (new Set(clavesHallazgo).size !== clavesHallazgo.length) {
+        throw new Error('No puede registrar el mismo hallazgo más de una vez.');
+      }
+
+      return {
+        tipo: 'HALLAZGOS',
+        modo: 'DETALLE',
+        hallazgos,
+      };
+    }
+
+    if (item.tipoResultado !== 'NUMERICO') {
+      return this.normalizarValorFormulario(grupo.controls.valor.value, item);
+    }
+
+    const cualitativo = grupo.controls.selectorCualitativoNumerico.value;
+    if (cualitativo) {
+      return {
+        tipo: 'CUALITATIVO',
+        valor: cualitativo,
+      };
+    }
+
+    const formato = grupo.controls.formatoNumerico.value;
+    const permitidos = this.obtenerFormatosCapturaNumerica(item);
+
+    if (!permitidos.includes(formato)) {
+      throw new Error(
+        'El formato numérico seleccionado no está permitido para este Item.',
+      );
+    }
+
+    if (formato === 'RANGO') {
+      const desdeRaw = grupo.controls.valorDesde.value;
+      const hastaRaw = grupo.controls.valorHasta.value;
+      const vacioDesde = desdeRaw === null || desdeRaw === undefined;
+      const vacioHasta = hastaRaw === null || hastaRaw === undefined;
+
+      if (vacioDesde && vacioHasta) {
+        return null;
+      }
+
+      if (vacioDesde || vacioHasta) {
+        throw new Error('Debe indicar ambos extremos del rango numérico.');
+      }
+
+      const desde = Number(desdeRaw);
+      const hasta = Number(hastaRaw);
+
+      if (!Number.isFinite(desde) || !Number.isFinite(hasta)) {
+        throw new Error('Los extremos del rango deben ser numéricos.');
+      }
+
+      this.validarPrecisionNumericaLocal(desde, item);
+      this.validarPrecisionNumericaLocal(hasta, item);
+
+      if (desde > hasta) {
+        throw new Error(
+          'El valor inicial no puede ser mayor que el valor final.',
+        );
+      }
+
+      return {
+        tipo: 'RANGO',
+        desde,
+        hasta,
+      };
+    }
+
+    const valorRaw = grupo.controls.valor.value;
+
+    if (valorRaw === null || valorRaw === undefined || valorRaw === '') {
+      return null;
+    }
+
+    const numero = Number(valorRaw);
+
+    if (!Number.isFinite(numero)) {
+      throw new Error('El resultado debe ser un valor numérico válido.');
+    }
+
+    this.validarPrecisionNumericaLocal(numero, item);
+
+    if (formato === 'VALOR') {
+      return numero;
+    }
+
+    return {
+      tipo: formato,
+      valor: numero,
+    };
+  }
+
+  private construirValorHallazgoEstructurado(
+    item: IResultadoLaboratorioItem,
+    grupo: FormGroup<IHallazgoResultadoForm>,
+  ): any {
+    const hallazgo = String(grupo.controls.hallazgo.value ?? '').trim();
+    const configuracion = this.obtenerConfiguracionEstructurada(item);
+
+    if (!hallazgo) {
+      throw new Error('Seleccione el tipo de hallazgo.');
+    }
+
+    if (configuracion?.cuantificacion?.tipo === 'CATEGORICA') {
+      const valor = String(grupo.controls.valor.value ?? '').trim();
+      if (!valor) {
+        throw new Error(`Seleccione la cuantificación de ${hallazgo}.`);
+      }
+      return {
+        hallazgo,
+        valor: { tipo: 'CATEGORICO', valor },
+      };
+    }
+
+    const formato = grupo.controls.formatoNumerico.value;
+    const permitidos = this.obtenerFormatosHallazgoNumerico(item);
+
+    if (!permitidos.includes(formato)) {
+      throw new Error(`El formato de ${hallazgo} no está permitido.`);
+    }
+
+    if (formato === 'RANGO') {
+      const desde = grupo.controls.valorDesde.value;
+      const hasta = grupo.controls.valorHasta.value;
+
+      if (desde === null || hasta === null) {
+        throw new Error(`Complete ambos extremos del rango de ${hallazgo}.`);
+      }
+
+      const numeroDesde = Number(desde);
+      const numeroHasta = Number(hasta);
+
+      if (!Number.isFinite(numeroDesde) || !Number.isFinite(numeroHasta)) {
+        throw new Error(`El rango de ${hallazgo} debe ser numérico.`);
+      }
+
+      this.validarPrecisionNumericaLocal(numeroDesde, item, true);
+      this.validarPrecisionNumericaLocal(numeroHasta, item, true);
+
+      if (numeroDesde > numeroHasta) {
+        throw new Error(
+          `El valor inicial de ${hallazgo} no puede ser mayor que el valor final.`,
+        );
+      }
+
+      return {
+        hallazgo,
+        valor: { tipo: 'RANGO', desde: numeroDesde, hasta: numeroHasta },
+      };
+    }
+
+    const valor = grupo.controls.valor.value;
+    if (valor === null || valor === undefined || valor === '') {
+      throw new Error(`Ingrese el valor de ${hallazgo}.`);
+    }
+
+    const numero = Number(valor);
+    if (!Number.isFinite(numero)) {
+      throw new Error(`El valor de ${hallazgo} debe ser numérico.`);
+    }
+
+    this.validarPrecisionNumericaLocal(numero, item, true);
+
+    if (formato === 'VALOR') {
+      return { hallazgo, valor: numero };
+    }
+
+    return {
+      hallazgo,
+      valor: { tipo: formato, valor: numero },
+    };
+  }
+
   // ====== Normalizar valor clínico ======
 
   private normalizarValorClinico(
     item: IResultadoLaboratorioItem,
-    valor: string | number,
-  ): string | number {
+    valor: Exclude<ValorResultadoLaboratorio, null>,
+  ): Exclude<ValorResultadoLaboratorio, null> {
     const configuracion = item.configuracionClinica;
 
     if (item.tipoResultado === 'NUMERICO') {
-      const numero = Number(valor);
+      const normalizado = this.normalizarValorFormulario(valor, item);
 
-      if (!Number.isFinite(numero)) {
+      if (normalizado === null) {
         throw new Error('El resultado debe ser un valor numérico válido.');
       }
 
-      return numero;
+      return normalizado;
+    }
+
+    if (item.tipoResultado === 'ESTRUCTURADO') {
+      const normalizado = this.normalizarValorFormulario(valor, item);
+      if (normalizado === null) {
+        throw new Error('El resultado estructurado no es válido.');
+      }
+      return normalizado;
     }
 
     const texto = String(valor ?? '').trim();
@@ -737,8 +1724,7 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
       const opciones = configuracion?.opcionesResultado ?? [];
 
       const opcionEncontrada = opciones.find(
-        (opcion) =>
-          String(opcion).trim().toUpperCase() === texto.toUpperCase(),
+        (opcion) => String(opcion).trim().toUpperCase() === texto.toUpperCase(),
       );
 
       if (opcionEncontrada !== undefined) {
@@ -748,7 +1734,7 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
       if (configuracion?.permiteValorNoListado !== true) {
         throw new Error(
           opciones.length > 0
-            ? `El valor debe ser una de las opciones permitidas: ${opciones.join(', ')}`
+            ? `El valor debe ser una de las opciones permitidas: ${opciones.join(', ')}.`
             : 'El Item no permite valores fuera de la configuración.',
         );
       }
@@ -759,10 +1745,9 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
 
   // ====== Normalizar sexo clínico ======
 
-  private normalizarSexoClinico(sexo: string | null | undefined):
-    | 'MASCULINO'
-    | 'FEMENINO'
-    | null {
+  private normalizarSexoClinico(
+    sexo: string | null | undefined,
+  ): 'MASCULINO' | 'FEMENINO' | null {
     const valor = String(sexo ?? '')
       .trim()
       .toUpperCase();
@@ -878,12 +1863,10 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
     }
 
     const tieneEdadMin =
-      configuracion.edadMin !== null &&
-      configuracion.edadMin !== undefined;
+      configuracion.edadMin !== null && configuracion.edadMin !== undefined;
 
     const tieneEdadMax =
-      configuracion.edadMax !== null &&
-      configuracion.edadMax !== undefined;
+      configuracion.edadMax !== null && configuracion.edadMax !== undefined;
 
     if (tieneEdadMin || tieneEdadMax) {
       const edad = this.calcularEdadClinica(
@@ -929,8 +1912,7 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
 
     const especificasEdad = candidatas.filter(
       (referencia) =>
-        referencia.edadMin !== null ||
-        referencia.edadMax !== null,
+        referencia.edadMin !== null || referencia.edadMax !== null,
     );
 
     if (especificasEdad.length > 0) {
@@ -940,10 +1922,201 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
     return candidatas;
   }
 
+  // ====== Convertir resultado numérico a intervalo ======
+
+  private obtenerIntervaloResultadoNumerico(
+    valor: Exclude<ValorResultadoLaboratorio, null>,
+  ): IIntervaloNumericoLocal | null {
+    if (typeof valor !== 'object') {
+      const numero = Number(valor);
+      if (!Number.isFinite(numero)) return null;
+      return {
+        minimo: numero,
+        maximo: numero,
+        incluyeMinimo: true,
+        incluyeMaximo: true,
+      };
+    }
+
+    if (valor.tipo === 'CUALITATIVO' || valor.tipo === 'HALLAZGOS') {
+      return null;
+    }
+
+    if (valor.tipo === 'RANGO') {
+      const desde = Number(valor.desde);
+      const hasta = Number(valor.hasta);
+      if (!Number.isFinite(desde) || !Number.isFinite(hasta) || desde > hasta) {
+        return null;
+      }
+      return {
+        minimo: desde,
+        maximo: hasta,
+        incluyeMinimo: true,
+        incluyeMaximo: true,
+      };
+    }
+
+    const limite = Number(valor.valor);
+    if (!Number.isFinite(limite)) return null;
+
+    if (valor.tipo === 'MAYOR_QUE') {
+      return {
+        minimo: limite,
+        maximo: Number.POSITIVE_INFINITY,
+        incluyeMinimo: false,
+        incluyeMaximo: false,
+      };
+    }
+    if (valor.tipo === 'MAYOR_IGUAL_QUE') {
+      return {
+        minimo: limite,
+        maximo: Number.POSITIVE_INFINITY,
+        incluyeMinimo: true,
+        incluyeMaximo: false,
+      };
+    }
+    if (valor.tipo === 'MENOR_QUE') {
+      return {
+        minimo: Number.NEGATIVE_INFINITY,
+        maximo: limite,
+        incluyeMinimo: false,
+        incluyeMaximo: false,
+      };
+    }
+    if (valor.tipo === 'MENOR_IGUAL_QUE') {
+      return {
+        minimo: Number.NEGATIVE_INFINITY,
+        maximo: limite,
+        incluyeMinimo: false,
+        incluyeMaximo: true,
+      };
+    }
+
+    return null;
+  }
+
+  private obtenerIntervaloReferenciaNumerica(
+    referencia: IReferenciaResultadoSnapshot,
+  ): IIntervaloNumericoLocal | null {
+    const tipo = referencia.tipoReferencia;
+
+    if (tipo === 'RANGO') {
+      const minimo = Number(referencia.valorMin);
+      const maximo = Number(referencia.valorMax);
+      if (
+        !Number.isFinite(minimo) ||
+        !Number.isFinite(maximo) ||
+        minimo > maximo
+      ) {
+        return null;
+      }
+      return {
+        minimo,
+        maximo,
+        incluyeMinimo: true,
+        incluyeMaximo: true,
+      };
+    }
+
+    const limite = Number(referencia.valorLimite);
+    if (!Number.isFinite(limite)) return null;
+
+    if (tipo === 'MENOR_QUE') {
+      return {
+        minimo: Number.NEGATIVE_INFINITY,
+        maximo: limite,
+        incluyeMinimo: false,
+        incluyeMaximo: false,
+      };
+    }
+    if (tipo === 'MENOR_IGUAL_QUE') {
+      return {
+        minimo: Number.NEGATIVE_INFINITY,
+        maximo: limite,
+        incluyeMinimo: false,
+        incluyeMaximo: true,
+      };
+    }
+    if (tipo === 'MAYOR_QUE') {
+      return {
+        minimo: limite,
+        maximo: Number.POSITIVE_INFINITY,
+        incluyeMinimo: false,
+        incluyeMaximo: false,
+      };
+    }
+    if (tipo === 'MAYOR_IGUAL_QUE') {
+      return {
+        minimo: limite,
+        maximo: Number.POSITIVE_INFINITY,
+        incluyeMinimo: true,
+        incluyeMaximo: false,
+      };
+    }
+
+    return null;
+  }
+
+  private intervaloContenido(
+    resultado: IIntervaloNumericoLocal | null,
+    referencia: IIntervaloNumericoLocal | null,
+  ): boolean {
+    if (!resultado || !referencia) return false;
+
+    const cumpleMinimo =
+      resultado.minimo > referencia.minimo ||
+      (resultado.minimo === referencia.minimo &&
+        (!resultado.incluyeMinimo || referencia.incluyeMinimo));
+    const cumpleMaximo =
+      resultado.maximo < referencia.maximo ||
+      (resultado.maximo === referencia.maximo &&
+        (!resultado.incluyeMaximo || referencia.incluyeMaximo));
+
+    return cumpleMinimo && cumpleMaximo;
+  }
+
+  private direccionFueraIntervalo(
+    resultado: IIntervaloNumericoLocal | null,
+    referencia: IIntervaloNumericoLocal | null,
+  ): IEvaluacionReferencia['estado'] {
+    if (!resultado || !referencia) return 'FUERA_REFERENCIA';
+
+    const violaMinimo = !(
+      resultado.minimo > referencia.minimo ||
+      (resultado.minimo === referencia.minimo &&
+        (!resultado.incluyeMinimo || referencia.incluyeMinimo))
+    );
+    const violaMaximo = !(
+      resultado.maximo < referencia.maximo ||
+      (resultado.maximo === referencia.maximo &&
+        (!resultado.incluyeMaximo || referencia.incluyeMaximo))
+    );
+
+    if (violaMinimo && !violaMaximo) return 'BAJO';
+    if (violaMaximo && !violaMinimo) return 'ALTO';
+    return 'FUERA_REFERENCIA';
+  }
+
+  private intervaloContieneValor(
+    intervalo: IIntervaloNumericoLocal | null,
+    valor: number,
+  ): boolean {
+    if (!intervalo || !Number.isFinite(valor)) return false;
+
+    const cumpleMinimo =
+      valor > intervalo.minimo ||
+      (valor === intervalo.minimo && intervalo.incluyeMinimo);
+    const cumpleMaximo =
+      valor < intervalo.maximo ||
+      (valor === intervalo.maximo && intervalo.incluyeMaximo);
+
+    return cumpleMinimo && cumpleMaximo;
+  }
+
   // ====== Comparar valor con referencia ======
 
   private valorCumpleReferencia(
-    valor: string | number,
+    valor: Exclude<ValorResultadoLaboratorio, null>,
     referencia: IReferenciaResultadoSnapshot,
   ): boolean {
     const tipo = referencia.tipoReferencia;
@@ -957,48 +2130,14 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
         'MAYOR_IGUAL_QUE',
       ].includes(tipo)
     ) {
-      const numero = Number(valor);
-
-      if (!Number.isFinite(numero)) {
-        return false;
-      }
-
-      if (tipo === 'RANGO') {
-        const minimo = Number(referencia.valorMin);
-        const maximo = Number(referencia.valorMax);
-
-        return (
-          Number.isFinite(minimo) &&
-          Number.isFinite(maximo) &&
-          numero >= minimo &&
-          numero <= maximo
-        );
-      }
-
-      const limite = Number(referencia.valorLimite);
-
-      if (!Number.isFinite(limite)) {
-        return false;
-      }
-
-      if (tipo === 'MENOR_QUE') {
-        return numero < limite;
-      }
-
-      if (tipo === 'MENOR_IGUAL_QUE') {
-        return numero <= limite;
-      }
-
-      if (tipo === 'MAYOR_QUE') {
-        return numero > limite;
-      }
-
-      return numero >= limite;
+      return this.intervaloContenido(
+        this.obtenerIntervaloResultadoNumerico(valor),
+        this.obtenerIntervaloReferenciaNumerica(referencia),
+      );
     }
 
     if (tipo === 'VALORES_PERMITIDOS') {
       const comparacion = this.normalizarTextoComparacion(valor);
-
       return (referencia.valoresPermitidos ?? []).some(
         (permitido) =>
           this.normalizarTextoComparacion(permitido) === comparacion,
@@ -1009,7 +2148,6 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
       const textoReferencia = this.normalizarTextoComparacion(
         referencia.textoReferencia,
       );
-
       return (
         Boolean(textoReferencia) &&
         this.normalizarTextoComparacion(valor) === textoReferencia
@@ -1042,56 +2180,25 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
   // ====== Clasificar valor fuera de referencia ======
 
   private evaluarFueraReferenciaUnica(
-    valor: string | number,
+    valor: Exclude<ValorResultadoLaboratorio, null>,
     referencia: IReferenciaResultadoSnapshot,
   ): IEvaluacionReferencia['estado'] {
     const tipo = referencia.tipoReferencia;
 
-    if (tipo === 'VALORES_PERMITIDOS') {
-      return 'VALOR_NO_PERMITIDO';
-    }
+    if (tipo === 'VALORES_PERMITIDOS') return 'VALOR_NO_PERMITIDO';
+    if (tipo === 'TEXTO') return 'FUERA_REFERENCIA';
 
-    if (tipo === 'TEXTO') {
-      return 'FUERA_REFERENCIA';
-    }
-
-    const numero = Number(valor);
-
-    if (!Number.isFinite(numero)) {
-      return 'FUERA_REFERENCIA';
-    }
-
-    if (tipo === 'RANGO') {
-      const minimo = Number(referencia.valorMin);
-      const maximo = Number(referencia.valorMax);
-
-      if (Number.isFinite(minimo) && numero < minimo) {
-        return 'BAJO';
-      }
-
-      if (Number.isFinite(maximo) && numero > maximo) {
-        return 'ALTO';
-      }
-
-      return 'FUERA_REFERENCIA';
-    }
-
-    if (tipo === 'MENOR_QUE' || tipo === 'MENOR_IGUAL_QUE') {
-      return 'ALTO';
-    }
-
-    if (tipo === 'MAYOR_QUE' || tipo === 'MAYOR_IGUAL_QUE') {
-      return 'BAJO';
-    }
-
-    return 'FUERA_REFERENCIA';
+    return this.direccionFueraIntervalo(
+      this.obtenerIntervaloResultadoNumerico(valor),
+      this.obtenerIntervaloReferenciaNumerica(referencia),
+    );
   }
 
   // ====== Evaluar referencia ======
 
   private evaluarReferenciaLocal(
     referencias: IReferenciaResultadoSnapshot[],
-    valor: string | number,
+    valor: Exclude<ValorResultadoLaboratorio, null>,
   ): IEvaluacionReferencia {
     const aplicables = this.obtenerReferenciasDemograficas(referencias);
 
@@ -1169,9 +2276,19 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
 
   private cumpleCondicionAlerta(
     item: IResultadoLaboratorioItem,
-    valor: string | number,
+    valor: Exclude<ValorResultadoLaboratorio, null>,
     regla: IReglaAlertaSnapshot,
   ): boolean {
+    if (
+      item.tipoResultado === 'ESTRUCTURADO' ||
+      (item.tipoResultado === 'NUMERICO' &&
+        typeof valor === 'object' &&
+        !Array.isArray(valor) &&
+        valor.tipo === 'CUALITATIVO')
+    ) {
+      return false;
+    }
+
     const condicionesNumericas = [
       'MENOR_QUE',
       'MENOR_IGUAL_QUE',
@@ -1187,59 +2304,50 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
         );
       }
 
-      const numero = Number(valor);
+      const intervalo = this.obtenerIntervaloResultadoNumerico(valor);
       const valor1 = Number(regla.valor1);
 
-      if (!Number.isFinite(numero) || !Number.isFinite(valor1)) {
+      if (!intervalo || !Number.isFinite(valor1)) {
         throw new Error(
           `La regla de alerta ${regla.descripcion || regla.condicion} no posee un valor numérico válido.`,
         );
       }
 
       if (regla.condicion === 'MENOR_QUE') {
-        return numero < valor1;
+        return intervalo.minimo < valor1;
       }
-
       if (regla.condicion === 'MENOR_IGUAL_QUE') {
-        return numero <= valor1;
+        return intervalo.minimo <= valor1;
       }
-
       if (regla.condicion === 'MAYOR_QUE') {
-        return numero > valor1;
+        return intervalo.maximo > valor1;
       }
-
       if (regla.condicion === 'MAYOR_IGUAL_QUE') {
-        return numero >= valor1;
+        return intervalo.maximo >= valor1;
       }
 
       const valor2 = Number(regla.valor2);
-
       if (!Number.isFinite(valor2) || valor1 > valor2) {
         throw new Error(
           `La regla de alerta ${regla.descripcion || regla.condicion} posee un rango inválido.`,
         );
       }
 
-      return numero < valor1 || numero > valor2;
+      return intervalo.minimo < valor1 || intervalo.maximo > valor2;
     }
 
-    if (
-      regla.condicion === 'IGUAL_A' ||
-      regla.condicion === 'DISTINTO_DE'
-    ) {
+    if (regla.condicion === 'IGUAL_A' || regla.condicion === 'DISTINTO_DE') {
       let iguales: boolean;
 
       if (item.tipoResultado === 'NUMERICO') {
-        const numero = Number(valor);
+        const intervalo = this.obtenerIntervaloResultadoNumerico(valor);
         const valorRegla = Number(regla.valor1);
-
-        if (!Number.isFinite(numero) || !Number.isFinite(valorRegla)) {
+        if (!intervalo || !Number.isFinite(valorRegla)) {
           throw new Error(
             `La regla de alerta ${regla.descripcion || regla.condicion} no posee un valor numérico válido.`,
           );
         }
-
-        iguales = numero === valorRegla;
+        iguales = this.intervaloContieneValor(intervalo, valorRegla);
       } else {
         iguales =
           this.normalizarTextoComparacion(valor) ===
@@ -1257,7 +2365,7 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
   private detectarAlertasLocal(
     item: IResultadoLaboratorioItem,
     reglas: IReglaAlertaSnapshot[],
-    valor: string | number,
+    valor: Exclude<ValorResultadoLaboratorio, null>,
   ): IAlertaDetectada[] {
     const alertas: IAlertaDetectada[] = [];
 
@@ -1282,9 +2390,7 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
 
   // ====== Normalizar texto ======
 
-  private normalizarTextoComparacion(
-    valor: string | number | null | undefined,
-  ): string {
+  private normalizarTextoComparacion(valor: unknown): string {
     return String(valor ?? '')
       .trim()
       .toUpperCase();
@@ -1299,43 +2405,75 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
 
     const resultado = this.resultadoActual;
 
-    const items = this.itemsForm.controls
-      .map((grupo, indice) => {
-        const itemOrigen = resultado.resultadosItems[indice];
-        const raw = grupo.getRawValue();
+    let items;
 
-        const valor = this.normalizarValorFormulario(raw.valor, itemOrigen);
+    try {
+      items = this.itemsForm.controls
+        .map((grupo, indice) => {
+          const itemOrigen = resultado.resultadosItems[indice];
+          const raw = grupo.getRawValue();
+          const valor = this.construirValorDesdeGrupo(grupo, itemOrigen);
 
-        if (valor === null) {
-          return null;
-        }
+          const observacion = this.esItemObservaciones(itemOrigen)
+            ? String(itemOrigen.observacion ?? '').trim()
+            : raw.observacionActiva
+              ? raw.observacion.trim()
+              : '';
+          const valorOriginal = this.normalizarValorFormulario(
+            itemOrigen.valor,
+            itemOrigen,
+          );
+          const observacionOriginal = String(
+            itemOrigen.observacion ?? '',
+          ).trim();
 
-        const observacion = raw.observacion.trim();
-        const valorOriginal = this.normalizarValorFormulario(
-          itemOrigen.valor,
-          itemOrigen,
+          const cambioValor = !this.sonValoresEquivalentes(
+            valor,
+            valorOriginal,
+          );
+          const cambioObservacion = observacion !== observacionOriginal;
+          const pendienteConValor =
+            itemOrigen.estado === 'PENDIENTE' && valor !== null;
+
+          if (!cambioValor && !cambioObservacion && !pendienteConValor) {
+            return null;
+          }
+
+          if (valor === null) {
+            return null;
+          }
+
+          return {
+            itemResultadoId: raw.itemResultadoId,
+            valor,
+            observacion,
+          };
+        })
+        .filter(
+          (
+            item,
+          ): item is {
+            itemResultadoId: string;
+            valor: Exclude<ValorResultadoLaboratorio, null>;
+            observacion: string;
+          } => item !== null,
         );
-        const observacionOriginal = String(itemOrigen.observacion ?? '').trim();
-
-        const cambioValor = !this.sonValoresEquivalentes(valor, valorOriginal);
-        const cambioObservacion = observacion !== observacionOriginal;
-        const aunPendiente = itemOrigen.estado === 'PENDIENTE';
-
-        if (!cambioValor && !cambioObservacion && !aunPendiente) {
-          return null;
-        }
-
-        return {
-          itemResultadoId: raw.itemResultadoId,
-          valor,
-          observacion,
-        };
-      })
-      .filter((item) => item !== null);
+    } catch (error: any) {
+      await this._swal.fire({
+        icon: 'warning',
+        title: 'Resultado incompleto',
+        text: error?.message || 'Revise los valores numéricos ingresados.',
+        confirmButtonText: 'Cerrar',
+      });
+      return;
+    }
 
     if (items.length === 0) {
-      this._snackBar.open('No hay cambios para guardar en esta prueba.', 'Cerrar', {
-        duration: 2200,
+      await this._swal.fire({
+        icon: 'info',
+        title: 'Sin cambios',
+        text: 'No hay cambios para guardar en esta prueba.',
+        confirmButtonText: 'Cerrar',
       });
       return;
     }
@@ -1353,62 +2491,175 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
         );
 
     solicitudRegistro$.subscribe({
-        next: (response) => {
-          const resultadoActualizado = this.construirResultadoActualizado(
-            resultado,
-            response,
-          );
+      next: async (response) => {
+        const resultadoActualizado = this.construirResultadoActualizado(
+          resultado,
+          response,
+        );
 
-          this.resultados[this.indiceActual] = resultadoActualizado;
-          this._resultadosActualizados.set(
-            resultadoActualizado._id,
-            resultadoActualizado,
-          );
-          this.ultimoEstadoSolicitud = response.estadoSolicitud;
-          this.ultimoEstadoOperativo = response.estadoOperativo;
-          this._borradores.delete(resultadoActualizado._id);
-          this.procesando = false;
+        this.resultados[this.indiceActual] = resultadoActualizado;
+        this._resultadosActualizados.set(
+          resultadoActualizado._id,
+          resultadoActualizado,
+        );
+        this.ultimoEstadoSolicitud = response.estadoSolicitud;
+        this.ultimoEstadoOperativo = response.estadoOperativo;
+        this._borradores.delete(resultadoActualizado._id);
+        this.procesando = false;
 
-          this.formResultado = this.crearFormularioActual();
+        await this._swal.fire({
+          icon: 'success',
+          title: this.esModoValidacion
+            ? 'Cambios guardados'
+            : response.estadoResultado === 'COMPLETO'
+              ? 'Prueba completa'
+              : 'Resultados registrados',
+          text: this.esModoValidacion
+            ? 'Los cambios del informe fueron guardados para validación.'
+            : response.estadoResultado === 'COMPLETO'
+              ? 'Los resultados fueron registrados correctamente. La prueba ya puede validarse.'
+              : 'Los resultados fueron registrados correctamente.',
+          confirmButtonText: 'Continuar',
+        });
 
-          this._snackBar.open(
-            this.esModoValidacion
-              ? 'Cambios del informe guardados para validación.'
-              : response.estadoResultado === 'COMPLETO'
-                ? 'Prueba completa. Ya puede validarse.'
-                : 'Resultados registrados correctamente.',
-            'Cerrar',
-            {
-              duration: 2200,
-            },
-          );
-        },
-        error: async (error) => {
-          this.procesando = false;
+        if (this.esModoRegistro) {
+          const salida: IRegistroResultadoDialogResult = {
+            huboCambios: true,
+            resultadosActualizados: Array.from(
+              this._resultadosActualizados.values(),
+            ),
+            estadoSolicitud: response.estadoSolicitud,
+            estadoOperativo: response.estadoOperativo,
+          };
 
-          console.error('Error al guardar resultados:', error);
+          this._dialogRef.close(salida);
+          return;
+        }
 
-          await this._swal.fire({
-            icon: 'error',
-            title: this.esModoValidacion
-              ? 'No se pudo actualizar el informe'
-              : 'No se pudieron registrar los resultados',
-            text:
-              error?.error?.msg ||
-              (this.esModoValidacion
-                ? 'Ocurrió un error al actualizar el informe durante la validación.'
-                : 'Ocurrió un error al registrar los resultados de laboratorio.'),
-            confirmButtonText: 'Cerrar',
-          });
-        },
+        this.formResultado = this.crearFormularioActual();
+      },
+      error: async (error) => {
+        this.procesando = false;
+
+        console.error('Error al guardar resultados:', error);
+
+        await this._swal.fire({
+          icon: 'error',
+          title: this.esModoValidacion
+            ? 'No se pudo actualizar el informe'
+            : 'No se pudieron registrar los resultados',
+          text:
+            error?.error?.msg ||
+            (this.esModoValidacion
+              ? 'Ocurrió un error al actualizar el informe durante la validación.'
+              : 'Ocurrió un error al registrar los resultados de laboratorio.'),
+          confirmButtonText: 'Cerrar',
+        });
+      },
+    });
+  }
+
+  // ====== Registrar pruebas seleccionadas ======
+
+  async registrarSeleccionadas(): Promise<void> {
+    if (
+      !this.esModoRegistro ||
+      this.data.puedeRegistrar === false ||
+      this.cantidadSeleccionadosRegistro === 0 ||
+      this.procesando
+    ) {
+      return;
+    }
+
+    this.guardarBorradorActual();
+
+    const operaciones = this.resultados
+      .map((resultado, indice) => ({
+        resultado,
+        indice,
+        items: this.construirItemsModificadosDesdeBorrador(resultado),
+      }))
+      .filter(
+        ({ resultado, indice, items }) =>
+          this._seleccionRegistro.has(resultado._id) &&
+          this.puedeSeleccionarParaRegistro(resultado, indice) &&
+          items.length > 0,
+      );
+
+    if (operaciones.length === 0) {
+      await this._swal.fire({
+        icon: 'info',
+        title: 'Sin cambios por registrar',
+        text: 'Las pruebas seleccionadas no contienen cambios pendientes de registro.',
+        confirmButtonText: 'Cerrar',
       });
+      return;
+    }
+
+    this.procesando = true;
+    let registradas = 0;
+
+    try {
+      for (const operacion of operaciones) {
+        const response = await firstValueFrom(
+          this._resultadoLaboratorioService.registrarResultadosMasivos(
+            operacion.resultado._id,
+            { items: operacion.items },
+          ),
+        );
+
+        const actualizado = this.construirResultadoActualizado(
+          this.resultados[operacion.indice],
+          response,
+        );
+
+        this.resultados[operacion.indice] = actualizado;
+        this._resultadosActualizados.set(actualizado._id, actualizado);
+        this._borradores.delete(actualizado._id);
+        this._seleccionRegistro.delete(actualizado._id);
+        this.ultimoEstadoSolicitud = response.estadoSolicitud;
+        this.ultimoEstadoOperativo = response.estadoOperativo;
+        registradas += 1;
+      }
+
+      this.formResultado = this.crearFormularioActual();
+
+      await this._swal.fire({
+        icon: 'success',
+        title: 'Pruebas registradas',
+        text: `${registradas} prueba(s) fueron registradas correctamente. Puede continuar con las pruebas pendientes o cerrar.`,
+        confirmButtonText: 'Continuar',
+      });
+    } catch (error: any) {
+      this.formResultado = this.crearFormularioActual();
+
+      const detalleError =
+        error?.error?.msg ||
+        'Ocurrió un error al registrar las pruebas seleccionadas.';
+
+      await this._swal.fire({
+        icon: 'error',
+        title: 'No se pudieron registrar todas las pruebas',
+        text:
+          registradas > 0
+            ? `${registradas} prueba(s) se registraron antes de producirse el error. El proceso se detuvo: ${detalleError}`
+            : detalleError,
+        confirmButtonText: 'Cerrar',
+      });
+    } finally {
+      this.procesando = false;
+    }
   }
 
   // ====== Cambios de un resultado durante validación ======
 
   private construirItemsModificadosDesdeBorrador(
     resultado: IResultadoLaboratorio,
-  ): Array<{ itemResultadoId: string; valor: string | number; observacion: string }> {
+  ): Array<{
+    itemResultadoId: string;
+    valor: Exclude<ValorResultadoLaboratorio, null>;
+    observacion: string;
+  }> {
     const borrador = this._borradores.get(resultado._id);
 
     if (!borrador) {
@@ -1447,7 +2698,7 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
           item,
         ): item is {
           itemResultadoId: string;
-          valor: string | number;
+          valor: Exclude<ValorResultadoLaboratorio, null>;
           observacion: string;
         } => item !== null,
       );
@@ -1498,7 +2749,8 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
         ...itemsOrigen.get(item._id),
         ...item,
         configuracionClinica:
-          item.configuracionClinica ?? itemsOrigen.get(item._id)?.configuracionClinica,
+          item.configuracionClinica ??
+          itemsOrigen.get(item._id)?.configuracionClinica,
       })),
     };
   }
@@ -1527,7 +2779,10 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
     );
 
     const nombres = resultados
-      .map((resultado) => `${resultado.codPruebaLab} - ${resultado.nombrePruebaLab}`)
+      .map(
+        (resultado) =>
+          `${resultado.codPruebaLab} - ${resultado.nombrePruebaLab}`,
+      )
       .join('<br>');
 
     const confirmacion = await this._swal.fire({
@@ -1635,9 +2890,24 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
       this._borradores.delete(actualizado._id);
       this.formResultado = this.crearFormularioActual();
 
-      this._snackBar.open('Resultado validado correctamente.', 'Cerrar', {
-        duration: 2200,
+      await this._swal.fire({
+        icon: response.resumenAlertas.criticas > 0 ? 'warning' : 'success',
+        title: 'Resultado validado',
+        text: response.msg,
+        confirmButtonText: 'Continuar',
+        confirmButtonColor: '#7e22ce',
       });
+
+      const salida: IRegistroResultadoDialogResult = {
+        huboCambios: true,
+        resultadosActualizados: Array.from(
+          this._resultadosActualizados.values(),
+        ),
+        estadoSolicitud: response.estadoSolicitud,
+        estadoOperativo: response.estadoOperativo,
+      };
+
+      this._dialogRef.close(salida);
     } catch (error: any) {
       await this._swal.fire({
         icon: 'error',
@@ -1688,9 +2958,13 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
       );
 
       if (candidatos.length === 0) {
-        this._snackBar.open('No quedan resultados seleccionados por validar.', 'Cerrar', {
-          duration: 2200,
-        });
+        this._snackBar.open(
+          'No quedan resultados seleccionados por validar.',
+          'Cerrar',
+          {
+            duration: 2200,
+          },
+        );
         return;
       }
 
@@ -1731,14 +3005,30 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
       this.ultimoEstadoOperativo = response.estadoOperativo;
       this.formResultado = this.crearFormularioActual();
 
-      this._snackBar.open(response.msg, 'Cerrar', { duration: 2400 });
+      await this._swal.fire({
+        icon: response.resumenAlertas.criticas > 0 ? 'warning' : 'success',
+        title: 'Resultados validados',
+        text: response.msg,
+        confirmButtonText: 'Continuar',
+        confirmButtonColor: '#7e22ce',
+      });
+
+      const salida: IRegistroResultadoDialogResult = {
+        huboCambios: true,
+        resultadosActualizados: Array.from(
+          this._resultadosActualizados.values(),
+        ),
+        estadoSolicitud: response.estadoSolicitud,
+        estadoOperativo: response.estadoOperativo,
+      };
+
+      this._dialogRef.close(salida);
     } catch (error: any) {
       await this._swal.fire({
         icon: 'error',
         title: 'No se pudieron validar los resultados',
         text:
-          error?.error?.msg ||
-          'Ocurrió un error durante la validación masiva.',
+          error?.error?.msg || 'Ocurrió un error durante la validación masiva.',
         confirmButtonText: 'Cerrar',
       });
     } finally {
@@ -1779,12 +3069,12 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
         cancelButtonText: 'Cancelar',
         confirmButtonColor: '#b91c1c',
         preConfirm: () => {
-          const motivo = document.querySelector<HTMLTextAreaElement>(
-            '#motivo-anulacion-dialog',
-          )?.value?.trim();
-          const usuario = document.querySelector<HTMLInputElement>(
-            '#usuario-autorizador-dialog',
-          )?.value?.trim();
+          const motivo = document
+            .querySelector<HTMLTextAreaElement>('#motivo-anulacion-dialog')
+            ?.value?.trim();
+          const usuario = document
+            .querySelector<HTMLInputElement>('#usuario-autorizador-dialog')
+            ?.value?.trim();
           const password = document.querySelector<HTMLInputElement>(
             '#password-autorizador-dialog',
           )?.value;
@@ -1838,9 +3128,7 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
       const response = await firstValueFrom(
         this._resultadoLaboratorioService.anularResultado(resultado._id, {
           motivoAnulacion,
-          ...(nombreUsuarioAutorizador
-            ? { nombreUsuarioAutorizador }
-            : {}),
+          ...(nombreUsuarioAutorizador ? { nombreUsuarioAutorizador } : {}),
           ...(passwordAutorizador ? { passwordAutorizador } : {}),
         }),
       );
@@ -1865,9 +3153,7 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
       await this._swal.fire({
         icon: 'error',
         title: 'No se pudo anular el resultado',
-        text:
-          error?.error?.msg ||
-          'Ocurrió un error al anular el resultado.',
+        text: error?.error?.msg || 'Ocurrió un error al anular el resultado.',
         confirmButtonText: 'Cerrar',
       });
     } finally {
@@ -1940,9 +3226,7 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
       await this._swal.fire({
         icon: 'error',
         title: 'No se pudo reabrir el resultado',
-        text:
-          error?.error?.msg ||
-          'Ocurrió un error al reabrir el resultado.',
+        text: error?.error?.msg || 'Ocurrió un error al reabrir el resultado.',
         confirmButtonText: 'Cerrar',
       });
     } finally {
@@ -2005,12 +3289,28 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
       return;
     }
 
-    const borrador = this.itemsForm.controls.map((grupo) => {
+    const borrador = this.itemsForm.controls.map((grupo, indice) => {
       const raw = grupo.getRawValue();
+      const item = resultado.resultadosItems[indice];
+      let valor: ValorResultadoLaboratorio = null;
+
+      try {
+        valor = this.construirValorDesdeGrupo(grupo, item);
+      } catch {
+        valor = null;
+      }
+
+      const observacionActiva =
+        !this.esItemObservaciones(item) && raw.observacionActiva;
 
       return {
-        valor: raw.valor,
-        observacion: raw.observacion,
+        valor,
+        observacionActiva,
+        observacion: this.esItemObservaciones(item)
+          ? String(item.observacion ?? '')
+          : observacionActiva
+            ? raw.observacion
+            : '',
       };
     });
 
@@ -2056,40 +3356,77 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
   // ====== Normalizar valor ======
 
   private normalizarValorFormulario(
-    valor: string | number | null | undefined,
+    valor: ValorResultadoLaboratorio | undefined,
     item: IResultadoLaboratorioItem,
-  ): string | number | null {
-    if (valor === null || valor === undefined) {
+  ): ValorResultadoLaboratorio {
+    if (valor === null || valor === undefined) return null;
+
+    if (item.tipoResultado === 'NUMERICO') {
+      if (valor === '') return null;
+
+      if (typeof valor !== 'object') {
+        const numero = Number(valor);
+        return Number.isFinite(numero) ? numero : null;
+      }
+
+      if (valor.tipo === 'CUALITATIVO') {
+        const texto = String(valor.valor ?? '').trim();
+        return texto ? { tipo: 'CUALITATIVO', valor: texto } : null;
+      }
+
+      if (valor.tipo === 'RANGO') {
+        const desde = Number(valor.desde);
+        const hasta = Number(valor.hasta);
+        if (
+          !Number.isFinite(desde) ||
+          !Number.isFinite(hasta) ||
+          desde > hasta
+        ) {
+          return null;
+        }
+        return { tipo: 'RANGO', desde, hasta };
+      }
+
+      if ('valor' in valor) {
+        const numero = Number(valor.valor);
+        if (!Number.isFinite(numero)) return null;
+        return { tipo: valor.tipo, valor: numero };
+      }
+
       return null;
     }
 
-    if (item.tipoResultado === 'NUMERICO') {
-      if (valor === '') {
+    if (item.tipoResultado === 'ESTRUCTURADO') {
+      if (
+        typeof valor !== 'object' ||
+        Array.isArray(valor) ||
+        valor.tipo !== 'HALLAZGOS'
+      ) {
         return null;
       }
 
-      const numero = Number(valor);
-
-      return Number.isFinite(numero) ? numero : String(valor);
+      return JSON.parse(JSON.stringify(valor)) as ValorResultadoLaboratorio;
     }
 
     const texto = String(valor).trim();
-
     return texto ? texto : null;
   }
 
   private sonValoresEquivalentes(
-    valorA: string | number | null | undefined,
-    valorB: string | number | null | undefined,
+    valorA: ValorResultadoLaboratorio | undefined,
+    valorB: ValorResultadoLaboratorio | undefined,
   ): boolean {
-    if (
-      (valorA === null || valorA === undefined || valorA === '') &&
-      (valorB === null || valorB === undefined || valorB === '')
-    ) {
-      return true;
+    const vacioA = valorA === null || valorA === undefined || valorA === '';
+    const vacioB = valorB === null || valorB === undefined || valorB === '';
+
+    if (vacioA && vacioB) return true;
+    if (vacioA || vacioB) return false;
+
+    if (typeof valorA === 'object' || typeof valorB === 'object') {
+      return JSON.stringify(valorA) === JSON.stringify(valorB);
     }
 
-    return String(valorA ?? '') === String(valorB ?? '');
+    return String(valorA) === String(valorB);
   }
 
   // ====== Construir resultado actualizado ======
@@ -2139,12 +3476,35 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
 
   // ====== Presentación de evaluación ======
 
+  esHallazgoEstructuradoFueraReferencia(
+    item: IResultadoLaboratorioItem,
+  ): boolean {
+    return (
+      item.tipoResultado === 'ESTRUCTURADO' &&
+      this.obtenerEvaluacionVisible(item)?.estado === 'VALOR_NO_PERMITIDO'
+    );
+  }
+
   obtenerTextoEvaluacionItem(
     item: IResultadoLaboratorioItem,
     evaluacion: IEvaluacionReferencia | null,
   ): string {
     if (!evaluacion) {
       return '';
+    }
+
+    if (item.tipoResultado === 'ESTRUCTURADO') {
+      if (evaluacion.estado === 'VALOR_NO_PERMITIDO') {
+        return 'Hallazgo presente · fuera del valor esperado';
+      }
+
+      if (evaluacion.estado === 'VALOR_PERMITIDO') {
+        return String(evaluacion.mensaje ?? '').includes(
+          'hallazgos registrados',
+        )
+          ? 'Resultado esperado · hallazgos considerados normales'
+          : 'Resultado esperado · sin hallazgos';
+      }
     }
 
     if (item.tipoResultado === 'TEXTO') {
@@ -2177,6 +3537,20 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
     item: IResultadoLaboratorioItem,
     evaluacion: IEvaluacionReferencia | null,
   ): string {
+    if (
+      item.tipoResultado === 'ESTRUCTURADO' &&
+      evaluacion?.estado === 'VALOR_NO_PERMITIDO'
+    ) {
+      return 'evaluacion evaluacion-precaucion';
+    }
+
+    if (
+      item.tipoResultado === 'ESTRUCTURADO' &&
+      evaluacion?.estado === 'VALOR_PERMITIDO'
+    ) {
+      return 'evaluacion evaluacion-normal';
+    }
+
     if (
       item.tipoResultado === 'TEXTO' &&
       evaluacion?.estado === 'FUERA_REFERENCIA'

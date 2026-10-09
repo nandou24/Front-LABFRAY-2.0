@@ -1,0 +1,196 @@
+<div class="dialog-header" mat-dialog-title>
+  <div>
+    <div class="dialog-title">Liberación masiva de resultados</div>
+    <div class="dialog-subtitle">
+      {{ data.origenAtencion === 'EMPRESA' ? 'Resultados de empresa' : 'Resultados particulares' }}
+      · solo resultados VALIDADOS
+    </div>
+  </div>
+
+  <button
+    mat-icon-button
+    type="button"
+    aria-label="Cerrar"
+    [disabled]="procesando"
+    (click)="cerrar()"
+  >
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
+<mat-dialog-content class="dialog-content">
+  <form [formGroup]="form" class="filtros">
+    <mat-form-field appearance="outline" class="filtro-busqueda">
+      <mat-label>Buscar resultado</mat-label>
+      <input
+        matInput
+        formControlName="terminoBusqueda"
+        placeholder="Código Lab., solicitud, DNI, paciente o empresa"
+        (keyup.enter)="buscar()"
+      />
+      <mat-icon matSuffix>search</mat-icon>
+    </mat-form-field>
+
+    <button
+      mat-flat-button
+      type="button"
+      [disabled]="cargando || procesando"
+      (click)="buscar()"
+    >
+      <mat-icon>search</mat-icon>
+      Buscar
+    </button>
+
+    <button
+      mat-button
+      type="button"
+      [disabled]="cargando || procesando"
+      (click)="limpiarBusqueda()"
+    >
+      <mat-icon>refresh</mat-icon>
+      Limpiar
+    </button>
+  </form>
+
+  <div class="resumen-operativo">
+    <div><strong>{{ resultados.length }}</strong> disponibles</div>
+    <div><strong>{{ totalSeleccionados }}</strong> seleccionados</div>
+  </div>
+
+  <div *ngIf="cargando" class="estado-lista">
+    <mat-icon>hourglass_top</mat-icon>
+    Consultando resultados validados...
+  </div>
+
+  <div *ngIf="!cargando && resultados.length > 0" class="tabla-container">
+    <table mat-table [dataSource]="resultados">
+      <ng-container matColumnDef="seleccion">
+        <th mat-header-cell *matHeaderCellDef>
+          <mat-checkbox
+            [checked]="todosSeleccionados"
+            [indeterminate]="seleccionParcial"
+            [disabled]="procesando"
+            aria-label="Seleccionar todos los resultados"
+            (change)="cambiarSeleccionTodos($event)"
+          ></mat-checkbox>
+        </th>
+        <td mat-cell *matCellDef="let fila">
+          <mat-checkbox
+            [checked]="estaSeleccionado(fila)"
+            [disabled]="procesando"
+            [attr.aria-label]="'Seleccionar ' + fila.resultado.codPruebaLab"
+            (change)="cambiarSeleccion(fila, $event)"
+          ></mat-checkbox>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="codigoLaboratorio">
+        <th mat-header-cell *matHeaderCellDef>Código Lab.</th>
+        <td mat-cell *matCellDef="let fila">
+          <strong>{{ fila.solicitud.codigoLaboratorio || '-' }}</strong>
+          <div class="dato-secundario">{{ fila.solicitud.codSolicitud }}</div>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="paciente">
+        <th mat-header-cell *matHeaderCellDef>Paciente</th>
+        <td mat-cell *matCellDef="let fila">
+          {{ obtenerNombrePaciente(fila) || '-' }}
+          <div class="dato-secundario">HC {{ fila.solicitud.paciente.hc || '-' }}</div>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="documento">
+        <th mat-header-cell *matHeaderCellDef>Documento</th>
+        <td mat-cell *matCellDef="let fila">
+          {{ obtenerDocumentoPaciente(fila) || '-' }}
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="programacion">
+        <th mat-header-cell *matHeaderCellDef>Programación</th>
+        <td mat-cell *matCellDef="let fila">
+          {{ fila.solicitud.empresa?.codProgramacion || '-' }}
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="empresa">
+        <th mat-header-cell *matHeaderCellDef>Empresa</th>
+        <td mat-cell *matCellDef="let fila">
+          {{ fila.solicitud.empresa?.razonSocialEmpresa || '-' }}
+          <div class="dato-secundario" *ngIf="fila.solicitud.empresa?.sede">
+            {{ fila.solicitud.empresa?.sede }}
+          </div>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="prueba">
+        <th mat-header-cell *matHeaderCellDef>Prueba</th>
+        <td mat-cell *matCellDef="let fila">
+          <strong>{{ fila.resultado.codPruebaLab }}</strong>
+          <div>{{ fila.resultado.nombrePruebaLab }}</div>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="instancia">
+        <th mat-header-cell *matHeaderCellDef>Instancia</th>
+        <td mat-cell *matCellDef="let fila">
+          {{ fila.resultado.etiquetaInstancia || fila.resultado.numeroInstancia }}
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="alertas">
+        <th mat-header-cell *matHeaderCellDef>Alertas</th>
+        <td mat-cell *matCellDef="let fila">
+          <strong>{{ fila.totalAlertas }}</strong>
+          <div class="dato-secundario alerta-critica" *ngIf="fila.alertasCriticas > 0">
+            {{ fila.alertasCriticas }} crítica(s)
+          </div>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="validacion">
+        <th mat-header-cell *matHeaderCellDef>Validado</th>
+        <td mat-cell *matCellDef="let fila">
+          {{ fila.resultado.fechaValidacion | date: 'dd/MM/yyyy HH:mm' }}
+          <div class="dato-secundario">{{ fila.resultado.usuarioValidacion || '-' }}</div>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="columnas; sticky: true"></tr>
+      <tr mat-row *matRowDef="let row; columns: columnas"></tr>
+    </table>
+  </div>
+
+  <div *ngIf="!cargando && resultados.length === 0" class="estado-lista">
+    <mat-icon>task_alt</mat-icon>
+    <div>No hay resultados VALIDADOS disponibles para liberación con el criterio seleccionado.</div>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <div class="acciones-resumen">
+    {{ totalSeleccionados }}
+    {{ totalSeleccionados === 1 ? 'seleccionado' : 'seleccionados' }}
+  </div>
+
+  <button
+    mat-button
+    type="button"
+    [disabled]="procesando"
+    (click)="cerrar()"
+  >
+    Cerrar
+  </button>
+
+  <button
+    mat-flat-button
+    type="button"
+    class="accion-liberar-masivo"
+    [disabled]="procesando || cargando || totalSeleccionados === 0"
+    (click)="liberarSeleccionados()"
+  >
+    <mat-icon>publish</mat-icon>
+    {{ procesando ? 'Liberando...' : 'Liberar seleccionados (' + totalSeleccionados + ')' }}
+  </button>
+</mat-dialog-actions>

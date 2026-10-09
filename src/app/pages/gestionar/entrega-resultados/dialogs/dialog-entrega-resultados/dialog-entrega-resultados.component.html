@@ -1,11 +1,45 @@
 <div class="cabecera" mat-dialog-title>
   <div>
-    <h2>Resultados disponibles</h2>
+    <h2>
+      {{
+        informe?.solicitud?.origenAtencion === 'EMPRESA'
+          ? 'Resultados disponibles · Empresa'
+          : 'Resultados disponibles'
+      }}
+    </h2>
     <div class="identidad" *ngIf="informe">
       <strong>{{ informe.solicitud.paciente.nombreCompleto }}</strong>
       <span>{{ informe.solicitud.paciente.documento }}</span>
       <span>HC: {{ informe.solicitud.paciente.hc }}</span>
       <span>{{ informe.solicitud.codigoLaboratorio || informe.solicitud.codSolicitud }}</span>
+    </div>
+
+    <div
+      class="contexto-empresa"
+      *ngIf="informe?.solicitud?.empresa as empresa"
+    >
+      <div>
+        <span>Empresa</span>
+        <strong>{{ empresa.razonSocialEmpresa || '-' }}</strong>
+        <small *ngIf="empresa.rucEmpresa">RUC {{ empresa.rucEmpresa }}</small>
+      </div>
+      <div>
+        <span>Programación</span>
+        <strong>{{ empresa.codProgramacion || '-' }}</strong>
+      </div>
+      <div>
+        <span>Protocolo</span>
+        <strong>
+          {{ empresa.codProtocolo || '-' }}
+          <ng-container *ngIf="empresa.nombreProtocolo">
+            · {{ empresa.nombreProtocolo }}
+          </ng-container>
+        </strong>
+      </div>
+      <div>
+        <span>Sede</span>
+        <strong>{{ empresa.sede || '-' }}</strong>
+      </div>
     </div>
   </div>
 
@@ -107,6 +141,14 @@
         <span>Instancia {{ prueba.numeroInstancia }} · v{{ prueba.versionResultado }}</span>
       </div>
 
+      <p class="metadato" *ngIf="prueba.muestras?.length">
+        Muestra: {{ prueba.muestras?.join(', ') }}
+      </p>
+
+      <p class="metadato" *ngIf="prueba.fechaValidacion">
+        Validado: {{ prueba.fechaValidacion | date: 'dd/MM/yyyy HH:mm' }}
+      </p>
+
       <p class="metadato">
         Liberado: {{ prueba.fechaLiberacion | date: 'dd/MM/yyyy HH:mm' }}
       </p>
@@ -116,7 +158,7 @@
           <tr>
             <th>Determinación</th>
             <th>Resultado</th>
-            <th>Valor referencial</th>
+            <th *ngIf="mostrarColumnaReferencia(prueba)">Valor referencial</th>
             <th>Unidades</th>
           </tr>
         </thead>
@@ -124,17 +166,39 @@
           <tr *ngFor="let item of prueba.items">
             <td class="determinacion">
               <div class="determinacion-nombre">{{ item.nombreInforme }}</div>
+              <div class="metodo-item" *ngIf="item.muestra">
+                Muestra: {{ item.muestra }}
+              </div>
               <div class="metodo-item" *ngIf="item.metodo">
                 Método: {{ item.metodo }}
               </div>
             </td>
-            <td class="valor" [class.fuera-referencia]="fueraReferencia(item)">
-              <strong>{{ item.valor ?? '-' }}</strong>
-              <mat-icon class="indicador" *ngIf="indicadorIcono(item) as icono">
-                {{ icono }}
-              </mat-icon>
+            <td
+              class="valor"
+              [class.fuera-referencia]="
+                fueraReferencia(item) && !esResultadoEstructuradoDetalle(item)
+              "
+            >
+              <ng-container
+                *ngIf="esResultadoEstructuradoDetalle(item); else valorComun"
+              >
+                <span
+                  *ngFor="let hallazgo of lineasHallazgosItem(item)"
+                  class="hallazgo-resultado"
+                  [class.hallazgo-fuera-referencia]="hallazgo.fueraReferencia"
+                >
+                  {{ hallazgo.texto }}
+                </span>
+              </ng-container>
+
+              <ng-template #valorComun>
+                <strong>{{ formatearValorItem(item) }}</strong>
+                <mat-icon class="indicador" *ngIf="indicadorIcono(item) as icono">
+                  {{ icono }}
+                </mat-icon>
+              </ng-template>
             </td>
-            <td class="referencias">
+            <td class="referencias" *ngIf="mostrarColumnaReferencia(prueba)">
               <span
                 *ngFor="let referencia of referenciasItem(item)"
                 class="referencia-linea"
@@ -149,6 +213,14 @@
           </tr>
         </tbody>
       </table>
+
+      <div
+        class="observacion"
+        *ngFor="let referenciaGrupo of comentariosGrupoPrueba(prueba)"
+      >
+        <strong>Referencia / interpretación<span *ngIf="referenciaGrupo.nombreGrupo"> · {{ referenciaGrupo.nombreGrupo }}</span>:</strong>
+        {{ referenciaGrupo.comentario }}
+      </div>
 
       <p class="observacion" *ngIf="prueba.observacionGeneral">
         Observación: {{ prueba.observacionGeneral }}

@@ -8,6 +8,19 @@ export interface IPacienteEntrega {
   fechaNacimiento?: string | null;
 }
 
+export interface IEmpresaEntrega {
+  programacionEmpresaId?: string | null;
+  codProgramacion?: string | null;
+  empresaId?: string | null;
+  rucEmpresa?: string | null;
+  razonSocialEmpresa: string;
+  sede?: string | null;
+  prioridad?: string | null;
+  protocoloId?: string | null;
+  codProtocolo?: string | null;
+  nombreProtocolo?: string | null;
+}
+
 export interface IResumenEntrega {
   totalPruebas: number;
   liberados: number;
@@ -22,6 +35,7 @@ export interface IFilaEntrega {
   fechaEmision: string;
   origenAtencion: 'PARTICULAR' | 'EMPRESA';
   paciente: IPacienteEntrega;
+  empresa?: IEmpresaEntrega | null;
   resumen: IResumenEntrega;
   tieneHistorial: boolean;
 }
@@ -55,11 +69,50 @@ export interface IReferenciaAplicadaEntrega {
   textoReferencia?: string;
 }
 
+
+export type ValorCuantificacionInformeEntrega =
+  | string
+  | number
+  | { tipo: 'RANGO'; desde: number; hasta: number }
+  | {
+      tipo:
+        | 'MAYOR_QUE'
+        | 'MAYOR_IGUAL_QUE'
+        | 'MENOR_QUE'
+        | 'MENOR_IGUAL_QUE';
+      valor: number;
+    }
+  | { tipo: 'CATEGORICO'; valor: string }
+  | { tipo: 'CUALITATIVO'; valor: string };
+
+export interface IHallazgoInformeEntrega {
+  hallazgo: string;
+  valor: ValorCuantificacionInformeEntrega;
+}
+
+export interface IValorEstructuradoInformeEntrega {
+  tipo: 'HALLAZGOS';
+  modo: 'AUSENCIA' | 'DETALLE';
+  valorAusencia?: string;
+  hallazgos: IHallazgoInformeEntrega[];
+}
+
+export type ValorInformeEntrega =
+  | ValorCuantificacionInformeEntrega
+  | IValorEstructuradoInformeEntrega
+  | null;
+
 export interface IItemInformeEntrega {
   nombreInforme: string;
   codItemLab: string | null;
+  tipoResultado?: 'NUMERICO' | 'TEXTO' | 'CATEGORICO' | 'ESTRUCTURADO';
+  muestra?: string | null;
   metodo?: string | null;
-  valor: string | number | null;
+  nombreGrupo?: string | null;
+  comentarioReferenciaGrupo?: string | null;
+  mostrarReferenciaInforme?: boolean;
+  hallazgosNormales?: string[];
+  valor: ValorInformeEntrega;
   unidadesRef: string;
   observacion: string;
   ordenGrupo: number;
@@ -80,6 +133,7 @@ export interface IPruebaInformeEntrega {
   etiquetaInstancia: string | null;
   versionResultado: number;
   fechaValidacion?: string | null;
+  muestras?: string[];
   fechaLiberacion: string | null;
   usuarioLiberacion: string | null;
   observacionGeneral: string;
@@ -106,6 +160,7 @@ export interface IInformeEntregable {
     fechaAtencion?: string | null;
     origenAtencion: 'PARTICULAR' | 'EMPRESA';
     paciente: IPacienteEntrega;
+    empresa?: IEmpresaEntrega | null;
   };
   resumen: IResumenEntrega;
   resultados: IPruebaInformeEntrega[];

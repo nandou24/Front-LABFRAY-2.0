@@ -45,6 +45,14 @@
 
     <div class="estado-y-seleccion">
       <mat-checkbox
+        *ngIf="esModoRegistro && puedeSeleccionarParaRegistro(resultadoActual)"
+        [checked]="estaSeleccionadoParaRegistrar(resultadoActual)"
+        (change)="cambiarSeleccionRegistro(resultadoActual, $event.checked)"
+      >
+        Seleccionar para registrar
+      </mat-checkbox>
+
+      <mat-checkbox
         *ngIf="esModoValidacion && resultadoActual.estadoResultado === 'COMPLETO'"
         [checked]="estaSeleccionadoParaValidar(resultadoActual)"
         (change)="cambiarSeleccionValidacion(resultadoActual, $event.checked)"
@@ -52,7 +60,12 @@
         Seleccionar para validar
       </mat-checkbox>
 
-      <mat-chip>{{ resultadoActual.estadoResultado }}</mat-chip>
+      <mat-chip
+        class="estado-chip"
+        [ngClass]="claseEstadoResultado(resultadoActual.estadoResultado)"
+      >
+        {{ resultadoActual.estadoResultado }}
+      </mat-chip>
     </div>
   </div>
 </div>
@@ -107,94 +120,374 @@
 
   <form [formGroup]="formResultado" class="form-resultado">
     <div formArrayName="items" class="lista-items">
-      <div
-        *ngFor="let grupo of itemsForm.controls; let i = index"
-        [formGroupName]="i"
-        class="item-resultado"
+      <ng-container *ngFor="let grupo of itemsForm.controls; let i = index">
+        <div
+          [formGroupName]="i"
+          class="item-resultado"
         [class.item-activo]="itemActivoIndex === i"
         (focusin)="marcarItemActivo(i)"
         (click)="marcarItemActivo(i)"
       >
-        <div class="item-identidad">
-          <div>
-            <strong>{{ resultadoActual.resultadosItems[i].nombreInforme }}</strong>
-            <span *ngIf="resultadoActual.resultadosItems[i].codItemLab">
-              {{ resultadoActual.resultadosItems[i].codItemLab }}
-            </span>
+        <div class="item-linea-principal">
+          <div class="item-identidad-compacta">
+            <div class="item-nombre-codigo">
+              <strong>{{ resultadoActual.resultadosItems[i].nombreInforme }}</strong>
+              <span
+                class="indicador-hallazgo-estructurado"
+                *ngIf="esHallazgoEstructuradoFueraReferencia(resultadoActual.resultadosItems[i])"
+                matTooltip="Hallazgo presente respecto al valor esperado"
+                aria-label="Hallazgo presente"
+              >
+                *
+              </span>
+              <span
+                class="item-codigo"
+                *ngIf="resultadoActual.resultadosItems[i].codItemLab"
+              >
+                {{ resultadoActual.resultadosItems[i].codItemLab }}
+              </span>
+            </div>
           </div>
 
-          <span class="tipo-resultado">
-            {{ resultadoActual.resultadosItems[i].tipoResultado }}
-          </span>
+          <div class="campo-resultado">
+            <ng-container
+              *ngIf="esItemObservaciones(resultadoActual.resultadosItems[i]); else capturaResultadoComun"
+            >
+              <mat-form-field
+                appearance="outline"
+                class="campo-resultado-observaciones"
+              >
+                <mat-label>Observaciones</mat-label>
+                <textarea
+                  matInput
+                  rows="2"
+                  formControlName="valor"
+                  placeholder="Ingrese las observaciones del examen"
+                ></textarea>
+              </mat-form-field>
+            </ng-container>
+
+            <ng-template #capturaResultadoComun>
+              <ng-container
+                *ngIf="resultadoActual.resultadosItems[i].tipoResultado === 'NUMERICO'"
+              >
+                <mat-form-field
+                  appearance="outline"
+                  *ngIf="tieneAlternativasCualitativasNumericas(resultadoActual.resultadosItems[i])"
+                >
+                  <mat-label>Tipo de resultado</mat-label>
+                  <mat-select formControlName="selectorCualitativoNumerico">
+                    <mat-option value="">Cuantificar numéricamente</mat-option>
+                    <mat-option
+                      *ngFor="let opcion of obtenerValoresCualitativosNumericos(resultadoActual.resultadosItems[i])"
+                      [value]="opcion"
+                    >
+                      {{ opcion }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+
+                <ng-container *ngIf="!grupo.controls.selectorCualitativoNumerico.value">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Formato</mat-label>
+                    <mat-select formControlName="formatoNumerico">
+                      <mat-option
+                        *ngFor="let formato of obtenerFormatosCapturaNumerica(resultadoActual.resultadosItems[i])"
+                        [value]="formato"
+                      >
+                        {{ etiquetaFormatoNumerico(formato) }}
+                      </mat-option>
+                    </mat-select>
+                  </mat-form-field>
+
+                  <ng-container *ngIf="esFormatoNumericoRango(grupo); else valorNumericoSimple">
+                    <mat-form-field appearance="outline">
+                      <mat-label>Desde</mat-label>
+                      <input
+                        matInput
+                        type="number"
+                        [step]="pasoNumerico(resultadoActual.resultadosItems[i])"
+                        (keydown)="bloquearSeparadorDecimal($event, esNumericoSoloEnteros(resultadoActual.resultadosItems[i]))"
+                        formControlName="valorDesde"
+                      />
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline">
+                      <mat-label>Hasta</mat-label>
+                      <input
+                        matInput
+                        type="number"
+                        [step]="pasoNumerico(resultadoActual.resultadosItems[i])"
+                        (keydown)="bloquearSeparadorDecimal($event, esNumericoSoloEnteros(resultadoActual.resultadosItems[i]))"
+                        formControlName="valorHasta"
+                      />
+                    </mat-form-field>
+
+                    <span
+                      class="unidad-resultado-rango"
+                      *ngIf="resultadoActual.resultadosItems[i].unidadesRef"
+                    >
+                      {{ resultadoActual.resultadosItems[i].unidadesRef }}
+                    </span>
+                  </ng-container>
+
+                  <ng-template #valorNumericoSimple>
+                    <mat-form-field appearance="outline">
+                      <mat-label>Resultado</mat-label>
+                      <span
+                        matTextPrefix
+                        *ngIf="simboloFormatoNumerico(grupo.controls.formatoNumerico.value) as simbolo"
+                      >
+                        {{ simbolo }}&nbsp;
+                      </span>
+                      <input
+                        matInput
+                        type="number"
+                        [step]="pasoNumerico(resultadoActual.resultadosItems[i])"
+                        (keydown)="bloquearSeparadorDecimal($event, esNumericoSoloEnteros(resultadoActual.resultadosItems[i]))"
+                        formControlName="valor"
+                      />
+                      <span
+                        matTextSuffix
+                        *ngIf="resultadoActual.resultadosItems[i].unidadesRef"
+                      >
+                        {{ resultadoActual.resultadosItems[i].unidadesRef }}
+                      </span>
+                    </mat-form-field>
+                  </ng-template>
+                </ng-container>
+              </ng-container>
+
+              <ng-container
+                *ngIf="resultadoActual.resultadosItems[i].tipoResultado === 'ESTRUCTURADO'"
+              >
+                <mat-form-field appearance="outline" class="modo-estructurado">
+                  <mat-label>Resultado</mat-label>
+                  <mat-select formControlName="modoEstructurado">
+                    <mat-option value="">Seleccione...</mat-option>
+                    <mat-option value="AUSENCIA">
+                      {{ valorAusenciaEstructurada(resultadoActual.resultadosItems[i]) }}
+                    </mat-option>
+                    <mat-option value="DETALLE">Registrar hallazgos</mat-option>
+                  </mat-select>
+                </mat-form-field>
+
+                <button
+                  mat-stroked-button
+                  type="button"
+                  class="boton-agregar-hallazgo"
+                  *ngIf="
+                    grupo.controls.modoEstructurado.value === 'DETALLE' &&
+                    !soloLectura
+                  "
+                  (click)="agregarHallazgoEstructuradoResultado(i)"
+                >
+                  <mat-icon>add</mat-icon>
+                  Agregar hallazgo
+                </button>
+              </ng-container>
+
+              <mat-form-field
+                appearance="outline"
+                *ngIf="usaSelectorResultado(resultadoActual.resultadosItems[i])"
+              >
+                <mat-label>Resultado</mat-label>
+                <mat-select formControlName="selectorResultado">
+                  <mat-option value="">Seleccione...</mat-option>
+                  <mat-option
+                    *ngFor="let opcion of obtenerOpcionesResultado(resultadoActual.resultadosItems[i])"
+                    [value]="opcion"
+                  >
+                    {{ opcion }}
+                  </mat-option>
+                  <mat-option
+                    *ngIf="permiteOtroResultado(resultadoActual.resultadosItems[i])"
+                    [value]="valorOtroResultado"
+                  >
+                    Otro resultado...
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field
+                appearance="outline"
+                *ngIf="
+                  mostrarIngresoManualResultado(
+                    resultadoActual.resultadosItems[i],
+                    grupo
+                  )
+                "
+                class="campo-otro-resultado"
+              >
+                <mat-label>Otro resultado</mat-label>
+                <input matInput type="text" formControlName="valor" />
+              </mat-form-field>
+
+              <mat-form-field
+                appearance="outline"
+                *ngIf="
+                  resultadoActual.resultadosItems[i].tipoResultado !== 'NUMERICO' &&
+                  resultadoActual.resultadosItems[i].tipoResultado !== 'ESTRUCTURADO' &&
+                  !usaSelectorResultado(resultadoActual.resultadosItems[i])
+                "
+              >
+                <mat-label>Resultado</mat-label>
+                <input matInput type="text" formControlName="valor" />
+              </mat-form-field>
+            </ng-template>
+          </div>
+
+          <div
+            class="control-observacion"
+            *ngIf="!esItemObservaciones(resultadoActual.resultadosItems[i])"
+          >
+            <mat-slide-toggle formControlName="observacionActiva">
+              Observación
+            </mat-slide-toggle>
+          </div>
         </div>
 
-        <div class="item-captura">
-          <div class="campo-resultado">
-            <mat-form-field
-              appearance="outline"
-              *ngIf="resultadoActual.resultadosItems[i].tipoResultado === 'NUMERICO'"
-            >
-              <mat-label>Resultado</mat-label>
-              <input matInput type="number" formControlName="valor" />
-              <span
-                matTextSuffix
-                *ngIf="resultadoActual.resultadosItems[i].unidadesRef"
-              >
-                {{ resultadoActual.resultadosItems[i].unidadesRef }}
-              </span>
-            </mat-form-field>
-
-            <mat-form-field
-              appearance="outline"
-              *ngIf="usaSelectorResultado(resultadoActual.resultadosItems[i])"
-            >
-              <mat-label>Resultado</mat-label>
-              <mat-select formControlName="selectorResultado">
-                <mat-option value="">Seleccione...</mat-option>
-                <mat-option
-                  *ngFor="let opcion of obtenerOpcionesResultado(resultadoActual.resultadosItems[i])"
-                  [value]="opcion"
+        <div
+          class="item-detalle-estructurado"
+          *ngIf="
+            resultadoActual.resultadosItems[i].tipoResultado === 'ESTRUCTURADO' &&
+            grupo.controls.modoEstructurado.value === 'DETALLE'
+          "
+        >
+          <div class="hallazgos-estructurados">
+            <div [formGroup]="grupo" class="lista-hallazgos-estructurados">
+              <div formArrayName="hallazgosEstructurados">
+                <div
+                  class="hallazgo-estructurado-fila"
+                  *ngFor="let hallazgoGrupo of grupo.controls.hallazgosEstructurados.controls; let j = index"
+                  [formGroupName]="j"
                 >
-                  {{ opcion }}
-                </mat-option>
-                <mat-option
-                  *ngIf="permiteOtroResultado(resultadoActual.resultadosItems[i])"
-                  [value]="valorOtroResultado"
-                >
-                  Otro resultado...
-                </mat-option>
-              </mat-select>
-            </mat-form-field>
+                  <mat-form-field appearance="outline" class="hallazgo-campo">
+                    <mat-label>Hallazgo</mat-label>
+                    <mat-select formControlName="hallazgo">
+                      <mat-option
+                        *ngFor="let hallazgo of obtenerHallazgosPermitidos(resultadoActual.resultadosItems[i])"
+                        [value]="hallazgo"
+                      >
+                        {{ hallazgo }}
+                      </mat-option>
+                    </mat-select>
+                  </mat-form-field>
 
-            <mat-form-field
-              appearance="outline"
-              *ngIf="
-                mostrarIngresoManualResultado(
-                  resultadoActual.resultadosItems[i],
-                  grupo
-                )
-              "
-              class="campo-otro-resultado"
-            >
-              <mat-label>Otro resultado</mat-label>
-              <input matInput type="text" formControlName="valor" />
-            </mat-form-field>
+                  <ng-container
+                    *ngIf="!esCuantificacionEstructuradaNumerica(resultadoActual.resultadosItems[i]); else hallazgoNumerico"
+                  >
+                    <mat-form-field appearance="outline" class="cuantificacion-campo">
+                      <mat-label>Cuantificación</mat-label>
+                      <mat-select formControlName="valor">
+                        <mat-option
+                          *ngFor="let opcion of obtenerOpcionesCuantificacionEstructurada(resultadoActual.resultadosItems[i])"
+                          [value]="opcion"
+                        >
+                          {{ opcion }}
+                        </mat-option>
+                      </mat-select>
+                    </mat-form-field>
+                  </ng-container>
 
-            <mat-form-field
-              appearance="outline"
-              *ngIf="
-                resultadoActual.resultadosItems[i].tipoResultado !== 'NUMERICO' &&
-                !usaSelectorResultado(resultadoActual.resultadosItems[i])
-              "
-            >
-              <mat-label>Resultado</mat-label>
-              <input matInput type="text" formControlName="valor" />
-            </mat-form-field>
+                  <ng-template #hallazgoNumerico>
+                    <mat-form-field appearance="outline" class="formato-hallazgo-campo">
+                      <mat-label>Formato</mat-label>
+                      <mat-select formControlName="formatoNumerico">
+                        <mat-option
+                          *ngFor="let formato of obtenerFormatosHallazgoNumerico(resultadoActual.resultadosItems[i])"
+                          [value]="formato"
+                        >
+                          {{ etiquetaFormatoNumerico(formato) }}
+                        </mat-option>
+                      </mat-select>
+                    </mat-form-field>
+
+                    <ng-container *ngIf="esHallazgoNumericoRango(hallazgoGrupo); else hallazgoNumericoSimple">
+                      <mat-form-field appearance="outline" class="numero-hallazgo-campo">
+                        <mat-label>Desde</mat-label>
+                        <input
+                          matInput
+                          type="number"
+                          [step]="pasoNumerico(resultadoActual.resultadosItems[i], true)"
+                          (keydown)="bloquearSeparadorDecimal($event, esHallazgoNumericoSoloEnteros(resultadoActual.resultadosItems[i]))"
+                          formControlName="valorDesde"
+                        />
+                      </mat-form-field>
+                      <mat-form-field appearance="outline" class="numero-hallazgo-campo">
+                        <mat-label>Hasta</mat-label>
+                        <input
+                          matInput
+                          type="number"
+                          [step]="pasoNumerico(resultadoActual.resultadosItems[i], true)"
+                          (keydown)="bloquearSeparadorDecimal($event, esHallazgoNumericoSoloEnteros(resultadoActual.resultadosItems[i]))"
+                          formControlName="valorHasta"
+                        />
+                      </mat-form-field>
+                    </ng-container>
+
+                    <ng-template #hallazgoNumericoSimple>
+                      <mat-form-field appearance="outline" class="numero-hallazgo-campo">
+                        <mat-label>Valor</mat-label>
+                        <span
+                          matTextPrefix
+                          *ngIf="simboloFormatoNumerico(hallazgoGrupo.controls.formatoNumerico.value) as simboloHallazgo"
+                        >
+                          {{ simboloHallazgo }}&nbsp;
+                        </span>
+                        <input
+                          matInput
+                          type="number"
+                          [step]="pasoNumerico(resultadoActual.resultadosItems[i], true)"
+                          (keydown)="bloquearSeparadorDecimal($event, esHallazgoNumericoSoloEnteros(resultadoActual.resultadosItems[i]))"
+                          formControlName="valor"
+                        />
+                      </mat-form-field>
+                    </ng-template>
+                  </ng-template>
+
+                  <span
+                    class="unidad-hallazgo"
+                    *ngIf="resultadoActual.resultadosItems[i].unidadesRef"
+                  >
+                    {{ resultadoActual.resultadosItems[i].unidadesRef }}
+                  </span>
+
+                  <button
+                    *ngIf="!soloLectura"
+                    mat-icon-button
+                    color="warn"
+                    type="button"
+                    class="eliminar-hallazgo"
+                    (click)="eliminarHallazgoEstructuradoResultado(i, j)"
+                    matTooltip="Eliminar hallazgo"
+                  >
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
+        </div>
 
-          <mat-form-field appearance="outline" class="campo-observacion">
+        <div
+          class="item-linea-observacion"
+          *ngIf="
+            !esItemObservaciones(resultadoActual.resultadosItems[i]) &&
+            grupo.controls.observacionActiva.value
+          "
+        >
+          <mat-form-field
+            appearance="outline"
+            class="campo-observacion-expandida"
+          >
             <mat-label>Observación</mat-label>
-            <input matInput formControlName="observacion" />
+            <textarea
+              matInput
+              rows="2"
+              formControlName="observacion"
+              placeholder="Observación opcional"
+            ></textarea>
           </mat-form-field>
         </div>
 
@@ -233,7 +526,25 @@
             </div>
           </div>
         </ng-container>
-      </div>
+
+        </div>
+
+        <div
+          class="referencia-grupo"
+          *ngIf="
+            esUltimoItemGrupo(i) &&
+            comentarioReferenciaGrupo(resultadoActual.resultadosItems[i]) as comentarioGrupo
+          "
+        >
+          <strong>
+            Referencia / interpretación
+            <span *ngIf="resultadoActual.resultadosItems[i].nombreGrupo">
+              · {{ resultadoActual.resultadosItems[i].nombreGrupo }}
+            </span>:
+          </strong>
+          <span>{{ comentarioGrupo }}</span>
+        </div>
+      </ng-container>
     </div>
   </form>
 </mat-dialog-content>
@@ -250,7 +561,7 @@
     </button>
 
     <button
-      *ngIf="esModoRegistro && !soloLectura"
+      *ngIf="esModoRegistro && !soloLectura && cantidadSeleccionadosRegistro === 0"
       mat-flat-button
       type="button"
       (click)="guardar()"
@@ -258,6 +569,28 @@
     >
       <mat-icon>save</mat-icon>
       {{ procesando ? 'Registrando...' : 'Registrar prueba' }}
+    </button>
+
+    <button
+      *ngIf="esModoRegistro && cantidadCompletosRegistrables > 1"
+      mat-button
+      type="button"
+      (click)="seleccionarTodosRegistrables()"
+      [disabled]="procesando"
+    >
+      Seleccionar completas
+    </button>
+
+    <button
+      *ngIf="esModoRegistro && cantidadSeleccionadosRegistro > 0"
+      mat-flat-button
+      type="button"
+      class="accion-registrar-todas"
+      (click)="registrarSeleccionadas()"
+      [disabled]="procesando"
+    >
+      <mat-icon>done_all</mat-icon>
+      Registrar seleccionadas ({{ cantidadSeleccionadosRegistro }})
     </button>
 
     <button

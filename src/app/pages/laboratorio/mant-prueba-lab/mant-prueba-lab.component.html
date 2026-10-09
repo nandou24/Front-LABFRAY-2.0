@@ -337,6 +337,25 @@
                 </div>
               </div>
 
+              <!-- ====== Referencia / interpretación compartida ====== -->
+              <div class="row-flex">
+                <div [style.flex]="setFlex(95, '%')" class="flex-item">
+                  <mat-form-field appearance="outline" class="w-100">
+                    <mat-label> Referencia / interpretación del grupo </mat-label>
+                    <textarea
+                      matInput
+                      rows="3"
+                      maxlength="2000"
+                      formControlName="comentarioReferenciaGrupo"
+                      placeholder="Texto interpretativo común para los Items de este grupo"
+                    ></textarea>
+                    <mat-hint>
+                      Opcional. Se mostrará una sola vez debajo de los resultados del grupo.
+                    </mat-hint>
+                  </mat-form-field>
+                </div>
+              </div>
+
               <!-- ====== Procesamiento especial del grupo ====== -->
 
               <div class="row-flex">

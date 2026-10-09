@@ -31,8 +31,11 @@ import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import Swal from 'sweetalert2';
 import {
+  FormatoCapturaNumerica,
   IItemLab,
+  PrecisionNumericaItem,
   TipoResultadoItem,
+  ValorPorDefectoResultadoItem,
 } from '../../../models/Mantenimiento/items.models';
 import { ItemLabService } from '../../../services/mantenimiento/itemLab/item-lab.service';
 import { MatChipsModule } from '@angular/material/chips';
@@ -81,6 +84,24 @@ export class MantItemLabComponent implements OnInit {
     { value: 'NUMERICO', label: 'Numérico' },
     { value: 'TEXTO', label: 'Texto' },
     { value: 'CATEGORICO', label: 'Categórico' },
+    { value: 'ESTRUCTURADO', label: 'Estructurado / hallazgos' },
+  ];
+
+  public precisionesNumericas: { value: PrecisionNumericaItem; label: string }[] = [
+    { value: 'ENTERO', label: 'Solo enteros' },
+    { value: 'DECIMAL', label: 'Permitir decimales' },
+  ];
+
+  public formatosCapturaNumerica: {
+    value: FormatoCapturaNumerica;
+    label: string;
+  }[] = [
+    { value: 'VALOR', label: 'Valor único' },
+    { value: 'RANGO', label: 'Rango (desde - hasta)' },
+    { value: 'MAYOR_QUE', label: 'Mayor que (>)' },
+    { value: 'MAYOR_IGUAL_QUE', label: 'Mayor o igual que (>=)' },
+    { value: 'MENOR_QUE', label: 'Menor que (<)' },
+    { value: 'MENOR_IGUAL_QUE', label: 'Menor o igual que (<=)' },
   ];
 
   public sexosReferencia = [
@@ -124,6 +145,10 @@ export class MantItemLabComponent implements OnInit {
     { value: 'DISTINTO_DE', label: 'Distinto de' },
   ];
 
+  public nuevaOpcionCualitativaNumerica = new FormControl<string>('', { nonNullable: true });
+  public nuevoHallazgoEstructurado = new FormControl<string>('', { nonNullable: true });
+  public nuevaOpcionCuantificacionEstructurada = new FormControl<string>('', { nonNullable: true });
+
   // ==========================================================
   // FORMULARIO
   // ==========================================================
@@ -163,7 +188,32 @@ export class MantItemLabComponent implements OnInit {
     tipoResultado: ['TEXTO', [Validators.required]],
     opcionesResultado: [[]],
     valorPorDefectoResultado: [''],
+    valorPorDefectoRangoDesde: [null],
+    valorPorDefectoRangoHasta: [null],
+    formatosCapturaNumerica: [['VALOR']],
+    formatoCapturaNumericaDefault: ['VALOR'],
+    precisionNumerica: ['DECIMAL'],
+    valoresCualitativosAlternativos: [[]],
+    valoresCualitativosReferencia: [[]],
+    valorCualitativoDefaultNumerico: [''],
     permiteValorNoListado: [false],
+    esOpcional: [false],
+    mostrarReferenciaInforme: [true],
+
+    // ====== Resultado estructurado / hallazgos ======
+    hallazgosEstructurados: [[]],
+    cuantificacionEstructuradaTipo: ['CATEGORICA'],
+    opcionesCuantificacionEstructurada: [[]],
+    formatosCapturaEstructurada: [['RANGO']],
+    formatoCapturaEstructuradaDefault: ['RANGO'],
+    precisionNumericaEstructurada: ['DECIMAL'],
+    valorAusenciaEstructurada: ['NO SE OBSERVAN'],
+    ausenciaEsReferenciaEstructurada: [true],
+    hallazgosNormalesEstructurados: [[]],
+    permiteMultiplesEstructurada: [true],
+    permitirOtroHallazgoEstructurado: [false],
+    modoDefaultEstructurado: ['AUSENCIA'],
+    hallazgosDefaultEstructurado: this._fb.array([]),
     valoresReferenciaCategorica: [[]],
     poseeReferenciaTexto: [false],
     textoReferenciaResultado: [''],
@@ -194,6 +244,10 @@ export class MantItemLabComponent implements OnInit {
 
   get reglasAlerta(): FormArray {
     return this.myFormItemLab.get('reglasAlerta') as FormArray;
+  }
+
+  get hallazgosDefaultEstructurado(): FormArray {
+    return this.myFormItemLab.get('hallazgosDefaultEstructurado') as FormArray;
   }
 
   // ==========================================================
@@ -357,7 +411,7 @@ export class MantItemLabComponent implements OnInit {
   agregarReferencia(): void {
     const referencia = this._fb.group(
       {
-        descripcion: ['', [Validators.required, Validators.maxLength(100)]],
+        descripcion: ['', [Validators.maxLength(100)]],
         sexo: ['TODOS', [Validators.required]],
         tipoReferencia: ['RANGO', [Validators.required]],
         valorMin: [null],
@@ -592,8 +646,355 @@ export class MantItemLabComponent implements OnInit {
     this.agregarOpcionResultado();
   }
 
+  // ====== Alternativas cualitativas de Items numéricos ======
+
+  agregarValorCualitativoNumerico(): void {
+    const valor = this.nuevaOpcionCualitativaNumerica.value.trim();
+    if (!valor) return;
+
+    const actuales: string[] =
+      this.myFormItemLab.get('valoresCualitativosAlternativos')?.value ?? [];
+
+    if (
+      actuales.some(
+        (item) => item.trim().toUpperCase() === valor.toUpperCase(),
+      )
+    ) {
+      this.nuevaOpcionCualitativaNumerica.setValue('');
+      return;
+    }
+
+    this.myFormItemLab
+      .get('valoresCualitativosAlternativos')
+      ?.setValue([...actuales, valor]);
+    this.nuevaOpcionCualitativaNumerica.setValue('');
+  }
+
+  eliminarValorCualitativoNumerico(index: number): void {
+    const actuales: string[] = [
+      ...(this.myFormItemLab.get('valoresCualitativosAlternativos')?.value ?? []),
+    ];
+    const eliminado = actuales[index];
+    actuales.splice(index, 1);
+    this.myFormItemLab.get('valoresCualitativosAlternativos')?.setValue(actuales);
+
+    const referencias: string[] =
+      this.myFormItemLab.get('valoresCualitativosReferencia')?.value ?? [];
+    this.myFormItemLab
+      .get('valoresCualitativosReferencia')
+      ?.setValue(referencias.filter((valor) => valor !== eliminado));
+
+    if (
+      this.myFormItemLab.get('valorCualitativoDefaultNumerico')?.value ===
+      eliminado
+    ) {
+      this.myFormItemLab.get('valorCualitativoDefaultNumerico')?.setValue('');
+    }
+  }
+
+  obtenerValoresCualitativosNumericos(): string[] {
+    return this.myFormItemLab.get('valoresCualitativosAlternativos')?.value ?? [];
+  }
+
+  // ====== Catálogo de hallazgos estructurados ======
+
+  agregarHallazgoEstructurado(): void {
+    const valor = this.nuevoHallazgoEstructurado.value.trim();
+    if (!valor) return;
+
+    const actuales: string[] =
+      this.myFormItemLab.get('hallazgosEstructurados')?.value ?? [];
+
+    if (
+      actuales.some(
+        (item) => item.trim().toUpperCase() === valor.toUpperCase(),
+      )
+    ) {
+      this.nuevoHallazgoEstructurado.setValue('');
+      return;
+    }
+
+    this.myFormItemLab.get('hallazgosEstructurados')?.setValue([...actuales, valor]);
+    this.nuevoHallazgoEstructurado.setValue('');
+  }
+
+  eliminarHallazgoEstructurado(index: number): void {
+    const actuales: string[] = [
+      ...(this.myFormItemLab.get('hallazgosEstructurados')?.value ?? []),
+    ];
+    const eliminado = actuales[index];
+    actuales.splice(index, 1);
+    this.myFormItemLab.get('hallazgosEstructurados')?.setValue(actuales);
+
+    const normales: string[] =
+      this.myFormItemLab.get('hallazgosNormalesEstructurados')?.value ?? [];
+    this.myFormItemLab
+      .get('hallazgosNormalesEstructurados')
+      ?.setValue(normales.filter((hallazgo) => hallazgo !== eliminado));
+
+    [...this.hallazgosDefaultEstructurado.controls]
+      .reverse()
+      .forEach((control, reverseIndex) => {
+        if (control.get('hallazgo')?.value === eliminado) {
+          const indice = this.hallazgosDefaultEstructurado.length - 1 - reverseIndex;
+          this.hallazgosDefaultEstructurado.removeAt(indice);
+        }
+      });
+  }
+
+  obtenerHallazgosEstructurados(): string[] {
+    return this.myFormItemLab.get('hallazgosEstructurados')?.value ?? [];
+  }
+
+  // ====== Opciones de cuantificación estructurada ======
+
+  agregarOpcionCuantificacionEstructurada(): void {
+    const valor = this.nuevaOpcionCuantificacionEstructurada.value.trim();
+    if (!valor) return;
+
+    const actuales: string[] =
+      this.myFormItemLab.get('opcionesCuantificacionEstructurada')?.value ?? [];
+
+    if (
+      actuales.some(
+        (item) => item.trim().toUpperCase() === valor.toUpperCase(),
+      )
+    ) {
+      this.nuevaOpcionCuantificacionEstructurada.setValue('');
+      return;
+    }
+
+    this.myFormItemLab
+      .get('opcionesCuantificacionEstructurada')
+      ?.setValue([...actuales, valor]);
+    this.nuevaOpcionCuantificacionEstructurada.setValue('');
+  }
+
+  eliminarOpcionCuantificacionEstructurada(index: number): void {
+    const actuales: string[] = [
+      ...(this.myFormItemLab.get('opcionesCuantificacionEstructurada')?.value ?? []),
+    ];
+    const eliminado = actuales[index];
+    actuales.splice(index, 1);
+    this.myFormItemLab
+      .get('opcionesCuantificacionEstructurada')
+      ?.setValue(actuales);
+
+    this.hallazgosDefaultEstructurado.controls.forEach((control) => {
+      if (control.get('valorCategorico')?.value === eliminado) {
+        control.get('valorCategorico')?.setValue('');
+      }
+    });
+  }
+
+  obtenerOpcionesCuantificacionEstructurada(): string[] {
+    return this.myFormItemLab.get('opcionesCuantificacionEstructurada')?.value ?? [];
+  }
+
+  // ====== Default estructurado ======
+
+  private crearHallazgoDefaultEstructuradoGroup(data: any = {}): FormGroup {
+    return this._fb.group({
+      hallazgo: [data.hallazgo ?? '', Validators.required],
+      valorCategorico: [data.valorCategorico ?? ''],
+      formatoNumerico: [data.formatoNumerico ?? 'RANGO'],
+      valor: [data.valor ?? null],
+      desde: [data.desde ?? null],
+      hasta: [data.hasta ?? null],
+    });
+  }
+
+  agregarHallazgoDefaultEstructurado(data: any = {}): void {
+    if (
+      this.myFormItemLab.get('permiteMultiplesEstructurada')?.value === false &&
+      this.hallazgosDefaultEstructurado.length > 0
+    ) {
+      return;
+    }
+
+    this.hallazgosDefaultEstructurado.push(
+      this.crearHallazgoDefaultEstructuradoGroup(data),
+    );
+  }
+
+  eliminarHallazgoDefaultEstructurado(index: number): void {
+    this.hallazgosDefaultEstructurado.removeAt(index);
+  }
+
+  esCuantificacionEstructuradaNumerica(): boolean {
+    return (
+      this.myFormItemLab.get('cuantificacionEstructuradaTipo')?.value ===
+      'NUMERICA'
+    );
+  }
+
+  esHallazgoDefaultRango(control: AbstractControl): boolean {
+    return control.get('formatoNumerico')?.value === 'RANGO';
+  }
+
+  obtenerFormatosCapturaEstructuradaSeleccionados(): FormatoCapturaNumerica[] {
+    return (
+      this.myFormItemLab.get('formatosCapturaEstructurada')?.value ?? ['RANGO']
+    ) as FormatoCapturaNumerica[];
+  }
+
   private validarConfiguracionResultado(): boolean {
     const tipoResultado = this.myFormItemLab.get('tipoResultado')?.value;
+
+    // ====== NUMÉRICO ======
+
+    if (tipoResultado === 'NUMERICO') {
+      const formatos = this.obtenerFormatosCapturaSeleccionados();
+      const formatoDefault = this.myFormItemLab.get(
+        'formatoCapturaNumericaDefault',
+      )?.value as FormatoCapturaNumerica | null;
+
+      if (!formatos.length) {
+        Swal.fire({
+          title: 'Formato de captura requerido',
+          text: 'Seleccione al menos un formato de captura para el resultado numérico.',
+          icon: 'warning',
+          confirmButtonText: 'Ok',
+        });
+        return false;
+      }
+
+      if (!formatoDefault || !formatos.includes(formatoDefault)) {
+        Swal.fire({
+          title: 'Formato predeterminado inválido',
+          text: 'El formato predeterminado debe estar incluido entre los formatos permitidos.',
+          icon: 'warning',
+          confirmButtonText: 'Ok',
+        });
+        return false;
+      }
+
+      // ====== Validar alternativas cualitativas ======
+      const alternativas = this.obtenerValoresCualitativosNumericos();
+      const referenciasCualitativas: string[] =
+        this.myFormItemLab.get('valoresCualitativosReferencia')?.value ?? [];
+      const referenciaInvalida = referenciasCualitativas.find(
+        (valor) => !alternativas.includes(valor),
+      );
+
+      if (referenciaInvalida) {
+        Swal.fire({
+          title: 'Referencia cualitativa inválida',
+          text: 'Los valores cualitativos de referencia deben existir entre las alternativas configuradas.',
+          icon: 'warning',
+          confirmButtonText: 'Ok',
+        });
+        return false;
+      }
+
+      const defaultCualitativo = String(
+        this.myFormItemLab.get('valorCualitativoDefaultNumerico')?.value ?? '',
+      ).trim();
+
+      if (defaultCualitativo && !alternativas.includes(defaultCualitativo)) {
+        Swal.fire({
+          title: 'Valor cualitativo predeterminado inválido',
+          text: 'El valor predeterminado debe existir entre las alternativas cualitativas.',
+          icon: 'warning',
+          confirmButtonText: 'Ok',
+        });
+        return false;
+      }
+
+      // ====== Validar valor por defecto numérico ======
+      if (!defaultCualitativo) {
+        if (formatoDefault === 'RANGO') {
+          const desdeRaw = this.myFormItemLab.get(
+            'valorPorDefectoRangoDesde',
+          )?.value;
+          const hastaRaw = this.myFormItemLab.get(
+            'valorPorDefectoRangoHasta',
+          )?.value;
+          const desdeVacio =
+            desdeRaw === null || desdeRaw === undefined || desdeRaw === '';
+          const hastaVacio =
+            hastaRaw === null || hastaRaw === undefined || hastaRaw === '';
+
+          if (desdeVacio !== hastaVacio) {
+            Swal.fire({
+              title: 'Valor por defecto incompleto',
+              text: 'Para un rango predeterminado debe indicar ambos extremos.',
+              icon: 'warning',
+              confirmButtonText: 'Ok',
+            });
+            return false;
+          }
+
+          if (!desdeVacio && !hastaVacio) {
+            const desde = Number(desdeRaw);
+            const hasta = Number(hastaRaw);
+
+            if (!Number.isFinite(desde) || !Number.isFinite(hasta)) {
+              Swal.fire({
+                title: 'Valor por defecto inválido',
+                text: 'Los extremos del rango predeterminado deben ser numéricos.',
+                icon: 'warning',
+                confirmButtonText: 'Ok',
+              });
+              return false;
+            }
+
+            if (
+              !this.permiteDecimalesNumerico() &&
+              (!Number.isInteger(desde) || !Number.isInteger(hasta))
+            ) {
+              Swal.fire({
+                title: 'Valor por defecto inválido',
+                text: 'Este Item está configurado para aceptar solo números enteros.',
+                icon: 'warning',
+                confirmButtonText: 'Ok',
+              });
+              return false;
+            }
+
+            if (desde > hasta) {
+              Swal.fire({
+                title: 'Rango predeterminado inválido',
+                text: 'El valor inicial no puede ser mayor que el valor final.',
+                icon: 'warning',
+                confirmButtonText: 'Ok',
+              });
+              return false;
+            }
+          }
+        } else {
+          const valorRaw = this.myFormItemLab.get(
+            'valorPorDefectoResultado',
+          )?.value;
+          const vacio =
+            valorRaw === null || valorRaw === undefined || valorRaw === '';
+
+          if (!vacio && !Number.isFinite(Number(valorRaw))) {
+            Swal.fire({
+              title: 'Valor por defecto inválido',
+              text: 'El valor predeterminado debe ser numérico.',
+              icon: 'warning',
+              confirmButtonText: 'Ok',
+            });
+            return false;
+          }
+
+          if (
+            !vacio &&
+            !this.permiteDecimalesNumerico() &&
+            !Number.isInteger(Number(valorRaw))
+          ) {
+            Swal.fire({
+              title: 'Valor por defecto inválido',
+              text: 'Este Item está configurado para aceptar solo números enteros.',
+              icon: 'warning',
+              confirmButtonText: 'Ok',
+            });
+            return false;
+          }
+        }
+      }
+    }
 
     // ========================================================
     // CATEGÓRICO
@@ -664,6 +1065,181 @@ export class MantItemLabComponent implements OnInit {
     }
 
     // ========================================================
+    // ESTRUCTURADO / HALLAZGOS
+    // ========================================================
+
+    if (tipoResultado === 'ESTRUCTURADO') {
+      const hallazgos = this.obtenerHallazgosEstructurados();
+      const hallazgosNormales: string[] =
+        this.myFormItemLab.get('hallazgosNormalesEstructurados')?.value ?? [];
+      const valorAusencia = String(
+        this.myFormItemLab.get('valorAusenciaEstructurada')?.value ?? '',
+      ).trim();
+      const tipoCuantificacion =
+        this.myFormItemLab.get('cuantificacionEstructuradaTipo')?.value;
+
+      if (!hallazgos.length) {
+        Swal.fire({
+          title: 'Hallazgos requeridos',
+          text: 'Configure al menos un hallazgo para este Item estructurado.',
+          icon: 'warning',
+          confirmButtonText: 'Ok',
+        });
+        return false;
+      }
+
+      const hallazgoNormalInvalido = hallazgosNormales.find(
+        (hallazgo) => !hallazgos.includes(hallazgo),
+      );
+
+      if (hallazgoNormalInvalido) {
+        Swal.fire({
+          title: 'Hallazgo normal inválido',
+          text: `El hallazgo ${hallazgoNormalInvalido} ya no existe en el catálogo configurado.`,
+          icon: 'warning',
+          confirmButtonText: 'Ok',
+        });
+        return false;
+      }
+
+      if (!valorAusencia) {
+        Swal.fire({
+          title: 'Valor de ausencia requerido',
+          text: 'Indique el texto que se utilizará cuando no existan hallazgos.',
+          icon: 'warning',
+          confirmButtonText: 'Ok',
+        });
+        return false;
+      }
+
+      if (tipoCuantificacion === 'CATEGORICA') {
+        if (!this.obtenerOpcionesCuantificacionEstructurada().length) {
+          Swal.fire({
+            title: 'Cuantificación requerida',
+            text: 'Agregue al menos una opción de cuantificación, por ejemplo +, ++ o +++.',
+            icon: 'warning',
+            confirmButtonText: 'Ok',
+          });
+          return false;
+        }
+      } else if (tipoCuantificacion === 'NUMERICA') {
+        const formatos = this.obtenerFormatosCapturaEstructuradaSeleccionados();
+        const formatoDefault = this.myFormItemLab.get(
+          'formatoCapturaEstructuradaDefault',
+        )?.value as FormatoCapturaNumerica | null;
+
+        if (!formatos.length || !formatoDefault || !formatos.includes(formatoDefault)) {
+          Swal.fire({
+            title: 'Formato estructurado inválido',
+            text: 'Seleccione formatos numéricos válidos y un formato predeterminado.',
+            icon: 'warning',
+            confirmButtonText: 'Ok',
+          });
+          return false;
+        }
+      } else {
+        return false;
+      }
+
+      if (this.myFormItemLab.get('modoDefaultEstructurado')?.value === 'DETALLE') {
+        if (!this.hallazgosDefaultEstructurado.length) {
+          Swal.fire({
+            title: 'Default estructurado incompleto',
+            text: 'Agregue al menos un hallazgo predeterminado o seleccione ausencia.',
+            icon: 'warning',
+            confirmButtonText: 'Ok',
+          });
+          return false;
+        }
+
+        const usados = new Set<string>();
+        for (const control of this.hallazgosDefaultEstructurado.controls) {
+          const hallazgo = String(control.get('hallazgo')?.value ?? '').trim();
+          if (!hallazgo || !hallazgos.includes(hallazgo) || usados.has(hallazgo)) {
+            Swal.fire({
+              title: 'Default estructurado inválido',
+              text: 'Revise los hallazgos predeterminados y evite duplicados.',
+              icon: 'warning',
+              confirmButtonText: 'Ok',
+            });
+            return false;
+          }
+          usados.add(hallazgo);
+
+          if (tipoCuantificacion === 'CATEGORICA') {
+            const valor = String(control.get('valorCategorico')?.value ?? '').trim();
+            if (!this.obtenerOpcionesCuantificacionEstructurada().includes(valor)) {
+              Swal.fire({
+                title: 'Cuantificación predeterminada inválida',
+                text: `Seleccione una cuantificación válida para ${hallazgo}.`,
+                icon: 'warning',
+                confirmButtonText: 'Ok',
+              });
+              return false;
+            }
+          } else {
+            const formato = control.get('formatoNumerico')?.value as FormatoCapturaNumerica;
+            if (!this.obtenerFormatosCapturaEstructuradaSeleccionados().includes(formato)) {
+              return false;
+            }
+
+            if (formato === 'RANGO') {
+              const desde = control.get('desde')?.value;
+              const hasta = control.get('hasta')?.value;
+              if (
+                desde === null ||
+                hasta === null ||
+                !Number.isFinite(Number(desde)) ||
+                !Number.isFinite(Number(hasta)) ||
+                Number(desde) > Number(hasta)
+              ) {
+                Swal.fire({
+                  title: 'Rango predeterminado inválido',
+                  text: `Revise el rango configurado para ${hallazgo}.`,
+                  icon: 'warning',
+                  confirmButtonText: 'Ok',
+                });
+                return false;
+              }
+
+              if (
+                !this.permiteDecimalesEstructurado() &&
+                (!Number.isInteger(Number(desde)) ||
+                  !Number.isInteger(Number(hasta)))
+              ) {
+                Swal.fire({
+                  title: 'Rango predeterminado inválido',
+                  text: `${hallazgo} está configurado para aceptar solo números enteros.`,
+                  icon: 'warning',
+                  confirmButtonText: 'Ok',
+                });
+                return false;
+              }
+            } else {
+              const valor = control.get('valor')?.value;
+              if (valor === null || valor === '' || !Number.isFinite(Number(valor))) {
+                return false;
+              }
+
+              if (
+                !this.permiteDecimalesEstructurado() &&
+                !Number.isInteger(Number(valor))
+              ) {
+                Swal.fire({
+                  title: 'Valor predeterminado inválido',
+                  text: `${hallazgo} está configurado para aceptar solo números enteros.`,
+                  icon: 'warning',
+                  confirmButtonText: 'Ok',
+                });
+                return false;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // ========================================================
     // TEXTO
     // ========================================================
 
@@ -711,6 +1287,34 @@ export class MantItemLabComponent implements OnInit {
          * IGUAL_A POSITIVO
          */
         this.reglasAlerta.clear();
+      }
+
+      if (nuevoTipo !== tipoAnterior) {
+        this.myFormItemLab.get('valorPorDefectoResultado')?.setValue('', {
+          emitEvent: false,
+        });
+        this.myFormItemLab.get('valorPorDefectoRangoDesde')?.setValue(null, {
+          emitEvent: false,
+        });
+        this.myFormItemLab.get('valorPorDefectoRangoHasta')?.setValue(null, {
+          emitEvent: false,
+        });
+      }
+
+      if (nuevoTipo !== 'NUMERICO') {
+        this.myFormItemLab.get('formatosCapturaNumerica')?.setValue(['VALOR'], {
+          emitEvent: false,
+        });
+        this.myFormItemLab
+          .get('formatoCapturaNumericaDefault')
+          ?.setValue('VALOR', { emitEvent: false });
+        this.myFormItemLab.get('valoresCualitativosAlternativos')?.setValue([], { emitEvent: false });
+        this.myFormItemLab.get('valoresCualitativosReferencia')?.setValue([], { emitEvent: false });
+        this.myFormItemLab.get('valorCualitativoDefaultNumerico')?.setValue('', { emitEvent: false });
+      }
+
+      if (nuevoTipo !== 'ESTRUCTURADO') {
+        this.hallazgosDefaultEstructurado.clear();
       }
 
       tipoAnterior = nuevoTipo;
@@ -807,6 +1411,9 @@ export class MantItemLabComponent implements OnInit {
       case 'TEXTO':
         return 'Texto';
 
+      case 'ESTRUCTURADO':
+        return 'Estructurado';
+
       default:
         return '—';
     }
@@ -830,12 +1437,22 @@ export class MantItemLabComponent implements OnInit {
     this.paramValidacion.clear();
     this.referenciasResultado.clear();
     this.reglasAlerta.clear();
+    this.hallazgosDefaultEstructurado.clear();
 
     // ========================================================
     // TIPO DE RESULTADO
     // ========================================================
 
     const tipoItem = item.tipoResultado ?? 'TEXTO';
+    const valorDefaultNumerico = this.descomponerValorPorDefectoNumerico(item);
+    const configuracionEstructurada = item.configuracionEstructurada;
+    const valorDefaultEstructurado =
+      tipoItem === 'ESTRUCTURADO' &&
+      item.valorPorDefectoResultado &&
+      typeof item.valorPorDefectoResultado === 'object' &&
+      item.valorPorDefectoResultado.tipo === 'HALLAZGOS'
+        ? item.valorPorDefectoResultado
+        : null;
 
     // ========================================================
     // REFERENCIA CATEGÓRICA
@@ -888,13 +1505,110 @@ export class MantItemLabComponent implements OnInit {
       contextoAnalitico: item.contextoAnalitico ?? '',
       tipoResultado: tipoItem,
       opcionesResultado: item.opcionesResultado ?? [],
-      valorPorDefectoResultado: item.valorPorDefectoResultado ?? '',
+      valorPorDefectoResultado:
+        tipoItem === 'NUMERICO'
+          ? valorDefaultNumerico.valor
+          : tipoItem === 'ESTRUCTURADO'
+            ? ''
+            : (item.valorPorDefectoResultado ?? ''),
+      valorPorDefectoRangoDesde: valorDefaultNumerico.desde,
+      valorPorDefectoRangoHasta: valorDefaultNumerico.hasta,
+      formatosCapturaNumerica:
+        item.tipoResultado === 'NUMERICO' && item.formatosCapturaNumerica?.length
+          ? item.formatosCapturaNumerica
+          : ['VALOR'],
+      precisionNumerica:
+        item.tipoResultado === 'NUMERICO'
+          ? (item.precisionNumerica ?? 'DECIMAL')
+          : 'DECIMAL',
+      formatoCapturaNumericaDefault:
+        item.tipoResultado === 'NUMERICO'
+          ? (item.formatoCapturaNumericaDefault ??
+            item.formatosCapturaNumerica?.[0] ??
+            'VALOR')
+          : 'VALOR',
+      valoresCualitativosAlternativos:
+        item.tipoResultado === 'NUMERICO'
+          ? (item.valoresCualitativosAlternativos ?? [])
+          : [],
+      valoresCualitativosReferencia:
+        item.tipoResultado === 'NUMERICO'
+          ? (item.valoresCualitativosReferencia ?? [])
+          : [],
+      valorCualitativoDefaultNumerico: valorDefaultNumerico.cualitativo,
+      hallazgosEstructurados: configuracionEstructurada?.hallazgos ?? [],
+      cuantificacionEstructuradaTipo:
+        configuracionEstructurada?.cuantificacion?.tipo ?? 'CATEGORICA',
+      opcionesCuantificacionEstructurada:
+        configuracionEstructurada?.cuantificacion?.opciones ?? [],
+      formatosCapturaEstructurada:
+        configuracionEstructurada?.cuantificacion?.formatosCapturaNumerica?.length
+          ? configuracionEstructurada.cuantificacion.formatosCapturaNumerica
+          : ['RANGO'],
+      formatoCapturaEstructuradaDefault:
+        configuracionEstructurada?.cuantificacion?.formatoCapturaNumericaDefault ??
+        'RANGO',
+      precisionNumericaEstructurada:
+        configuracionEstructurada?.cuantificacion?.precisionNumerica ?? 'DECIMAL',
+      valorAusenciaEstructurada:
+        configuracionEstructurada?.valorAusencia ?? 'NO SE OBSERVAN',
+      ausenciaEsReferenciaEstructurada:
+        configuracionEstructurada?.ausenciaEsReferencia === true,
+      hallazgosNormalesEstructurados:
+        configuracionEstructurada?.hallazgosNormales ?? [],
+      permiteMultiplesEstructurada:
+        configuracionEstructurada?.permiteMultiples !== false,
+      permitirOtroHallazgoEstructurado:
+        configuracionEstructurada?.permitirOtroHallazgo === true,
+      modoDefaultEstructurado:
+        valorDefaultEstructurado?.modo ?? 'AUSENCIA',
       permiteValorNoListado: item.permiteValorNoListado ?? false,
+      esOpcional: item.esOpcional === true,
+      mostrarReferenciaInforme: item.mostrarReferenciaInforme !== false,
       valoresReferenciaCategorica: valoresReferenciaCategorica,
       poseeReferenciaTexto: poseeReferenciaTexto,
       textoReferenciaResultado: textoReferenciaResultado,
       estado: (item.estadoItem ?? 'ACTIVO') === 'ACTIVO',
     });
+
+    // ========================================================
+    // RECONSTRUIR DEFAULT ESTRUCTURADO
+    // ========================================================
+
+    if (
+      valorDefaultEstructurado?.modo === 'DETALLE' &&
+      Array.isArray(valorDefaultEstructurado.hallazgos)
+    ) {
+      valorDefaultEstructurado.hallazgos.forEach((entrada) => {
+        const valor: any = entrada.valor;
+        const data: any = {
+          hallazgo: entrada.hallazgo,
+          valorCategorico: '',
+          formatoNumerico:
+            configuracionEstructurada?.cuantificacion?.formatoCapturaNumericaDefault ??
+            'RANGO',
+          valor: null,
+          desde: null,
+          hasta: null,
+        };
+
+        if (valor && typeof valor === 'object' && valor.tipo === 'CATEGORICO') {
+          data.valorCategorico = valor.valor ?? '';
+        } else if (valor && typeof valor === 'object' && valor.tipo === 'RANGO') {
+          data.formatoNumerico = 'RANGO';
+          data.desde = valor.desde ?? null;
+          data.hasta = valor.hasta ?? null;
+        } else if (valor && typeof valor === 'object' && 'valor' in valor) {
+          data.formatoNumerico = valor.tipo ?? 'VALOR';
+          data.valor = valor.valor ?? null;
+        } else if (typeof valor === 'number') {
+          data.formatoNumerico = 'VALOR';
+          data.valor = valor;
+        }
+
+        this.agregarHallazgoDefaultEstructurado(data);
+      });
+    }
 
     // ========================================================
     // RECONSTRUIR REFERENCIAS NUMÉRICAS
@@ -939,7 +1653,7 @@ export class MantItemLabComponent implements OnInit {
 
     const grupo = this._fb.group(
       {
-        descripcion: [referencia.descripcion ?? '', [Validators.required]],
+        descripcion: [referencia.descripcion ?? '', [Validators.maxLength(100)]],
         sexo: [referencia.sexo ?? 'TODOS'],
         tipoReferencia: [referencia.tipoReferencia ?? 'RANGO'],
         valorMin: [referencia.valorMin ?? null],
@@ -1210,6 +1924,333 @@ export class MantItemLabComponent implements OnInit {
     };
   }
 
+  // ====== Validar formatos de captura numérica ======
+
+  cambiarFormatosCapturaNumerica(): void {
+    const formatos = (
+      this.myFormItemLab.get('formatosCapturaNumerica')?.value ?? []
+    ) as FormatoCapturaNumerica[];
+    const controlDefault = this.myFormItemLab.get(
+      'formatoCapturaNumericaDefault',
+    );
+    const actual = controlDefault?.value as FormatoCapturaNumerica | null;
+
+    if (!formatos.length) {
+      controlDefault?.setValue('VALOR', { emitEvent: false });
+      return;
+    }
+
+    if (!actual || !formatos.includes(actual)) {
+      controlDefault?.setValue(formatos[0], { emitEvent: false });
+    }
+  }
+
+  obtenerFormatosCapturaSeleccionados(): FormatoCapturaNumerica[] {
+    return (
+      this.myFormItemLab.get('formatosCapturaNumerica')?.value ?? ['VALOR']
+    ) as FormatoCapturaNumerica[];
+  }
+
+  // ====== Precisión numérica ======
+
+  permiteDecimalesNumerico(): boolean {
+    return this.myFormItemLab.get('precisionNumerica')?.value !== 'ENTERO';
+  }
+
+  permiteDecimalesEstructurado(): boolean {
+    return (
+      this.myFormItemLab.get('precisionNumericaEstructurada')?.value !== 'ENTERO'
+    );
+  }
+
+  bloquearDecimalSiEntero(
+    event: KeyboardEvent,
+    permiteDecimales: boolean,
+  ): void {
+    if (permiteDecimales) return;
+
+    if (['.', ',', 'Decimal'].includes(event.key)) {
+      event.preventDefault();
+    }
+  }
+
+  // ====== Configuración estructurada ======
+
+  private construirConfiguracionEstructurada(): any | null {
+    if (this.myFormItemLab.get('tipoResultado')?.value !== 'ESTRUCTURADO') {
+      return null;
+    }
+
+    const tipoCuantificacion =
+      this.myFormItemLab.get('cuantificacionEstructuradaTipo')?.value ??
+      'CATEGORICA';
+
+    return {
+      subtipo: 'HALLAZGOS',
+      permiteMultiples:
+        this.myFormItemLab.get('permiteMultiplesEstructurada')?.value !== false,
+      valorAusencia: String(
+        this.myFormItemLab.get('valorAusenciaEstructurada')?.value ??
+          'NO SE OBSERVAN',
+      ).trim(),
+      ausenciaEsReferencia:
+        this.myFormItemLab.get('ausenciaEsReferenciaEstructurada')?.value === true,
+      hallazgosNormales:
+        this.myFormItemLab.get('hallazgosNormalesEstructurados')?.value ?? [],
+      permitirOtroHallazgo:
+        this.myFormItemLab.get('permitirOtroHallazgoEstructurado')?.value ===
+        true,
+      hallazgos: this.obtenerHallazgosEstructurados(),
+      cuantificacion: {
+        tipo: tipoCuantificacion,
+        precisionNumerica:
+          tipoCuantificacion === 'NUMERICA'
+            ? (this.myFormItemLab.get('precisionNumericaEstructurada')?.value ??
+              'DECIMAL')
+            : 'DECIMAL',
+        opciones:
+          tipoCuantificacion === 'CATEGORICA'
+            ? this.obtenerOpcionesCuantificacionEstructurada()
+            : [],
+        formatosCapturaNumerica:
+          tipoCuantificacion === 'NUMERICA'
+            ? this.obtenerFormatosCapturaEstructuradaSeleccionados()
+            : ['VALOR'],
+        formatoCapturaNumericaDefault:
+          tipoCuantificacion === 'NUMERICA'
+            ? (this.myFormItemLab.get('formatoCapturaEstructuradaDefault')
+                ?.value ?? 'RANGO')
+            : 'VALOR',
+      },
+    };
+  }
+
+  private construirValorPorDefectoEstructurado(): ValorPorDefectoResultadoItem {
+    const configuracion = this.construirConfiguracionEstructurada();
+
+    if (!configuracion) return null;
+
+    const modo =
+      this.myFormItemLab.get('modoDefaultEstructurado')?.value ?? 'AUSENCIA';
+
+    if (modo === 'AUSENCIA') {
+      return {
+        tipo: 'HALLAZGOS',
+        modo: 'AUSENCIA',
+        valorAusencia: configuracion.valorAusencia,
+        hallazgos: [],
+      };
+    }
+
+    const hallazgos = this.hallazgosDefaultEstructurado.controls.map(
+      (control) => {
+        const hallazgo = String(control.get('hallazgo')?.value ?? '').trim();
+
+        if (configuracion.cuantificacion.tipo === 'CATEGORICA') {
+          return {
+            hallazgo,
+            valor: {
+              tipo: 'CATEGORICO' as const,
+              valor: String(control.get('valorCategorico')?.value ?? '').trim(),
+            },
+          };
+        }
+
+        const formato = (control.get('formatoNumerico')?.value ??
+          configuracion.cuantificacion.formatoCapturaNumericaDefault ??
+          'RANGO') as FormatoCapturaNumerica;
+
+        if (formato === 'RANGO') {
+          return {
+            hallazgo,
+            valor: {
+              tipo: 'RANGO' as const,
+              desde: Number(control.get('desde')?.value),
+              hasta: Number(control.get('hasta')?.value),
+            },
+          };
+        }
+
+        const numero = Number(control.get('valor')?.value);
+
+        if (formato === 'VALOR') {
+          return { hallazgo, valor: numero };
+        }
+
+        return {
+          hallazgo,
+          valor: {
+            tipo: formato,
+            valor: numero,
+          },
+        };
+      },
+    );
+
+    return {
+      tipo: 'HALLAZGOS',
+      modo: 'DETALLE',
+      hallazgos,
+    };
+  }
+
+  // ====== Valor por defecto numérico ======
+
+  esFormatoDefaultRango(): boolean {
+    return (
+      this.myFormItemLab.get('formatoCapturaNumericaDefault')?.value ===
+      'RANGO'
+    );
+  }
+
+  simboloFormatoDefaultNumerico(): string {
+    const formato = this.myFormItemLab.get(
+      'formatoCapturaNumericaDefault',
+    )?.value as FormatoCapturaNumerica | null;
+
+    const simbolos: Partial<Record<FormatoCapturaNumerica, string>> = {
+      MAYOR_QUE: '>',
+      MAYOR_IGUAL_QUE: '>=',
+      MENOR_QUE: '<',
+      MENOR_IGUAL_QUE: '<=',
+    };
+
+    return formato ? (simbolos[formato] ?? '') : '';
+  }
+
+  private descomponerValorPorDefectoNumerico(item: IItemLab): {
+    valor: number | null;
+    desde: number | null;
+    hasta: number | null;
+    cualitativo: string;
+  } {
+    if (item.tipoResultado !== 'NUMERICO') {
+      return { valor: null, desde: null, hasta: null, cualitativo: '' };
+    }
+
+    const valor = item.valorPorDefectoResultado;
+
+    if (typeof valor === 'number') {
+      return { valor, desde: null, hasta: null, cualitativo: '' };
+    }
+
+    if (typeof valor === 'string' && valor.trim() !== '') {
+      const numero = Number(valor);
+      return Number.isFinite(numero)
+        ? { valor: numero, desde: null, hasta: null, cualitativo: '' }
+        : { valor: null, desde: null, hasta: null, cualitativo: valor.trim() };
+    }
+
+    if (valor && typeof valor === 'object') {
+      if (valor.tipo === 'CUALITATIVO') {
+        return {
+          valor: null,
+          desde: null,
+          hasta: null,
+          cualitativo: String(valor.valor ?? '').trim(),
+        };
+      }
+
+      if (valor.tipo === 'RANGO') {
+        const desde = Number(valor.desde);
+        const hasta = Number(valor.hasta);
+        return {
+          valor: null,
+          desde: Number.isFinite(desde) ? desde : null,
+          hasta: Number.isFinite(hasta) ? hasta : null,
+          cualitativo: '',
+        };
+      }
+
+      if ('valor' in valor) {
+        const numero = Number(valor.valor);
+        return {
+          valor: Number.isFinite(numero) ? numero : null,
+          desde: null,
+          hasta: null,
+          cualitativo: '',
+        };
+      }
+    }
+
+    return { valor: null, desde: null, hasta: null, cualitativo: '' };
+  }
+
+  private construirValorPorDefectoResultado(): ValorPorDefectoResultadoItem {
+    const tipoResultado = this.myFormItemLab.get('tipoResultado')?.value;
+
+    if (tipoResultado === 'ESTRUCTURADO') {
+      return this.construirValorPorDefectoEstructurado();
+    }
+
+    if (tipoResultado !== 'NUMERICO') {
+      return String(
+        this.myFormItemLab.get('valorPorDefectoResultado')?.value ?? '',
+      ).trim();
+    }
+
+    const cualitativo = String(
+      this.myFormItemLab.get('valorCualitativoDefaultNumerico')?.value ?? '',
+    ).trim();
+
+    if (cualitativo) {
+      return {
+        tipo: 'CUALITATIVO',
+        valor: cualitativo,
+      };
+    }
+
+    const formato = (
+      this.myFormItemLab.get('formatoCapturaNumericaDefault')?.value ??
+      'VALOR'
+    ) as FormatoCapturaNumerica;
+
+    if (formato === 'RANGO') {
+      const desdeRaw = this.myFormItemLab.get(
+        'valorPorDefectoRangoDesde',
+      )?.value;
+      const hastaRaw = this.myFormItemLab.get(
+        'valorPorDefectoRangoHasta',
+      )?.value;
+
+      if (
+        desdeRaw === null ||
+        desdeRaw === undefined ||
+        desdeRaw === '' ||
+        hastaRaw === null ||
+        hastaRaw === undefined ||
+        hastaRaw === ''
+      ) {
+        return null;
+      }
+
+      return {
+        tipo: 'RANGO',
+        desde: Number(desdeRaw),
+        hasta: Number(hastaRaw),
+      };
+    }
+
+    const valorRaw = this.myFormItemLab.get(
+      'valorPorDefectoResultado',
+    )?.value;
+
+    if (valorRaw === null || valorRaw === undefined || valorRaw === '') {
+      return null;
+    }
+
+    const numero = Number(valorRaw);
+
+    if (formato === 'VALOR') {
+      return numero;
+    }
+
+    return {
+      tipo: formato,
+      valor: numero,
+    };
+  }
+
   // ==========================================================
   // CONSTRUIR BODY
   // ==========================================================
@@ -1228,10 +2269,7 @@ export class MantItemLabComponent implements OnInit {
       metodoItemLab: formValue.metodoItemLab,
       valoresHojaTrabajo: formValue.valoresHojaTrabajo,
       valoresInforme: formValue.valoresInforme,
-      unidadesRef:
-        formValue.tipoResultado === 'NUMERICO'
-          ? (formValue.unidadesRef ?? '')
-          : '',
+      unidadesRef: formValue.unidadesRef ?? '',
 
       // ======================================================
       // LEGACY
@@ -1249,16 +2287,41 @@ export class MantItemLabComponent implements OnInit {
 
       contextoAnalitico: formValue.contextoAnalitico ?? '',
       tipoResultado: formValue.tipoResultado ?? 'TEXTO',
-      opcionesResultado: formValue.opcionesResultado ?? [],
-      valorPorDefectoResultado:
-        formValue.tipoResultado === 'TEXTO' ||
+      opcionesResultado:
         formValue.tipoResultado === 'CATEGORICO'
-          ? String(formValue.valorPorDefectoResultado ?? '').trim()
-          : '',
+          ? (formValue.opcionesResultado ?? [])
+          : [],
+      valorPorDefectoResultado: this.construirValorPorDefectoResultado(),
+      formatosCapturaNumerica:
+        formValue.tipoResultado === 'NUMERICO'
+          ? (formValue.formatosCapturaNumerica ?? ['VALOR'])
+          : ['VALOR'],
+      formatoCapturaNumericaDefault:
+        formValue.tipoResultado === 'NUMERICO'
+          ? (formValue.formatoCapturaNumericaDefault ?? 'VALOR')
+          : 'VALOR',
+      precisionNumerica:
+        formValue.tipoResultado === 'NUMERICO'
+          ? (formValue.precisionNumerica ?? 'DECIMAL')
+          : 'DECIMAL',
+      valoresCualitativosAlternativos:
+        formValue.tipoResultado === 'NUMERICO'
+          ? (formValue.valoresCualitativosAlternativos ?? [])
+          : [],
+      valoresCualitativosReferencia:
+        formValue.tipoResultado === 'NUMERICO'
+          ? (formValue.valoresCualitativosReferencia ?? [])
+          : [],
+      configuracionEstructurada:
+        formValue.tipoResultado === 'ESTRUCTURADO'
+          ? this.construirConfiguracionEstructurada()
+          : null,
       permiteValorNoListado:
         formValue.tipoResultado === 'CATEGORICO'
           ? (formValue.permiteValorNoListado ?? false)
           : false,
+      esOpcional: formValue.esOpcional === true,
+      mostrarReferenciaInforme: formValue.mostrarReferenciaInforme !== false,
       estadoItem: formValue.estado ? 'ACTIVO' : 'INACTIVO',
 
       /*
@@ -1546,6 +2609,7 @@ export class MantItemLabComponent implements OnInit {
     this.paramValidacion.clear();
     this.referenciasResultado.clear();
     this.reglasAlerta.clear();
+    this.hallazgosDefaultEstructurado.clear();
 
     this.myFormItemLab.reset({
       _id: null,
@@ -1568,7 +2632,29 @@ export class MantItemLabComponent implements OnInit {
       tipoResultado: 'TEXTO',
       opcionesResultado: [],
       valorPorDefectoResultado: '',
+      valorPorDefectoRangoDesde: null,
+      valorPorDefectoRangoHasta: null,
+      formatosCapturaNumerica: ['VALOR'],
+      formatoCapturaNumericaDefault: 'VALOR',
+      precisionNumerica: 'DECIMAL',
+      valoresCualitativosAlternativos: [],
+      valoresCualitativosReferencia: [],
+      valorCualitativoDefaultNumerico: '',
+      hallazgosEstructurados: [],
+      cuantificacionEstructuradaTipo: 'CATEGORICA',
+      opcionesCuantificacionEstructurada: [],
+      formatosCapturaEstructurada: ['RANGO'],
+      formatoCapturaEstructuradaDefault: 'RANGO',
+      precisionNumericaEstructurada: 'DECIMAL',
+      valorAusenciaEstructurada: 'NO SE OBSERVAN',
+      ausenciaEsReferenciaEstructurada: true,
+      hallazgosNormalesEstructurados: [],
+      permiteMultiplesEstructurada: true,
+      permitirOtroHallazgoEstructurado: false,
+      modoDefaultEstructurado: 'AUSENCIA',
       permiteValorNoListado: false,
+      esOpcional: false,
+      mostrarReferenciaInforme: true,
       valoresReferenciaCategorica: [],
       poseeReferenciaTexto: false,
       textoReferenciaResultado: '',

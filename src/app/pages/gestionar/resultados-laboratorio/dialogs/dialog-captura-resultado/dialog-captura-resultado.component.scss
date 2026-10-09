@@ -92,8 +92,10 @@
 }
 
 mat-dialog-content {
-  width: min(940px, 90vw);
-  max-height: 66vh;
+  width: 100%;
+  max-width: none;
+  max-height: 70vh;
+  box-sizing: border-box;
   padding: 12px 22px !important;
 }
 
@@ -138,11 +140,11 @@ mat-dialog-content {
 }
 
 .item-resultado.item-activo {
-  border-color: #60a5fa;
-  background: #eff6ff;
+  border-color: #2563eb;
+  background: #dbeafe;
   box-shadow:
-    inset 4px 0 0 #2563eb,
-    0 0 0 1px rgba(37, 99, 235, 0.12);
+    inset 4px 0 0 #1d4ed8,
+    0 0 0 1px rgba(37, 99, 235, 0.22);
 }
 
 .item-identidad {
@@ -164,6 +166,13 @@ mat-dialog-content {
   font-size: 0.82rem;
 }
 
+.indicador-hallazgo-estructurado {
+  color: #d97706 !important;
+  font-size: 1rem !important;
+  font-weight: 800;
+  line-height: 1;
+}
+
 .item-identidad > div span,
 .tipo-resultado {
   font-size: 0.68rem;
@@ -172,8 +181,8 @@ mat-dialog-content {
 
 .item-captura {
   display: grid;
-  grid-template-columns: minmax(210px, 0.9fr) minmax(280px, 1.3fr);
-  gap: 8px;
+  grid-template-columns: minmax(0, 7fr) minmax(220px, 3fr);
+  gap: 10px;
 }
 
 .item-captura mat-form-field {
@@ -186,6 +195,12 @@ mat-dialog-content {
 
 .item-captura ::ng-deep .mat-mdc-text-field-wrapper {
   min-height: 42px;
+}
+
+.campo-observacion textarea {
+  min-height: 58px;
+  line-height: 1.35;
+  resize: vertical;
 }
 
 .evaluando {
@@ -298,6 +313,26 @@ mat-dialog-content {
 .alerta-critica {
   background: #fef2f2;
   color: #b91c1c;
+}
+
+// ====== Referencia compartida del grupo ======
+
+.referencia-grupo {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 0 4px 2px;
+  padding: 8px 10px;
+  border-left: 3px solid #64748b;
+  border-radius: 6px;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 0.73rem;
+  line-height: 1.4;
+}
+
+.referencia-grupo strong {
+  color: #334155;
 }
 
 .dialog-actions {
@@ -437,13 +472,25 @@ kbd {
 
 .campo-resultado {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   min-width: 0;
 }
 
 .campo-resultado mat-form-field {
-  flex: 1 1 0;
-  min-width: 0;
+  flex: 1 1 150px;
+  min-width: 135px;
+}
+
+
+.unidad-resultado-rango {
+  align-self: center;
+  flex: 0 0 auto;
+  max-width: 100px;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.25;
+  white-space: normal;
 }
 
 .campo-otro-resultado {
@@ -455,4 +502,330 @@ kbd {
   .estado-y-seleccion {
     flex-wrap: wrap;
   }
+}
+
+// ====== Hallazgos estructurados ======
+.captura-estructurada {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+.modo-estructurado {
+  width: min(260px, 100%) !important;
+}
+
+.hallazgos-estructurados {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+.boton-agregar-hallazgo {
+  align-self: flex-start;
+  min-width: 210px;
+}
+
+.lista-hallazgos-estructurados,
+.lista-hallazgos-estructurados > div {
+  width: 100%;
+  min-width: 0;
+}
+
+.hallazgo-estructurado-fila {
+  display: grid;
+  grid-template-columns:
+    minmax(150px, 1.45fr)
+    minmax(130px, 1.15fr)
+    minmax(95px, 0.8fr)
+    minmax(95px, 0.8fr)
+    minmax(70px, auto)
+    40px;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.hallazgo-estructurado-fila mat-form-field {
+  width: 100%;
+  min-width: 0;
+}
+
+.unidad-hallazgo {
+  color: #64748b;
+  font-size: 12px;
+  white-space: normal;
+}
+
+.eliminar-hallazgo {
+  justify-self: center;
+}
+
+@media (max-width: 980px) {
+  .hallazgo-estructurado-fila {
+    grid-template-columns: repeat(2, minmax(130px, 1fr));
+  }
+
+  .unidad-hallazgo,
+  .eliminar-hallazgo {
+    justify-self: start;
+  }
+}
+
+
+
+// ====== Disposición compacta de captura ======
+
+.item-linea-principal {
+  display: grid;
+  grid-template-columns: minmax(170px, 0.9fr) minmax(0, 4.1fr) auto;
+  gap: 12px;
+  align-items: start;
+}
+
+.item-identidad-compacta {
+  min-width: 0;
+  padding-top: 10px;
+}
+
+.item-nombre-codigo {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.item-nombre-codigo strong {
+  font-size: 0.82rem;
+  color: #1f2937;
+}
+
+.item-codigo {
+  font-size: 0.68rem;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+.item-linea-principal .campo-resultado {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+}
+
+.item-linea-principal .campo-resultado mat-form-field {
+  flex: 1 1 150px;
+  min-width: 125px;
+  width: auto;
+}
+
+.item-linea-principal .campo-resultado .modo-estructurado {
+  flex: 0 1 300px;
+  min-width: 220px;
+}
+
+.item-linea-principal .campo-resultado .campo-resultado-observaciones {
+  flex: 1 1 100%;
+  min-width: 0;
+}
+
+.campo-resultado-observaciones textarea {
+  min-height: 48px;
+  line-height: 1.35;
+  resize: vertical;
+}
+
+.control-observacion {
+  min-width: 145px;
+  padding-top: 10px;
+  white-space: nowrap;
+}
+
+.control-observacion ::ng-deep .mdc-label {
+  font-size: 0.76rem;
+}
+
+.item-linea-observacion,
+.item-detalle-estructurado {
+  display: grid;
+  grid-template-columns: minmax(170px, 0.9fr) minmax(0, 4.1fr) auto;
+  gap: 12px;
+  margin-top: 7px;
+}
+
+.campo-observacion-expandida,
+.item-detalle-estructurado .hallazgos-estructurados {
+  grid-column: 2 / 4;
+  width: 100%;
+  min-width: 0;
+}
+
+.campo-observacion-expandida textarea {
+  min-height: 52px;
+  line-height: 1.4;
+  resize: vertical;
+}
+
+.item-linea-principal ::ng-deep .mat-mdc-form-field-subscript-wrapper,
+.item-linea-observacion ::ng-deep .mat-mdc-form-field-subscript-wrapper,
+.item-detalle-estructurado ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+  display: none;
+}
+
+.item-linea-principal ::ng-deep .mat-mdc-text-field-wrapper,
+.item-linea-observacion ::ng-deep .mat-mdc-text-field-wrapper,
+.item-detalle-estructurado ::ng-deep .mat-mdc-text-field-wrapper {
+  min-height: 42px;
+}
+
+.item-linea-principal .boton-agregar-hallazgo {
+  flex: 0 0 auto;
+  min-width: 175px;
+  height: 42px;
+  margin-top: 0;
+}
+
+.item-detalle-estructurado .hallazgo-estructurado-fila {
+  grid-template-columns:
+    minmax(170px, 1.5fr)
+    minmax(145px, 1.15fr)
+    minmax(105px, 0.85fr)
+    minmax(105px, 0.85fr)
+    minmax(75px, auto)
+    40px;
+  gap: 8px;
+  padding: 5px 0;
+}
+
+.item-detalle-estructurado .hallazgo-estructurado-fila:first-child {
+  padding-top: 0;
+}
+
+@media (max-width: 1050px) {
+  .item-linea-principal {
+    grid-template-columns: minmax(145px, 0.8fr) minmax(0, 3.2fr) auto;
+  }
+
+  .item-linea-observacion,
+  .item-detalle-estructurado {
+    grid-template-columns: minmax(145px, 0.8fr) minmax(0, 3.2fr) auto;
+  }
+
+  .item-linea-principal .campo-resultado {
+    flex-wrap: wrap;
+  }
+
+  .item-detalle-estructurado .hallazgo-estructurado-fila {
+    grid-template-columns: repeat(2, minmax(130px, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .item-linea-principal,
+  .item-linea-observacion,
+  .item-detalle-estructurado {
+    grid-template-columns: 1fr;
+  }
+
+  .item-identidad-compacta {
+    padding-top: 0;
+  }
+
+  .item-linea-principal .campo-resultado {
+    flex-wrap: wrap;
+  }
+
+  .control-observacion {
+    padding-top: 0;
+  }
+
+  .campo-observacion-expandida,
+  .item-detalle-estructurado .hallazgos-estructurados {
+    grid-column: 1;
+  }
+}
+
+// ====== Estado visual de la prueba ======
+.estado-chip {
+  min-width: 96px;
+  justify-content: center;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.estado-chip.estado-pendiente {
+  --mdc-chip-elevated-container-color: #fef3c7;
+  --mdc-chip-label-text-color: #92400e;
+  --mdc-chip-outline-color: #f59e0b;
+  background: #fef3c7 !important;
+  color: #92400e !important;
+}
+
+.estado-chip.estado-en-proceso {
+  --mdc-chip-elevated-container-color: #fff7ed;
+  --mdc-chip-label-text-color: #c2410c;
+  --mdc-chip-outline-color: #fdba74;
+  background: #fff7ed !important;
+  color: #c2410c !important;
+}
+
+.estado-chip.estado-completo {
+  --mdc-chip-elevated-container-color: #ecfdf5;
+  --mdc-chip-label-text-color: #047857;
+  --mdc-chip-outline-color: #6ee7b7;
+  background: #ecfdf5 !important;
+  color: #047857 !important;
+}
+
+.estado-chip.estado-validado {
+  --mdc-chip-elevated-container-color: #f5f3ff;
+  --mdc-chip-label-text-color: #6d28d9;
+  --mdc-chip-outline-color: #c4b5fd;
+  background: #f5f3ff !important;
+  color: #6d28d9 !important;
+}
+
+.estado-chip.estado-liberado {
+  --mdc-chip-elevated-container-color: #eff6ff;
+  --mdc-chip-label-text-color: #1d4ed8;
+  --mdc-chip-outline-color: #93c5fd;
+  background: #eff6ff !important;
+  color: #1d4ed8 !important;
+}
+
+.estado-chip.estado-anulado {
+  --mdc-chip-elevated-container-color: #fef2f2;
+  --mdc-chip-label-text-color: #b91c1c;
+  --mdc-chip-outline-color: #fca5a5;
+  background: #fef2f2 !important;
+  color: #b91c1c !important;
+}
+
+.estado-chip.estado-neutro {
+  --mdc-chip-elevated-container-color: #f8fafc;
+  --mdc-chip-label-text-color: #334155;
+  background: #f8fafc !important;
+  color: #334155 !important;
+}
+
+// ====== Resaltado al pasar el mouse ======
+@media (hover: hover) {
+  .item-resultado:not(.item-activo):hover {
+    border-color: #60a5fa;
+    background: #eff6ff;
+    box-shadow: inset 3px 0 0 #60a5fa;
+  }
+}
+
+// ====== Registro múltiple ======
+.accion-registrar-todas {
+  background: #0b63c7 !important;
+  color: #fff !important;
 }

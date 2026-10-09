@@ -85,7 +85,7 @@
 
           <div class="row-flex mt-2">
             <!-- Tipo de Resultado -->
-            <div [style.flex]="setFlex(22, '%')" class="flex-item">
+            <div [style.flex]="setFlex(18, '%')" class="flex-item">
               <mat-form-field appearance="outline" class="w-100">
                 <mat-label> Tipo de resultado </mat-label>
 
@@ -109,7 +109,7 @@
             </div>
 
             <!-- Método -->
-            <div [style.flex]="setFlex(30, '%')" class="flex-item">
+            <div [style.flex]="setFlex(25, '%')" class="flex-item">
               <mat-form-field appearance="outline" class="w-100">
                 <mat-label> Método </mat-label>
 
@@ -126,11 +126,7 @@
             </div>
 
             <!-- Unidades -->
-            <div
-              *ngIf="myFormItemLab.get('tipoResultado')?.value === 'NUMERICO'"
-              [style.flex]="setFlex(20, '%')"
-              class="flex-item"
-            >
+            <div [style.flex]="setFlex(17, '%')" class="flex-item">
               <mat-form-field appearance="outline" class="w-100">
                 <mat-label> Unidades </mat-label>
 
@@ -148,19 +144,52 @@
               </mat-form-field>
             </div>
 
+            <!-- Item opcional -->
+            <div [style.flex]="setFlex(12, '%')" class="flex-item mb-3">
+              <mat-slide-toggle formControlName="esOpcional">
+                Item opcional
+              </mat-slide-toggle>
+            </div>
+
             <!-- Estado -->
-            <div [style.flex]="setFlex(18, '%')" class="flex-item mb-3">
+            <div [style.flex]="setFlex(12, '%')" class="flex-item mb-3">
               <mat-slide-toggle formControlName="estado">
                 Activo
               </mat-slide-toggle>
+            </div>
+
+            <div [style.flex]="setFlex(16, '%')" class="flex-item mb-3">
+              <mat-slide-toggle formControlName="mostrarReferenciaInforme">
+                Mostrar valor referencial en informe *
+              </mat-slide-toggle>
+            </div>
+          </div>
+
+          <div class="row-flex" *ngIf="myFormItemLab.get('esOpcional')?.value">
+            <div [style.flex]="setFlex(95, '%')" class="flex-item">
+              <span style="font-size: 12px; color: #6c757d">
+                Si queda sin resultado, no bloqueará la finalización o
+                validación de la prueba y no se mostrará en la entrega del
+                informe.
+              </span>
+            </div>
+          </div>
+
+          <div class="row-flex mt-2">
+            <div [style.flex]="setFlex(100, '%')" class="flex-item">
+              <span style="font-size: 12px; color: #6c757d">
+                * Desactívelo solo para ocultar el valor referencial en
+                Resultados disponibles y PDF. La referencia clínica se conserva
+                para validación y clasificación.
+              </span>
             </div>
           </div>
         </mat-card-content>
       </mat-card>
 
       <!-- =========================================================
-     REFERENCIA - RESULTADO TEXTO
-        ========================================================= -->
+          CONFIGURACIÓN DE CAPTURA - RESULTADO TEXTO
+      ========================================================= -->
 
       <mat-card
         class="mt-2"
@@ -168,12 +197,20 @@
       >
         <mat-card-title>
           <div class="row-flex align-items-center">
-            VALOR POR DEFECTO Y REFERENCIA
+            CONFIGURACIÓN DE CAPTURA
           </div>
         </mat-card-title>
 
         <mat-card-content>
-          <!-- Valor por defecto -->
+          <div class="row-flex mt-2">
+            <div [style.flex]="setFlex(95, '%')" class="flex-item">
+              <span style="font-size: 12px; color: #6c757d">
+                Defina el valor que se precargará al registrar el resultado.
+                Podrá modificarse antes de guardar.
+              </span>
+            </div>
+          </div>
+
           <div class="row-flex mt-3">
             <div [style.flex]="setFlex(70, '%')" class="flex-item">
               <mat-form-field appearance="outline" class="w-100">
@@ -187,13 +224,28 @@
                 ></textarea>
 
                 <mat-hint>
-                  Se precargará al registrar resultados y podrá modificarse antes de guardar.
+                  Se precargará al abrir la captura, pero no se registrará hasta
+                  guardar.
                 </mat-hint>
               </mat-form-field>
             </div>
           </div>
+        </mat-card-content>
+      </mat-card>
 
-          <!-- Switch -->
+      <!-- =========================================================
+          VALORES DE REFERENCIA - RESULTADO TEXTO
+      ========================================================= -->
+
+      <mat-card
+        class="mt-2"
+        *ngIf="myFormItemLab.get('tipoResultado')?.value === 'TEXTO'"
+      >
+        <mat-card-title>
+          <div class="row-flex align-items-center">VALORES DE REFERENCIA</div>
+        </mat-card-title>
+
+        <mat-card-content>
           <div class="row-flex mt-3">
             <div [style.flex]="setFlex(25, '%')" class="flex-item mb-3">
               <mat-slide-toggle formControlName="poseeReferenciaTexto">
@@ -227,34 +279,33 @@
       </mat-card>
 
       <!-- =========================================================
-     OPCIONES DE RESULTADO - CATEGÓRICO
-========================================================= -->
+          CONFIGURACIÓN DE CAPTURA - RESULTADO CATEGÓRICO
+      ========================================================= -->
 
       <mat-card
         class="mt-2"
         *ngIf="myFormItemLab.get('tipoResultado')?.value === 'CATEGORICO'"
       >
         <mat-card-title>
-          <div class="row-flex align-items-center">OPCIONES DE RESULTADO</div>
+          <div class="row-flex align-items-center">
+            CONFIGURACIÓN DE CAPTURA
+          </div>
         </mat-card-title>
 
         <mat-card-content>
-          <!-- Explicación -->
           <div class="row-flex mt-2">
             <div [style.flex]="setFlex(95, '%')" class="flex-item">
               <span style="font-size: 12px; color: #6c757d">
                 Configure los valores que podrán seleccionarse al registrar el
-                resultado de este Item.
+                resultado y, opcionalmente, el valor que aparecerá precargado.
               </span>
             </div>
           </div>
 
-          <!-- Nueva opción -->
           <div class="row-flex mt-2">
             <div [style.flex]="setFlex(55, '%')" class="flex-item">
               <mat-form-field appearance="outline" class="w-100">
                 <mat-label> Nueva opción </mat-label>
-
                 <input
                   matInput
                   [formControl]="nuevaOpcionResultado"
@@ -272,15 +323,10 @@
                 (click)="agregarOpcionResultado()"
               >
                 <mat-icon> add </mat-icon>
-
                 Agregar
               </button>
             </div>
           </div>
-
-          <!-- =====================================================
-         OPCIONES AGREGADAS
-    ====================================================== -->
 
           <div
             class="row-flex mt-1"
@@ -295,7 +341,6 @@
                   "
                 >
                   {{ opcion }}
-
                   <button
                     matChipRemove
                     type="button"
@@ -309,7 +354,6 @@
             </div>
           </div>
 
-          <!-- Sin opciones -->
           <div
             class="row-flex mt-2"
             *ngIf="obtenerOpcionesResultado().length === 0"
@@ -321,21 +365,15 @@
             </div>
           </div>
 
-          <!-- =====================================================
-              VALOR POR DEFECTO
-          ====================================================== -->
-
           <div
             class="row-flex mt-3"
             *ngIf="obtenerOpcionesResultado().length > 0"
           >
             <div [style.flex]="setFlex(55, '%')" class="flex-item">
               <mat-form-field appearance="outline" class="w-100">
-                <mat-label> Valor por defecto </mat-label>
-
+                <mat-label> Valor predeterminado </mat-label>
                 <mat-select formControlName="valorPorDefectoResultado">
                   <mat-option value=""> Sin valor por defecto </mat-option>
-
                   <mat-option
                     *ngFor="let opcion of obtenerOpcionesResultado()"
                     [value]="opcion"
@@ -343,17 +381,13 @@
                     {{ opcion }}
                   </mat-option>
                 </mat-select>
-
                 <mat-hint>
-                  Se seleccionará automáticamente al abrir la captura de resultados.
+                  Se precargará al abrir la captura, pero no se registrará hasta
+                  guardar.
                 </mat-hint>
               </mat-form-field>
             </div>
           </div>
-
-          <!-- =====================================================
-              PERMITIR VALOR NO LISTADO
-          ====================================================== -->
 
           <div
             class="row-flex mt-3"
@@ -363,7 +397,6 @@
               <mat-slide-toggle formControlName="permiteValorNoListado">
                 Permitir ingreso manual de un valor no listado
               </mat-slide-toggle>
-
               <div
                 style="
                   font-size: 12px;
@@ -377,19 +410,29 @@
               </div>
             </div>
           </div>
+        </mat-card-content>
+      </mat-card>
 
-          <!-- =====================================================
-              VALORES DE REFERENCIA CATEGÓRICOS
-          ====================================================== -->
+      <!-- =========================================================
+          VALORES DE REFERENCIA - RESULTADO CATEGÓRICO
+      ========================================================= -->
 
+      <mat-card
+        class="mt-2"
+        *ngIf="myFormItemLab.get('tipoResultado')?.value === 'CATEGORICO'"
+      >
+        <mat-card-title>
+          <div class="row-flex align-items-center">VALORES DE REFERENCIA</div>
+        </mat-card-title>
+
+        <mat-card-content>
           <div
             class="row-flex mt-3"
             *ngIf="obtenerOpcionesResultado().length > 0"
           >
             <div [style.flex]="setFlex(55, '%')" class="flex-item">
               <mat-form-field appearance="outline" class="w-100">
-                <mat-label> Valor(es) de referencia </mat-label>
-
+                <mat-label> Valores considerados normales </mat-label>
                 <mat-select
                   formControlName="valoresReferenciaCategorica"
                   multiple
@@ -401,13 +444,271 @@
                     {{ opcion }}
                   </mat-option>
                 </mat-select>
-
                 <mat-hint>
-                  Seleccione los resultados considerados esperados o normales
+                  Seleccione los resultados considerados esperados o normales.
                 </mat-hint>
               </mat-form-field>
             </div>
           </div>
+
+          <div
+            class="row-flex mt-2"
+            *ngIf="obtenerOpcionesResultado().length === 0"
+          >
+            <div [style.flex]="setFlex(95, '%')" class="flex-item">
+              <span style="font-size: 12px; color: #6c757d">
+                Primero configure las opciones permitidas en Configuración de
+                captura.
+              </span>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- =========================================================
+          CONFIGURACIÓN DE CAPTURA - RESULTADO NUMÉRICO
+      ========================================================= -->
+
+      <mat-card
+        class="mt-2"
+        *ngIf="myFormItemLab.get('tipoResultado')?.value === 'NUMERICO'"
+      >
+        <mat-card-title>
+          <div class="row-flex align-items-center">
+            CONFIGURACIÓN DE CAPTURA
+          </div>
+        </mat-card-title>
+
+        <mat-card-content>
+          <div class="row-flex mt-2">
+            <div [style.flex]="setFlex(95, '%')" class="flex-item">
+              <span style="font-size: 12px; color: #6c757d">
+                Defina cómo se ingresará el resultado, las alternativas
+                cualitativas permitidas y el valor que aparecerá precargado.
+              </span>
+            </div>
+          </div>
+          <!-- ====== Formato de captura numérica ====== -->
+          <div class="row-flex mt-3">
+            <div [style.flex]="setFlex(45, '%')" class="flex-item">
+              <mat-form-field appearance="outline" class="w-100">
+                <mat-label> Formatos de captura permitidos </mat-label>
+                <mat-select
+                  formControlName="formatosCapturaNumerica"
+                  multiple
+                  (selectionChange)="cambiarFormatosCapturaNumerica()"
+                >
+                  <mat-option
+                    *ngFor="let formato of formatosCapturaNumerica"
+                    [value]="formato.value"
+                  >
+                    {{ formato.label }}
+                  </mat-option>
+                </mat-select>
+                <mat-hint>
+                  Ej.: valor único, 3 - 5 o &gt; 100. Los símbolos no se digitan
+                  manualmente.
+                </mat-hint>
+              </mat-form-field>
+            </div>
+
+            <div [style.flex]="setFlex(27, '%')" class="flex-item">
+              <mat-form-field appearance="outline" class="w-100">
+                <mat-label> Formato predeterminado </mat-label>
+                <mat-select formControlName="formatoCapturaNumericaDefault">
+                  <mat-option
+                    *ngFor="let formato of formatosCapturaNumerica"
+                    [value]="formato.value"
+                    [disabled]="
+                      !obtenerFormatosCapturaSeleccionados().includes(
+                        formato.value
+                      )
+                    "
+                  >
+                    {{ formato.label }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+
+            <div [style.flex]="setFlex(22, '%')" class="flex-item">
+              <mat-form-field appearance="outline" class="w-100">
+                <mat-label> Precisión numérica </mat-label>
+                <mat-select formControlName="precisionNumerica">
+                  <mat-option
+                    *ngFor="let precision of precisionesNumericas"
+                    [value]="precision.value"
+                  >
+                    {{ precision.label }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+          </div>
+
+          <!-- ====== Alternativas cualitativas ====== -->
+          <div class="row-flex mt-3">
+            <div [style.flex]="setFlex(55, '%')" class="flex-item">
+              <mat-form-field appearance="outline" class="w-100">
+                <mat-label> Alternativa cualitativa </mat-label>
+                <input
+                  matInput
+                  [formControl]="nuevaOpcionCualitativaNumerica"
+                  placeholder="Ej. NO SE OBSERVAN"
+                  (keydown.enter)="
+                    $event.preventDefault(); agregarValorCualitativoNumerico()
+                  "
+                />
+              </mat-form-field>
+            </div>
+            <div [style.flex]="setFlex(20, '%')" class="flex-item mb-3">
+              <button
+                mat-flat-button
+                color="primary"
+                type="button"
+                (click)="agregarValorCualitativoNumerico()"
+              >
+                <mat-icon>add</mat-icon>
+                Agregar
+              </button>
+            </div>
+          </div>
+
+          <div
+            class="row-flex mt-1"
+            *ngIf="obtenerValoresCualitativosNumericos().length"
+          >
+            <div [style.flex]="setFlex(95, '%')" class="flex-item">
+              <mat-chip-set>
+                <mat-chip
+                  *ngFor="
+                    let opcion of obtenerValoresCualitativosNumericos();
+                    let i = index
+                  "
+                >
+                  {{ opcion }}
+                  <button
+                    matChipRemove
+                    type="button"
+                    (click)="eliminarValorCualitativoNumerico(i)"
+                  >
+                    <mat-icon>cancel</mat-icon>
+                  </button>
+                </mat-chip>
+              </mat-chip-set>
+            </div>
+          </div>
+
+          <div
+            class="row-flex mt-2"
+            *ngIf="obtenerValoresCualitativosNumericos().length"
+          >
+            <div [style.flex]="setFlex(45, '%')" class="flex-item">
+              <mat-form-field appearance="outline" class="w-100">
+                <mat-label> Valor cualitativo predeterminado </mat-label>
+                <mat-select formControlName="valorCualitativoDefaultNumerico">
+                  <mat-option value="">
+                    Usar default numérico / sin default
+                  </mat-option>
+                  <mat-option
+                    *ngFor="let opcion of obtenerValoresCualitativosNumericos()"
+                    [value]="opcion"
+                  >
+                    {{ opcion }}
+                  </mat-option>
+                </mat-select>
+                <mat-hint>
+                  Se precargará al abrir la captura, pero no se registrará hasta
+                  guardar.
+                </mat-hint>
+              </mat-form-field>
+            </div>
+          </div>
+
+          <!-- ====== Valor por defecto numérico ====== -->
+          <ng-container
+            *ngIf="!myFormItemLab.get('valorCualitativoDefaultNumerico')?.value"
+          >
+            <div class="row-flex mt-2">
+              <div [style.flex]="setFlex(95, '%')" class="flex-item">
+                <div
+                  style="font-size: 12px; color: #6c757d; margin-bottom: 6px"
+                >
+                  <strong>Valor por defecto (opcional)</strong>
+                  · Se precargará al abrir la captura, pero no se registrará
+                  hasta guardar.
+                </div>
+              </div>
+            </div>
+
+            <div
+              class="row-flex"
+              *ngIf="esFormatoDefaultRango(); else valorDefaultNumericoSimple"
+            >
+              <div [style.flex]="setFlex(30, '%')" class="flex-item">
+                <mat-form-field appearance="outline" class="w-100">
+                  <mat-label> Desde </mat-label>
+                  <input
+                    matInput
+                    type="number"
+                    [step]="permiteDecimalesNumerico() ? 'any' : 1"
+                    (keydown)="
+                      bloquearDecimalSiEntero(
+                        $event,
+                        permiteDecimalesNumerico()
+                      )
+                    "
+                    formControlName="valorPorDefectoRangoDesde"
+                  />
+                </mat-form-field>
+              </div>
+
+              <div [style.flex]="setFlex(30, '%')" class="flex-item">
+                <mat-form-field appearance="outline" class="w-100">
+                  <mat-label> Hasta </mat-label>
+                  <input
+                    matInput
+                    type="number"
+                    [step]="permiteDecimalesNumerico() ? 'any' : 1"
+                    (keydown)="
+                      bloquearDecimalSiEntero(
+                        $event,
+                        permiteDecimalesNumerico()
+                      )
+                    "
+                    formControlName="valorPorDefectoRangoHasta"
+                  />
+                  <mat-hint>Ej.: 0 - 1 por campo</mat-hint>
+                </mat-form-field>
+              </div>
+            </div>
+
+            <ng-template #valorDefaultNumericoSimple>
+              <div class="row-flex">
+                <div [style.flex]="setFlex(35, '%')" class="flex-item">
+                  <mat-form-field appearance="outline" class="w-100">
+                    <mat-label> Valor por defecto </mat-label>
+                    <span matTextPrefix *ngIf="simboloFormatoDefaultNumerico()">
+                      {{ simboloFormatoDefaultNumerico() }}&nbsp;
+                    </span>
+                    <input
+                      matInput
+                      type="number"
+                      [step]="permiteDecimalesNumerico() ? 'any' : 1"
+                      (keydown)="
+                        bloquearDecimalSiEntero(
+                          $event,
+                          permiteDecimalesNumerico()
+                        )
+                      "
+                      formControlName="valorPorDefectoResultado"
+                    />
+                    <mat-hint>Ej.: pH 6.0 o densidad 1.015</mat-hint>
+                  </mat-form-field>
+                </div>
+              </div>
+            </ng-template>
+          </ng-container>
         </mat-card-content>
       </mat-card>
 
@@ -424,8 +725,6 @@
             <div [style.flex]="setFlex(65, '%')" class="flex-item">
               VALORES DE REFERENCIA
             </div>
-
-            <!-- Unidad actualmente configurada -->
             <div [style.flex]="setFlex(30, '%')" class="flex-item text-end">
               <span style="font-size: 12px; font-weight: 400">
                 Unidad:
@@ -438,6 +737,34 @@
         </mat-card-title>
 
         <mat-card-content>
+          <div
+            class="row-flex mt-3"
+            *ngIf="obtenerValoresCualitativosNumericos().length"
+          >
+            <div [style.flex]="setFlex(55, '%')" class="flex-item">
+              <mat-form-field appearance="outline" class="w-100">
+                <mat-label>
+                  Valores cualitativos considerados normales
+                </mat-label>
+                <mat-select
+                  formControlName="valoresCualitativosReferencia"
+                  multiple
+                >
+                  <mat-option
+                    *ngFor="let opcion of obtenerValoresCualitativosNumericos()"
+                    [value]="opcion"
+                  >
+                    {{ opcion }}
+                  </mat-option>
+                </mat-select>
+                <mat-hint>
+                  Ej.: NO SE OBSERVAN para Hematíes. Estas opciones se evalúan
+                  como referencia clínica.
+                </mat-hint>
+              </mat-form-field>
+            </div>
+          </div>
+
           <!-- =====================================================
               BOTÓN AGREGAR
           ====================================================== -->
@@ -535,13 +862,10 @@
                       placeholder="Ej. Normal"
                     />
 
-                    <mat-error
-                      *ngIf="
-                        referenciaGroup.get('descripcion')?.hasError('required')
-                      "
-                    >
-                      Requerido
-                    </mat-error>
+                    <mat-hint>
+                      Opcional. Si se deja vacía, el informe mostrará solo el
+                      valor de referencia.
+                    </mat-hint>
                   </mat-form-field>
                 </div>
 
@@ -768,6 +1092,487 @@
                   </mat-form-field>
                 </div>
               </div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- =========================================================
+          RESULTADO ESTRUCTURADO / HALLAZGOS
+      ========================================================= -->
+
+      <mat-card
+        class="mt-2"
+        *ngIf="myFormItemLab.get('tipoResultado')?.value === 'ESTRUCTURADO'"
+      >
+        <mat-card-title>
+          <div class="row-flex align-items-center">
+            CONFIGURACIÓN DE CAPTURA
+          </div>
+        </mat-card-title>
+
+        <mat-card-content>
+          <div class="row-flex mt-2">
+            <div [style.flex]="setFlex(95, '%')" class="flex-item">
+              <span style="font-size: 12px; color: #6c757d">
+                Configure el catálogo de hallazgos, su forma de cuantificación y
+                los valores que se precargarán durante el registro.
+              </span>
+            </div>
+          </div>
+          <div class="row-flex mt-2">
+            <div [style.flex]="setFlex(60, '%')" class="flex-item">
+              <mat-form-field appearance="outline" class="w-100">
+                <mat-label> Nuevo hallazgo </mat-label>
+                <input
+                  matInput
+                  [formControl]="nuevoHallazgoEstructurado"
+                  placeholder="Ej. OXALATO DE CALCIO"
+                  (keydown.enter)="
+                    $event.preventDefault(); agregarHallazgoEstructurado()
+                  "
+                />
+              </mat-form-field>
+            </div>
+            <div [style.flex]="setFlex(20, '%')" class="flex-item mb-3">
+              <button
+                mat-flat-button
+                color="primary"
+                type="button"
+                (click)="agregarHallazgoEstructurado()"
+              >
+                <mat-icon>add</mat-icon>
+                Agregar
+              </button>
+            </div>
+          </div>
+
+          <div
+            class="row-flex mt-1"
+            *ngIf="obtenerHallazgosEstructurados().length"
+          >
+            <div [style.flex]="setFlex(95, '%')" class="flex-item">
+              <mat-chip-set>
+                <mat-chip
+                  *ngFor="
+                    let hallazgo of obtenerHallazgosEstructurados();
+                    let i = index
+                  "
+                >
+                  {{ hallazgo }}
+                  <button
+                    matChipRemove
+                    type="button"
+                    (click)="eliminarHallazgoEstructurado(i)"
+                  >
+                    <mat-icon>cancel</mat-icon>
+                  </button>
+                </mat-chip>
+              </mat-chip-set>
+            </div>
+          </div>
+
+          <div class="row-flex mt-3">
+            <div [style.flex]="setFlex(35, '%')" class="flex-item">
+              <mat-form-field appearance="outline" class="w-100">
+                <mat-label> Texto cuando no hay hallazgos </mat-label>
+                <input matInput formControlName="valorAusenciaEstructurada" />
+              </mat-form-field>
+            </div>
+            <div [style.flex]="setFlex(25, '%')" class="flex-item mb-3">
+              <mat-slide-toggle formControlName="permiteMultiplesEstructurada">
+                Permitir múltiples hallazgos
+              </mat-slide-toggle>
+            </div>
+          </div>
+
+          <div class="row-flex mt-2">
+            <div [style.flex]="setFlex(35, '%')" class="flex-item">
+              <mat-form-field appearance="outline" class="w-100">
+                <mat-label> Tipo de cuantificación </mat-label>
+                <mat-select formControlName="cuantificacionEstructuradaTipo">
+                  <mat-option value="CATEGORICA"
+                    >Categórica (cruces, grados, etc.)</mat-option
+                  >
+                  <mat-option value="NUMERICA"
+                    >Numérica (valor/rango/operador)</mat-option
+                  >
+                </mat-select>
+              </mat-form-field>
+            </div>
+          </div>
+
+          <ng-container *ngIf="!esCuantificacionEstructuradaNumerica()">
+            <div class="row-flex mt-2">
+              <div [style.flex]="setFlex(55, '%')" class="flex-item">
+                <mat-form-field appearance="outline" class="w-100">
+                  <mat-label> Nueva cuantificación </mat-label>
+                  <input
+                    matInput
+                    [formControl]="nuevaOpcionCuantificacionEstructurada"
+                    placeholder="Ej. +"
+                    (keydown.enter)="
+                      $event.preventDefault();
+                      agregarOpcionCuantificacionEstructurada()
+                    "
+                  />
+                </mat-form-field>
+              </div>
+              <div [style.flex]="setFlex(20, '%')" class="flex-item mb-3">
+                <button
+                  mat-flat-button
+                  color="primary"
+                  type="button"
+                  (click)="agregarOpcionCuantificacionEstructurada()"
+                >
+                  <mat-icon>add</mat-icon>
+                  Agregar
+                </button>
+              </div>
+            </div>
+
+            <div
+              class="row-flex mt-1"
+              *ngIf="obtenerOpcionesCuantificacionEstructurada().length"
+            >
+              <div [style.flex]="setFlex(95, '%')" class="flex-item">
+                <mat-chip-set>
+                  <mat-chip
+                    *ngFor="
+                      let opcion of obtenerOpcionesCuantificacionEstructurada();
+                      let i = index
+                    "
+                  >
+                    {{ opcion }}
+                    <button
+                      matChipRemove
+                      type="button"
+                      (click)="eliminarOpcionCuantificacionEstructurada(i)"
+                    >
+                      <mat-icon>cancel</mat-icon>
+                    </button>
+                  </mat-chip>
+                </mat-chip-set>
+              </div>
+            </div>
+          </ng-container>
+
+          <ng-container *ngIf="esCuantificacionEstructuradaNumerica()">
+            <div class="row-flex mt-2">
+              <div [style.flex]="setFlex(43, '%')" class="flex-item">
+                <mat-form-field appearance="outline" class="w-100">
+                  <mat-label> Formatos numéricos permitidos </mat-label>
+                  <mat-select
+                    formControlName="formatosCapturaEstructurada"
+                    multiple
+                  >
+                    <mat-option
+                      *ngFor="let formato of formatosCapturaNumerica"
+                      [value]="formato.value"
+                    >
+                      {{ formato.label }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+              <div [style.flex]="setFlex(27, '%')" class="flex-item">
+                <mat-form-field appearance="outline" class="w-100">
+                  <mat-label> Formato predeterminado </mat-label>
+                  <mat-select
+                    formControlName="formatoCapturaEstructuradaDefault"
+                  >
+                    <mat-option
+                      *ngFor="let formato of formatosCapturaNumerica"
+                      [value]="formato.value"
+                      [disabled]="
+                        !obtenerFormatosCapturaEstructuradaSeleccionados().includes(
+                          formato.value
+                        )
+                      "
+                    >
+                      {{ formato.label }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+
+              <div [style.flex]="setFlex(24, '%')" class="flex-item">
+                <mat-form-field appearance="outline" class="w-100">
+                  <mat-label> Precisión numérica </mat-label>
+                  <mat-select formControlName="precisionNumericaEstructurada">
+                    <mat-option
+                      *ngFor="let precision of precisionesNumericas"
+                      [value]="precision.value"
+                    >
+                      {{ precision.label }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+            </div>
+          </ng-container>
+
+          <div class="row-flex mt-3">
+            <div [style.flex]="setFlex(40, '%')" class="flex-item">
+              <mat-form-field appearance="outline" class="w-100">
+                <mat-label> Valor por defecto </mat-label>
+                <mat-select formControlName="modoDefaultEstructurado">
+                  <mat-option value="AUSENCIA">{{
+                    myFormItemLab.get("valorAusenciaEstructurada")?.value ||
+                      "NO SE OBSERVAN"
+                  }}</mat-option>
+                  <mat-option value="DETALLE"
+                    >Hallazgos predeterminados</mat-option
+                  >
+                </mat-select>
+                <mat-hint
+                  >Solo precarga la captura; no registra hasta
+                  guardar.</mat-hint
+                >
+              </mat-form-field>
+            </div>
+          </div>
+
+          <ng-container
+            *ngIf="
+              myFormItemLab.get('modoDefaultEstructurado')?.value === 'DETALLE'
+            "
+          >
+            <div class="row-flex mt-2">
+              <div [style.flex]="setFlex(95, '%')" class="flex-item">
+                <button
+                  mat-stroked-button
+                  type="button"
+                  (click)="agregarHallazgoDefaultEstructurado()"
+                >
+                  <mat-icon>add</mat-icon>
+                  Agregar hallazgo predeterminado
+                </button>
+              </div>
+            </div>
+
+            <div formArrayName="hallazgosDefaultEstructurado">
+              <div
+                *ngFor="
+                  let defaultGroup of hallazgosDefaultEstructurado.controls;
+                  let i = index
+                "
+                [formGroupName]="i"
+                class="mt-2 p-2 border rounded"
+              >
+                <div class="row-flex">
+                  <div [style.flex]="setFlex(30, '%')" class="flex-item">
+                    <mat-form-field appearance="outline" class="w-100">
+                      <mat-label> Hallazgo </mat-label>
+                      <mat-select formControlName="hallazgo">
+                        <mat-option
+                          *ngFor="
+                            let hallazgo of obtenerHallazgosEstructurados()
+                          "
+                          [value]="hallazgo"
+                        >
+                          {{ hallazgo }}
+                        </mat-option>
+                      </mat-select>
+                    </mat-form-field>
+                  </div>
+
+                  <ng-container
+                    *ngIf="
+                      !esCuantificacionEstructuradaNumerica();
+                      else defaultNumerico
+                    "
+                  >
+                    <div [style.flex]="setFlex(30, '%')" class="flex-item">
+                      <mat-form-field appearance="outline" class="w-100">
+                        <mat-label> Cuantificación </mat-label>
+                        <mat-select formControlName="valorCategorico">
+                          <mat-option
+                            *ngFor="
+                              let opcion of obtenerOpcionesCuantificacionEstructurada()
+                            "
+                            [value]="opcion"
+                          >
+                            {{ opcion }}
+                          </mat-option>
+                        </mat-select>
+                      </mat-form-field>
+                    </div>
+                  </ng-container>
+
+                  <ng-template #defaultNumerico>
+                    <div [style.flex]="setFlex(25, '%')" class="flex-item">
+                      <mat-form-field appearance="outline" class="w-100">
+                        <mat-label> Formato </mat-label>
+                        <mat-select formControlName="formatoNumerico">
+                          <mat-option
+                            *ngFor="let formato of formatosCapturaNumerica"
+                            [value]="formato.value"
+                            [disabled]="
+                              !obtenerFormatosCapturaEstructuradaSeleccionados().includes(
+                                formato.value
+                              )
+                            "
+                          >
+                            {{ formato.label }}
+                          </mat-option>
+                        </mat-select>
+                      </mat-form-field>
+                    </div>
+
+                    <ng-container
+                      *ngIf="
+                        esHallazgoDefaultRango(defaultGroup);
+                        else defaultValorSimple
+                      "
+                    >
+                      <div [style.flex]="setFlex(18, '%')" class="flex-item">
+                        <mat-form-field appearance="outline" class="w-100">
+                          <mat-label> Desde </mat-label>
+                          <input
+                            matInput
+                            type="number"
+                            [step]="permiteDecimalesEstructurado() ? 'any' : 1"
+                            (keydown)="
+                              bloquearDecimalSiEntero(
+                                $event,
+                                permiteDecimalesEstructurado()
+                              )
+                            "
+                            formControlName="desde"
+                          />
+                        </mat-form-field>
+                      </div>
+                      <div [style.flex]="setFlex(18, '%')" class="flex-item">
+                        <mat-form-field appearance="outline" class="w-100">
+                          <mat-label> Hasta </mat-label>
+                          <input
+                            matInput
+                            type="number"
+                            [step]="permiteDecimalesEstructurado() ? 'any' : 1"
+                            (keydown)="
+                              bloquearDecimalSiEntero(
+                                $event,
+                                permiteDecimalesEstructurado()
+                              )
+                            "
+                            formControlName="hasta"
+                          />
+                        </mat-form-field>
+                      </div>
+                    </ng-container>
+
+                    <ng-template #defaultValorSimple>
+                      <div [style.flex]="setFlex(20, '%')" class="flex-item">
+                        <mat-form-field appearance="outline" class="w-100">
+                          <mat-label> Valor </mat-label>
+                          <input
+                            matInput
+                            type="number"
+                            [step]="permiteDecimalesEstructurado() ? 'any' : 1"
+                            (keydown)="
+                              bloquearDecimalSiEntero(
+                                $event,
+                                permiteDecimalesEstructurado()
+                              )
+                            "
+                            formControlName="valor"
+                          />
+                        </mat-form-field>
+                      </div>
+                    </ng-template>
+                  </ng-template>
+
+                  <div [style.flex]="setFlex(8, '%')" class="flex-item">
+                    <button
+                      mat-icon-button
+                      color="warn"
+                      type="button"
+                      (click)="eliminarHallazgoDefaultEstructurado(i)"
+                    >
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </ng-container>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- =========================================================
+          VALORES DE REFERENCIA - RESULTADO ESTRUCTURADO
+      ========================================================= -->
+
+      <mat-card
+        class="mt-2"
+        *ngIf="myFormItemLab.get('tipoResultado')?.value === 'ESTRUCTURADO'"
+      >
+        <mat-card-title>
+          <div class="row-flex align-items-center">VALORES DE REFERENCIA</div>
+        </mat-card-title>
+
+        <mat-card-content>
+          <div class="row-flex mt-3">
+            <div [style.flex]="setFlex(75, '%')" class="flex-item mb-3">
+              <mat-slide-toggle
+                formControlName="ausenciaEsReferenciaEstructurada"
+              >
+                Considerar "{{
+                  myFormItemLab.get("valorAusenciaEstructurada")?.value ||
+                    "NO SE OBSERVAN"
+                }}" como resultado normal
+              </mat-slide-toggle>
+
+              <div
+                *ngIf="
+                  myFormItemLab.get('ausenciaEsReferenciaEstructurada')?.value
+                "
+                style="
+                  font-size: 12px;
+                  color: #6c757d;
+                  margin-top: 6px;
+                  margin-left: 48px;
+                "
+              >
+                La ausencia de hallazgos se considerará dentro del valor esperado.
+              </div>
+            </div>
+          </div>
+
+          <div
+            class="row-flex mt-2"
+            *ngIf="obtenerHallazgosEstructurados().length > 0"
+          >
+            <div [style.flex]="setFlex(55, '%')" class="flex-item">
+              <mat-form-field appearance="outline" class="w-100">
+                <mat-label> Hallazgos considerados normales </mat-label>
+                <mat-select
+                  formControlName="hallazgosNormalesEstructurados"
+                  multiple
+                >
+                  <mat-option
+                    *ngFor="let hallazgo of obtenerHallazgosEstructurados()"
+                    [value]="hallazgo"
+                  >
+                    {{ hallazgo }}
+                  </mat-option>
+                </mat-select>
+                <mat-hint>
+                  Estos hallazgos pueden estar presentes sin marcar el resultado
+                  como fuera del valor esperado.
+                </mat-hint>
+              </mat-form-field>
+            </div>
+          </div>
+
+          <div class="row-flex mt-1">
+            <div [style.flex]="setFlex(95, '%')" class="flex-item">
+              <span style="font-size: 12px; color: #6c757d">
+                Los hallazgos no seleccionados como normales se marcarán como
+                fuera del valor esperado. En el informe solo esos hallazgos se
+                resaltarán en negrita y subrayado.
+              </span>
             </div>
           </div>
         </mat-card-content>

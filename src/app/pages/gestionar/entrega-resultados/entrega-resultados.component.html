@@ -1,39 +1,88 @@
 <section class="modulo-entregas">
-  <header>
-    <h2>Consulta y Entrega de Resultados</h2>
+  <header class="encabezado-pagina">
+    <div>
+      <h2>Consulta y Entrega de Resultados</h2>
+      <p>Consulta resultados liberados y prepara entregas individuales o descargas internas.</p>
+    </div>
   </header>
 
-  <form [formGroup]="formBusqueda" (ngSubmit)="buscar()" class="busqueda">
-    <label class="buscador">
-      <span>Solicitud, código laboratorio, DNI o paciente</span>
+  <!-- ====== Búsqueda ====== -->
+  <form [formGroup]="formBusqueda" class="busqueda-container">
+    <mat-form-field appearance="outline" class="campo-busqueda">
+      <mat-label>Buscar solicitud o paciente</mat-label>
       <input
-        type="search"
+        matInput
         formControlName="terminoBusqueda"
-        placeholder="Buscar solicitud o paciente"
+        placeholder="Código Lab., solicitud, DNI, paciente, programación o protocolo"
+        (keyup.enter)="buscar()"
       />
-    </label>
-    <label
-      ><span>Desde</span><input type="date" formControlName="fechaInicio"
-    /></label>
-    <label
-      ><span>Hasta</span><input type="date" formControlName="fechaFin"
-    /></label>
-    <button mat-flat-button color="primary" type="submit" [disabled]="cargando">
-      <mat-icon>search</mat-icon> Buscar
+      <mat-icon matSuffix>search</mat-icon>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="campo-empresa">
+      <mat-label>Empresa</mat-label>
+      <mat-select formControlName="empresaId">
+        <mat-option value="">Todas las empresas</mat-option>
+        <mat-option
+          *ngFor="let empresa of empresasCatalogo"
+          [value]="empresa.empresaId"
+        >
+          {{ empresa.razonSocial }}{{ empresa.ruc ? ' · ' + empresa.ruc : '' }}
+        </mat-option>
+      </mat-select>
+      <mat-hint *ngIf="cargandoEmpresas">Cargando empresas...</mat-hint>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="campo-fecha">
+      <mat-label>Desde</mat-label>
+      <input
+        matInput
+        [matDatepicker]="pickerInicio"
+        formControlName="fechaInicio"
+        readonly
+      />
+      <mat-datepicker-toggle matSuffix [for]="pickerInicio"></mat-datepicker-toggle>
+      <mat-datepicker #pickerInicio></mat-datepicker>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="campo-fecha">
+      <mat-label>Hasta</mat-label>
+      <input
+        matInput
+        [matDatepicker]="pickerFin"
+        formControlName="fechaFin"
+        readonly
+      />
+      <mat-datepicker-toggle matSuffix [for]="pickerFin"></mat-datepicker-toggle>
+      <mat-datepicker #pickerFin></mat-datepicker>
+    </mat-form-field>
+
+    <button
+      mat-flat-button
+      type="button"
+      class="boton-buscar"
+      (click)="buscar()"
+      [disabled]="cargando || descargandoZip"
+    >
+      <mat-icon>search</mat-icon>
+      Buscar
     </button>
+
     <button
       mat-button
       type="button"
+      class="boton-hoy"
       (click)="hoyBuscar()"
-      [disabled]="cargando"
+      [disabled]="cargando || descargandoZip"
     >
-      <mat-icon>refresh</mat-icon> Hoy
+      <mat-icon>refresh</mat-icon>
+      Hoy
     </button>
   </form>
 
   <div class="cargando" *ngIf="cargando">
-    <mat-spinner diameter="28"></mat-spinner> Consultando resultados
-    liberados...
+    <mat-spinner diameter="28"></mat-spinner>
+    Consultando resultados liberados...
   </div>
 
   <mat-tab-group
@@ -44,47 +93,167 @@
     <mat-tab
       [label]="'Particulares (' + totalOrigen('PARTICULAR') + ')'"
     ></mat-tab>
-    <mat-tab [label]="'Empresas (' + totalOrigen('EMPRESA') + ')'"></mat-tab>
+    <mat-tab [label]="'Empresas (' + totalOrigen('EMPRESA') + ')'" ></mat-tab>
   </mat-tab-group>
 
+  <!-- ====== Descarga múltiple interna ====== -->
+  <div class="acciones-masivas" *ngIf="!cargando && tabActivo === 1">
+    <ng-container *ngIf="!modoSeleccionEmpresa; else modoSeleccion">
+      <span class="ayuda-masiva">
+        La descarga múltiple genera PDF individuales en un ZIP y no registra una entrega.
+      </span>
+
+      <button
+        mat-stroked-button
+        type="button"
+        (click)="activarSeleccionEmpresa()"
+        [disabled]="descargandoZip || totalSeleccionablesEmpresa === 0"
+      >
+        <mat-icon>folder_zip</mat-icon>
+        Descargar varios informes
+      </button>
+    </ng-container>
+
+    <ng-template #modoSeleccion>
+      <div class="resumen-seleccion">
+        <strong>{{ totalSeleccionadasEmpresa }} seleccionado(s)</strong>
+        <span>Marca los informes que deseas incluir en el ZIP.</span>
+      </div>
+
+      <div class="botones-seleccion">
+        <button
+          mat-button
+          type="button"
+          (click)="seleccionarDisponiblesEmpresa()"
+          [disabled]="descargandoZip"
+        >
+          Seleccionar disponibles
+        </button>
+
+        <button
+          mat-button
+          type="button"
+          (click)="quitarSeleccionEmpresa()"
+          [disabled]="descargandoZip || totalSeleccionadasEmpresa === 0"
+        >
+          Quitar selección
+        </button>
+
+        <button
+          mat-button
+          type="button"
+          (click)="cancelarSeleccionEmpresa()"
+          [disabled]="descargandoZip"
+        >
+          Cancelar
+        </button>
+
+        <button
+          mat-flat-button
+          type="button"
+          (click)="descargarZipSeleccionados()"
+          [disabled]="descargandoZip || totalSeleccionadasEmpresa === 0"
+        >
+          <mat-icon>download</mat-icon>
+          Descargar ZIP ({{ totalSeleccionadasEmpresa }})
+        </button>
+      </div>
+    </ng-template>
+  </div>
+
+  <div class="progreso-zip" *ngIf="descargandoZip">
+    <mat-spinner diameter="22"></mat-spinner>
+    {{ progresoZip || 'Preparando informes...' }}
+  </div>
+
   <div class="tabla-scroll" *ngIf="!cargando">
-    <table>
+    <table [class.tabla-empresa]="tabActivo === 1">
       <thead>
         <tr>
+          <th
+            *ngIf="tabActivo === 1 && modoSeleccionEmpresa"
+            class="columna-seleccion"
+          >
+            Selección
+          </th>
           <th>Código Lab.</th>
           <th>Solicitud</th>
+          <th *ngIf="tabActivo === 1">Programación</th>
+          <th *ngIf="tabActivo === 1">Protocolo</th>
           <th>Fecha</th>
           <th>HC</th>
           <th>Documento</th>
           <th>Paciente</th>
+          <th *ngIf="tabActivo === 1">Empresa</th>
+          <th *ngIf="tabActivo === 1">Sede</th>
           <th>Disponibilidad</th>
           <th>Acción</th>
         </tr>
       </thead>
+
       <tbody>
         <tr
           *ngFor="let fila of visibles"
           [class.completa]="fila.resumen.tipoDisponibilidad === 'COMPLETA'"
+          [class.fila-seleccionada]="
+            modoSeleccionEmpresa && estaSeleccionadaEmpresa(fila)
+          "
         >
-          <td>
-            <strong>{{ fila.codigoLaboratorio || "-" }}</strong>
+          <td
+            *ngIf="tabActivo === 1 && modoSeleccionEmpresa"
+            class="celda-seleccion"
+            [class.no-seleccionable]="!esSeleccionableEmpresa(fila)"
+            (click)="alternarSeleccionEmpresa(fila)"
+          >
+            <mat-checkbox
+              class="checkbox-grande"
+              [checked]="estaSeleccionadaEmpresa(fila)"
+              [disabled]="!esSeleccionableEmpresa(fila) || descargandoZip"
+              (click)="$event.stopPropagation()"
+              (change)="cambiarSeleccionEmpresa(fila, $event.checked)"
+              aria-label="Seleccionar informe para ZIP"
+            ></mat-checkbox>
           </td>
+
+          <td><strong>{{ fila.codigoLaboratorio || '-' }}</strong></td>
           <td>{{ fila.codSolicitud }}</td>
-          <td>{{ fila.fechaEmision | date: "dd/MM/yyyy HH:mm" }}</td>
+
+          <td *ngIf="tabActivo === 1">
+            <strong>{{ fila.empresa?.codProgramacion || '-' }}</strong>
+          </td>
+
+          <td *ngIf="tabActivo === 1">
+            <strong>{{ fila.empresa?.codProtocolo || '-' }}</strong>
+            <div class="dato-secundario" *ngIf="fila.empresa?.nombreProtocolo">
+              {{ fila.empresa?.nombreProtocolo }}
+            </div>
+          </td>
+
+          <td>{{ fila.fechaEmision | date: 'dd/MM/yyyy HH:mm' }}</td>
           <td>{{ fila.paciente.hc }}</td>
           <td>{{ fila.paciente.documento }}</td>
           <td>{{ fila.paciente.nombreCompleto }}</td>
+
+          <td *ngIf="tabActivo === 1">
+            <strong>{{ fila.empresa?.razonSocialEmpresa || '-' }}</strong>
+            <div class="dato-secundario" *ngIf="fila.empresa?.rucEmpresa">
+              RUC {{ fila.empresa?.rucEmpresa }}
+            </div>
+          </td>
+
+          <td *ngIf="tabActivo === 1">{{ fila.empresa?.sede || '-' }}</td>
+
           <td>
             <span
               class="estado"
               [class.final]="fila.resumen.tipoDisponibilidad === 'COMPLETA'"
             >
               {{
-                fila.resumen.tipoDisponibilidad === "COMPLETA"
-                  ? "COMPLETA"
-                  : fila.resumen.tipoDisponibilidad === "SIN_VIGENTES"
-                    ? "HISTÓRICO"
-                    : "PARCIAL"
+                fila.resumen.tipoDisponibilidad === 'COMPLETA'
+                  ? 'COMPLETA'
+                  : fila.resumen.tipoDisponibilidad === 'SIN_VIGENTES'
+                    ? 'HISTÓRICO'
+                    : 'PARCIAL'
               }}
             </span>
             <div class="contador">
@@ -92,25 +261,34 @@
               {{ fila.resumen.totalPruebas }} liberados
             </div>
           </td>
+
           <td>
             <button
               mat-stroked-button
               type="button"
               (click)="abrirInforme(fila)"
+              [disabled]="descargandoZip"
             >
               <mat-icon>description</mat-icon>
-              {{ fila.resumen.liberados ? "Ver informe" : "Ver historial" }}
+              {{ fila.resumen.liberados ? 'Ver informe' : 'Ver historial' }}
             </button>
           </td>
         </tr>
+
         <tr *ngIf="filtradas.length === 0">
-          <td colspan="8" class="vacio">
+          <td
+            [attr.colspan]="
+              tabActivo === 1 ? (modoSeleccionEmpresa ? 13 : 12) : 8
+            "
+            class="vacio"
+          >
             No hay resultados liberados para este criterio.
           </td>
         </tr>
       </tbody>
     </table>
   </div>
+
   <mat-paginator
     *ngIf="!cargando && filtradas.length > 0"
     [length]="filtradas.length"

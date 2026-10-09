@@ -12,6 +12,8 @@ import {
   IInicializarResultadosResponse,
   ILiberarResultadoDTO,
   ILiberarResultadoResponse,
+  ILiberarResultadosMasivosDTO,
+  ILiberarResultadosMasivosResponse,
   IRegistrarResultadoItemDTO,
   IRegistrarResultadoItemResponse,
   IRegistrarResultadosMasivosDTO,
@@ -187,6 +189,20 @@ export class ResultadoLaboratorioService {
   ): Observable<IValidarResultadoResponse> {
     return this._http.put<IValidarResultadoResponse>(
       `${this.apiUrl}/${resultadoLaboratorioId}/validar`,
+      body,
+      {
+        headers: this._auth.getAuthHeaders(),
+      },
+    );
+  }
+
+  // ====== Liberar resultados masivamente ======
+
+  liberarResultadosMasivamente(
+    body: ILiberarResultadosMasivosDTO,
+  ): Observable<ILiberarResultadosMasivosResponse> {
+    return this._http.put<ILiberarResultadosMasivosResponse>(
+      `${this.apiUrl}/liberar-masivo`,
       body,
       {
         headers: this._auth.getAuthHeaders(),

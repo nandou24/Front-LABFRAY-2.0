@@ -5,7 +5,91 @@ import {
 
 // ====== Tipos base ======
 
-export type TipoResultadoLaboratorio = 'NUMERICO' | 'TEXTO' | 'CATEGORICO';
+export type TipoResultadoLaboratorio =
+  | 'NUMERICO'
+  | 'TEXTO'
+  | 'CATEGORICO'
+  | 'ESTRUCTURADO';
+
+export type PrecisionNumericaLaboratorio = 'ENTERO' | 'DECIMAL';
+
+export type FormatoCapturaNumericaLaboratorio =
+  | 'VALOR'
+  | 'RANGO'
+  | 'MAYOR_QUE'
+  | 'MAYOR_IGUAL_QUE'
+  | 'MENOR_QUE'
+  | 'MENOR_IGUAL_QUE';
+
+export interface IValorNumericoRango {
+  tipo: 'RANGO';
+  desde: number;
+  hasta: number;
+}
+
+export interface IValorNumericoOperador {
+  tipo:
+    | 'MAYOR_QUE'
+    | 'MAYOR_IGUAL_QUE'
+    | 'MENOR_QUE'
+    | 'MENOR_IGUAL_QUE';
+  valor: number;
+}
+
+export interface IValorCualitativoNumericoLaboratorio {
+  tipo: 'CUALITATIVO';
+  valor: string;
+}
+
+export type ValorNumericoResultadoLaboratorio =
+  | number
+  | IValorNumericoRango
+  | IValorNumericoOperador;
+
+export interface IValorHallazgoCategoricoLaboratorio {
+  tipo: 'CATEGORICO';
+  valor: string;
+}
+
+export type ValorCuantificacionHallazgoLaboratorio =
+  | ValorNumericoResultadoLaboratorio
+  | IValorHallazgoCategoricoLaboratorio;
+
+export interface IHallazgoResultadoLaboratorio {
+  hallazgo: string;
+  valor: ValorCuantificacionHallazgoLaboratorio;
+}
+
+export interface IValorEstructuradoHallazgosLaboratorio {
+  tipo: 'HALLAZGOS';
+  modo: 'AUSENCIA' | 'DETALLE';
+  valorAusencia?: string;
+  hallazgos: IHallazgoResultadoLaboratorio[];
+}
+
+export interface IConfiguracionEstructuradaResultadoItem {
+  subtipo: 'HALLAZGOS';
+  permiteMultiples: boolean;
+  valorAusencia: string;
+  ausenciaEsReferencia: boolean;
+  hallazgosNormales?: string[];
+  permitirOtroHallazgo: boolean;
+  hallazgos: string[];
+  cuantificacion: {
+    tipo: 'CATEGORICA' | 'NUMERICA';
+    opciones: string[];
+    formatosCapturaNumerica: FormatoCapturaNumericaLaboratorio[];
+    formatoCapturaNumericaDefault: FormatoCapturaNumericaLaboratorio;
+    precisionNumerica: PrecisionNumericaLaboratorio;
+  };
+}
+
+export type ValorResultadoLaboratorio =
+  | string
+  | ValorNumericoResultadoLaboratorio
+  | IValorCualitativoNumericoLaboratorio
+  | IValorEstructuradoHallazgosLaboratorio
+  | null;
 
 export type EstadoItemResultado =
   | 'PENDIENTE'
@@ -152,9 +236,25 @@ export interface IReglaAlertaSnapshot {
 export interface IConfiguracionClinicaResultadoItem {
   tipoResultado: TipoResultadoLaboratorio;
 
+  esOpcional?: boolean;
+
+  mostrarReferenciaInforme?: boolean;
+
   opcionesResultado: string[];
 
-  valorPorDefectoResultado: string;
+  valorPorDefectoResultado: ValorResultadoLaboratorio;
+
+  formatosCapturaNumerica: FormatoCapturaNumericaLaboratorio[];
+
+  formatoCapturaNumericaDefault: FormatoCapturaNumericaLaboratorio;
+
+  precisionNumerica: PrecisionNumericaLaboratorio;
+
+  valoresCualitativosAlternativos: string[];
+
+  valoresCualitativosReferencia: string[];
+
+  configuracionEstructurada: IConfiguracionEstructuradaResultadoItem | null;
 
   permiteValorNoListado: boolean;
 
@@ -175,6 +275,8 @@ export interface IResultadoLaboratorioItem {
 
   nombreGrupo: string;
 
+  comentarioReferenciaGrupo?: string | null;
+
   ordenGrupo: number;
   ordenItem: number;
 
@@ -188,7 +290,11 @@ export interface IResultadoLaboratorioItem {
 
   unidadesRef: string;
 
-  valor: string | number | null;
+  esOpcional?: boolean;
+
+  mostrarReferenciaInforme?: boolean;
+
+  valor: ValorResultadoLaboratorio;
 
   observacion: string;
 
@@ -548,7 +654,7 @@ export interface IInicializarResultadosResponse {
 // ====== Captura individual ======
 
 export interface IRegistrarResultadoItemDTO {
-  valor: string | number;
+  valor: Exclude<ValorResultadoLaboratorio, null>;
 
   observacion?: string;
 }
@@ -579,7 +685,7 @@ export interface IRegistrarResultadoItemResponse {
 export interface IResultadoMasivoItemDTO {
   itemResultadoId: string;
 
-  valor: string | number;
+  valor: Exclude<ValorResultadoLaboratorio, null>;
 
   observacion?: string;
 }
@@ -678,6 +784,33 @@ export interface ILiberarResultadoResponse {
   resultado: IResultadoLaboratorio;
 }
 
+// ====== Liberación masiva ======
+
+export interface ILiberarResultadosMasivosDTO {
+  resultadoIds: string[];
+  confirmarAlertasCriticas?: boolean;
+}
+
+export interface IEstadoSolicitudLiberacionMasiva {
+  solicitudAtencionId: string;
+  codSolicitud: string;
+  estadoSolicitud: string;
+  estadoOperativo: IEstadoOperativoSolicitud;
+}
+
+export interface ILiberarResultadosMasivosResponse {
+  ok: boolean;
+  msg: string;
+  resumen: {
+    totalSolicitados: number;
+    liberados: number;
+    solicitudesAfectadas: number;
+    alertas: IResumenAlertas;
+  };
+  solicitudes: IEstadoSolicitudLiberacionMasiva[];
+  resultados: IResultadoLaboratorio[];
+}
+
 
 // ====== Bandeja de Gestión de Resultados ======
 
@@ -707,6 +840,10 @@ export interface IEmpresaBandejaResultado {
   programacionEmpresaId: string | null;
 
   codProgramacion: string | null;
+
+  codProtocolo: string | null;
+
+  nombreProtocolo: string | null;
 
   empresaId: string | null;
 

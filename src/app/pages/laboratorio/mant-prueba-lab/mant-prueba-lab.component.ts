@@ -250,6 +250,10 @@ export class MantPruebaLabComponent implements OnInit, AfterViewInit {
         [Validators.required, Validators.min(0)],
       ],
       mostrarTitulo: [grupo?.mostrarTitulo ?? true],
+      comentarioReferenciaGrupo: [
+        grupo?.comentarioReferenciaGrupo ?? '',
+        [Validators.maxLength(2000)],
+      ],
       usarProcesamientoOverride: [tieneOverride],
       procesamientoOverride: this._fb.group({
         tipo: [grupo?.procesamientoOverride?.tipo ?? 'INTERNO'],
@@ -895,6 +899,8 @@ export class MantPruebaLabComponent implements OnInit, AfterViewInit {
         nombreGrupo: grupo.get('nombreGrupo')?.value?.trim() ?? '',
         ordenGrupo: Number(grupo.get('ordenGrupo')?.value ?? grupoIndex + 1),
         mostrarTitulo: grupo.get('mostrarTitulo')?.value ?? true,
+        comentarioReferenciaGrupo:
+          grupo.get('comentarioReferenciaGrupo')?.value?.trim() ?? '',
         procesamientoOverride: this.construirProcesamientoOverride(grupo),
         items: items.controls.map((itemControl, itemIndex) => {
           const item = itemControl as FormGroup;

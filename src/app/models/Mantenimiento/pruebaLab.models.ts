@@ -36,6 +36,7 @@ export interface IGrupoResultado {
   nombreGrupo?: string;
   ordenGrupo?: number;
   mostrarTitulo?: boolean;
+  comentarioReferenciaGrupo?: string;
 
   // null = hereda procesamiento de la prueba.
   procesamientoOverride?: IProcesamientoLab | null;

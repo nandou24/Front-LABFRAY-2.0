@@ -17,10 +17,20 @@ export class EntregaResultadosService {
   private readonly apiUrl = `${environment.baseUrl}/api/resultadoLaboratorio/entrega`;
 
   // ====== Bandeja para Recepción ======
-  obtenerBandeja(fechaInicio: string, fechaFin: string, terminoBusqueda = ''): Observable<IBandejaEntregaResponse> {
+  obtenerBandeja(
+    fechaInicio: string,
+    fechaFin: string,
+    terminoBusqueda = '',
+    empresaId = '',
+  ): Observable<IBandejaEntregaResponse> {
     return this._http.get<IBandejaEntregaResponse>(`${this.apiUrl}/bandeja`, {
       headers: this._auth.getAuthHeaders(),
-      params: { fechaInicio, fechaFin, ...(terminoBusqueda ? { terminoBusqueda } : {}) },
+      params: {
+        fechaInicio,
+        fechaFin,
+        ...(terminoBusqueda ? { terminoBusqueda } : {}),
+        ...(empresaId ? { empresaId } : {}),
+      },
     });
   }
 

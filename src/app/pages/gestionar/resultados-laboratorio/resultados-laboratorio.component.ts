@@ -29,6 +29,7 @@ import Swal from 'sweetalert2';
 import {
   IBandejaResultadosLaboratorioItem,
   IResultadoLaboratorio,
+  OrigenAtencionBandejaResultado,
 } from '../../../models/Gestion/resultadoLaboratorio.models';
 import {
   IEstadoOperativoSolicitud,
@@ -41,6 +42,7 @@ import {
   IRegistroResultadoDialogResult,
 } from './dialogs/dialog-captura-resultado/dialog-captura-resultado.component';
 import { DialogHistorialResultadoComponent } from './dialogs/dialog-historial-resultado/dialog-historial-resultado.component';
+import { DialogLiberacionMasivaComponent } from './dialogs/dialog-liberacion-masiva/dialog-liberacion-masiva.component';
 
 @Component({
   selector: 'app-resultados-laboratorio',
@@ -134,6 +136,7 @@ export class ResultadosLaboratorioComponent implements OnInit, AfterViewInit {
 
   expandedParticularId: string | null = null;
   expandedEmpresaId: string | null = null;
+  indiceTabActivo = 0;
 
   readonly columnasParticulares: string[] = [
     'codigoLaboratorio',
@@ -151,16 +154,28 @@ export class ResultadosLaboratorioComponent implements OnInit, AfterViewInit {
     'codigoLaboratorio',
     'codigoSolicitud',
     'codigoProgramacion',
+    'protocolo',
     'fechaEmision',
     'hc',
     'documento',
     'paciente',
     'empresa',
     'sede',
+    'prioridad',
     'estado',
     'resultados',
     'acciones',
   ];
+
+  resumenEmpresas = {
+    solicitudes: 0,
+    empresas: 0,
+    programaciones: 0,
+    pendientesMuestra: 0,
+    pruebasCompletas: 0,
+    pruebasValidadas: 0,
+    pruebasLiberadas: 0,
+  };
 
   readonly columnasDetalle: string[] = [
     'prueba',
@@ -245,6 +260,7 @@ export class ResultadosLaboratorioComponent implements OnInit, AfterViewInit {
             (item) => item.solicitud.origenAtencion === 'EMPRESA',
           );
 
+          this.actualizarResumenEmpresas();
           this.reiniciarPaginadores();
           this.cargandoBandeja = false;
 
@@ -263,6 +279,7 @@ export class ResultadosLaboratorioComponent implements OnInit, AfterViewInit {
 
           this.dataSourceParticulares.data = [];
           this.dataSourceEmpresas.data = [];
+          this.actualizarResumenEmpresas();
           this.cargandoBandeja = false;
 
           this._snackBar.open(
@@ -275,6 +292,62 @@ export class ResultadosLaboratorioComponent implements OnInit, AfterViewInit {
           );
         },
       });
+  }
+
+  // ====== Liberación masiva ======
+
+  abrirLiberacionMasiva(
+    origenAtencion: OrigenAtencionBandejaResultado,
+  ): void {
+    if (!this.puedeLiberarResultados) {
+      return;
+    }
+
+    // ====== Conservar pestaña de origen ======
+    this.indiceTabActivo = origenAtencion === 'EMPRESA' ? 1 : 0;
+
+    const fechaInicio = this.formBusqueda.controls.fechaInicio.value;
+    const fechaFin = this.formBusqueda.controls.fechaFin.value;
+
+    if (!fechaInicio || !fechaFin) {
+      this._snackBar.open('Debe indicar el rango de fechas', 'Cerrar', {
+        duration: 3000,
+      });
+      return;
+    }
+
+    const inicio = new Date(fechaInicio);
+    const fin = new Date(fechaFin);
+
+    inicio.setHours(0, 0, 0, 0);
+    fin.setHours(23, 59, 59, 999);
+
+    if (inicio.getTime() > fin.getTime()) {
+      this._snackBar.open(
+        'La fecha de inicio no puede ser mayor que la fecha fin',
+        'Cerrar',
+        { duration: 3000 },
+      );
+      return;
+    }
+
+    const dialogRef = this._dialog.open(DialogLiberacionMasivaComponent, {
+      width: '1240px',
+      maxWidth: '97vw',
+      maxHeight: '92vh',
+      autoFocus: false,
+      data: {
+        origenAtencion,
+        fechaInicio: inicio.toISOString(),
+        fechaFin: fin.toISOString(),
+      },
+    });
+
+    dialogRef.afterClosed().subscribe((actualizarBandeja: boolean | undefined) => {
+      if (actualizarBandeja === true) {
+        this.buscarSolicitudes(false);
+      }
+    });
   }
 
   // ====== Limpiar búsqueda ======
@@ -390,8 +463,8 @@ export class ResultadosLaboratorioComponent implements OnInit, AfterViewInit {
     );
 
     const dialogRef = this._dialog.open(DialogCapturaResultadoComponent, {
-      width: '1000px',
-      maxWidth: '96vw',
+      width: '1280px',
+      maxWidth: '98vw',
       disableClose: true,
       data: {
         resultados: row.resultados.detalle,
@@ -925,6 +998,58 @@ export class ResultadosLaboratorioComponent implements OnInit, AfterViewInit {
 
     this.dataSourceParticulares.data = [...this.dataSourceParticulares.data];
     this.dataSourceEmpresas.data = [...this.dataSourceEmpresas.data];
+    this.actualizarResumenEmpresas();
+  }
+
+  // ====== Resumen operativo de empresas ======
+
+  private actualizarResumenEmpresas(): void {
+    const solicitudes = this.dataSourceEmpresas.data;
+
+    const empresas = new Set(
+      solicitudes
+        .map((item) =>
+          String(
+            item.solicitud.empresa?.empresaId ??
+              item.solicitud.empresa?.razonSocialEmpresa ??
+              '',
+          ).trim(),
+        )
+        .filter(Boolean),
+    );
+
+    const programaciones = new Set(
+      solicitudes
+        .map((item) =>
+          String(
+            item.solicitud.empresa?.programacionEmpresaId ??
+              item.solicitud.empresa?.codProgramacion ??
+              '',
+          ).trim(),
+        )
+        .filter(Boolean),
+    );
+
+    this.resumenEmpresas = {
+      solicitudes: solicitudes.length,
+      empresas: empresas.size,
+      programaciones: programaciones.size,
+      pendientesMuestra: solicitudes.filter(
+        (item) => item.solicitud.estadoOperativo.codigo === 'PENDIENTE_MUESTRAS',
+      ).length,
+      pruebasCompletas: solicitudes.reduce(
+        (total, item) => total + (item.resultados.resumen?.completos ?? 0),
+        0,
+      ),
+      pruebasValidadas: solicitudes.reduce(
+        (total, item) => total + (item.resultados.resumen?.validados ?? 0),
+        0,
+      ),
+      pruebasLiberadas: solicitudes.reduce(
+        (total, item) => total + (item.resultados.resumen?.liberados ?? 0),
+        0,
+      ),
+    };
   }
 
   // ====== Recalcular resumen en memoria ======
@@ -1097,6 +1222,20 @@ export class ResultadosLaboratorioComponent implements OnInit, AfterViewInit {
 
       default:
         return 'estado-chip resultado-pendiente';
+    }
+  }
+
+  obtenerClasePrioridadEmpresa(prioridad: string | null | undefined): string {
+    switch (String(prioridad ?? '').trim().toUpperCase()) {
+      case 'URGENTE':
+      case 'ALTA':
+        return 'prioridad-chip prioridad-alta';
+
+      case 'BAJA':
+        return 'prioridad-chip prioridad-baja';
+
+      default:
+        return 'prioridad-chip prioridad-normal';
     }
   }
 

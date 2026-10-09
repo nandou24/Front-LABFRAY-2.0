@@ -1,19 +1,255 @@
-.modulo-entregas { padding: 16px; }
-header h2 { margin: 0 0 6px; font-size: 1.25rem; }
-header p { margin: 0 0 18px; color: #64748b; }
-.busqueda { display: flex; flex-wrap: wrap; align-items: end; gap: 10px; margin-bottom: 18px; }
-.busqueda label { display: flex; flex-direction: column; gap: 4px; color: #475569; font-size: .76rem; }
-.busqueda .buscador { flex: 1 1 280px; }
-.busqueda input { box-sizing: border-box; height: 40px; border: 1px solid #9ca3af; border-radius: 5px; padding: 0 12px; font: inherit; min-width: 120px; }
-.busqueda input[type=search] { width: 100%; }
-.cargando { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 24px; }
-.tabla-scroll { overflow-x: auto; margin-top: 14px; }
-table { border-collapse: collapse; min-width: 980px; width: 100%; font-size: .8rem; }
-tr { border-bottom: 1px solid #e2e8f0; }
-thead { color: #475569; background: #f8fafc; }
-th, td { text-align: left; padding: 11px 12px; }
-tbody tr:hover { background: #f3f7fc; }
-.estado { padding: 4px 8px; border-radius: 6px; border: 1px solid #fcd34d; color: #92400e; background: #fffbeb; font-weight: 700; }
-.estado.final { color: #166534; border-color: #86efac; background: #ecfdf5; }
-.contador { margin-top: 7px; color: #475569; font-size: .78rem; }
-.vacio { color: #64748b; text-align: center; padding: 28px; }
+.modulo-entregas {
+  padding: 16px;
+}
+
+.encabezado-pagina h2 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.encabezado-pagina p {
+  margin: 4px 0 16px;
+  color: #64748b;
+}
+
+// ====== Búsqueda ======
+.busqueda-container {
+  display: grid;
+  grid-template-columns: minmax(320px, 1fr) minmax(260px, 320px) 180px 180px auto auto;
+  align-items: start;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.busqueda-container mat-form-field {
+  width: 100%;
+}
+
+.campo-busqueda {
+  min-width: 320px;
+}
+
+.campo-empresa {
+  min-width: 260px;
+}
+
+.campo-fecha {
+  min-width: 170px;
+}
+
+.boton-buscar,
+.boton-hoy {
+  margin-top: 4px;
+  min-height: 48px;
+  align-self: start;
+}
+
+.cargando,
+.progreso-zip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 24px;
+}
+
+.progreso-zip {
+  padding: 12px;
+  color: #1e3a5f;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  margin-top: 12px;
+}
+
+// ====== Descarga múltiple ======
+.acciones-masivas {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid #dbe5f1;
+  border-radius: 8px;
+  background: #f8fbff;
+}
+
+.ayuda-masiva {
+  margin-right: auto;
+  color: #64748b;
+  font-size: 0.78rem;
+}
+
+.resumen-seleccion {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-right: auto;
+  color: #334155;
+}
+
+.resumen-seleccion span {
+  color: #64748b;
+  font-size: 0.76rem;
+}
+
+.botones-seleccion {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+// ====== Tabla ======
+.tabla-scroll {
+  overflow-x: auto;
+  margin-top: 14px;
+}
+
+table {
+  border-collapse: collapse;
+  min-width: 980px;
+  width: 100%;
+  font-size: 0.8rem;
+}
+
+tr {
+  border-bottom: 1px solid #e2e8f0;
+}
+
+thead {
+  color: #475569;
+  background: #f8fafc;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 11px 12px;
+}
+
+tbody tr:hover {
+  background: #f3f7fc;
+}
+
+.estado {
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid #fcd34d;
+  color: #92400e;
+  background: #fffbeb;
+  font-weight: 700;
+}
+
+.estado.final {
+  color: #166534;
+  border-color: #86efac;
+  background: #ecfdf5;
+}
+
+.contador {
+  margin-top: 7px;
+  color: #475569;
+  font-size: 0.78rem;
+}
+
+.vacio {
+  color: #64748b;
+  text-align: center;
+  padding: 28px;
+}
+
+table.tabla-empresa {
+  min-width: 1420px;
+}
+
+.dato-secundario {
+  margin-top: 3px;
+  color: #64748b;
+  font-size: 0.72rem;
+}
+
+.tabla-empresa tbody tr:hover {
+  background: #eaf3ff;
+}
+
+.tabla-empresa tbody tr.fila-seleccionada {
+  background: #dbeafe;
+}
+
+.tabla-empresa tbody tr.fila-seleccionada:hover {
+  background: #d3e7ff;
+}
+
+// ====== Área amplia para seleccionar ======
+.columna-seleccion {
+  width: 78px;
+  text-align: center;
+}
+
+.celda-seleccion {
+  width: 78px;
+  min-width: 78px;
+  padding: 0;
+  text-align: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.celda-seleccion:not(.no-seleccionable):hover {
+  background: #cfe3fb;
+}
+
+.celda-seleccion.no-seleccionable {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.checkbox-grande {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 62px;
+  min-height: 54px;
+  transform: scale(1.18);
+}
+
+@media (max-width: 1500px) {
+  .busqueda-container {
+    grid-template-columns: minmax(300px, 1fr) minmax(240px, 300px) 170px 170px auto auto;
+  }
+}
+
+@media (max-width: 1180px) {
+  .busqueda-container {
+    grid-template-columns: repeat(2, minmax(240px, 1fr));
+  }
+
+  .campo-busqueda,
+  .campo-empresa,
+  .campo-fecha {
+    min-width: 0;
+  }
+
+  .boton-buscar,
+  .boton-hoy {
+    width: 100%;
+    margin-top: 0;
+  }
+
+  .acciones-masivas {
+    justify-content: flex-start;
+  }
+
+  .botones-seleccion {
+    width: 100%;
+  }
+}
+
+@media (max-width: 720px) {
+  .busqueda-container {
+    grid-template-columns: 1fr;
+  }
+}

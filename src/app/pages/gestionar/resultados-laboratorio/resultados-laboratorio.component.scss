@@ -32,6 +32,19 @@
   flex: 1 1 360px;
 }
 
+
+.acciones-tab {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 0 0;
+}
+
+.accion-liberar-masivo {
+  --mdc-filled-button-container-color: #15803d;
+  --mdc-filled-button-label-text-color: #ffffff;
+}
+
 .table-container {
   width: 100%;
   overflow-x: auto;
@@ -192,12 +205,13 @@
 .celda-detalle {
   padding: 0 !important;
   border-bottom: 0;
+  background: #eef6ff;
 }
 
 .detalle-expandido {
-  margin: 0 8px 12px;
+  margin: 0 0 12px;
   padding: 16px;
-  background: #f8fbff;
+  background: #eef6ff;
   border: 1px solid #bfdbfe;
   border-top: 0;
   border-radius: 0 0 10px 10px;
@@ -225,7 +239,7 @@
 
 .indicadores-operativos {
   display: grid;
-  grid-template-columns: repeat(4, minmax(120px, 1fr));
+  grid-template-columns: repeat(3, minmax(120px, 1fr));
   gap: 10px;
   margin: 14px 0;
 }
@@ -270,6 +284,14 @@
 
 .detalle-table-container table {
   min-width: 900px;
+}
+
+.detalle-table-container .fila-prueba-resultado td {
+  transition: background-color 140ms ease;
+}
+
+.detalle-table-container .fila-prueba-resultado:hover td {
+  background: #dbeafe !important;
 }
 
 .bloqueado-muestra {
@@ -324,4 +346,87 @@
 .accion-reabrir {
   color: #0b63c7;
   border-color: #93c5fd;
+}
+
+
+// ====== Bandeja corporativa ======
+
+.resumen-empresas-operativo {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(120px, 1fr));
+  gap: 10px;
+  padding-top: 12px;
+}
+
+.resumen-empresas-operativo > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border: 1px solid #dbe3ee;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.resumen-empresas-operativo strong {
+  font-size: 1.08rem;
+}
+
+.resumen-empresas-operativo span {
+  font-size: 0.74rem;
+  color: #64748b;
+}
+
+.resumen-empresas-operativo .resumen-alerta {
+  background: #fff7ed;
+  border-color: #fed7aa;
+}
+
+.resumen-empresas-operativo .resumen-ok {
+  background: #ecfdf5;
+  border-color: #bbf7d0;
+}
+
+.tabla-empresas {
+  min-width: 1500px !important;
+}
+
+.texto-secundario {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.72rem;
+  line-height: 1.2;
+  color: #64748b;
+}
+
+.prioridad-chip.mat-mdc-chip {
+  min-height: 28px;
+  border: 1px solid;
+  font-weight: 600;
+  --mdc-chip-label-text-color: currentColor;
+}
+
+.prioridad-normal.mat-mdc-chip {
+  color: #334155;
+  border-color: #cbd5e1;
+  --mdc-chip-elevated-container-color: #f8fafc;
+}
+
+.prioridad-alta.mat-mdc-chip {
+  color: #b91c1c;
+  border-color: #fca5a5;
+  --mdc-chip-elevated-container-color: #fee2e2;
+}
+
+.prioridad-baja.mat-mdc-chip {
+  color: #166534;
+  border-color: #86efac;
+  --mdc-chip-elevated-container-color: #dcfce7;
+}
+
+
+@media (max-width: 1200px) {
+  .resumen-empresas-operativo {
+    grid-template-columns: repeat(4, minmax(120px, 1fr));
+  }
 }
