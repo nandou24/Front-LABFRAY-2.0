@@ -57,12 +57,23 @@
 
 <mat-dialog-actions align="end">
   <span *ngIf="esVistaIndividual" class="nota-8b">
-    Impresión individual · LK-B24 · 50 × 25 mm · escala 100 %
+    Impresión individual / reimpresión · LK-B24 · 50 × 25 mm · escala 100 %
   </span>
 
   <span *ngIf="!esVistaIndividual" class="nota-8b">
-    Impresión grupal · {{ data.etiquetas.length }} etiquetas · 50 × 25 mm · escala 100 %
+    Impresión grupal / reimpresión · {{ data.etiquetas.length }} etiquetas · 50 × 25 mm · escala 100 %
   </span>
+
+  <button
+    *ngIf="esVistaIndividual"
+    mat-stroked-button
+    type="button"
+    [disabled]="!puedeImprimirIndividual || imprimiendoLocal"
+    (click)="imprimirEtiquetaDirecta()"
+  >
+    <mat-icon>print</mat-icon>
+    {{ imprimiendoLocal ? 'Enviando...' : 'Imprimir / Reimprimir directo LK-B24' }}
+  </button>
 
   <button
     *ngIf="esVistaIndividual"
@@ -73,6 +84,17 @@
   >
     <mat-icon>print</mat-icon>
     Imprimir etiqueta
+  </button>
+
+  <button
+    *ngIf="!esVistaIndividual"
+    mat-stroked-button
+    type="button"
+    [disabled]="!puedeImprimirTodas || imprimiendoLocal"
+    (click)="imprimirTodasEtiquetasDirectas()"
+  >
+    <mat-icon>print</mat-icon>
+    {{ imprimiendoLocal ? 'Enviando...' : 'Imprimir / Reimprimir todas directo LK-B24' }}
   </button>
 
   <button
