@@ -2,7 +2,7 @@
   <header class="encabezado-pagina">
     <div>
       <h2>Consulta y Entrega de Resultados</h2>
-      <p>Consulta resultados liberados y prepara entregas individuales o descargas internas.</p>
+      <p>Consulta el avance de las pruebas, resultados liberados y prepara entregas o descargas internas.</p>
     </div>
   </header>
 
@@ -82,7 +82,7 @@
 
   <div class="cargando" *ngIf="cargando">
     <mat-spinner diameter="28"></mat-spinner>
-    Consultando resultados liberados...
+    Consultando resultados y seguimiento...
   </div>
 
   <mat-tab-group
@@ -95,6 +95,40 @@
     ></mat-tab>
     <mat-tab [label]="'Empresas (' + totalOrigen('EMPRESA') + ')'" ></mat-tab>
   </mat-tab-group>
+
+  <!-- ====== Semáforo de plazos ====== -->
+  <section class="panel-semaforo" *ngIf="!cargando">
+    <div class="semaforo-cards">
+      <div class="tarjeta-semaforo semaforo-en-plazo">
+        <strong>{{ resumenPlazosActual.enPlazo }}</strong>
+        <span>En plazo</span>
+      </div>
+
+      <div class="tarjeta-semaforo semaforo-proximo">
+        <strong>{{ resumenPlazosActual.proximos }}</strong>
+        <span>Próx. 24 h</span>
+      </div>
+
+      <div class="tarjeta-semaforo semaforo-hoy">
+        <strong>{{ resumenPlazosActual.hoy }}</strong>
+        <span>Vencen hoy</span>
+      </div>
+
+      <div class="tarjeta-semaforo semaforo-vencido">
+        <strong>{{ resumenPlazosActual.vencidos }}</strong>
+        <span>Vencidos</span>
+      </div>
+    </div>
+
+    <mat-checkbox
+      class="filtro-alertas-plazo"
+      [checked]="soloAlertasPlazo"
+      [disabled]="totalAlertasPlazoActual === 0 && !soloAlertasPlazo"
+      (change)="cambiarSoloAlertasPlazo($event.checked)"
+    >
+      Solo alertas de plazo ({{ totalAlertasPlazoActual }})
+    </mat-checkbox>
+  </section>
 
   <!-- ====== Descarga múltiple interna ====== -->
   <div class="acciones-masivas" *ngIf="!cargando && tabActivo === 1">
@@ -192,88 +226,219 @@
       </thead>
 
       <tbody>
-        <tr
-          *ngFor="let fila of visibles"
-          [class.completa]="fila.resumen.tipoDisponibilidad === 'COMPLETA'"
-          [class.fila-seleccionada]="
-            modoSeleccionEmpresa && estaSeleccionadaEmpresa(fila)
-          "
-        >
-          <td
-            *ngIf="tabActivo === 1 && modoSeleccionEmpresa"
-            class="celda-seleccion"
-            [class.no-seleccionable]="!esSeleccionableEmpresa(fila)"
-            (click)="alternarSeleccionEmpresa(fila)"
+        <ng-container *ngFor="let fila of visibles">
+          <tr
+            [class.completa]="fila.resumen.tipoDisponibilidad === 'COMPLETA'"
+            [ngClass]="claseSemaforoFila(fila)"
+            [class.fila-seleccionada]="
+              modoSeleccionEmpresa && estaSeleccionadaEmpresa(fila)
+            "
+            [class.fila-seleccionable]="
+              tabActivo === 1 && modoSeleccionEmpresa && esSeleccionableEmpresa(fila)
+            "
+            (click)="manejarClickFila(fila)"
           >
-            <mat-checkbox
-              class="checkbox-grande"
-              [checked]="estaSeleccionadaEmpresa(fila)"
-              [disabled]="!esSeleccionableEmpresa(fila) || descargandoZip"
-              (click)="$event.stopPropagation()"
-              (change)="cambiarSeleccionEmpresa(fila, $event.checked)"
-              aria-label="Seleccionar informe para ZIP"
-            ></mat-checkbox>
-          </td>
-
-          <td><strong>{{ fila.codigoLaboratorio || '-' }}</strong></td>
-          <td>{{ fila.codSolicitud }}</td>
-
-          <td *ngIf="tabActivo === 1">
-            <strong>{{ fila.empresa?.codProgramacion || '-' }}</strong>
-          </td>
-
-          <td *ngIf="tabActivo === 1">
-            <strong>{{ fila.empresa?.codProtocolo || '-' }}</strong>
-            <div class="dato-secundario" *ngIf="fila.empresa?.nombreProtocolo">
-              {{ fila.empresa?.nombreProtocolo }}
-            </div>
-          </td>
-
-          <td>{{ fila.fechaEmision | date: 'dd/MM/yyyy HH:mm' }}</td>
-          <td>{{ fila.paciente.hc }}</td>
-          <td>{{ fila.paciente.documento }}</td>
-          <td>{{ fila.paciente.nombreCompleto }}</td>
-
-          <td *ngIf="tabActivo === 1">
-            <strong>{{ fila.empresa?.razonSocialEmpresa || '-' }}</strong>
-            <div class="dato-secundario" *ngIf="fila.empresa?.rucEmpresa">
-              RUC {{ fila.empresa?.rucEmpresa }}
-            </div>
-          </td>
-
-          <td *ngIf="tabActivo === 1">{{ fila.empresa?.sede || '-' }}</td>
-
-          <td>
-            <span
-              class="estado"
-              [class.final]="fila.resumen.tipoDisponibilidad === 'COMPLETA'"
+            <td
+              *ngIf="tabActivo === 1 && modoSeleccionEmpresa"
+              class="celda-seleccion"
+              [class.no-seleccionable]="!esSeleccionableEmpresa(fila)"
+              (click)="$event.stopPropagation(); alternarSeleccionEmpresa(fila)"
             >
-              {{
-                fila.resumen.tipoDisponibilidad === 'COMPLETA'
-                  ? 'COMPLETA'
-                  : fila.resumen.tipoDisponibilidad === 'SIN_VIGENTES'
-                    ? 'HISTÓRICO'
-                    : 'PARCIAL'
-              }}
-            </span>
-            <div class="contador">
-              {{ fila.resumen.liberados }} de
-              {{ fila.resumen.totalPruebas }} liberados
-            </div>
-          </td>
+              <mat-checkbox
+                class="checkbox-grande"
+                [checked]="estaSeleccionadaEmpresa(fila)"
+                [disabled]="!esSeleccionableEmpresa(fila) || descargandoZip"
+                (click)="$event.stopPropagation()"
+                (change)="cambiarSeleccionEmpresa(fila, $event.checked)"
+                aria-label="Seleccionar informe para ZIP"
+              ></mat-checkbox>
+            </td>
 
-          <td>
-            <button
-              mat-stroked-button
-              type="button"
-              (click)="abrirInforme(fila)"
-              [disabled]="descargandoZip"
+            <td><strong>{{ fila.codigoLaboratorio || '-' }}</strong></td>
+            <td>{{ fila.codSolicitud }}</td>
+
+            <td *ngIf="tabActivo === 1">
+              <strong>{{ fila.empresa?.codProgramacion || '-' }}</strong>
+            </td>
+
+            <td *ngIf="tabActivo === 1">
+              <strong>{{ fila.empresa?.codProtocolo || '-' }}</strong>
+              <div class="dato-secundario" *ngIf="fila.empresa?.nombreProtocolo">
+                {{ fila.empresa?.nombreProtocolo }}
+              </div>
+            </td>
+
+            <td>{{ fila.fechaEmision | date: 'dd/MM/yyyy HH:mm' }}</td>
+            <td>{{ fila.paciente.hc }}</td>
+            <td>{{ fila.paciente.documento }}</td>
+            <td>{{ fila.paciente.nombreCompleto }}</td>
+
+            <td *ngIf="tabActivo === 1">
+              <strong>{{ fila.empresa?.razonSocialEmpresa || '-' }}</strong>
+              <div class="dato-secundario" *ngIf="fila.empresa?.rucEmpresa">
+                RUC {{ fila.empresa?.rucEmpresa }}
+              </div>
+            </td>
+
+            <td *ngIf="tabActivo === 1">{{ fila.empresa?.sede || '-' }}</td>
+
+            <td>
+              <span class="estado" [ngClass]="claseDisponibilidad(fila)">
+                {{ etiquetaDisponibilidad(fila) }}
+              </span>
+              <div class="contador">
+                {{ fila.resumen.liberados }} de
+                {{ fila.resumen.totalPruebas }} liberados
+              </div>
+              <div
+                class="contador contador-alerta"
+                *ngIf="(fila.resumen.pendientesMuestra ?? 0) > 0"
+              >
+                {{ fila.resumen.pendientesMuestra }} con muestra pendiente
+              </div>
+              <div
+                class="contador resumen-plazo-fila"
+                *ngIf="textoResumenPlazoFila(fila)"
+                [ngClass]="clasePlazoPrueba(fila.resumen.semaforoPlazo)"
+              >
+                {{ textoResumenPlazoFila(fila) }}
+              </div>
+            </td>
+
+            <td>
+              <div class="acciones-fila">
+                <button
+                  mat-stroked-button
+                  type="button"
+                  (click)="alternarSeguimiento(fila); $event.stopPropagation()"
+                  [disabled]="descargandoZip"
+                >
+                  <mat-icon>
+                    {{ estaSeguimientoExpandido(fila) ? 'expand_less' : 'query_stats' }}
+                  </mat-icon>
+                  {{ estaSeguimientoExpandido(fila) ? 'Cerrar estado' : 'Ver estado' }}
+                </button>
+
+                <button
+                  *ngIf="fila.resumen.liberados > 0 || fila.tieneHistorial"
+                  mat-stroked-button
+                  type="button"
+                  (click)="abrirInforme(fila); $event.stopPropagation()"
+                  [disabled]="descargandoZip"
+                >
+                  <mat-icon>description</mat-icon>
+                  {{ fila.resumen.liberados ? 'Ver informe' : 'Ver historial' }}
+                </button>
+              </div>
+            </td>
+          </tr>
+
+          <tr
+            *ngIf="estaSeguimientoExpandido(fila)"
+            class="fila-seguimiento"
+          >
+            <td
+              [attr.colspan]="
+                tabActivo === 1 ? (modoSeleccionEmpresa ? 13 : 12) : 8
+              "
             >
-              <mat-icon>description</mat-icon>
-              {{ fila.resumen.liberados ? 'Ver informe' : 'Ver historial' }}
-            </button>
-          </td>
-        </tr>
+              <div class="seguimiento-contenido">
+                <div class="seguimiento-titulo">
+                  <strong>Seguimiento de pruebas</strong>
+                  <span>
+                    Información operativa para recepción e informes. La fecha estimada se calcula desde la aceptación de la muestra usando el tiempo de respuesta configurado.
+                  </span>
+                </div>
+
+                <div class="seguimiento-tabla-scroll">
+                  <table class="tabla-seguimiento">
+                    <thead>
+                      <tr>
+                        <th>Prueba</th>
+                        <th>Muestra</th>
+                        <th>Estado resultado</th>
+                        <th>Tiempo respuesta</th>
+                        <th>Fecha estimada</th>
+                        <th>Plazo</th>
+                        <th>Situación</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let prueba of fila.pruebas">
+                        <td>
+                          <strong>{{ prueba.codPruebaLab }}</strong>
+                          <div>{{ prueba.nombrePruebaLab }}</div>
+                          <div class="dato-secundario" *ngIf="prueba.etiquetaInstancia">
+                            {{ prueba.etiquetaInstancia }}
+                          </div>
+                        </td>
+                        <td>
+                          <span
+                            class="estado-muestra"
+                            [class.muestra-ok]="
+                              prueba.muestra.estado === 'ACEPTADA' ||
+                              prueba.muestra.estado === 'NO_REQUIERE'
+                            "
+                            [class.muestra-alerta]="prueba.muestra.pendiente"
+                          >
+                            {{ prueba.muestra.descripcion }}
+                          </span>
+                          <div
+                            class="dato-secundario texto-error"
+                            *ngIf="prueba.muestra.motivo"
+                          >
+                            {{ prueba.muestra.motivo }}
+                          </div>
+                        </td>
+                        <td>
+                          <span
+                            class="estado-prueba"
+                            [class.resultado-liberado]="prueba.estadoResultado === 'LIBERADO'"
+                            [class.resultado-validado]="prueba.estadoResultado === 'VALIDADO'"
+                            [class.resultado-completo]="prueba.estadoResultado === 'COMPLETO'"
+                            [class.resultado-pendiente]="
+                              prueba.estadoResultado === 'PENDIENTE' ||
+                              prueba.estadoResultado === 'EN PROCESO'
+                            "
+                          >
+                            {{ prueba.estadoResultado }}
+                          </span>
+                        </td>
+                        <td>
+                          {{ textoTiempoRespuesta(prueba.tiempoRespuesta, prueba.diasRespuesta) }}
+                        </td>
+                        <td>
+                          <ng-container *ngIf="prueba.fechaEstimada; else sinFechaEstimada">
+                            <strong [ngClass]="clasePlazoPrueba(prueba.estadoPlazo)">
+                              {{ prueba.fechaEstimada | date: 'dd/MM/yyyy HH:mm' }}
+                            </strong>
+                          </ng-container>
+                          <ng-template #sinFechaEstimada>
+                            <span *ngIf="prueba.muestra.pendiente; else sinEstimacion">
+                              Inicia al aceptar muestra
+                            </span>
+                            <ng-template #sinEstimacion>-</ng-template>
+                          </ng-template>
+                        </td>
+                        <td>
+                          <span
+                            class="chip-plazo"
+                            [ngClass]="clasePlazoPrueba(prueba.estadoPlazo)"
+                          >
+                            {{ prueba.etiquetaPlazo }}
+                          </span>
+                        </td>
+                        <td [class.texto-error]="prueba.estadoPlazo === 'VENCIDO'">
+                          {{ prueba.situacion }}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </td>
+          </tr>
+        </ng-container>
 
         <tr *ngIf="filtradas.length === 0">
           <td
@@ -282,7 +447,11 @@
             "
             class="vacio"
           >
-            No hay resultados liberados para este criterio.
+            {{
+              soloAlertasPlazo
+                ? 'No hay solicitudes con alertas de plazo para este criterio.'
+                : 'No hay solicitudes de laboratorio para este criterio.'
+            }}
           </td>
         </tr>
       </tbody>

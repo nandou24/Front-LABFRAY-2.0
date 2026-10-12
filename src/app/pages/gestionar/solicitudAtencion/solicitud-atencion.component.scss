@@ -45,7 +45,7 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 
 .mat-mdc-row:hover .mat-mdc-cell {
-  background-color: #dfe9f3;
+  background-color: #eaf3ff;
   cursor: pointer;
 }
 
@@ -187,7 +187,7 @@ tr.example-element-row {
 }
 
 tr.example-element-row:not(.example-expanded-row):hover {
-  background: whitesmoke;
+  background: #eaf3ff;
 }
 
 tr.example-element-row:not(.example-expanded-row):active {
@@ -261,6 +261,10 @@ tr.example-element-row:not(.example-expanded-row):active {
 
   tr:last-child td {
     border-bottom: none;
+  }
+
+  tbody tr:hover td {
+    background-color: #eaf3ff;
   }
 
   mat-chip {

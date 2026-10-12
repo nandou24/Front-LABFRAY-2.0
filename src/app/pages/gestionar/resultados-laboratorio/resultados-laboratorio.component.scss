@@ -184,7 +184,7 @@
 // ====== Detalle expandido ======
 
 .fila-solicitud:hover td {
-  background: #f8fafc;
+  background: #eaf3ff;
 }
 
 // ====== Resaltar solicitud expandida ======
@@ -196,6 +196,10 @@
 
 .fila-solicitud:has(+ .fila-detalle[style*='table-row']) td:first-child {
   box-shadow: inset 4px 0 0 #2563eb;
+}
+
+.fila-solicitud:has(+ .fila-detalle[style*='table-row']):hover td {
+  background: #eaf3ff !important;
 }
 
 .fila-detalle {
@@ -291,7 +295,7 @@
 }
 
 .detalle-table-container .fila-prueba-resultado:hover td {
-  background: #dbeafe !important;
+  background: #eaf3ff !important;
 }
 
 .bloqueado-muestra {

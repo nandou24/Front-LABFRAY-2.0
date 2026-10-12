@@ -87,6 +87,8 @@ export class EntregaResultadosComponent implements OnInit {
   modoSeleccionEmpresa = false;
   descargandoZip = false;
   progresoZip = '';
+  filaSeguimientoId: string | null = null;
+  soloAlertasPlazo = false;
   tabActivo = 0;
   pagina = 0;
   tamanoPagina = 25;
@@ -133,9 +135,46 @@ export class EntregaResultadosComponent implements OnInit {
       });
   }
 
-  get filtradas(): IFilaEntrega[] {
+  private get filasOrigenActivo(): IFilaEntrega[] {
     const origen = this.tabActivo === 0 ? 'PARTICULAR' : 'EMPRESA';
     return this.bandeja.filter((fila) => fila.origenAtencion === origen);
+  }
+
+  get filtradas(): IFilaEntrega[] {
+    const filas = this.filasOrigenActivo;
+
+    if (!this.soloAlertasPlazo) {
+      return filas;
+    }
+
+    return filas.filter((fila) =>
+      ['PROXIMO', 'HOY', 'VENCIDO'].includes(
+        String(fila.resumen.semaforoPlazo ?? ''),
+      ),
+    );
+  }
+
+  get resumenPlazosActual(): {
+    enPlazo: number;
+    proximos: number;
+    hoy: number;
+    vencidos: number;
+  } {
+    return this.filasOrigenActivo.reduce(
+      (acumulado, fila) => {
+        acumulado.enPlazo += fila.resumen.enPlazo ?? 0;
+        acumulado.proximos += fila.resumen.proximosVencer ?? 0;
+        acumulado.hoy += fila.resumen.vencenHoy ?? 0;
+        acumulado.vencidos += fila.resumen.vencidos ?? fila.resumen.fueraPlazo ?? 0;
+        return acumulado;
+      },
+      { enPlazo: 0, proximos: 0, hoy: 0, vencidos: 0 },
+    );
+  }
+
+  get totalAlertasPlazoActual(): number {
+    const resumen = this.resumenPlazosActual;
+    return resumen.proximos + resumen.hoy + resumen.vencidos;
   }
 
   get visibles(): IFilaEntrega[] {
@@ -160,6 +199,7 @@ export class EntregaResultadosComponent implements OnInit {
   cambiarTab(index: number): void {
     this.tabActivo = index;
     this.pagina = 0;
+    this.filaSeguimientoId = null;
 
     if (index !== 1) {
       this.cancelarSeleccionEmpresa();
@@ -169,6 +209,67 @@ export class EntregaResultadosComponent implements OnInit {
   cambiarPagina(event: PageEvent): void {
     this.pagina = event.pageIndex;
     this.tamanoPagina = event.pageSize;
+  }
+
+  // ====== Filtro operativo de alertas de plazo ======
+  cambiarSoloAlertasPlazo(activo: boolean): void {
+    this.soloAlertasPlazo = activo;
+    this.pagina = 0;
+    this.filaSeguimientoId = null;
+
+    if (activo) {
+      this.cancelarSeleccionEmpresa();
+    }
+  }
+
+  claseSemaforoFila(fila: IFilaEntrega): string {
+    switch (fila.resumen.semaforoPlazo) {
+      case 'VENCIDO':
+        return 'fila-plazo-vencido';
+      case 'HOY':
+        return 'fila-plazo-hoy';
+      case 'PROXIMO':
+        return 'fila-plazo-proximo';
+      default:
+        return '';
+    }
+  }
+
+  clasePlazoPrueba(estado: string | null | undefined): string {
+    switch (estado) {
+      case 'VENCIDO':
+        return 'plazo-vencido';
+      case 'HOY':
+        return 'plazo-hoy';
+      case 'PROXIMO':
+        return 'plazo-proximo';
+      case 'EN_PLAZO':
+        return 'plazo-en-plazo';
+      case 'FINALIZADO':
+        return 'plazo-finalizado';
+      default:
+        return 'plazo-sin-fecha';
+    }
+  }
+
+  textoResumenPlazoFila(fila: IFilaEntrega): string {
+    const vencidos = fila.resumen.vencidos ?? fila.resumen.fueraPlazo ?? 0;
+    const hoy = fila.resumen.vencenHoy ?? 0;
+    const proximos = fila.resumen.proximosVencer ?? 0;
+
+    if (vencidos > 0) {
+      return `${vencidos} ${vencidos === 1 ? 'prueba vencida' : 'pruebas vencidas'}`;
+    }
+
+    if (hoy > 0) {
+      return `${hoy} ${hoy === 1 ? 'prueba vence hoy' : 'pruebas vencen hoy'}`;
+    }
+
+    if (proximos > 0) {
+      return `${proximos} ${proximos === 1 ? 'prueba próxima a vencer' : 'pruebas próximas a vencer'}`;
+    }
+
+    return '';
   }
 
   buscar(): void {
@@ -186,6 +287,7 @@ export class EntregaResultadosComponent implements OnInit {
     }
 
     this.cancelarSeleccionEmpresa();
+    this.filaSeguimientoId = null;
     this.cargando = true;
 
     this._service
@@ -233,6 +335,45 @@ export class EntregaResultadosComponent implements OnInit {
       autoFocus: false,
       data: { solicitudAtencionId: fila.solicitudAtencionId },
     });
+  }
+
+  // ====== Seguimiento operativo visible para Recepción ======
+  estaSeguimientoExpandido(fila: IFilaEntrega): boolean {
+    return this.filaSeguimientoId === fila.solicitudAtencionId;
+  }
+
+  alternarSeguimiento(fila: IFilaEntrega): void {
+    this.filaSeguimientoId = this.estaSeguimientoExpandido(fila)
+      ? null
+      : fila.solicitudAtencionId;
+  }
+
+  manejarClickFila(fila: IFilaEntrega): void {
+    if (this.tabActivo === 1 && this.modoSeleccionEmpresa) {
+      this.alternarSeleccionEmpresa(fila);
+    }
+  }
+
+  etiquetaDisponibilidad(fila: IFilaEntrega): string {
+    if (fila.resumen.tipoDisponibilidad === 'COMPLETA') return 'COMPLETA';
+    if (fila.resumen.tipoDisponibilidad === 'PARCIAL') return 'PARCIAL';
+    if ((fila.resumen.pendientesMuestra ?? 0) > 0) return 'PEND. MUESTRA';
+    if (fila.resumen.totalPruebas > 0) return 'EN PROCESO';
+    return 'HISTÓRICO';
+  }
+
+  claseDisponibilidad(fila: IFilaEntrega): string {
+    if (fila.resumen.tipoDisponibilidad === 'COMPLETA') return 'final';
+    if ((fila.resumen.pendientesMuestra ?? 0) > 0) return 'muestra-pendiente';
+    return 'proceso';
+  }
+
+  textoTiempoRespuesta(valor: string | null | undefined, dias: number | null | undefined): string {
+    if (dias !== null && dias !== undefined) {
+      return `${dias} día${dias === 1 ? '' : 's'}`;
+    }
+
+    return String(valor ?? '').trim() || '-';
   }
 
   // ====== Activar selección para descarga múltiple ======

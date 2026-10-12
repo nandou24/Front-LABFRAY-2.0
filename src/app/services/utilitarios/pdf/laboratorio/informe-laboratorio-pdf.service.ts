@@ -577,7 +577,7 @@ export class InformeLaboratorioPdfService {
       y,
       margen,
       'Paciente:',
-      paciente.nombreCompleto || '-',
+      this.nombrePacienteInforme(paciente),
       127,
       'HC:',
       paciente.hc || '-',
@@ -602,6 +602,19 @@ export class InformeLaboratorioPdfService {
       'Fecha atención:',
       this.formatearFecha(fechaAtencion),
     );
+
+    if (informe.solicitud.origenAtencion === 'EMPRESA' && informe.solicitud.empresa) {
+      y = this.dibujarDatoDoble(
+        doc,
+        y,
+        margen,
+        'Empresa:',
+        informe.solicitud.empresa.razonSocialEmpresa || '-',
+        127,
+        'RUC:',
+        informe.solicitud.empresa.rucEmpresa || '-',
+      );
+    }
 
     doc.setFont('helvetica', 'bold');
     doc.text('Solicitud:', margen, y);
@@ -671,6 +684,28 @@ export class InformeLaboratorioPdfService {
     );
 
     return y + 2.3;
+  }
+
+  private nombrePacienteInforme(
+    paciente: IInformeEntregable['solicitud']['paciente'],
+  ): string {
+    const nombrePreferido = String(paciente.nombreInforme ?? '').trim();
+
+    if (nombrePreferido) {
+      return nombrePreferido;
+    }
+
+    const compuesto = [
+      paciente.apellidoPaterno,
+      paciente.apellidoMaterno,
+      paciente.nombres,
+    ]
+      .map((valor) => String(valor ?? '').trim())
+      .filter(Boolean)
+      .join(' ')
+      .trim();
+
+    return compuesto || paciente.nombreCompleto || '-';
   }
 
   private dibujarDatoDoble(

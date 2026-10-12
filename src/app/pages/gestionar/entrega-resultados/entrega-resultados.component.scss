@@ -131,7 +131,7 @@ td {
 }
 
 tbody tr:hover {
-  background: #f3f7fc;
+  background: #eaf3ff;
 }
 
 .estado {
@@ -251,5 +251,307 @@ table.tabla-empresa {
 @media (max-width: 720px) {
   .busqueda-container {
     grid-template-columns: 1fr;
+  }
+}
+
+// ====== Seguimiento operativo ======
+.acciones-fila {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.fila-seleccionable {
+  cursor: pointer;
+}
+
+.fila-seguimiento > td {
+  padding: 0;
+  background: #f8fbff;
+}
+
+.seguimiento-contenido {
+  padding: 14px 18px 16px;
+  border-top: 1px solid #cbd5e1;
+  border-bottom: 1px solid #dbeafe;
+}
+
+.seguimiento-titulo {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-bottom: 10px;
+  color: #1e293b;
+}
+
+.seguimiento-titulo span {
+  color: #64748b;
+  font-size: 0.76rem;
+}
+
+.seguimiento-tabla-scroll {
+  overflow-x: auto;
+}
+
+.tabla-seguimiento {
+  min-width: 1080px;
+  width: 100%;
+  background: #ffffff;
+  border: 1px solid #dbe5f1;
+  border-radius: 8px;
+}
+
+.tabla-seguimiento th,
+.tabla-seguimiento td {
+  padding: 9px 10px;
+  vertical-align: top;
+}
+
+.tabla-seguimiento tbody tr:hover {
+  background: #eaf3ff;
+}
+
+.estado.proceso {
+  color: #1d4ed8;
+  border-color: #93c5fd;
+  background: #eff6ff;
+}
+
+.estado.muestra-pendiente {
+  color: #92400e;
+  border-color: #fbbf24;
+  background: #fffbeb;
+}
+
+.estado.vencido {
+  color: #b91c1c;
+  border-color: #fca5a5;
+  background: #fef2f2;
+}
+
+.contador-alerta {
+  color: #92400e;
+}
+
+.contador-vencido,
+.texto-error {
+  color: #b91c1c;
+}
+
+.estado-muestra,
+.estado-prueba {
+  display: inline-block;
+  padding: 3px 7px;
+  border-radius: 5px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.muestra-ok,
+.resultado-liberado {
+  color: #166534;
+  border-color: #86efac;
+  background: #ecfdf5;
+}
+
+.muestra-alerta,
+.resultado-pendiente {
+  color: #92400e;
+  border-color: #fcd34d;
+  background: #fffbeb;
+}
+
+.resultado-completo {
+  color: #075985;
+  border-color: #7dd3fc;
+  background: #f0f9ff;
+}
+
+.resultado-validado {
+  color: #6b21a8;
+  border-color: #d8b4fe;
+  background: #faf5ff;
+}
+
+// ====== Semáforo de plazos ======
+.panel-semaforo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid #dbe5f1;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.semaforo-cards {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(118px, 1fr));
+  gap: 8px;
+  flex: 1 1 560px;
+}
+
+.tarjeta-semaforo {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-height: 44px;
+  padding: 9px 12px;
+  border: 1px solid #dbe5f1;
+  border-radius: 7px;
+  background: #f8fafc;
+}
+
+.tarjeta-semaforo strong {
+  font-size: 1.05rem;
+}
+
+.tarjeta-semaforo span {
+  font-size: 0.76rem;
+  color: #475569;
+}
+
+.semaforo-en-plazo {
+  border-color: #86efac;
+  background: #f0fdf4;
+}
+
+.semaforo-en-plazo strong {
+  color: #166534;
+}
+
+.semaforo-proximo {
+  border-color: #fde68a;
+  background: #fefce8;
+}
+
+.semaforo-proximo strong {
+  color: #854d0e;
+}
+
+.semaforo-hoy {
+  border-color: #fdba74;
+  background: #fff7ed;
+}
+
+.semaforo-hoy strong {
+  color: #c2410c;
+}
+
+.semaforo-vencido {
+  border-color: #fca5a5;
+  background: #fef2f2;
+}
+
+.semaforo-vencido strong {
+  color: #b91c1c;
+}
+
+.filtro-alertas-plazo {
+  flex: 0 0 auto;
+  font-weight: 600;
+}
+
+// ====== Prioridad visual por solicitud ======
+tbody tr.fila-plazo-proximo {
+  background: #fffdf0;
+}
+
+tbody tr.fila-plazo-proximo:hover {
+  background: #eaf3ff;
+}
+
+tbody tr.fila-plazo-hoy {
+  background: #fff7ed;
+}
+
+tbody tr.fila-plazo-hoy:hover {
+  background: #eaf3ff;
+}
+
+tbody tr.fila-plazo-vencido {
+  background: #fff1f2;
+}
+
+tbody tr.fila-plazo-vencido:hover {
+  background: #eaf3ff;
+}
+
+.resumen-plazo-fila {
+  font-weight: 700;
+}
+
+.plazo-en-plazo {
+  color: #166534;
+}
+
+.plazo-proximo {
+  color: #854d0e;
+}
+
+.plazo-hoy {
+  color: #c2410c;
+}
+
+.plazo-vencido {
+  color: #b91c1c;
+}
+
+.plazo-finalizado,
+.plazo-sin-fecha {
+  color: #64748b;
+}
+
+.chip-plazo {
+  display: inline-block;
+  padding: 3px 7px;
+  border: 1px solid #cbd5e1;
+  border-radius: 5px;
+  background: #f8fafc;
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.chip-plazo.plazo-en-plazo {
+  border-color: #86efac;
+  background: #f0fdf4;
+}
+
+.chip-plazo.plazo-proximo {
+  border-color: #fde68a;
+  background: #fefce8;
+}
+
+.chip-plazo.plazo-hoy {
+  border-color: #fdba74;
+  background: #fff7ed;
+}
+
+.chip-plazo.plazo-vencido {
+  border-color: #fca5a5;
+  background: #fef2f2;
+}
+
+.chip-plazo.plazo-finalizado,
+.chip-plazo.plazo-sin-fecha {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+}
+
+@media (max-width: 900px) {
+  .semaforo-cards {
+    grid-template-columns: repeat(2, minmax(120px, 1fr));
+    flex-basis: 100%;
+  }
+
+  .filtro-alertas-plazo {
+    width: 100%;
   }
 }

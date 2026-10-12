@@ -116,7 +116,7 @@ td {
 }
 
 .fila-solicitud:hover td {
-  background: #f8fafc;
+  background: #eaf3ff;
 }
 
 .fila-expandida-activa td {
@@ -127,6 +127,10 @@ td {
 
 .fila-expandida-activa td:first-child {
   box-shadow: inset 4px 0 0 #2563eb;
+}
+
+.fila-solicitud.fila-expandida-activa:hover td {
+  background: #eaf3ff !important;
 }
 
 .fila-detalle-expandida td {

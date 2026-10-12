@@ -1,7 +1,11 @@
 // ====== Contratos exclusivos del módulo de Recepción ======
 export interface IPacienteEntrega {
   pacienteId?: string | null;
+  nombres?: string;
+  apellidoPaterno?: string;
+  apellidoMaterno?: string;
   nombreCompleto: string;
+  nombreInforme?: string;
   hc: string;
   documento: string;
   sexo?: string | null;
@@ -26,6 +30,70 @@ export interface IResumenEntrega {
   liberados: number;
   pendientes: number;
   tipoDisponibilidad: 'SIN_VIGENTES' | 'PARCIAL' | 'COMPLETA';
+  pendientesMuestra?: number;
+  enProceso?: number;
+  completos?: number;
+  validados?: number;
+  enPlazo?: number;
+  proximosVencer?: number;
+  vencenHoy?: number;
+  vencidos?: number;
+  fueraPlazo?: number;
+  semaforoPlazo?:
+    | 'EN_PLAZO'
+    | 'PROXIMO'
+    | 'HOY'
+    | 'VENCIDO'
+    | 'SIN_FECHA'
+    | 'FINALIZADO';
+}
+
+export interface IEstadoMuestraSeguimientoEntrega {
+  estado:
+    | 'NO_REQUIERE'
+    | 'PENDIENTE'
+    | 'RECOLECTADA'
+    | 'RECEPCIONADA'
+    | 'ACEPTADA'
+    | 'RECHAZADA'
+    | string;
+  descripcion: string;
+  pendiente: boolean;
+  fechaAceptacion?: string | null;
+  motivo?: string | null;
+}
+
+export interface IPruebaSeguimientoEntrega {
+  claveUnidad: string;
+  codPruebaLab: string;
+  nombrePruebaLab: string;
+  numeroInstancia: number;
+  etiquetaInstancia?: string | null;
+  estadoResultado:
+    | 'PENDIENTE'
+    | 'EN PROCESO'
+    | 'COMPLETO'
+    | 'VALIDADO'
+    | 'LIBERADO'
+    | 'ANULADO'
+    | string;
+  fechaValidacion?: string | null;
+  fechaLiberacion?: string | null;
+  tiempoRespuesta?: string | null;
+  diasRespuesta?: number | null;
+  fechaEstimada?: string | null;
+  estadoPlazo:
+    | 'EN_PLAZO'
+    | 'PROXIMO'
+    | 'HOY'
+    | 'VENCIDO'
+    | 'SIN_FECHA'
+    | 'FINALIZADO'
+    | string;
+  etiquetaPlazo: string;
+  fueraPlazo: boolean;
+  situacion: string;
+  muestra: IEstadoMuestraSeguimientoEntrega;
 }
 
 export interface IFilaEntrega {
@@ -37,6 +105,7 @@ export interface IFilaEntrega {
   paciente: IPacienteEntrega;
   empresa?: IEmpresaEntrega | null;
   resumen: IResumenEntrega;
+  pruebas: IPruebaSeguimientoEntrega[];
   tieneHistorial: boolean;
 }
 
