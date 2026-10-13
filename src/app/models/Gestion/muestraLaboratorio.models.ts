@@ -230,6 +230,8 @@ export interface IMuestraLaboratorio {
 
   fechaRecoleccion: Date | string | null;
 
+  fechaRegistroRecoleccion?: Date | string | null;
+
   observacionRecoleccion: string;
 
   // ====== Recepción ======
@@ -535,6 +537,8 @@ export interface IRecolectarMuestraDTO {
   unidadVolumenRecolectado?: UnidadVolumenMuestra | null;
 
   observacionRecoleccion?: string;
+
+  fechaRecoleccion?: string;
 }
 
 // ====== DTO recepción ======
@@ -1138,6 +1142,8 @@ export interface IRecolectarMuestrasMasivamenteDTO {
   muestras: IRecolectarMuestraMasivaItemDTO[];
 
   observacionRecoleccion?: string;
+
+  fechaRecoleccion?: string;
 }
 
 export interface IMuestraRecoleccionMasivaProcesada {
@@ -1162,6 +1168,8 @@ export interface IMuestraRecoleccionMasivaProcesada {
   usuarioRecoleccion: string | null;
 
   fechaRecoleccion: Date | string | null;
+
+  fechaRegistroRecoleccion?: Date | string | null;
 }
 
 export interface IMuestraRecoleccionMasivaNoProcesada {

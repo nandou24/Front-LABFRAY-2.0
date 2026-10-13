@@ -140,6 +140,7 @@ export class MantPruebaLabComponent implements OnInit, AfterViewInit {
       '',
       [Validators.required, Validators.pattern('^[1-9][0-9]*$')],
     ],
+    tipoDiasRespuesta: ['HABILES', [Validators.required]],
     observPruebas: [''],
 
     // En el formulario seguimos usando boolean.
@@ -842,6 +843,7 @@ export class MantPruebaLabComponent implements OnInit, AfterViewInit {
       condPreAnalitPaciente: '',
       condPreAnalitRefer: '',
       tiempoRespuesta: '',
+      tipoDiasRespuesta: 'HABILES',
       observPruebas: '',
       estadoPrueba: true,
       requiereMuestra: true,
@@ -1263,6 +1265,7 @@ export class MantPruebaLabComponent implements OnInit, AfterViewInit {
       condPreAnalitPaciente: formValue.condPreAnalitPaciente,
       condPreAnalitRefer: formValue.condPreAnalitRefer,
       tiempoRespuesta: formValue.tiempoRespuesta,
+      tipoDiasRespuesta: formValue.tipoDiasRespuesta ?? 'HABILES',
       observPruebas: formValue.observPruebas ?? '',
       estadoPrueba,
 
@@ -1451,6 +1454,7 @@ export class MantPruebaLabComponent implements OnInit, AfterViewInit {
       condPreAnalitPaciente: prueba.condPreAnalitPaciente,
       condPreAnalitRefer: prueba.condPreAnalitRefer,
       tiempoRespuesta: prueba.tiempoRespuesta,
+      tipoDiasRespuesta: prueba.tipoDiasRespuesta ?? 'HABILES',
       observPruebas: prueba.observPruebas ?? '',
       estadoPrueba: prueba.estadoPrueba === 'ACTIVO',
 

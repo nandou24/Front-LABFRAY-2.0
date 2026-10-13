@@ -51,7 +51,66 @@
               <div [style.flex]="setFlex(50, '%')" class="flex-item">
                 <mat-form-field appearance="outline">
                   <mat-label>Cotización de referencia</mat-label>
-                  <input matInput formControlName="nroCoti" maxlength="20" />
+                  <input
+                    matInput
+                    formControlName="nroCoti"
+                    maxlength="20"
+                    readonly
+                  />
+                  <mat-error
+                    *ngIf="protocoloForm.get('nroCoti')?.hasError('required')"
+                  >
+                    Seleccione una cotización de referencia
+                  </mat-error>
+                </mat-form-field>
+              </div>
+            </div>
+
+            <!-- ====== Plazo comprometido ====== -->
+            <div class="row-flex">
+              <div [style.flex]="setFlex(50, '%')" class="flex-item">
+                <mat-form-field appearance="outline">
+                  <mat-label>Plazo de resultados</mat-label>
+                  <input
+                    matInput
+                    type="number"
+                    min="1"
+                    step="1"
+                    formControlName="plazoCantidadDias"
+                  />
+                  <span matTextSuffix>&nbsp;días</span>
+                  <mat-hint *ngIf="esTipoReferencia">
+                    Se carga desde la última versión de la cotización y puede ajustarse.
+                  </mat-hint>
+                  <mat-error
+                    *ngIf="
+                      protocoloForm
+                        .get('plazoCantidadDias')
+                        ?.hasError('required')
+                    "
+                  >
+                    El plazo de resultados es obligatorio
+                  </mat-error>
+                  <mat-error
+                    *ngIf="
+                      protocoloForm.get('plazoCantidadDias')?.hasError('min') ||
+                      protocoloForm
+                        .get('plazoCantidadDias')
+                        ?.hasError('pattern')
+                    "
+                  >
+                    Ingrese un número entero mayor a cero
+                  </mat-error>
+                </mat-form-field>
+              </div>
+
+              <div [style.flex]="setFlex(50, '%')" class="flex-item">
+                <mat-form-field appearance="outline">
+                  <mat-label>Tipo de días</mat-label>
+                  <mat-select formControlName="plazoTipoDias">
+                    <mat-option value="HABILES">Días hábiles</mat-option>
+                    <mat-option value="CALENDARIO">Días calendario</mat-option>
+                  </mat-select>
                 </mat-form-field>
               </div>
             </div>

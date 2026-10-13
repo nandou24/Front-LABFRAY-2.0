@@ -29,6 +29,13 @@ export interface IServicioProtocolo {
   tipoServicio: string;
 }
 
+export type TipoDiasPlazoResultados = 'HABILES' | 'CALENDARIO';
+
+export interface IPlazoResultadosProtocolo {
+  cantidadDias: number;
+  tipoDias: TipoDiasPlazoResultados;
+}
+
 export interface IProtocoloEmpresa {
   _id?: string;
   codigoProtocolo: string;
@@ -39,6 +46,7 @@ export interface IProtocoloEmpresa {
   observaciones?: string;
   fechaInicioVigencia?: Date | string | null;
   fechaFinVigencia?: Date | string | null;
+  plazoResultados?: IPlazoResultadosProtocolo | null;
   servicios: IServicioProtocolo[];
 }
 

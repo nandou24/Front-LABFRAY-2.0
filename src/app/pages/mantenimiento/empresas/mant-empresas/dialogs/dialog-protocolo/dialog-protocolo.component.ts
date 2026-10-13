@@ -111,6 +111,15 @@ export class DialogProtocoloComponent implements OnInit {
     tipo: ['manual'],
     fechaInicioVigencia: [new Date()],
     fechaFinVigencia: [null],
+    plazoCantidadDias: [
+      null,
+      [
+        Validators.required,
+        Validators.min(1),
+        Validators.pattern(/^\d+$/),
+      ],
+    ],
+    plazoTipoDias: ['HABILES', [Validators.required]],
     observacionesProtocolo: [''],
   });
 
@@ -139,6 +148,8 @@ export class DialogProtocoloComponent implements OnInit {
       tipo: protocolo.tipo || 'manual',
       fechaInicioVigencia: protocolo.fechaInicioVigencia || null,
       fechaFinVigencia: protocolo.fechaFinVigencia || null,
+      plazoCantidadDias: protocolo.plazoResultados?.cantidadDias ?? null,
+      plazoTipoDias: protocolo.plazoResultados?.tipoDias || 'HABILES',
       observacionesProtocolo: protocolo.observaciones || '',
     });
 
@@ -153,6 +164,8 @@ export class DialogProtocoloComponent implements OnInit {
     this.protocoloForm.get('observacionesProtocolo')?.disable();
     this.protocoloForm.get('estado')?.enable();
     this.protocoloForm.get('fechaFinVigencia')?.enable();
+    this.protocoloForm.get('plazoCantidadDias')?.enable();
+    this.protocoloForm.get('plazoTipoDias')?.enable();
   }
 
   configurarColumnasServiciosSeleccionados(): void {
@@ -171,13 +184,26 @@ export class DialogProtocoloComponent implements OnInit {
 
     if (tipo === 'conReferencia') {
       campoNroCoti?.enable();
+      campoNroCoti?.setValidators([Validators.required]);
+
       if (campoNroCoti?.value === '-') {
         campoNroCoti.setValue('');
       }
+
+      campoNroCoti?.updateValueAndValidity({ emitEvent: false });
       this.dataSourceServiciosSeleccionados.data = [];
+      this.protocoloForm.patchValue(
+        {
+          plazoCantidadDias: null,
+          plazoTipoDias: 'HABILES',
+        },
+        { emitEvent: false },
+      );
     } else {
+      campoNroCoti?.clearValidators();
       campoNroCoti?.disable();
       campoNroCoti?.setValue('-');
+      campoNroCoti?.updateValueAndValidity({ emitEvent: false });
     }
   }
 
@@ -234,16 +260,44 @@ export class DialogProtocoloComponent implements OnInit {
   }
 
   seleccionarCotizacion(cotizacion: ICotizacionEmpresa) {
-    //console.log('Cotización seleccionada:', cotizacion);
+    const historial = Array.isArray(cotizacion.historial)
+      ? cotizacion.historial
+      : [];
+
+    const ultimaVersion =
+      historial.length > 0 ? historial[historial.length - 1] : null;
+
+    if (!ultimaVersion) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Cotización sin historial',
+        text: 'La cotización seleccionada no posee una versión disponible.',
+      });
+      return;
+    }
+
+    // ====== Usar siempre la última versión ======
     this.protocoloForm.patchValue({
-      nroCoti: `${cotizacion.codCotizacion}-V${cotizacion.historial[cotizacion.historial.length - 1].version}`,
+      nroCoti: `${cotizacion.codCotizacion}-V${ultimaVersion.version}`,
+      plazoCantidadDias:
+        Number(ultimaVersion.entregaResultados) > 0
+          ? Number(ultimaVersion.entregaResultados)
+          : null,
+      plazoTipoDias: 'HABILES',
     });
-    if (cotizacion.historial.length > 0) {
-      const serviciosSeleccionados =
-        cotizacion.historial[0].serviciosCotizacion.map(
-          (servicio: IServicioCotizacionEmpresa) => ({ ...servicio }),
-        );
-      this.dataSourceServiciosSeleccionados.data = serviciosSeleccionados;
+
+    const serviciosSeleccionados = (
+      ultimaVersion.serviciosCotizacion || []
+    ).map((servicio: IServicioCotizacionEmpresa) => ({ ...servicio }));
+
+    this.dataSourceServiciosSeleccionados.data = serviciosSeleccionados;
+
+    if (!ultimaVersion.entregaResultados) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Plazo no definido',
+        text: 'La última versión de la cotización no tiene un plazo de entrega. Defina el plazo directamente en el protocolo.',
+      });
     }
   }
 
@@ -353,7 +407,7 @@ export class DialogProtocoloComponent implements OnInit {
       Swal.fire({
         icon: 'warning',
         title: 'Formulario incompleto',
-        text: 'El nombre del protocolo es obligatorio.',
+        text: 'Complete el nombre, la referencia cuando corresponda y el plazo de resultados.',
       });
       return;
     }
@@ -429,6 +483,12 @@ export class DialogProtocoloComponent implements OnInit {
         null,
       fechaFinVigencia:
         this.protocoloForm.get('fechaFinVigencia')?.value || null,
+      plazoResultados: {
+        cantidadDias: Number(
+          this.protocoloForm.get('plazoCantidadDias')?.value,
+        ),
+        tipoDias: this.protocoloForm.get('plazoTipoDias')?.value,
+      },
       servicios: [...this.dataSourceServiciosSeleccionados.data],
     };
 

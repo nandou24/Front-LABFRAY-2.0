@@ -72,6 +72,40 @@
       </div>
     </section>
 
+    <!-- ====== Fecha real de toma ====== -->
+
+    <section class="seccion-formulario">
+      <div class="seccion-titulo">Fecha real de toma</div>
+      <div class="seccion-ayuda">
+        Por defecto se registra hoy. Modifíquela si la muestra fue tomada en una fecha anterior.
+      </div>
+
+      <mat-form-field appearance="outline" class="campo-completo">
+        <mat-label>Fecha de toma</mat-label>
+
+        <input
+          matInput
+          [matDatepicker]="pickerFechaToma"
+          formControlName="fechaRecoleccion"
+          [max]="fechaMaximaToma"
+          readonly
+        />
+
+        <mat-datepicker-toggle
+          matSuffix
+          [for]="pickerFechaToma"
+        ></mat-datepicker-toggle>
+
+        <mat-datepicker #pickerFechaToma></mat-datepicker>
+
+        <mat-error
+          *ngIf="formRecoleccion.controls.fechaRecoleccion.hasError('required')"
+        >
+          La fecha de toma es obligatoria.
+        </mat-error>
+      </mat-form-field>
+    </section>
+
     <!-- ====== Volumen ====== -->
 
     <section class="seccion-formulario">

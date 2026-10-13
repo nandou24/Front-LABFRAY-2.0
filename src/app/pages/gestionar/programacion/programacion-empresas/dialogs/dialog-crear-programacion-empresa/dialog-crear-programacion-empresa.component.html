@@ -341,6 +341,18 @@
                   </mat-select>
                 </mat-form-field>
 
+                <div
+                  class="mb-2"
+                  *ngIf="programacionForm.get('protocoloEmpresa')?.value as protocoloSeleccionado"
+                >
+                  <strong>Plazo comprometido:</strong>
+                  <span
+                    [class.text-danger]="!protocoloTienePlazo(protocoloSeleccionado)"
+                  >
+                    {{ textoPlazoProtocolo(protocoloSeleccionado) }}
+                  </span>
+                </div>
+
                 <table
                   mat-table
                   [dataSource]="serviciosProtocoloSeleccionado"

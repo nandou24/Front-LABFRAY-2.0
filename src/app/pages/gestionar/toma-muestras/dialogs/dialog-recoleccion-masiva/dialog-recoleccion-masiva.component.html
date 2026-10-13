@@ -326,6 +326,33 @@
     </table>
   </div>
 
+  <!-- ====== Fecha real de toma ====== -->
+
+  <div class="observacion-container" [formGroup]="form">
+    <mat-form-field appearance="outline">
+      <mat-label>Fecha real de toma</mat-label>
+
+      <input
+        matInput
+        [matDatepicker]="pickerFechaTomaMasiva"
+        formControlName="fechaRecoleccion"
+        [max]="fechaMaximaToma"
+        readonly
+      />
+
+      <mat-datepicker-toggle
+        matSuffix
+        [for]="pickerFechaTomaMasiva"
+      ></mat-datepicker-toggle>
+
+      <mat-datepicker #pickerFechaTomaMasiva></mat-datepicker>
+
+      <mat-hint>
+        Se aplicará a todas las muestras seleccionadas. Por defecto: hoy.
+      </mat-hint>
+    </mat-form-field>
+  </div>
+
   <!-- ====== Observación común ====== -->
 
   <div class="observacion-container" [formGroup]="form">

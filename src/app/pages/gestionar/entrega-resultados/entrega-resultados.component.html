@@ -96,6 +96,21 @@
     <mat-tab [label]="'Empresas (' + totalOrigen('EMPRESA') + ')'" ></mat-tab>
   </mat-tab-group>
 
+  <!-- ====== Modo crítico: vencidos sin límite de fecha ====== -->
+  <section class="modo-vencidos-criticos" *ngIf="!cargando && modoVencidosCriticos">
+    <div class="modo-vencidos-texto">
+      <mat-icon>error</mat-icon>
+      <div>
+        <strong>Resultados vencidos pendientes de liberación</strong>
+        <span>El rango de fechas no se aplica mientras este modo esté activo.</span>
+      </div>
+    </div>
+
+    <button mat-stroked-button type="button" (click)="salirModoVencidosCriticos()">
+      Volver a consulta normal
+    </button>
+  </section>
+
   <!-- ====== Semáforo de plazos ====== -->
   <section class="panel-semaforo" *ngIf="!cargando">
     <div class="semaforo-cards">
@@ -346,7 +361,7 @@
                 <div class="seguimiento-titulo">
                   <strong>Seguimiento de pruebas</strong>
                   <span>
-                    Información operativa para recepción e informes. La fecha estimada se calcula desde la aceptación de la muestra usando el tiempo de respuesta configurado.
+                    Información operativa para recepción e informes. La fecha de entrega se calcula desde la fecha real de toma usando el plazo aplicable.
                   </span>
                 </div>
 
@@ -357,8 +372,8 @@
                         <th>Prueba</th>
                         <th>Muestra</th>
                         <th>Estado resultado</th>
-                        <th>Tiempo respuesta</th>
-                        <th>Fecha estimada</th>
+                        <th>Plazo aplicable</th>
+                        <th>Fecha de entrega</th>
                         <th>Plazo</th>
                         <th>Situación</th>
                       </tr>
@@ -410,7 +425,7 @@
                         <td>
                           <ng-container *ngIf="prueba.fechaEstimada; else sinFechaEstimada">
                             <strong [ngClass]="clasePlazoPrueba(prueba.estadoPlazo)">
-                              {{ prueba.fechaEstimada | date: 'dd/MM/yyyy HH:mm' }}
+                              {{ prueba.fechaEstimada | date: 'dd/MM/yyyy' }}
                             </strong>
                           </ng-container>
                           <ng-template #sinFechaEstimada>

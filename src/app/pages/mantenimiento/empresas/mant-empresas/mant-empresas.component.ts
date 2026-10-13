@@ -659,6 +659,12 @@ export class MantEmpresasComponent implements OnInit, AfterViewInit {
       observaciones: protocolo.observaciones || '',
       fechaInicioVigencia: protocolo.fechaInicioVigencia || null,
       fechaFinVigencia: protocolo.fechaFinVigencia || null,
+      plazoResultados: protocolo.plazoResultados
+        ? {
+            cantidadDias: Number(protocolo.plazoResultados.cantidadDias),
+            tipoDias: protocolo.plazoResultados.tipoDias,
+          }
+        : null,
       servicios: (protocolo.servicios || []).map((servicio: any) => ({
         servicioId: servicio.servicioId,
         codServicio:

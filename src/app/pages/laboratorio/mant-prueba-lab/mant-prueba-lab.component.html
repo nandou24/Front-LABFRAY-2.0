@@ -59,10 +59,15 @@
                 </mat-form-field>
               </div>
 
-              <div [style.flex]="setFlex(20, '%')" class="flex-item">
+              <div [style.flex]="setFlex(12, '%')" class="flex-item">
                 <mat-form-field appearance="outline">
-                  <mat-label>Tiempo de Respuesta (Días)</mat-label>
-                  <input matInput formControlName="tiempoRespuesta" />
+                  <mat-label>Tiempo de respuesta</mat-label>
+                  <input
+                    matInput
+                    type="number"
+                    min="1"
+                    formControlName="tiempoRespuesta"
+                  />
                   <mat-error
                     *ngIf="
                       myFormPruebaLab
@@ -72,6 +77,25 @@
                   >
                     Requerido
                   </mat-error>
+                  <mat-error
+                    *ngIf="
+                      myFormPruebaLab
+                        .get('tiempoRespuesta')
+                        ?.hasError('pattern')
+                    "
+                  >
+                    Ingrese días válidos
+                  </mat-error>
+                </mat-form-field>
+              </div>
+
+              <div [style.flex]="setFlex(16, '%')" class="flex-item">
+                <mat-form-field appearance="outline">
+                  <mat-label>Tipo de días</mat-label>
+                  <mat-select formControlName="tipoDiasRespuesta">
+                    <mat-option value="HABILES">Días hábiles</mat-option>
+                    <mat-option value="CALENDARIO">Días calendario</mat-option>
+                  </mat-select>
                 </mat-form-field>
               </div>
 

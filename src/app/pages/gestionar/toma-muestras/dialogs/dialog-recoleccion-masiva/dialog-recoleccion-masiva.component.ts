@@ -6,6 +6,7 @@ import {
   ReactiveFormsModule,
 } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
+import { MatDatepickerModule } from '@angular/material/datepicker';
 import {
   MatCheckboxChange,
   MatCheckboxModule,
@@ -44,6 +45,7 @@ export interface IDialogRecoleccionMasivaData {
     ReactiveFormsModule,
     MatButtonModule,
     MatCheckboxModule,
+    MatDatepickerModule,
     MatDialogModule,
     MatFormFieldModule,
     MatIconModule,
@@ -70,6 +72,7 @@ export class DialogRecoleccionMasivaComponent implements OnInit {
   readonly form = this._fb.group({
     terminoBusqueda: [''],
     tipoMuestraId: [''],
+    fechaRecoleccion: [new Date()],
     observacionRecoleccion: [''],
   });
 
@@ -115,6 +118,8 @@ export class DialogRecoleccionMasivaComponent implements OnInit {
   procesando = false;
 
   huboCambios = false;
+
+  readonly fechaMaximaToma = new Date();
 
   ngOnInit(): void {
     this.form.controls.tipoMuestraId.valueChanges.subscribe(() => {
@@ -528,6 +533,12 @@ export class DialogRecoleccionMasivaComponent implements OnInit {
           <div style="margin-top: 8px; font-size: 13px; color: #64748b;">
             Cada recipiente conservará la opción física seleccionada en esta lista.
           </div>
+          <div style="margin-top: 8px; font-size: 13px; color: #64748b;">
+            Fecha real de toma:
+            <strong>${this.formatearFechaVisible(
+              this.form.controls.fechaRecoleccion.value,
+            )}</strong>
+          </div>
         </div>
       `,
       showCancelButton: true,
@@ -551,6 +562,9 @@ export class DialogRecoleccionMasivaComponent implements OnInit {
       .recolectarMuestrasMasivamente({
         muestras: payload,
         observacionRecoleccion: observacion || undefined,
+        fechaRecoleccion: this.formatearFechaBackend(
+          this.form.controls.fechaRecoleccion.value,
+        ),
       })
       .subscribe({
         next: async (response) => {
@@ -583,6 +597,28 @@ export class DialogRecoleccionMasivaComponent implements OnInit {
           });
         },
       });
+  }
+
+  // ====== Formatear fecha de toma ======
+
+  private formatearFechaBackend(fecha: Date | null): string {
+    if (!fecha) {
+      return '';
+    }
+
+    const anio = fecha.getFullYear();
+    const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+    const dia = String(fecha.getDate()).padStart(2, '0');
+
+    return `${anio}-${mes}-${dia}`;
+  }
+
+  private formatearFechaVisible(fecha: Date | null): string {
+    if (!fecha) {
+      return '-';
+    }
+
+    return new Intl.DateTimeFormat('es-PE').format(fecha);
   }
 
   // ====== Mostrar resultado ======

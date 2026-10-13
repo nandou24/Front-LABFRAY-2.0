@@ -15,6 +15,7 @@ export class EntregaResultadosService {
   private readonly _http = inject(HttpClient);
   private readonly _auth = inject(AuthService);
   private readonly apiUrl = `${environment.baseUrl}/api/resultadoLaboratorio/entrega`;
+  private readonly resultadoApiUrl = `${environment.baseUrl}/api/resultadoLaboratorio`;
 
   // ====== Bandeja para Recepción ======
   obtenerBandeja(
@@ -32,6 +33,23 @@ export class EntregaResultadosService {
         ...(empresaId ? { empresaId } : {}),
       },
     });
+  }
+
+  // ====== Vencidos críticos sin límite de fecha ======
+  obtenerVencidos(
+    terminoBusqueda = '',
+    empresaId = '',
+  ): Observable<IBandejaEntregaResponse> {
+    return this._http.get<IBandejaEntregaResponse>(
+      `${this.resultadoApiUrl}/alertas-vencidas`,
+      {
+        headers: this._auth.getAuthHeaders(),
+        params: {
+          ...(terminoBusqueda ? { terminoBusqueda } : {}),
+          ...(empresaId ? { empresaId } : {}),
+        },
+      },
+    );
   }
 
   // ====== Informe vigente solo con pruebas liberadas ======

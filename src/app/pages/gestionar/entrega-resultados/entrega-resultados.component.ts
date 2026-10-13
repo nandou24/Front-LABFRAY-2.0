@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import {
   DateAdapter,
@@ -18,7 +18,8 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { finalize, firstValueFrom } from 'rxjs';
+import { finalize, firstValueFrom, Subscription } from 'rxjs';
+import { ActivatedRoute, Router } from '@angular/router';
 import Swal from 'sweetalert2';
 import { IFilaEntrega } from '../../../models/Gestion/entregaResultadoLaboratorio.models';
 import { EntregaResultadosService } from '../../../services/gestion/entregaResultados/entrega-resultados.service';
@@ -62,7 +63,7 @@ interface IEmpresaSelectorEntrega {
   templateUrl: './entrega-resultados.component.html',
   styleUrl: './entrega-resultados.component.scss',
 })
-export class EntregaResultadosComponent implements OnInit {
+export class EntregaResultadosComponent implements OnInit, OnDestroy {
   private readonly _fb = inject(FormBuilder);
   private readonly _adapter = inject<DateAdapter<unknown, unknown>>(DateAdapter);
   private readonly _service = inject(EntregaResultadosService);
@@ -71,6 +72,9 @@ export class EntregaResultadosComponent implements OnInit {
   private readonly _zipService = inject(ZipArchivosService);
   private readonly _dialog = inject(MatDialog);
   private readonly _snack = inject(MatSnackBar);
+  private readonly _route = inject(ActivatedRoute);
+  private readonly _router = inject(Router);
+  private queryParamsSubscription?: Subscription;
 
   readonly formBusqueda = this._fb.nonNullable.group({
     fechaInicio: new Date(),
@@ -89,6 +93,7 @@ export class EntregaResultadosComponent implements OnInit {
   progresoZip = '';
   filaSeguimientoId: string | null = null;
   soloAlertasPlazo = false;
+  modoVencidosCriticos = false;
   tabActivo = 0;
   pagina = 0;
   tamanoPagina = 25;
@@ -96,7 +101,22 @@ export class EntregaResultadosComponent implements OnInit {
   ngOnInit(): void {
     this._adapter.setLocale('es-PE');
     this.cargarEmpresas();
-    this.buscar();
+
+    // ====== Reaccionar incluso si ya estamos en esta misma pantalla ======
+    this.queryParamsSubscription = this._route.queryParamMap.subscribe((params) => {
+      this.modoVencidosCriticos = params.get('vencidos') === '1';
+      this.soloAlertasPlazo = this.modoVencidosCriticos;
+
+      if (this.modoVencidosCriticos) {
+        this.buscarVencidosCriticos();
+      } else {
+        this.buscar();
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.queryParamsSubscription?.unsubscribe();
   }
 
   private formatearFecha(fecha: Date): string {
@@ -275,6 +295,11 @@ export class EntregaResultadosComponent implements OnInit {
   buscar(): void {
     if (this.cargando || this.descargandoZip) return;
 
+    if (this.modoVencidosCriticos) {
+      this.buscarVencidosCriticos();
+      return;
+    }
+
     const valor = this.formBusqueda.getRawValue();
 
     if (
@@ -316,14 +341,72 @@ export class EntregaResultadosComponent implements OnInit {
       });
   }
 
+  // ====== Consulta crítica sin límite de fecha ======
+  private buscarVencidosCriticos(): void {
+    if (this.cargando || this.descargandoZip) return;
+
+    const valor = this.formBusqueda.getRawValue();
+
+    this.cancelarSeleccionEmpresa();
+    this.filaSeguimientoId = null;
+    this.cargando = true;
+
+    this._service
+      .obtenerVencidos(valor.terminoBusqueda.trim(), valor.empresaId)
+      .pipe(finalize(() => (this.cargando = false)))
+      .subscribe({
+        next: (res) => {
+          this.bandeja = res.bandeja || [];
+          this.pagina = 0;
+          this.soloAlertasPlazo = true;
+
+          const tieneParticulares = this.bandeja.some(
+            (fila) => fila.origenAtencion === 'PARTICULAR',
+          );
+          const tieneEmpresas = this.bandeja.some(
+            (fila) => fila.origenAtencion === 'EMPRESA',
+          );
+
+          if (valor.empresaId || (!tieneParticulares && tieneEmpresas)) {
+            this.tabActivo = 1;
+          } else {
+            this.tabActivo = 0;
+          }
+        },
+        error: (err) =>
+          this._snack.open(
+            err.error?.msg || 'No se pudo consultar resultados vencidos',
+            'Cerrar',
+            { duration: 4500 },
+          ),
+      });
+  }
+
+  salirModoVencidosCriticos(): void {
+    this._router.navigate([], {
+      relativeTo: this._route,
+      queryParams: { vencidos: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  }
+
   hoyBuscar(): void {
     const hoy = new Date();
+    const estabaEnModoVencidos = this.modoVencidosCriticos;
+
     this.formBusqueda.patchValue({
       fechaInicio: hoy,
       fechaFin: new Date(hoy),
       terminoBusqueda: '',
       empresaId: '',
     });
+
+    if (estabaEnModoVencidos) {
+      this.salirModoVencidosCriticos();
+      return;
+    }
+
     this.buscar();
   }
 
@@ -368,12 +451,21 @@ export class EntregaResultadosComponent implements OnInit {
     return 'proceso';
   }
 
-  textoTiempoRespuesta(valor: string | null | undefined, dias: number | null | undefined): string {
+  textoTiempoRespuesta(
+    valor: string | null | undefined,
+    dias: number | null | undefined,
+  ): string {
+    const texto = String(valor ?? '').trim();
+
+    if (texto) {
+      return texto;
+    }
+
     if (dias !== null && dias !== undefined) {
       return `${dias} día${dias === 1 ? '' : 's'}`;
     }
 
-    return String(valor ?? '').trim() || '-';
+    return '-';
   }
 
   // ====== Activar selección para descarga múltiple ======

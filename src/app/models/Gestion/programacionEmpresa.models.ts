@@ -26,6 +26,13 @@ export type TipoAtencionProgramacion = 'Regular' | 'Preferencial' | 'VIP';
 
 export type PrioridadProgramacion = 'Normal' | 'Alta';
 
+export type TipoDiasPlazoProgramacion = 'HABILES' | 'CALENDARIO';
+
+export interface PlazoResultadosProgramacion {
+  cantidadDias: number;
+  tipoDias: TipoDiasPlazoProgramacion;
+}
+
 export interface ServicioProgramado {
   servicioId: string;
   codServicio: string;
@@ -78,6 +85,9 @@ export interface IProgramacionEmpresa {
   protocoloId: string;
   codProtocolo: string;
   nombreProtocolo: string;
+
+  // Snapshot del compromiso del protocolo
+  plazoResultados?: PlazoResultadosProgramacion | null;
 
   // Snapshot de los servicios
   serviciosProgramados: ServicioProgramado[];

@@ -880,8 +880,24 @@
                       </div>
                     </div>
 
-                    <div class="meta-row" *ngIf="protocolo.fechaFinVigencia">
+                    <div class="meta-row">
                       <div class="meta-item">
+                        <strong>Plazo:</strong>
+                        <ng-container *ngIf="protocolo.plazoResultados; else plazoNoDefinido">
+                          {{ protocolo.plazoResultados.cantidadDias }}
+                          {{
+                            protocolo.plazoResultados.tipoDias === "HABILES"
+                              ? "días hábiles"
+                              : "días calendario"
+                          }}
+                        </ng-container>
+                        <ng-template #plazoNoDefinido>No definido</ng-template>
+                      </div>
+
+                      <div
+                        class="meta-item"
+                        *ngIf="protocolo.fechaFinVigencia"
+                      >
                         <strong>Fin:</strong>
                         {{ protocolo.fechaFinVigencia | date: "dd/MM/yyyy" }}
                       </div>

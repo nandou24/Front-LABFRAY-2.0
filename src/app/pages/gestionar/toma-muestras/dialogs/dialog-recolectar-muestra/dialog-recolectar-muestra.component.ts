@@ -9,6 +9,7 @@ import {
   Validators,
 } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
+import { MatDatepickerModule } from '@angular/material/datepicker';
 import {
   MAT_DIALOG_DATA,
   MatDialogModule,
@@ -46,6 +47,7 @@ export interface IRecolectarMuestraDialogData {
     CommonModule,
     ReactiveFormsModule,
     MatButtonModule,
+    MatDatepickerModule,
     MatDialogModule,
     MatFormFieldModule,
     MatIconModule,
@@ -76,6 +78,8 @@ export class DialogRecolectarMuestraComponent {
 
   procesando = false;
   archivoEvidencia: File | null = null;
+
+  readonly fechaMaximaToma = new Date();
 
   private readonly _validadorVolumen: ValidatorFn = (
     control: AbstractControl,
@@ -113,6 +117,11 @@ export class DialogRecolectarMuestraComponent {
 
       unidadVolumenRecolectado:
         this._fb.control<UnidadVolumenMuestra | null>(null),
+
+      fechaRecoleccion: this._fb.control<Date | null>(
+        new Date(),
+        Validators.required,
+      ),
 
       observacionRecoleccion: [''],
     },
@@ -188,6 +197,12 @@ export class DialogRecolectarMuestraComponent {
             <strong>${opcion.tuboEnvase.nombreTuboEnvase}</strong>
             · ${opcion.tipoMuestra.nombreTipoMuestra}
           </p>
+          <p>
+            Fecha real de toma:<br>
+            <strong>${this.formatearFechaVisible(
+              this.formRecoleccion.controls.fechaRecoleccion.value,
+            )}</strong>
+          </p>
           ${
             this.archivoEvidencia
               ? '<p>También se registrará la fotografía como evidencia de recolección.</p>'
@@ -224,6 +239,7 @@ export class DialogRecolectarMuestraComponent {
         : null,
       observacionRecoleccion:
         raw.observacionRecoleccion?.trim() ?? '',
+      fechaRecoleccion: this.formatearFechaBackend(raw.fechaRecoleccion),
     };
 
     this.procesando = true;
@@ -253,6 +269,28 @@ export class DialogRecolectarMuestraComponent {
           });
         },
       });
+  }
+
+  // ====== Formatear fecha de toma ======
+
+  private formatearFechaBackend(fecha: Date | null): string {
+    if (!fecha) {
+      return '';
+    }
+
+    const anio = fecha.getFullYear();
+    const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+    const dia = String(fecha.getDate()).padStart(2, '0');
+
+    return `${anio}-${mes}-${dia}`;
+  }
+
+  private formatearFechaVisible(fecha: Date | null): string {
+    if (!fecha) {
+      return '-';
+    }
+
+    return new Intl.DateTimeFormat('es-PE').format(fecha);
   }
 
   // ====== Registrar evidencia posterior ======

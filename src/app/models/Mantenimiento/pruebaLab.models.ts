@@ -8,6 +8,7 @@ export type EstadoPruebaLab = 'ACTIVO' | 'INACTIVO';
 export type TipoProcesamientoLab = 'INTERNO' | 'REFERENCIA';
 export type AlcanceRequerimientoMuestra = 'TODA_PRUEBA' | 'ITEMS_ESPECIFICOS';
 export type UnidadVolumen = 'uL' | 'mL' | 'L';
+export type TipoDiasRespuestaLab = 'HABILES' | 'CALENDARIO';
 
 // ====== Procesamiento ======
 
@@ -79,6 +80,7 @@ export interface IPruebaLab {
   condPreAnalitPaciente: string;
   condPreAnalitRefer: string;
   tiempoRespuesta: string;
+  tipoDiasRespuesta?: TipoDiasRespuestaLab;
   observPruebas?: string | null;
   estadoPrueba: EstadoPruebaLab;
 

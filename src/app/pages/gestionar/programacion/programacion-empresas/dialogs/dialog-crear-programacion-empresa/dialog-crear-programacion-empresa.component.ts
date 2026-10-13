@@ -362,6 +362,29 @@ export class DialogCrearProgramacionEmpresaComponent implements OnInit {
     return `${protocolo.codigoProtocolo} - ${protocolo.nombreProtocolo}`;
   }
 
+  protocoloTienePlazo(protocolo: IProtocoloEmpresa | null): boolean {
+    const cantidadDias = Number(protocolo?.plazoResultados?.cantidadDias);
+    const tipoDias = protocolo?.plazoResultados?.tipoDias;
+
+    return (
+      Number.isInteger(cantidadDias) &&
+      cantidadDias > 0 &&
+      (tipoDias === 'HABILES' || tipoDias === 'CALENDARIO')
+    );
+  }
+
+  textoPlazoProtocolo(protocolo: IProtocoloEmpresa | null): string {
+    if (!this.protocoloTienePlazo(protocolo)) {
+      return 'No definido';
+    }
+
+    const cantidadDias = Number(protocolo?.plazoResultados?.cantidadDias);
+    const tipoDias = protocolo?.plazoResultados?.tipoDias;
+    const tipoTexto = tipoDias === 'HABILES' ? 'hábiles' : 'calendario';
+
+    return `${cantidadDias} ${cantidadDias === 1 ? 'día' : 'días'} ${tipoTexto}`;
+  }
+
   private limpiarEmpresaSeleccionada(): void {
     this.programacionForm.patchValue({
       protocoloEmpresa: null,
@@ -657,6 +680,16 @@ export class DialogCrearProgramacionEmpresaComponent implements OnInit {
       Swal.fire({
         title: 'Protocolo requerido',
         text: 'Debes seleccionar un protocolo para continuar.',
+        icon: 'warning',
+        confirmButtonText: 'Ok',
+      });
+      return;
+    }
+
+    if (!this.protocoloTienePlazo(protocolo)) {
+      Swal.fire({
+        title: 'Plazo no definido',
+        text: 'El protocolo seleccionado no tiene definido el plazo de resultados. Actualízalo en Mantenimiento de Empresas antes de programar.',
         icon: 'warning',
         confirmButtonText: 'Ok',
       });
