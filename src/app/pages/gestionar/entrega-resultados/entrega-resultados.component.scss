@@ -131,7 +131,7 @@ td {
 }
 
 tbody tr:hover {
-  background: #eaf3ff;
+  background: #f3f7fc;
 }
 
 .estado {
@@ -309,7 +309,7 @@ table.tabla-empresa {
 }
 
 .tabla-seguimiento tbody tr:hover {
-  background: #eaf3ff;
+  background: #eef6ff;
 }
 
 .estado.proceso {
@@ -464,7 +464,7 @@ tbody tr.fila-plazo-proximo {
 }
 
 tbody tr.fila-plazo-proximo:hover {
-  background: #eaf3ff;
+  background: #fef9c3;
 }
 
 tbody tr.fila-plazo-hoy {
@@ -472,7 +472,7 @@ tbody tr.fila-plazo-hoy {
 }
 
 tbody tr.fila-plazo-hoy:hover {
-  background: #eaf3ff;
+  background: #ffedd5;
 }
 
 tbody tr.fila-plazo-vencido {
@@ -480,7 +480,7 @@ tbody tr.fila-plazo-vencido {
 }
 
 tbody tr.fila-plazo-vencido:hover {
-  background: #eaf3ff;
+  background: #ffe4e6;
 }
 
 .resumen-plazo-fila {
@@ -553,5 +553,52 @@ tbody tr.fila-plazo-vencido:hover {
 
   .filtro-alertas-plazo {
     width: 100%;
+  }
+}
+
+
+// ====== Modo de resultados vencidos ======
+.modo-vencidos-criticos {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 12px 0;
+  padding: 12px 14px;
+  border: 1px solid #fecaca;
+  border-left: 4px solid #dc2626;
+  border-radius: 8px;
+  background: #fef2f2;
+}
+
+.modo-vencidos-texto {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  mat-icon {
+    color: #dc2626;
+  }
+
+  > div {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  strong {
+    color: #991b1b;
+  }
+
+  span {
+    color: #64748b;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 720px) {
+  .modo-vencidos-criticos {
+    align-items: stretch;
+    flex-direction: column;
   }
 }

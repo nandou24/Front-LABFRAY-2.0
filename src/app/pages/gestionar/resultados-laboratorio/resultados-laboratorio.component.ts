@@ -37,6 +37,7 @@ import {
 } from '../../../models/Gestion/estadoOperativoSolicitud.models';
 import { ResultadoLaboratorioService } from '../../../services/gestion/resultadosLaboratorio/resultados-laboratorio.service';
 import { AuthService } from '../../../services/auth/auth.service';
+import { AlertasCriticasResultadosService } from '../../../services/gestion/alertasResultados/alertas-criticas-resultados.service';
 import {
   DialogCapturaResultadoComponent,
   IRegistroResultadoDialogResult,
@@ -80,6 +81,7 @@ export class ResultadosLaboratorioComponent implements OnInit, AfterViewInit {
   );
 
   private readonly _authService = inject(AuthService);
+  private readonly _alertasCriticas = inject(AlertasCriticasResultadosService);
 
   readonly puedeRegistrarResultados = this._authService.tienePermisoAccion(
     'RESULTADOS_REGISTRAR',
@@ -263,6 +265,7 @@ export class ResultadosLaboratorioComponent implements OnInit, AfterViewInit {
           this.actualizarResumenEmpresas();
           this.reiniciarPaginadores();
           this.cargandoBandeja = false;
+          this._alertasCriticas.refrescar();
 
           if (mostrarMensaje) {
             this._snackBar.open(
@@ -999,6 +1002,9 @@ export class ResultadosLaboratorioComponent implements OnInit, AfterViewInit {
     this.dataSourceParticulares.data = [...this.dataSourceParticulares.data];
     this.dataSourceEmpresas.data = [...this.dataSourceEmpresas.data];
     this.actualizarResumenEmpresas();
+
+    // ====== Actualizar alerta crítica al cambiar resultados ======
+    this._alertasCriticas.refrescar();
   }
 
   // ====== Resumen operativo de empresas ======

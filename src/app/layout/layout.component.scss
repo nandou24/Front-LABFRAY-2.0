@@ -132,3 +132,169 @@
     }
   }
 }
+
+
+// ====== Alerta crítica de resultados vencidos ======
+.floating-critical-alert {
+  position: fixed;
+  z-index: 1002;
+  width: 40px;
+  height: 40px;
+  background: #ffffff;
+  color: #dc2626;
+  border: 2px solid #dc2626;
+  box-shadow: 0 6px 20px rgba(220, 38, 38, 0.22);
+
+  &:hover {
+    background: #fef2f2;
+    box-shadow: 0 8px 24px rgba(220, 38, 38, 0.3);
+    transform: scale(1.05);
+  }
+
+  mat-icon {
+    color: #dc2626;
+  }
+
+  &.desktop-critical-alert {
+    bottom: 72px;
+    left: 24px;
+  }
+
+  &.mobile-critical-alert {
+    bottom: 82px;
+    left: 20px;
+  }
+}
+
+.critical-alert-count {
+  position: absolute;
+  top: -8px;
+  right: -9px;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 5px;
+  border-radius: 11px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #dc2626;
+  color: #ffffff;
+  border: 2px solid #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.critical-alert-panel {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 14px 16px 16px;
+  cursor: default;
+}
+
+.critical-alert-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #991b1b;
+
+  mat-icon {
+    color: #dc2626;
+  }
+
+  div {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  strong {
+    font-size: 14px;
+  }
+
+  span {
+    color: #64748b;
+    font-size: 12px;
+  }
+}
+
+.critical-alert-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 14px;
+
+  > div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 9px 6px;
+    border-radius: 8px;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+  }
+
+  strong {
+    color: #b91c1c;
+    font-size: 16px;
+  }
+
+  span {
+    margin-top: 2px;
+    color: #64748b;
+    font-size: 11px;
+  }
+}
+
+.critical-alert-oldest {
+  margin-top: 12px;
+  padding: 9px 10px;
+  border-radius: 8px;
+  background: #fff7ed;
+  color: #7c2d12;
+  font-size: 12px;
+
+  strong {
+    display: block;
+    margin-top: 2px;
+  }
+}
+
+.critical-alert-action {
+  width: 100%;
+  margin-top: 12px;
+}
+
+@media (max-width: 768px) {
+  .floating-critical-alert {
+    bottom: 76px;
+    left: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .floating-critical-alert {
+    bottom: 82px;
+    left: 12px;
+  }
+
+}
+
+
+// ====== Ancho del desplegable de alerta crítica ======
+:host ::ng-deep .critical-alert-menu-overlay {
+  width: min(370px, calc(100vw - 24px));
+}
+
+:host ::ng-deep .critical-alert-menu-overlay .mat-mdc-menu-panel {
+  width: 100%;
+  min-width: 100%;
+  max-width: none;
+  overflow-x: hidden;
+}
+
+@media (max-width: 480px) {
+  :host ::ng-deep .critical-alert-menu-overlay {
+    width: min(340px, calc(100vw - 20px));
+  }
+}

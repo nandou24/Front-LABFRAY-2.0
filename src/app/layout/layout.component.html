@@ -11,6 +11,73 @@
 
   <!-- Contenido principal -->
   <mat-sidenav-content>
+    <!-- ====== Alerta crítica persistente ====== -->
+    <ng-container *ngIf="estadoAlertas$ | async as alerta">
+      <button
+        *ngIf="alerta.totalPruebasVencidas > 0"
+        mat-mini-fab
+        type="button"
+        class="floating-critical-alert"
+        [class.mobile-critical-alert]="isMobile"
+        [class.desktop-critical-alert]="!isMobile"
+        #criticalAlertTrigger="matMenuTrigger"
+        [matMenuTriggerFor]="criticalAlertMenu"
+        matTooltip="Resultados vencidos pendientes de liberación"
+        aria-label="Resultados vencidos pendientes de liberación"
+      >
+        <mat-icon>error</mat-icon>
+        <span class="critical-alert-count">
+          {{ alerta.totalPruebasVencidas > 99 ? '99+' : alerta.totalPruebasVencidas }}
+        </span>
+      </button>
+
+      <mat-menu
+        #criticalAlertMenu="matMenu"
+        xPosition="after"
+        yPosition="above"
+        overlayPanelClass="critical-alert-menu-overlay"
+      >
+        <div class="critical-alert-panel" (click)="$event.stopPropagation()">
+          <div class="critical-alert-title">
+            <mat-icon>error</mat-icon>
+            <div>
+              <strong>Resultados vencidos</strong>
+              <span>Pendientes de liberación</span>
+            </div>
+          </div>
+
+          <div class="critical-alert-summary">
+            <div>
+              <strong>{{ alerta.totalPruebasVencidas }}</strong>
+              <span>Pruebas</span>
+            </div>
+            <div>
+              <strong>{{ alerta.totalPacientes }}</strong>
+              <span>Pacientes</span>
+            </div>
+            <div>
+              <strong>{{ alerta.totalSolicitudes }}</strong>
+              <span>Solicitudes</span>
+            </div>
+          </div>
+
+          <div class="critical-alert-oldest" *ngIf="alerta.fechaVencimientoMasAntigua">
+            Vencimiento más antiguo:
+            <strong>{{ alerta.fechaVencimientoMasAntigua | date: 'dd/MM/yyyy HH:mm' }}</strong>
+          </div>
+
+          <button
+            mat-flat-button
+            type="button"
+            class="critical-alert-action"
+            (click)="irAVencidos()"
+          >
+            Ir a vencidos
+          </button>
+        </div>
+      </mat-menu>
+    </ng-container>
+
     <!-- Botón hamburguesa flotante -->
     <button
       mat-fab

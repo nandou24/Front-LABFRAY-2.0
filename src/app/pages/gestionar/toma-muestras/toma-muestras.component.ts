@@ -31,6 +31,7 @@ import {
 } from '../../../models/Gestion/muestraLaboratorio.models';
 
 import { MuestraLaboratorioService } from '../../../services/gestion/muestraLaboratorio/muestra-laboratorio.service';
+import { AlertasCriticasResultadosService } from '../../../services/gestion/alertasResultados/alertas-criticas-resultados.service';
 import { DialogGestionarTomaComponent } from './dialogs/dialog-gestionar-toma/dialog-gestionar-toma.component';
 import { DialogRecepcionMasivaComponent } from './dialogs/dialog-recepcion-masiva/dialog-recepcion-masiva.component';
 import { DialogAceptacionMasivaComponent } from './dialogs/dialog-aceptacion-masiva/dialog-aceptacion-masiva.component';
@@ -70,6 +71,8 @@ export class TomaMuestrasComponent implements OnInit, AfterViewInit {
   private readonly _muestraLaboratorioService = inject(
     MuestraLaboratorioService,
   );
+
+  private readonly _alertasCriticas = inject(AlertasCriticasResultadosService);
 
   private readonly _snackBar = inject(MatSnackBar);
 
@@ -245,6 +248,7 @@ export class TomaMuestrasComponent implements OnInit, AfterViewInit {
           }
 
           this.cargando = false;
+          this._alertasCriticas.refrescar();
 
           if (mostrarMensaje) {
             this._snackBar.open(
