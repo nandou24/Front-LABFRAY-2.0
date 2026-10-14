@@ -163,6 +163,13 @@ export const routes: Routes = [
           ).then((m) => m.LaboratorioReferenciaComponent),
       },
       {
+        path: 'dias-no-laborables',
+        loadComponent: () =>
+          import(
+            './pages/laboratorio/dias-no-laborables/dias-no-laborables.component'
+          ).then((m) => m.DiasNoLaborablesComponent),
+      },
+      {
         path: 'solicitudAtencion-laboratorio',
         loadComponent: () =>
           import(

@@ -138,7 +138,7 @@ export class MantPruebaLabComponent implements OnInit, AfterViewInit {
     condPreAnalitRefer: ['', [Validators.required]],
     tiempoRespuesta: [
       '',
-      [Validators.required, Validators.pattern('^[1-9][0-9]*$')],
+      [Validators.required, Validators.pattern('^(0|[1-9][0-9]*)$')],
     ],
     tipoDiasRespuesta: ['HABILES', [Validators.required]],
     observPruebas: [''],

@@ -1,0 +1,119 @@
+.pagina-calendario {
+  padding: 16px;
+}
+
+.encabezado {
+  margin-bottom: 14px;
+}
+
+.encabezado h2 {
+  margin: 0 0 4px;
+}
+
+.encabezado p {
+  margin: 0;
+  color: #5f6b7a;
+}
+
+.tarjeta-info,
+.tarjeta-formulario,
+.tarjeta-listado {
+  margin-bottom: 16px;
+}
+
+.tarjeta-info mat-card-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-top: 16px;
+}
+
+.formulario,
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin-top: 16px;
+}
+
+.formulario mat-form-field {
+  min-width: 210px;
+}
+
+.campo-descripcion {
+  flex: 1 1 330px;
+}
+
+.campo-observacion {
+  flex: 1 1 100%;
+}
+
+.filtro-anio {
+  width: 140px;
+}
+
+.filtro-estado {
+  width: 180px;
+}
+
+.filtro-busqueda {
+  flex: 1 1 320px;
+}
+
+.tabla-scroll {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+}
+
+small {
+  display: block;
+  margin-top: 3px;
+  color: #6b7280;
+}
+
+.estado {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.estado-activo {
+  background: #e8f5e9;
+  color: #1b5e20;
+}
+
+.estado-inactivo {
+  background: #eeeeee;
+  color: #616161;
+}
+
+.acciones {
+  white-space: nowrap;
+}
+
+.cargando,
+.sin-registros {
+  padding: 22px;
+  text-align: center;
+  color: #6b7280;
+}
+
+@media (max-width: 768px) {
+  .pagina-calendario {
+    padding: 10px;
+  }
+
+  .formulario mat-form-field,
+  .filtro-anio,
+  .filtro-estado,
+  .filtro-busqueda {
+    width: 100%;
+    flex-basis: 100%;
+  }
+}

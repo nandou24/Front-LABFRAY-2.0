@@ -23,11 +23,16 @@
         #criticalAlertTrigger="matMenuTrigger"
         [matMenuTriggerFor]="criticalAlertMenu"
         matTooltip="Resultados vencidos pendientes de liberación"
+        matTooltipPosition="above"
         aria-label="Resultados vencidos pendientes de liberación"
       >
         <mat-icon>error</mat-icon>
         <span class="critical-alert-count">
-          {{ alerta.totalPruebasVencidas > 99 ? '99+' : alerta.totalPruebasVencidas }}
+          {{
+            alerta.totalPruebasVencidas > 99
+              ? "99+"
+              : alerta.totalPruebasVencidas
+          }}
         </span>
       </button>
 
@@ -61,9 +66,14 @@
             </div>
           </div>
 
-          <div class="critical-alert-oldest" *ngIf="alerta.fechaVencimientoMasAntigua">
+          <div
+            class="critical-alert-oldest"
+            *ngIf="alerta.fechaVencimientoMasAntigua"
+          >
             Vencimiento más antiguo:
-            <strong>{{ alerta.fechaVencimientoMasAntigua | date: 'dd/MM/yyyy HH:mm' }}</strong>
+            <strong>{{
+              alerta.fechaVencimientoMasAntigua | date: "dd/MM/yyyy HH:mm"
+            }}</strong>
           </div>
 
           <button

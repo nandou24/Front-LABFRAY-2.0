@@ -36,7 +36,7 @@
                 </mat-form-field>
               </div>
 
-              <div [style.flex]="setFlex(22, '%')" class="flex-item">
+              <div [style.flex]="setFlex(25, '%')" class="flex-item">
                 <mat-form-field appearance="outline">
                   <mat-label>Area de Laboratorio</mat-label>
                   <mat-select formControlName="areaLab">
@@ -59,13 +59,14 @@
                 </mat-form-field>
               </div>
 
-              <div [style.flex]="setFlex(12, '%')" class="flex-item">
+              <div [style.flex]="setFlex(20, '%')" class="flex-item">
                 <mat-form-field appearance="outline">
                   <mat-label>Tiempo de respuesta</mat-label>
                   <input
                     matInput
                     type="number"
-                    min="1"
+                    min="0"
+                    step="1"
                     formControlName="tiempoRespuesta"
                   />
                   <mat-error
@@ -84,17 +85,25 @@
                         ?.hasError('pattern')
                     "
                   >
-                    Ingrese días válidos
+                    Ingrese 0 o un número entero de días
                   </mat-error>
+                  <mat-hint>0 = entrega el mismo día</mat-hint>
                 </mat-form-field>
               </div>
 
-              <div [style.flex]="setFlex(16, '%')" class="flex-item">
+              <div [style.flex]="setFlex(20, '%')" class="flex-item">
                 <mat-form-field appearance="outline">
                   <mat-label>Tipo de días</mat-label>
                   <mat-select formControlName="tipoDiasRespuesta">
-                    <mat-option value="HABILES">Días hábiles</mat-option>
-                    <mat-option value="CALENDARIO">Días calendario</mat-option>
+                    <mat-option value="HABILES">
+                      Días hábiles (lunes a viernes)
+                    </mat-option>
+                    <mat-option value="LABORABLES_LS">
+                      Días laborables (lunes a sábado)
+                    </mat-option>
+                    <mat-option value="CALENDARIO">
+                      Días calendario (lunes a domingo)
+                    </mat-option>
                   </mat-select>
                 </mat-form-field>
               </div>
@@ -110,7 +119,7 @@
             </div>
 
             <div class="row-flex">
-              <div [style.flex]="setFlex(48, '%')" class="flex-item">
+              <div [style.flex]="setFlex(50, '%')" class="flex-item">
                 <mat-form-field appearance="outline">
                   <mat-label>Condiciones Pre Analíticas - PACIENTE</mat-label>
                   <textarea
@@ -130,7 +139,7 @@
                 </mat-form-field>
               </div>
 
-              <div [style.flex]="setFlex(48, '%')" class="flex-item">
+              <div [style.flex]="setFlex(50, '%')" class="flex-item">
                 <mat-form-field appearance="outline">
                   <mat-label
                     >Condiciones Pre Analíticas - REFERENCIAS</mat-label
@@ -223,7 +232,7 @@
                 setFlex(
                   procesamientoDefault.get('tipo')?.value === 'REFERENCIA'
                     ? 45
-                    : 70,
+                    : 75,
                   '%'
                 )
               "
@@ -363,9 +372,11 @@
 
               <!-- ====== Referencia / interpretación compartida ====== -->
               <div class="row-flex">
-                <div [style.flex]="setFlex(95, '%')" class="flex-item">
+                <div [style.flex]="setFlex(100, '%')" class="flex-item">
                   <mat-form-field appearance="outline" class="w-100">
-                    <mat-label> Referencia / interpretación del grupo </mat-label>
+                    <mat-label>
+                      Referencia / interpretación del grupo
+                    </mat-label>
                     <textarea
                       matInput
                       rows="3"
@@ -374,7 +385,8 @@
                       placeholder="Texto interpretativo común para los Items de este grupo"
                     ></textarea>
                     <mat-hint>
-                      Opcional. Se mostrará una sola vez debajo de los resultados del grupo.
+                      Opcional. Se mostrará una sola vez debajo de los
+                      resultados del grupo.
                     </mat-hint>
                   </mat-form-field>
                 </div>

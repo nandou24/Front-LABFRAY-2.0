@@ -8,7 +8,10 @@ export type EstadoPruebaLab = 'ACTIVO' | 'INACTIVO';
 export type TipoProcesamientoLab = 'INTERNO' | 'REFERENCIA';
 export type AlcanceRequerimientoMuestra = 'TODA_PRUEBA' | 'ITEMS_ESPECIFICOS';
 export type UnidadVolumen = 'uL' | 'mL' | 'L';
-export type TipoDiasRespuestaLab = 'HABILES' | 'CALENDARIO';
+export type TipoDiasRespuestaLab =
+  | 'HABILES'
+  | 'LABORABLES_LS'
+  | 'CALENDARIO';
 
 // ====== Procesamiento ======
 

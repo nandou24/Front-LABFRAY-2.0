@@ -1,0 +1,221 @@
+<section class="pagina-calendario">
+  <header class="encabezado">
+    <div>
+      <h2>Días no laborables</h2>
+      <p>
+        Feriados y cierres que no cuentan para los plazos de laboratorio.
+      </p>
+    </div>
+  </header>
+
+  <mat-card class="tarjeta-info">
+    <mat-card-content>
+      <mat-icon>event_busy</mat-icon>
+      <span>
+        Todo día ACTIVO registrado aquí se excluye de los calendarios
+        L–V, L–S y calendario.
+      </span>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="tarjeta-formulario">
+    <mat-card-title>
+      {{ modoEdicion ? 'Editar día no laborable' : 'Nuevo día no laborable' }}
+    </mat-card-title>
+
+    <mat-card-content>
+      <form [formGroup]="myFormDiaNoLaborable" class="formulario">
+        <mat-form-field appearance="outline">
+          <mat-label>Fecha</mat-label>
+          <input
+            matInput
+            [matDatepicker]="pickerFecha"
+            formControlName="fecha"
+            readonly
+          />
+          <mat-datepicker-toggle matSuffix [for]="pickerFecha"></mat-datepicker-toggle>
+          <mat-datepicker #pickerFecha></mat-datepicker>
+          <mat-error *ngIf="myFormDiaNoLaborable.get('fecha')?.hasError('required')">
+            Fecha requerida
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="campo-descripcion">
+          <mat-label>Descripción</mat-label>
+          <input
+            matInput
+            formControlName="descripcion"
+            maxlength="180"
+            placeholder="Ej. Fiestas Patrias"
+          />
+          <mat-error
+            *ngIf="myFormDiaNoLaborable.get('descripcion')?.hasError('required')"
+          >
+            Descripción requerida
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Tipo</mat-label>
+          <mat-select formControlName="tipo">
+            <mat-option *ngFor="let tipo of tipos" [value]="tipo.value">
+              {{ tipo.label }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-slide-toggle formControlName="estadoDiaNoLaborable" color="primary">
+          Activo
+        </mat-slide-toggle>
+
+        <mat-form-field appearance="outline" class="campo-observacion">
+          <mat-label>Observación</mat-label>
+          <textarea
+            matInput
+            rows="2"
+            maxlength="500"
+            formControlName="observacion"
+            placeholder="Opcional: norma, motivo del cierre, detalle operativo..."
+          ></textarea>
+        </mat-form-field>
+      </form>
+    </mat-card-content>
+
+    <mat-card-actions align="end">
+      <button
+        mat-button
+        type="button"
+        (click)="nuevo()"
+        [disabled]="guardando"
+      >
+        {{ modoEdicion ? 'Cancelar' : 'Limpiar' }}
+      </button>
+
+      <button
+        mat-flat-button
+        color="primary"
+        type="button"
+        (click)="guardar()"
+        [disabled]="guardando"
+      >
+        <mat-icon>{{ modoEdicion ? 'save' : 'add' }}</mat-icon>
+        {{ modoEdicion ? 'Guardar cambios' : 'Registrar' }}
+      </button>
+    </mat-card-actions>
+  </mat-card>
+
+  <mat-card class="tarjeta-listado">
+    <mat-card-title>Calendario configurado</mat-card-title>
+
+    <mat-card-content>
+      <div class="filtros">
+        <mat-form-field appearance="outline" class="filtro-anio">
+          <mat-label>Año</mat-label>
+          <input matInput type="number" min="1900" max="2200" [formControl]="anioFiltro" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="filtro-estado">
+          <mat-label>Estado</mat-label>
+          <mat-select [formControl]="estadoFiltro">
+            <mat-option *ngFor="let estado of estados" [value]="estado.value">
+              {{ estado.label }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="filtro-busqueda">
+          <mat-label>Buscar</mat-label>
+          <input
+            matInput
+            [formControl]="terminoBusqueda"
+            placeholder="Fecha, descripción, tipo u observación"
+          />
+          <mat-icon matSuffix>search</mat-icon>
+        </mat-form-field>
+      </div>
+
+      <div class="cargando" *ngIf="cargando">
+        Cargando calendario...
+      </div>
+
+      <div class="tabla-scroll" *ngIf="!cargando">
+        <table mat-table [dataSource]="dataSource">
+          <ng-container matColumnDef="fecha">
+            <th mat-header-cell *matHeaderCellDef>Fecha</th>
+            <td mat-cell *matCellDef="let dia">
+              <strong>{{ formatearFecha(dia.fecha) }}</strong>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="descripcion">
+            <th mat-header-cell *matHeaderCellDef>Descripción</th>
+            <td mat-cell *matCellDef="let dia">
+              <div>{{ dia.descripcion }}</div>
+              <small *ngIf="dia.observacion">{{ dia.observacion }}</small>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="tipo">
+            <th mat-header-cell *matHeaderCellDef>Tipo</th>
+            <td mat-cell *matCellDef="let dia">
+              {{ etiquetaTipo(dia.tipo) }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="estado">
+            <th mat-header-cell *matHeaderCellDef>Estado</th>
+            <td mat-cell *matCellDef="let dia">
+              <span
+                class="estado"
+                [class.estado-activo]="dia.estadoDiaNoLaborable === 'ACTIVO'"
+                [class.estado-inactivo]="dia.estadoDiaNoLaborable === 'INACTIVO'"
+              >
+                {{ dia.estadoDiaNoLaborable }}
+              </span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="acciones">
+            <th mat-header-cell *matHeaderCellDef>Acciones</th>
+            <td mat-cell *matCellDef="let dia" class="acciones">
+              <button
+                mat-icon-button
+                type="button"
+                matTooltip="Editar"
+                (click)="editar(dia)"
+              >
+                <mat-icon>edit</mat-icon>
+              </button>
+
+              <button
+                mat-icon-button
+                type="button"
+                [matTooltip]="
+                  dia.estadoDiaNoLaborable === 'ACTIVO' ? 'Inactivar' : 'Activar'
+                "
+                (click)="cambiarEstado(dia)"
+              >
+                <mat-icon>
+                  {{ dia.estadoDiaNoLaborable === 'ACTIVO' ? 'toggle_off' : 'toggle_on' }}
+                </mat-icon>
+              </button>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="columnas"></tr>
+          <tr mat-row *matRowDef="let row; columns: columnas"></tr>
+        </table>
+
+        <div class="sin-registros" *ngIf="dataSource.data.length === 0">
+          No existen días no laborables para los filtros seleccionados.
+        </div>
+      </div>
+
+      <mat-paginator
+        [pageSize]="10"
+        [pageSizeOptions]="[10, 20, 50]"
+        showFirstLastButtons
+      ></mat-paginator>
+    </mat-card-content>
+  </mat-card>
+</section>
