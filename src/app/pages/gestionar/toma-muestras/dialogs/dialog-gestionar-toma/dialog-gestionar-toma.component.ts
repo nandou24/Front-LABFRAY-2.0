@@ -524,20 +524,23 @@ export class DialogGestionarTomaComponent implements OnInit {
   // ====== Puede generar reintento ======
 
   puedeGenerarReintento(plan: IPlanMuestraLaboratorio): boolean {
+    const muestra = this.obtenerIntentoMostrar(plan);
+
     return (
       plan.requiereReintento === true &&
-      plan.intentoVigente?.estadoMuestra === 'RECHAZADA'
+      !!muestra &&
+      ['RECHAZADA', 'ANULADA'].includes(muestra.estadoMuestra)
     );
   }
 
   // ====== Generar reintento ======
 
   async generarReintento(plan: IPlanMuestraLaboratorio): Promise<void> {
-    const muestra = this.obtenerIntentoVigente(plan);
+    const muestra = this.obtenerIntentoMostrar(plan);
 
     if (
       !muestra ||
-      muestra.estadoMuestra !== 'RECHAZADA' ||
+      !['RECHAZADA', 'ANULADA'].includes(muestra.estadoMuestra) ||
       !this.puedeGenerarReintento(plan) ||
       this.generandoReintentoMuestraId === muestra._id
     ) {
@@ -545,6 +548,8 @@ export class DialogGestionarTomaComponent implements OnInit {
     }
 
     const etiqueta = muestra.codigoEtiqueta || muestra.codMuestra;
+    const estadoAnterior =
+      muestra.estadoMuestra === 'ANULADA' ? 'anulado' : 'rechazado';
 
     const resultado = await Swal.fire({
       icon: 'question',
@@ -557,7 +562,7 @@ export class DialogGestionarTomaComponent implements OnInit {
           </p>
 
           <p>
-            El intento rechazado
+            El intento ${estadoAnterior}
             <strong>${etiqueta}</strong> se conservará en el historial
             y la nueva muestra quedará en estado
             <strong>PENDIENTE</strong>.

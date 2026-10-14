@@ -444,10 +444,15 @@
 
               <ng-container *ngIf="puedeGenerarReintento(plan)">
                 <span class="accion-rechazo">
-                  Muestra rechazada · requiere nueva muestra
+                  {{
+                    obtenerIntentoMostrar(plan)?.estadoMuestra === 'ANULADA'
+                      ? 'Muestra anulada · requiere nueva muestra'
+                      : 'Muestra rechazada · requiere nueva muestra'
+                  }}
                 </span>
 
                 <button
+                  *ngIf="obtenerIntentoMostrar(plan)?.estadoMuestra === 'RECHAZADA'"
                   mat-stroked-button
                   type="button"
                   class="btn-corregir"
@@ -462,12 +467,12 @@
                   type="button"
                   (click)="generarReintento(plan)"
                   [disabled]="
-                    generandoReintentoMuestraId === plan.intentoVigente?._id
+                    generandoReintentoMuestraId === obtenerIntentoMostrar(plan)?._id
                   "
                 >
                   <mat-icon>add_circle</mat-icon>
                   {{
-                    generandoReintentoMuestraId === plan.intentoVigente?._id
+                    generandoReintentoMuestraId === obtenerIntentoMostrar(plan)?._id
                       ? 'Generando...'
                       : 'Generar nueva muestra'
                   }}

@@ -659,6 +659,8 @@ export interface IReintentoMuestraAnterior {
   estadoMuestra: EstadoMuestraLaboratorio;
 
   motivoRechazo?: string | null;
+
+  motivoAnulacion?: string | null;
 }
 
 export interface IReintentarMuestraResponse {
