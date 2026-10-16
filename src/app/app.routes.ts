@@ -193,6 +193,13 @@ export const routes: Routes = [
     ],
   },
   {
+    path: 'resultados/consulta',
+    loadComponent: () =>
+      import(
+        './pages/publico/resultados-seguros/resultados-seguros.component'
+      ).then((m) => m.ResultadosSegurosComponent),
+  },
+  {
     path: 'auth',
     //necesito cargar la pagina de login
     loadComponent: () =>

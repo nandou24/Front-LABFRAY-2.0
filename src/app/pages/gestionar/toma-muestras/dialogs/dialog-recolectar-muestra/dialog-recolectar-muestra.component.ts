@@ -25,7 +25,7 @@ import Swal from 'sweetalert2';
 import {
   IMuestraLaboratorio,
   IOpcionMuestraSnapshot,
-  IRecolectarMuestraDTO,
+  ITomarRecibirMuestraDTO,
   UnidadVolumenMuestra,
 } from '../../../../../models/Gestion/muestraLaboratorio.models';
 import { MuestraLaboratorioService } from '../../../../../services/gestion/muestraLaboratorio/muestra-laboratorio.service';
@@ -168,9 +168,9 @@ export class DialogRecolectarMuestraComponent {
     );
   }
 
-  // ====== Registrar recolección ======
+  // ====== Registrar toma y recepción ======
 
-  async registrarRecoleccion(): Promise<void> {
+  registrarTomaRecepcion(): void {
     if (this.formRecoleccion.invalid || this.procesando) {
       this.formRecoleccion.markAllAsTouched();
       return;
@@ -182,53 +182,13 @@ export class DialogRecolectarMuestraComponent {
       return;
     }
 
-    const confirmacion = await Swal.fire({
-      icon: 'question',
-      title: '¿Registrar recolección?',
-      html: `
-        <div style="text-align: left;">
-          <p>
-            Se registrará la muestra
-            <strong>${this.data.muestra.codigoEtiqueta || this.data.muestra.codMuestra}</strong>
-            como recolectada.
-          </p>
-          <p>
-            Recipiente utilizado:<br>
-            <strong>${opcion.tuboEnvase.nombreTuboEnvase}</strong>
-            · ${opcion.tipoMuestra.nombreTipoMuestra}
-          </p>
-          <p>
-            Fecha real de toma:<br>
-            <strong>${this.formatearFechaVisible(
-              this.formRecoleccion.controls.fechaRecoleccion.value,
-            )}</strong>
-          </p>
-          ${
-            this.archivoEvidencia
-              ? '<p>También se registrará la fotografía como evidencia de recolección.</p>'
-              : ''
-          }
-        </div>
-      `,
-      showCancelButton: true,
-      reverseButtons: true,
-      confirmButtonText: 'Sí, registrar',
-      cancelButtonText: 'Cancelar',
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#6c757d',
-    });
-
-    if (!confirmacion.isConfirmed) {
-      return;
-    }
-
     const raw = this.formRecoleccion.getRawValue();
 
     const tieneVolumen =
       raw.volumenRecolectado !== null &&
       raw.volumenRecolectado !== undefined;
 
-    const body: IRecolectarMuestraDTO = {
+    const body: ITomarRecibirMuestraDTO = {
       tipoMuestraId: opcion.tipoMuestraId,
       tuboEnvaseId: opcion.tuboEnvaseId,
       volumenRecolectado: tieneVolumen
@@ -245,25 +205,25 @@ export class DialogRecolectarMuestraComponent {
     this.procesando = true;
 
     this._muestraLaboratorioService
-      .recolectarMuestra(this.data.muestra._id, body)
+      .tomarYRecibirMuestra(this.data.muestra._id, body)
       .subscribe({
         next: (response) => {
           this.registrarEvidenciaPosterior(
-            response.msg || 'La muestra fue recolectada correctamente.',
+            response.msg || 'La toma y recepción se registraron correctamente.',
             body.observacionRecoleccion ?? '',
           );
         },
         error: (error) => {
           this.procesando = false;
 
-          console.error('Error al registrar recolección:', error);
+          console.error('Error al registrar toma y recepción:', error);
 
           Swal.fire({
             icon: 'error',
-            title: 'No se pudo registrar la recolección',
+            title: 'No se pudo registrar la toma y recepción',
             text:
               error?.error?.msg ||
-              'Ocurrió un error al registrar la recolección de la muestra.',
+              'Ocurrió un error al registrar la toma y recepción de la muestra.',
             confirmButtonText: 'Cerrar',
             confirmButtonColor: '#d33',
           });
@@ -285,14 +245,6 @@ export class DialogRecolectarMuestraComponent {
     return `${anio}-${mes}-${dia}`;
   }
 
-  private formatearFechaVisible(fecha: Date | null): string {
-    if (!fecha) {
-      return '-';
-    }
-
-    return new Intl.DateTimeFormat('es-PE').format(fecha);
-  }
-
   // ====== Registrar evidencia posterior ======
 
   private registrarEvidenciaPosterior(
@@ -301,7 +253,7 @@ export class DialogRecolectarMuestraComponent {
   ): void {
     if (!this.archivoEvidencia) {
       void this.finalizarOperacion(
-        'Recolección registrada',
+        'Toma y recepción registradas',
         mensajeOperacion,
       );
       return;
@@ -317,20 +269,20 @@ export class DialogRecolectarMuestraComponent {
       .subscribe({
         next: () => {
           void this.finalizarOperacion(
-            'Recolección registrada',
-            'La recolección y su evidencia fotográfica fueron registradas correctamente.',
+            'Toma y recepción registradas',
+            'La toma, recepción y evidencia fotográfica fueron registradas correctamente.',
           );
         },
         error: (error) => {
           console.error(
-            'La recolección se registró, pero falló la evidencia:',
+            'La toma y recepción se registraron, pero falló la evidencia:',
             error,
           );
 
           void this.finalizarOperacionConAdvertencia(
-            'Recolección registrada, evidencia pendiente',
+            'Toma y recepción registradas, evidencia pendiente',
             error?.error?.msg ||
-              'La recolección se guardó correctamente, pero la fotografía no pudo registrarse. Puede agregarla posteriormente desde Evidencias.',
+              'La toma y recepción se guardaron correctamente, pero la fotografía no pudo registrarse. Puede agregarla posteriormente desde Evidencias.',
           );
         },
       });
@@ -343,16 +295,18 @@ export class DialogRecolectarMuestraComponent {
     mensaje: string,
   ): Promise<void> {
     this.procesando = false;
+    this._dialogRef.close(true);
 
-    await Swal.fire({
+    void Swal.fire({
+      toast: true,
+      position: 'top-end',
       icon: 'success',
       title: titulo,
       text: mensaje,
-      confirmButtonText: 'Continuar',
-      confirmButtonColor: '#3085d6',
+      timer: 2800,
+      timerProgressBar: true,
+      showConfirmButton: false,
     });
-
-    this._dialogRef.close(true);
   }
 
   // ====== Finalizar con advertencia ======

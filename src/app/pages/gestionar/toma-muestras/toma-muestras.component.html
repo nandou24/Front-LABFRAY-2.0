@@ -103,10 +103,10 @@
         <button
           mat-flat-button
           type="button"
-          (click)="abrirRecepcionMasiva('PARTICULAR')"
+          (click)="abrirRecoleccionMasiva('PARTICULAR')"
         >
           <mat-icon>inventory_2</mat-icon>
-          Recepción masiva
+          Toma / recepción masiva
         </button>
         <button
           mat-flat-button
@@ -302,15 +302,7 @@
           (click)="abrirRecoleccionMasiva('EMPRESA')"
         >
           <mat-icon>vaccines</mat-icon>
-          Recolección masiva
-        </button>
-        <button
-          mat-flat-button
-          type="button"
-          (click)="abrirRecepcionMasiva('EMPRESA')"
-        >
-          <mat-icon>inventory_2</mat-icon>
-          Recepción masiva
+          Toma / recepción masiva
         </button>
         <button
           mat-flat-button
@@ -999,24 +991,8 @@
                   border-top: 1px solid #e2e8f0;
                 "
               >
-                <div
-                  *ngIf="
-                    !row.muestras.inicializadas &&
-                    inicializandoSolicitudId === row.solicitud._id
-                  "
-                  style="
-                    display: inline-flex;
-                    align-items: center;
-                    gap: 8px;
-                    font-size: 13px;
-                    color: #1d4ed8;
-                  "
-                >
-                  <mat-icon>hourglass_top</mat-icon>
-                  Preparando plan de toma...
-                </div>
 
-                <!-- ====== Falta código laboratorio ====== -->
+<!-- ====== Falta código laboratorio ====== -->
 
                 <div
                   *ngIf="

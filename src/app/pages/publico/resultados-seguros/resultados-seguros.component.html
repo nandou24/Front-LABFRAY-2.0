@@ -1,0 +1,75 @@
+<div class="pagina-resultados">
+  <header class="cabecera-publica">
+    <img src="/images/logo labfray.png" alt="LAB FRAY" />
+    <div>
+      <strong>LAB FRAY</strong>
+      <span>Resultados de laboratorio</span>
+    </div>
+  </header>
+
+  <main class="contenido-publico">
+    <section class="estado" *ngIf="cargando">
+      <mat-spinner diameter="36"></mat-spinner>
+      <p>Validando acceso al informe...</p>
+    </section>
+
+    <section class="estado error" *ngIf="!cargando && error">
+      <mat-icon>error_outline</mat-icon>
+      <h1>No se pudo abrir el informe</h1>
+      <p>{{ error }}</p>
+      <small>
+        Si recibió una versión actualizada de sus resultados, utilice el enlace más reciente.
+      </small>
+    </section>
+
+    <ng-container *ngIf="!cargando && !error && informe">
+      <section class="resumen">
+        <div>
+          <span>Paciente</span>
+          <strong>{{ nombrePaciente }}</strong>
+        </div>
+        <div>
+          <span>Documento</span>
+          <strong>{{ documentoPaciente }}</strong>
+        </div>
+        <div>
+          <span>Solicitud</span>
+          <strong>{{ codigoSolicitud }}</strong>
+        </div>
+        <div>
+          <span>Resultados incluidos</span>
+          <strong>{{ informe.resultados.length }}</strong>
+        </div>
+        <div *ngIf="acceso?.fechaEnvio">
+          <span>Enviado</span>
+          <strong>{{ acceso?.fechaEnvio | date: 'dd/MM/yyyy HH:mm' }}</strong>
+        </div>
+      </section>
+
+      <section class="acciones" *ngIf="pdfUrl">
+        <button mat-stroked-button type="button" (click)="abrirPdf()">
+          <mat-icon>open_in_new</mat-icon>
+          Abrir informe
+        </button>
+        <button mat-flat-button color="primary" type="button" (click)="descargarPdf()">
+          <mat-icon>download</mat-icon>
+          Descargar PDF
+        </button>
+      </section>
+
+      <section class="estado" *ngIf="generandoPdf">
+        <mat-spinner diameter="32"></mat-spinner>
+        <p>Preparando informe...</p>
+      </section>
+
+      <section class="visor" *ngIf="pdfUrl && !generandoPdf">
+        <iframe [src]="pdfUrl" title="Informe de resultados de laboratorio"></iframe>
+      </section>
+
+      <p class="nota-seguridad">
+        Este enlace es personal. Puede volver a consultarlo mientras permanezca activo.
+        No lo comparta con terceros.
+      </p>
+    </ng-container>
+  </main>
+</div>

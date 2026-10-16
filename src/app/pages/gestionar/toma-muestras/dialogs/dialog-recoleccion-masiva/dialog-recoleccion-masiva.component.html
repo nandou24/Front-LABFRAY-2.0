@@ -1,6 +1,6 @@
 <div class="dialog-header" mat-dialog-title>
   <div>
-    <div class="dialog-title">Recolección masiva</div>
+    <div class="dialog-title">Toma / recepción masiva</div>
 
     <div class="dialog-subtitle">
       {{
@@ -357,7 +357,7 @@
 
   <div class="observacion-container" [formGroup]="form">
     <mat-form-field appearance="outline">
-      <mat-label>Observación común de recolección</mat-label>
+      <mat-label>Observación común de toma / recepción</mat-label>
 
       <textarea
         matInput
@@ -367,6 +367,21 @@
         placeholder="Opcional. Se aplicará a todas las muestras procesadas."
       ></textarea>
     </mat-form-field>
+  </div>
+
+  <!-- ====== Evidencia grupal opcional de Empresa ====== -->
+
+  <div *ngIf="permiteEvidenciaGrupal" class="evidencia-grupal-container">
+    <app-captura-evidencia-muestra
+      titulo="Evidencia fotográfica grupal (opcional)"
+      descripcion="Fotografía grupal asociada a las muestras de Empresa tomadas y recepcionadas correctamente."
+      [requerido]="false"
+      [disabled]="procesando"
+      (evidenciaChange)="cambiarEvidenciaGrupal($event)"
+    ></app-captura-evidencia-muestra>
+    <div class="evidencia-grupal-ayuda">
+      La imagen se almacenará una sola vez y se vinculará a las muestras procesadas correctamente.
+    </div>
   </div>
 
 </mat-dialog-content>
@@ -409,6 +424,6 @@
   >
     <mat-icon>vaccines</mat-icon>
 
-    {{ procesando ? "Procesando..." : "Registrar recolección" }}
+    {{ procesando ? "Procesando..." : "Registrar toma / recepción" }}
   </button>
 </mat-dialog-actions>

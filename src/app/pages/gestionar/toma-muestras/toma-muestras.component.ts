@@ -94,7 +94,6 @@ export class TomaMuestrasComponent implements OnInit, AfterViewInit {
   });
 
   cargando = false;
-  inicializandoSolicitudId: string | null = null;
 
   // ====== Particulares ======
 
@@ -448,7 +447,6 @@ export class TomaMuestrasComponent implements OnInit, AfterViewInit {
     }
 
     this.expandedParticular = item;
-    this.asegurarInicializacionAutomatica(item);
   }
 
   // ====== Expandir empresa ======
@@ -464,7 +462,6 @@ export class TomaMuestrasComponent implements OnInit, AfterViewInit {
     }
 
     this.expandedEmpresa = item;
-    this.asegurarInicializacionAutomatica(item);
   }
 
   // ====== Abrir recolección masiva ======
@@ -653,60 +650,6 @@ export class TomaMuestrasComponent implements OnInit, AfterViewInit {
     });
   }
 
-  // ====== Inicialización automática ======
-
-  private asegurarInicializacionAutomatica(
-    item: IBandejaTomaMuestrasItem,
-  ): void {
-    const solicitud = item.solicitud;
-    const muestras = item.muestras;
-
-    if (
-      muestras.inicializadas ||
-      !muestras.requiereMuestra ||
-      !muestras.puedeInicializar ||
-      !muestras.planToma.disponible ||
-      this.inicializandoSolicitudId === solicitud._id
-    ) {
-      return;
-    }
-
-    this.inicializandoSolicitudId = solicitud._id;
-
-    this._muestraLaboratorioService
-      .inicializarMuestras(solicitud._id)
-      .subscribe({
-        next: () => {
-          this.inicializandoSolicitudId = null;
-
-          // ====== Mantener expansión actual ======
-
-          const sigueExpandida =
-            this.expandedParticular?.solicitud._id === solicitud._id ||
-            this.expandedEmpresa?.solicitud._id === solicitud._id;
-
-          this.buscarSolicitudes(
-            sigueExpandida ? solicitud._id : null,
-            false,
-          );
-        },
-
-        error: (error) => {
-          this.inicializandoSolicitudId = null;
-
-          console.error('Error al preparar automáticamente la toma:', error);
-
-          const mensaje =
-            error?.error?.msg ||
-            'No se pudo preparar automáticamente el plan de toma';
-
-          this._snackBar.open(mensaje, 'Cerrar', {
-            duration: 4500,
-          });
-        },
-      });
-  }
-
   // ====== Estado general ======
 
   obtenerEstadoGeneralToma(item: IBandejaTomaMuestrasItem): string {
@@ -721,9 +664,7 @@ export class TomaMuestrasComponent implements OnInit, AfterViewInit {
     }
 
     if (!muestras.inicializadas) {
-      return this.inicializandoSolicitudId === item.solicitud._id
-        ? 'PREPARANDO PLAN'
-        : 'PENDIENTE';
+      return 'PLAN SIN INICIALIZAR';
     }
 
     const vigentes = muestras.resumen.vigentes;
@@ -781,7 +722,7 @@ export class TomaMuestrasComponent implements OnInit, AfterViewInit {
         color: '#475569',
         borderColor: '#cbd5e1',
       },
-      'PREPARANDO PLAN': {
+      'PLAN SIN INICIALIZAR': {
         background: '#eff6ff',
         color: '#1d4ed8',
         borderColor: '#93c5fd',
@@ -841,6 +782,9 @@ export class TomaMuestrasComponent implements OnInit, AfterViewInit {
 
   obtenerClaseEstadoSolicitud(estado: string): string {
     switch (estado) {
+      case 'PENDIENTE':
+        return 'estado-chip estado-pendiente';
+
       case 'EN PROCESO':
         return 'estado-chip estado-en-proceso';
 
@@ -851,7 +795,7 @@ export class TomaMuestrasComponent implements OnInit, AfterViewInit {
         return 'estado-chip estado-anulado';
 
       default:
-        return 'estado-chip estado-generado';
+        return 'estado-chip estado-pendiente';
     }
   }
 

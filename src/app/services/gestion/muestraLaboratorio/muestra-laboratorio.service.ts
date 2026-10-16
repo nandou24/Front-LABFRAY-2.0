@@ -22,6 +22,7 @@ import {
   IRechazarMuestraResponse,
   IRecibirMuestraDTO,
   IRecolectarMuestraDTO,
+  ITomarRecibirMuestraDTO,
   IRegistrarEvidenciaMuestraResponse,
   IReintentarMuestraResponse,
   EtapaEvidenciaMuestra,
@@ -120,6 +121,37 @@ export class MuestraLaboratorioService {
       {
         headers: this.auth.getAuthHeaders(),
       },
+    );
+  }
+
+  // ====== Registrar toma y recepción masiva ======
+
+  tomarRecibirMuestrasMasivamente(
+    body: IRecolectarMuestrasMasivamenteDTO,
+    imagenGrupal?: File,
+  ): Observable<IRecolectarMuestrasMasivamenteResponse> {
+    if (!imagenGrupal) {
+      return this.http.put<IRecolectarMuestrasMasivamenteResponse>(
+        `${this.apiUrl}/masiva/tomar-recibir`,
+        body,
+        { headers: this.auth.getAuthHeaders() },
+      );
+    }
+
+    const formData = new FormData();
+    formData.append('muestras', JSON.stringify(body.muestras));
+    if (body.fechaRecoleccion) {
+      formData.append('fechaRecoleccion', body.fechaRecoleccion);
+    }
+    if (body.observacionRecoleccion?.trim()) {
+      formData.append('observacionRecoleccion', body.observacionRecoleccion.trim());
+    }
+    formData.append('imagen', imagenGrupal);
+
+    return this.http.put<IRecolectarMuestrasMasivamenteResponse>(
+      `${this.apiUrl}/masiva/tomar-recibir`,
+      formData,
+      { headers: this.auth.getAuthHeaders() },
     );
   }
 
@@ -265,6 +297,21 @@ export class MuestraLaboratorioService {
   ): Observable<IAccionMuestraResponse> {
     return this.http.put<IAccionMuestraResponse>(
       `${this.apiUrl}/${muestraLaboratorioId}/recolectar`,
+      body,
+      {
+        headers: this.auth.getAuthHeaders(),
+      },
+    );
+  }
+
+  // ====== Toma y recepción individual ======
+
+  tomarYRecibirMuestra(
+    muestraLaboratorioId: string,
+    body: ITomarRecibirMuestraDTO,
+  ): Observable<IAccionMuestraResponse> {
+    return this.http.put<IAccionMuestraResponse>(
+      `${this.apiUrl}/${muestraLaboratorioId}/tomar-recibir`,
       body,
       {
         headers: this.auth.getAuthHeaders(),

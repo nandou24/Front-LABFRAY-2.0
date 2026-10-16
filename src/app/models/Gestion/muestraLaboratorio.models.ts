@@ -541,6 +541,12 @@ export interface IRecolectarMuestraDTO {
   fechaRecoleccion?: string;
 }
 
+// ====== DTO toma y recepción individual ======
+
+export interface ITomarRecibirMuestraDTO extends IRecolectarMuestraDTO {
+  observacionRecepcion?: string;
+}
+
 // ====== DTO recepción ======
 
 export interface IRecibirMuestraDTO {
@@ -1153,7 +1159,7 @@ export interface IMuestraRecoleccionMasivaProcesada {
 
   codigoEtiqueta: string | null;
 
-  estadoMuestra: 'RECOLECTADA';
+  estadoMuestra: 'RECOLECTADA' | 'RECEPCIONADA';
 
   tipoMuestraId: string | null;
 
@@ -1172,6 +1178,10 @@ export interface IMuestraRecoleccionMasivaProcesada {
   fechaRecoleccion: Date | string | null;
 
   fechaRegistroRecoleccion?: Date | string | null;
+
+  usuarioRecepcion?: string | null;
+
+  fechaRecepcion?: Date | string | null;
 }
 
 export interface IMuestraRecoleccionMasivaNoProcesada {
@@ -1187,6 +1197,8 @@ export interface IResumenResultadoRecoleccionMasiva {
 
   recolectadas: number;
 
+  recepcionadas?: number;
+
   noProcesadas: number;
 }
 
@@ -1198,6 +1210,8 @@ export interface IRecolectarMuestrasMasivamenteResponse {
   resumen: IResumenResultadoRecoleccionMasiva;
 
   recolectadas: IMuestraRecoleccionMasivaProcesada[];
+
+  evidenciaGrupal?: IEvidenciaGrupalOperacionMasiva | null;
 
   noProcesadas: IMuestraRecoleccionMasivaNoProcesada[];
 }

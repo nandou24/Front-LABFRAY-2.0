@@ -163,7 +163,7 @@ export class DialogAceptarMuestraComponent {
     observacion: string,
   ): void {
     if (!this.archivoEvidencia) {
-      void this.finalizarOperacion(
+      this.finalizarOperacion(
         'Muestra aceptada',
         mensajeOperacion,
       );
@@ -179,7 +179,7 @@ export class DialogAceptarMuestraComponent {
       )
       .subscribe({
         next: () => {
-          void this.finalizarOperacion(
+          this.finalizarOperacion(
             'Muestra aceptada',
             'La aceptación y su evidencia fotográfica fueron registradas correctamente.',
           );
@@ -201,21 +201,23 @@ export class DialogAceptarMuestraComponent {
 
   // ====== Finalizar operación ======
 
-  private async finalizarOperacion(
+  private finalizarOperacion(
     titulo: string,
     mensaje: string,
-  ): Promise<void> {
+  ): void {
     this.procesando = false;
+    this._dialogRef.close(true);
 
-    await Swal.fire({
+    void Swal.fire({
+      toast: true,
+      position: 'top-end',
       icon: 'success',
       title: titulo,
       text: mensaje,
-      confirmButtonText: 'Continuar',
-      confirmButtonColor: '#15803d',
+      timer: 2800,
+      timerProgressBar: true,
+      showConfirmButton: false,
     });
-
-    this._dialogRef.close(true);
   }
 
   // ====== Finalizar con advertencia ======

@@ -11,12 +11,13 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { finalize } from 'rxjs';
+import { finalize, firstValueFrom } from 'rxjs';
 import Swal from 'sweetalert2';
 
 import {
   IInformeEntregable,
   IItemInformeEntrega,
+  ModoContenidoDespachoResultado,
   IValorEstructuradoInformeEntrega,
   IPruebaInformeEntrega,
   IReferenciaAplicadaEntrega,
@@ -59,6 +60,10 @@ export class DialogEntregaResultadosComponent implements OnInit {
   generandoPdf = false;
   mostrarRegistroEntrega = false;
   informe: IInformeEntregable | null = null;
+  private claveIdempotenciaCorreo = '';
+  private firmaIdempotenciaCorreo = '';
+  private claveIdempotenciaWhatsapp = '';
+  private firmaIdempotenciaWhatsapp = '';
   seleccionados = new Set<string>();
 
   readonly incluirLogoImpresion = this._fb.nonNullable.control(true);
@@ -68,10 +73,26 @@ export class DialogEntregaResultadosComponent implements OnInit {
     medio: [
       'PRESENCIAL' as 'PRESENCIAL' | 'WHATSAPP' | 'CORREO' | 'OTRO',
     ],
+    correo: ['', [Validators.email, Validators.maxLength(180)]],
+    telefono: ['', [Validators.maxLength(30)]],
+    modoCorreo: [
+      'PDF_Y_ENLACE' as
+        | 'PDF_ADJUNTO'
+        | 'ENLACE_SEGURO'
+        | 'PDF_Y_ENLACE',
+    ],
+    tipoDestinatario: [
+      'PACIENTE' as 'PACIENTE' | 'CONTACTO_EMPRESA' | 'OTRO',
+    ],
+    cargo: ['', [Validators.maxLength(120)]],
     observacion: ['', [Validators.maxLength(1000)]],
   });
 
   ngOnInit(): void {
+    this.formEntrega.controls.medio.valueChanges.subscribe(() =>
+      this.actualizarValidadoresCanal(),
+    );
+    this.actualizarValidadoresCanal();
     this.cargar();
   }
 
@@ -90,6 +111,28 @@ export class DialogEntregaResultadosComponent implements OnInit {
 
   get puedeGenerarInforme(): boolean {
     return !!this.informe && !this.cargando && !!this.seleccionados.size;
+  }
+
+  get esCorreo(): boolean {
+    return this.formEntrega.controls.medio.value === 'CORREO';
+  }
+
+  get esWhatsapp(): boolean {
+    return this.formEntrega.controls.medio.value === 'WHATSAPP';
+  }
+
+  get esCanalDigital(): boolean {
+    return this.esCorreo || this.esWhatsapp;
+  }
+
+  get esEmpresa(): boolean {
+    return this.informe?.solicitud.origenAtencion === 'EMPRESA';
+  }
+
+  get textoAccionEntrega(): string {
+    if (this.esCorreo) return 'Enviar por correo';
+    if (this.esWhatsapp) return 'Enviar por WhatsApp';
+    return 'Registrar entrega';
   }
 
   cambiarSeleccion(id: string, marcado: boolean): void {
@@ -137,6 +180,7 @@ export class DialogEntregaResultadosComponent implements OnInit {
           if (!receptorActual.trim()) {
             this.formEntrega.patchValue({
               receptorNombre: informe.solicitud.paciente.nombreCompleto || '',
+              tipoDestinatario: 'PACIENTE',
             });
           }
         },
@@ -514,6 +558,280 @@ export class DialogEntregaResultadosComponent implements OnInit {
     }
   }
 
+  // ====== Validadores por canal ======
+  private actualizarValidadoresCanal(): void {
+    const correo = this.formEntrega.controls.correo;
+    const telefono = this.formEntrega.controls.telefono;
+    const medio = this.formEntrega.controls.medio.value;
+
+    if (medio === 'CORREO') {
+      correo.setValidators([
+        Validators.required,
+        Validators.email,
+        Validators.maxLength(180),
+      ]);
+    } else {
+      correo.setValidators([Validators.email, Validators.maxLength(180)]);
+    }
+
+    if (medio === 'WHATSAPP') {
+      telefono.setValidators([
+        Validators.required,
+        Validators.pattern(/^[+0-9()\s-]{8,30}$/),
+        Validators.maxLength(30),
+      ]);
+    } else {
+      telefono.setValidators([Validators.maxLength(30)]);
+    }
+
+    correo.updateValueAndValidity({ emitEvent: false });
+    telefono.updateValueAndValidity({ emitEvent: false });
+  }
+
+  modoCorreoTexto(modo: ModoContenidoDespachoResultado): string {
+    const etiquetas: Partial<Record<ModoContenidoDespachoResultado, string>> = {
+      PDF_ADJUNTO: 'PDF adjunto',
+      ENLACE_SEGURO: 'enlace seguro',
+      PDF_Y_ENLACE: 'PDF adjunto + enlace seguro',
+    };
+
+    return etiquetas[modo] ?? modo;
+  }
+
+  private obtenerClaveIdempotenciaCorreo(): string {
+    const datos = this.formEntrega.getRawValue();
+    const firma = JSON.stringify({
+      solicitudAtencionId: this.informe?.solicitud.solicitudAtencionId ?? '',
+      resultadosIds: [...this.seleccionados].sort(),
+      correo: datos.correo.trim().toLowerCase(),
+      modoCorreo: datos.modoCorreo,
+      receptorNombre: datos.receptorNombre.trim(),
+      tipoDestinatario: datos.tipoDestinatario,
+      cargo: datos.cargo.trim(),
+      observacion: datos.observacion.trim(),
+    });
+
+    if (!this.claveIdempotenciaCorreo || this.firmaIdempotenciaCorreo !== firma) {
+      this.claveIdempotenciaCorreo = this._service.crearClaveIdempotencia();
+      this.firmaIdempotenciaCorreo = firma;
+    }
+
+    return this.claveIdempotenciaCorreo;
+  }
+
+  private limpiarIdempotenciaCorreo(): void {
+    this.claveIdempotenciaCorreo = '';
+    this.firmaIdempotenciaCorreo = '';
+  }
+
+  // ====== Envío automático por correo ======
+  private async enviarPorCorreo(): Promise<void> {
+    if (
+      !this.informe ||
+      this.procesando ||
+      this.generandoPdf ||
+      this.formEntrega.invalid ||
+      !this.seleccionados.size
+    ) {
+      this.formEntrega.markAllAsTouched();
+      return;
+    }
+
+    const datos = this.formEntrega.getRawValue();
+    const receptorFinal =
+      datos.receptorNombre.trim() || this.informe.solicitud.paciente.nombreCompleto;
+    const correo = datos.correo.trim().toLowerCase();
+    const modo = datos.modoCorreo as ModoContenidoDespachoResultado;
+
+    this._ref.disableClose = true;
+    let confirmacion;
+
+    try {
+      confirmacion = await Swal.fire({
+        icon: 'question',
+        title: 'Enviar resultados por correo',
+        html:
+          `<strong>${correo}</strong><br>` +
+          `${this.seleccionados.size} resultado(s) · ${this.modoCorreoTexto(modo)}`,
+        showCancelButton: true,
+        confirmButtonText: 'Enviar ahora',
+        cancelButtonText: 'Cancelar',
+        allowEscapeKey: true,
+        allowEnterKey: true,
+      });
+    } finally {
+      this._ref.disableClose = false;
+    }
+
+    if (!confirmacion?.isConfirmed) return;
+
+    const incluyePdf = ['PDF_ADJUNTO', 'PDF_Y_ENLACE'].includes(modo);
+    this.procesando = true;
+    this.generandoPdf = incluyePdf;
+
+    try {
+      const archivo = incluyePdf
+        ? await this._pdf.generarArchivoDigital(
+            this.informe,
+            this.resultadosSeleccionados,
+          )
+        : null;
+
+      const despachoResp = await firstValueFrom(
+        this._service.crearDespacho(
+          this.informe.solicitud.solicitudAtencionId,
+          {
+            resultadosIds: [...this.seleccionados],
+            canal: 'CORREO',
+            modoContenido: modo,
+            destinatario: {
+              tipo: datos.tipoDestinatario,
+              nombre: receptorFinal,
+              correo,
+              telefono: null,
+              cargo: datos.cargo.trim() || null,
+              referencia: null,
+            },
+            observacion: datos.observacion.trim(),
+            idempotencyKey: this.obtenerClaveIdempotenciaCorreo(),
+          },
+        ),
+      );
+
+      const envio = await firstValueFrom(
+        this._service.enviarCorreoDespacho(
+          despachoResp.despacho._id,
+          archivo?.blob ?? null,
+          archivo?.nombreArchivo ?? null,
+        ),
+      );
+
+      this._snack.open(envio.msg, 'Cerrar', { duration: 5500 });
+      this.limpiarIdempotenciaCorreo();
+      this.mostrarRegistroEntrega = false;
+      this.cargar();
+    } catch (err: any) {
+      this._snack.open(
+        err?.error?.msg || err?.message || 'No se pudo enviar el correo',
+        'Cerrar',
+        { duration: 6500 },
+      );
+    } finally {
+      this.procesando = false;
+      this.generandoPdf = false;
+    }
+  }
+
+  private obtenerClaveIdempotenciaWhatsapp(): string {
+    const datos = this.formEntrega.getRawValue();
+    const firma = JSON.stringify({
+      solicitudAtencionId: this.informe?.solicitud.solicitudAtencionId ?? '',
+      resultadosIds: [...this.seleccionados].sort(),
+      telefono: datos.telefono.trim(),
+      receptorNombre: datos.receptorNombre.trim(),
+      tipoDestinatario: datos.tipoDestinatario,
+      cargo: datos.cargo.trim(),
+      observacion: datos.observacion.trim(),
+    });
+
+    if (
+      !this.claveIdempotenciaWhatsapp ||
+      this.firmaIdempotenciaWhatsapp !== firma
+    ) {
+      this.claveIdempotenciaWhatsapp = this._service.crearClaveIdempotencia();
+      this.firmaIdempotenciaWhatsapp = firma;
+    }
+
+    return this.claveIdempotenciaWhatsapp;
+  }
+
+  private limpiarIdempotenciaWhatsapp(): void {
+    this.claveIdempotenciaWhatsapp = '';
+    this.firmaIdempotenciaWhatsapp = '';
+  }
+
+  // ====== Envío automático por WhatsApp ======
+  private async enviarPorWhatsapp(): Promise<void> {
+    if (
+      !this.informe ||
+      this.procesando ||
+      this.formEntrega.invalid ||
+      !this.seleccionados.size
+    ) {
+      this.formEntrega.markAllAsTouched();
+      return;
+    }
+
+    const datos = this.formEntrega.getRawValue();
+    const receptorFinal =
+      datos.receptorNombre.trim() || this.informe.solicitud.paciente.nombreCompleto;
+    const telefono = datos.telefono.trim();
+
+    this._ref.disableClose = true;
+    let confirmacion;
+
+    try {
+      confirmacion = await Swal.fire({
+        icon: 'question',
+        title: 'Enviar resultados por WhatsApp',
+        html:
+          `<strong>${telefono}</strong><br>` +
+          `${this.seleccionados.size} resultado(s) · enlace seguro`,
+        showCancelButton: true,
+        confirmButtonText: 'Enviar ahora',
+        cancelButtonText: 'Cancelar',
+        allowEscapeKey: true,
+        allowEnterKey: true,
+      });
+    } finally {
+      this._ref.disableClose = false;
+    }
+
+    if (!confirmacion?.isConfirmed) return;
+
+    this.procesando = true;
+
+    try {
+      const despachoResp = await firstValueFrom(
+        this._service.crearDespacho(
+          this.informe.solicitud.solicitudAtencionId,
+          {
+            resultadosIds: [...this.seleccionados],
+            canal: 'WHATSAPP',
+            modoContenido: 'ENLACE_SEGURO',
+            destinatario: {
+              tipo: datos.tipoDestinatario,
+              nombre: receptorFinal,
+              correo: null,
+              telefono,
+              cargo: datos.cargo.trim() || null,
+              referencia: null,
+            },
+            observacion: datos.observacion.trim(),
+            idempotencyKey: this.obtenerClaveIdempotenciaWhatsapp(),
+          },
+        ),
+      );
+
+      const envio = await firstValueFrom(
+        this._service.enviarWhatsappDespacho(despachoResp.despacho._id),
+      );
+
+      this._snack.open(envio.msg, 'Cerrar', { duration: 5500 });
+      this.limpiarIdempotenciaWhatsapp();
+      this.mostrarRegistroEntrega = false;
+      this.cargar();
+    } catch (err: any) {
+      this._snack.open(
+        err?.error?.msg || err?.message || 'No se pudo enviar el WhatsApp',
+        'Cerrar',
+        { duration: 6500 },
+      );
+    } finally {
+      this.procesando = false;
+    }
+  }
+
   // ====== Registro administrativo opcional ======
   alternarRegistroEntrega(): void {
     this.mostrarRegistroEntrega = !this.mostrarRegistroEntrega;
@@ -546,6 +864,16 @@ export class DialogEntregaResultadosComponent implements OnInit {
 
     const { receptorNombre, medio, observacion } =
       this.formEntrega.getRawValue();
+
+    if (medio === 'CORREO') {
+      await this.enviarPorCorreo();
+      return;
+    }
+
+    if (medio === 'WHATSAPP') {
+      await this.enviarPorWhatsapp();
+      return;
+    }
 
     const receptorFinal =
       receptorNombre.trim() || this.informe.solicitud.paciente.nombreCompleto;

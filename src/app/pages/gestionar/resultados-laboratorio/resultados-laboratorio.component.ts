@@ -1179,6 +1179,9 @@ export class ResultadosLaboratorioComponent implements OnInit, AfterViewInit {
 
   obtenerClaseEstadoPrincipal(estado: string): string {
     switch (estado) {
+      case 'PENDIENTE':
+        return 'estado-chip estado-pendiente';
+
       case 'ATENDIDO':
         return 'estado-chip estado-atendido';
 
@@ -1189,7 +1192,7 @@ export class ResultadosLaboratorioComponent implements OnInit, AfterViewInit {
         return 'estado-chip estado-en-proceso';
 
       default:
-        return 'estado-chip estado-generado';
+        return 'estado-chip estado-pendiente';
     }
   }
 

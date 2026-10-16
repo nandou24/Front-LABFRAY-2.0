@@ -1,17 +1,54 @@
 <div class="cabecera" mat-dialog-title>
-  <div>
-    <h2>
-      {{
-        informe?.solicitud?.origenAtencion === 'EMPRESA'
-          ? 'Resultados disponibles · Empresa'
-          : 'Resultados disponibles'
-      }}
-    </h2>
-    <div class="identidad" *ngIf="informe">
-      <strong>{{ informe.solicitud.paciente.nombreCompleto }}</strong>
-      <span>{{ informe.solicitud.paciente.documento }}</span>
-      <span>HC: {{ informe.solicitud.paciente.hc }}</span>
-      <span>{{ informe.solicitud.codigoLaboratorio || informe.solicitud.codSolicitud }}</span>
+  <div class="cabecera-contenido">
+    <div class="cabecera-linea">
+      <h2>
+        {{
+          informe?.solicitud?.origenAtencion === "EMPRESA"
+            ? "RESULTADOS:"
+            : "RESULTADOS:"
+        }}
+      </h2>
+
+      <div class="identidad" *ngIf="informe">
+        <div class="identidad-superior">
+          <strong>
+            {{
+              informe.solicitud.paciente.nombreInforme ||
+                informe.solicitud.paciente.nombreCompleto
+            }}
+          </strong>
+          <span>{{ informe.solicitud.paciente.documento }}</span>
+        </div>
+
+        <div class="identidad-inferior">
+          <span>HC: {{ informe.solicitud.paciente.hc }}</span>
+          <span>Solicitud: {{ informe.solicitud.codSolicitud }}</span>
+          <span *ngIf="informe.solicitud.codigoLaboratorio">
+            Lab: {{ informe.solicitud.codigoLaboratorio }}
+          </span>
+        </div>
+      </div>
+
+      <div
+        class="estado-entrega estado-entrega-cabecera"
+        *ngIf="informe"
+        [class.completa]="informe.resumen.tipoDisponibilidad === 'COMPLETA'"
+      >
+        <strong>
+          {{
+            informe.resumen.tipoDisponibilidad === "COMPLETA"
+              ? "DISPONIBILIDAD COMPLETA"
+              : "DISPONIBILIDAD PARCIAL"
+          }}
+        </strong>
+        <span>
+          {{ informe.resumen.liberados }} de {{ informe.resumen.totalPruebas }}
+          pruebas liberadas.
+        </span>
+        <span *ngIf="informe.resumen.pendientes">
+          {{ informe.resumen.pendientes }} pendiente(s).
+        </span>
+      </div>
     </div>
 
     <div
@@ -20,17 +57,17 @@
     >
       <div>
         <span>Empresa</span>
-        <strong>{{ empresa.razonSocialEmpresa || '-' }}</strong>
+        <strong>{{ empresa.razonSocialEmpresa || "-" }}</strong>
         <small *ngIf="empresa.rucEmpresa">RUC {{ empresa.rucEmpresa }}</small>
       </div>
       <div>
         <span>Programación</span>
-        <strong>{{ empresa.codProgramacion || '-' }}</strong>
+        <strong>{{ empresa.codProgramacion || "-" }}</strong>
       </div>
       <div>
         <span>Protocolo</span>
         <strong>
-          {{ empresa.codProtocolo || '-' }}
+          {{ empresa.codProtocolo || "-" }}
           <ng-container *ngIf="empresa.nombreProtocolo">
             · {{ empresa.nombreProtocolo }}
           </ng-container>
@@ -38,17 +75,12 @@
       </div>
       <div>
         <span>Sede</span>
-        <strong>{{ empresa.sede || '-' }}</strong>
+        <strong>{{ empresa.sede || "-" }}</strong>
       </div>
     </div>
   </div>
 
-  <button
-    mat-icon-button
-    type="button"
-    aria-label="Cerrar"
-    (click)="cerrar()"
-  >
+  <button mat-icon-button type="button" aria-label="Cerrar" (click)="cerrar()">
     <mat-icon>close</mat-icon>
   </button>
 </div>
@@ -60,25 +92,166 @@
   </div>
 
   <ng-container *ngIf="informe && !cargando">
-    <div
-      class="estado-entrega"
-      [class.completa]="informe.resumen.tipoDisponibilidad === 'COMPLETA'"
-    >
-      <strong>
-        {{
-          informe.resumen.tipoDisponibilidad === 'COMPLETA'
-            ? 'DISPONIBILIDAD COMPLETA'
-            : 'DISPONIBILIDAD PARCIAL'
-        }}
-      </strong>
-      <span>
-        {{ informe.resumen.liberados }} de {{ informe.resumen.totalPruebas }}
-        pruebas liberadas.
-      </span>
-      <span *ngIf="informe.resumen.pendientes">
-        Quedan {{ informe.resumen.pendientes }} prueba(s) pendientes de liberar.
-      </span>
-    </div>
+    <section class="registro-opcional" *ngIf="informe.resultados.length">
+      <div class="registro-opcional-cabecera">
+        <div>
+          <strong>Entrega de resultados</strong>
+          <p>
+            Presencial registra la entrega. Correo y WhatsApp realizan el envío
+            automáticamente desde LAB FRAY.
+          </p>
+        </div>
+
+        <button
+          mat-stroked-button
+          type="button"
+          (click)="alternarRegistroEntrega()"
+        >
+          <mat-icon>{{
+            mostrarRegistroEntrega ? "expand_less" : "send"
+          }}</mat-icon>
+          {{ mostrarRegistroEntrega ? "Ocultar" : "Entregar resultados" }}
+        </button>
+      </div>
+
+      <form
+        *ngIf="mostrarRegistroEntrega"
+        [formGroup]="formEntrega"
+        class="datos-entrega"
+        (ngSubmit)="registrarEntrega()"
+      >
+        <label>
+          <span>Medio</span>
+          <select formControlName="medio">
+            <option value="PRESENCIAL">Presencial</option>
+            <option value="CORREO">Correo automático</option>
+            <option value="WHATSAPP">WhatsApp automático</option>
+            <option value="OTRO">Otro</option>
+          </select>
+        </label>
+
+        <label>
+          <span>{{
+            esCanalDigital ? "Destinatario" : "Recibido por (opcional)"
+          }}</span>
+          <input
+            formControlName="receptorNombre"
+            placeholder="Por defecto: paciente"
+            maxlength="180"
+          />
+        </label>
+
+        <label *ngIf="esEmpresa && esCanalDigital">
+          <span>Tipo de destinatario</span>
+          <select formControlName="tipoDestinatario">
+            <option value="PACIENTE">Paciente / trabajador</option>
+            <option value="CONTACTO_EMPRESA">Contacto de empresa</option>
+            <option value="OTRO">Otro</option>
+          </select>
+        </label>
+
+        <label *ngIf="esCorreo">
+          <span>Correo electrónico</span>
+          <input
+            formControlName="correo"
+            type="email"
+            autocomplete="email"
+            placeholder="destinatario@correo.com"
+            maxlength="180"
+          />
+          <small
+            class="campo-error"
+            *ngIf="
+              formEntrega.controls.correo.touched &&
+              formEntrega.controls.correo.invalid
+            "
+          >
+            Ingrese un correo electrónico válido.
+          </small>
+        </label>
+
+        <label *ngIf="esWhatsapp">
+          <span>Teléfono WhatsApp</span>
+          <input
+            formControlName="telefono"
+            type="tel"
+            autocomplete="tel"
+            placeholder="Ej. +51 999 888 777"
+            maxlength="30"
+          />
+          <small
+            class="campo-error"
+            *ngIf="
+              formEntrega.controls.telefono.touched &&
+              formEntrega.controls.telefono.invalid
+            "
+          >
+            Ingrese un teléfono válido con código de país.
+          </small>
+        </label>
+
+        <label *ngIf="esCorreo">
+          <span>Contenido del correo</span>
+          <select formControlName="modoCorreo">
+            <option value="PDF_ADJUNTO">PDF adjunto</option>
+            <option value="ENLACE_SEGURO">Enlace seguro</option>
+            <option value="PDF_Y_ENLACE">PDF adjunto + enlace seguro</option>
+          </select>
+        </label>
+
+        <label *ngIf="esCanalDigital && esEmpresa">
+          <span>Cargo (opcional)</span>
+          <input
+            formControlName="cargo"
+            placeholder="Ej. Médico ocupacional"
+            maxlength="120"
+          />
+        </label>
+
+        <label class="observaciones">
+          <span>Observación (opcional)</span>
+          <input formControlName="observacion" maxlength="1000" />
+        </label>
+
+        <div class="nota-correo" *ngIf="esCorreo">
+          <mat-icon>verified_user</mat-icon>
+          <span>
+            El envío se registra solo cuando el servidor de correo acepta el
+            mensaje. El enlace seguro abre el visor público de LAB FRAY y
+            permanece disponible mientras no sea revocado.
+          </span>
+        </div>
+
+        <div class="nota-correo" *ngIf="esWhatsapp">
+          <mat-icon>verified_user</mat-icon>
+          <span>
+            WhatsApp envía únicamente el enlace seguro al visor público. LAB
+            FRAY no almacena ni adjunta el PDF en este canal.
+          </span>
+        </div>
+
+        <div class="accion-registro-entrega">
+          <span>
+            ENTREGA {{ tipoEntregaPreparada }} ·
+            {{ resultadosSeleccionados.length }} prueba(s)
+          </span>
+          <button
+            mat-flat-button
+            color="primary"
+            type="submit"
+            [disabled]="
+              procesando ||
+              generandoPdf ||
+              !seleccionados.size ||
+              formEntrega.invalid
+            "
+          >
+            <mat-icon>{{ esCanalDigital ? "send" : "fact_check" }}</mat-icon>
+            {{ procesando ? "Procesando..." : textoAccionEntrega }}
+          </button>
+        </div>
+      </form>
+    </section>
 
     <div class="herramientas">
       <strong>Preparación del informe</strong>
@@ -136,21 +309,27 @@
           [checked]="seleccionados.has(prueba._id)"
           (change)="cambiarSeleccion(prueba._id, $event.checked)"
         >
-          <strong>{{ prueba.codPruebaLab }} · {{ prueba.nombrePruebaLab }}</strong>
+          <strong
+            >{{ prueba.codPruebaLab }} · {{ prueba.nombrePruebaLab }}</strong
+          >
         </mat-checkbox>
-        <span>Instancia {{ prueba.numeroInstancia }} · v{{ prueba.versionResultado }}</span>
+        <span
+          >Instancia {{ prueba.numeroInstancia }} · v{{
+            prueba.versionResultado
+          }}</span
+        >
       </div>
 
       <p class="metadato" *ngIf="prueba.muestras?.length">
-        Muestra: {{ prueba.muestras?.join(', ') }}
+        Muestra: {{ prueba.muestras?.join(", ") }}
       </p>
 
       <p class="metadato" *ngIf="prueba.fechaValidacion">
-        Validado: {{ prueba.fechaValidacion | date: 'dd/MM/yyyy HH:mm' }}
+        Validado: {{ prueba.fechaValidacion | date: "dd/MM/yyyy HH:mm" }}
       </p>
 
       <p class="metadato">
-        Liberado: {{ prueba.fechaLiberacion | date: 'dd/MM/yyyy HH:mm' }}
+        Liberado: {{ prueba.fechaLiberacion | date: "dd/MM/yyyy HH:mm" }}
       </p>
 
       <table>
@@ -193,7 +372,10 @@
 
               <ng-template #valorComun>
                 <strong>{{ formatearValorItem(item) }}</strong>
-                <mat-icon class="indicador" *ngIf="indicadorIcono(item) as icono">
+                <mat-icon
+                  class="indicador"
+                  *ngIf="indicadorIcono(item) as icono"
+                >
                   {{ icono }}
                 </mat-icon>
               </ng-template>
@@ -209,7 +391,7 @@
                 Alerta crítica
               </span>
             </td>
-            <td class="unidad">{{ item.unidadesRef || '-' }}</td>
+            <td class="unidad">{{ item.unidadesRef || "-" }}</td>
           </tr>
         </tbody>
       </table>
@@ -218,7 +400,11 @@
         class="observacion"
         *ngFor="let referenciaGrupo of comentariosGrupoPrueba(prueba)"
       >
-        <strong>Referencia / interpretación<span *ngIf="referenciaGrupo.nombreGrupo"> · {{ referenciaGrupo.nombreGrupo }}</span>:</strong>
+        <strong
+          >Referencia / interpretación<span *ngIf="referenciaGrupo.nombreGrupo">
+            · {{ referenciaGrupo.nombreGrupo }}</span
+          >:</strong
+        >
         {{ referenciaGrupo.comentario }}
       </div>
 
@@ -231,87 +417,21 @@
       No existen resultados liberados vigentes.
     </div>
 
-    <section class="registro-opcional" *ngIf="informe.resultados.length">
-      <div class="registro-opcional-cabecera">
-        <div>
-          <strong>Registro de entrega (opcional)</strong>
-          <p>
-            Imprimir o descargar no marca el informe como entregado. Si desea dejar
-            constancia, registre principalmente el medio utilizado.
-          </p>
-        </div>
-
-        <button
-          mat-stroked-button
-          type="button"
-          (click)="alternarRegistroEntrega()"
-        >
-          <mat-icon>{{ mostrarRegistroEntrega ? 'expand_less' : 'history' }}</mat-icon>
-          {{ mostrarRegistroEntrega ? 'Ocultar' : 'Registrar entrega' }}
-        </button>
-      </div>
-
-      <form
-        *ngIf="mostrarRegistroEntrega"
-        [formGroup]="formEntrega"
-        class="datos-entrega"
-        (ngSubmit)="registrarEntrega()"
-      >
-        <label>
-          <span>Medio</span>
-          <select formControlName="medio">
-            <option value="PRESENCIAL">Presencial</option>
-            <option value="WHATSAPP">WhatsApp</option>
-            <option value="CORREO">Correo</option>
-            <option value="OTRO">Otro</option>
-          </select>
-        </label>
-
-        <label>
-          <span>Recibido por (opcional)</span>
-          <input
-            formControlName="receptorNombre"
-            placeholder="Por defecto: paciente"
-            maxlength="180"
-          />
-        </label>
-
-        <label class="observaciones">
-          <span>Observación (opcional)</span>
-          <input formControlName="observacion" maxlength="1000" />
-        </label>
-
-        <div class="accion-registro-entrega">
-          <span>
-            ENTREGA {{ tipoEntregaPreparada }} ·
-            {{ resultadosSeleccionados.length }} prueba(s)
-          </span>
-          <button
-            mat-flat-button
-            color="primary"
-            type="submit"
-            [disabled]="
-              procesando ||
-              !seleccionados.size ||
-              formEntrega.invalid
-            "
-          >
-            <mat-icon>fact_check</mat-icon>
-            Registrar entrega
-          </button>
-        </div>
-      </form>
-    </section>
-
     <section class="historial" *ngIf="informe.entregas.length">
       <h3>Entregas registradas (solo lectura)</h3>
       <div *ngFor="let entrega of informe.entregas" class="evento">
         <strong>{{ entrega.tipoEntrega }}</strong>
-        · {{ entrega.fechaEntrega | date: 'dd/MM/yyyy HH:mm' }}
-        · {{ entrega.pruebasEntregadas }} prueba(s)
-        · {{ medioTexto(entrega.medio) }}
+        · {{ entrega.fechaEntrega | date: "dd/MM/yyyy HH:mm" }} ·
+        {{ entrega.pruebasEntregadas }} prueba(s) ·
+        {{ medioTexto(entrega.medio) }}
         <ng-container *ngIf="entrega.receptorNombre">
           · Receptor: {{ entrega.receptorNombre }}
+        </ng-container>
+        <ng-container *ngIf="entrega.receptorCorreo">
+          · {{ entrega.receptorCorreo }}
+        </ng-container>
+        <ng-container *ngIf="entrega.receptorTelefono">
+          · {{ entrega.receptorTelefono }}
         </ng-container>
         · Usuario: {{ entrega.usuarioEntrega }}
       </div>

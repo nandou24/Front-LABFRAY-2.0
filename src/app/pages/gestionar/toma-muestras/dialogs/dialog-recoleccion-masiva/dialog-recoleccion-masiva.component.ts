@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, ViewChild } from '@angular/core';
 import {
   FormBuilder,
   FormControl,
@@ -30,6 +30,10 @@ import {
   OrigenAtencionBandejaMuestra,
 } from '../../../../../models/Gestion/muestraLaboratorio.models';
 import { MuestraLaboratorioService } from '../../../../../services/gestion/muestraLaboratorio/muestra-laboratorio.service';
+import {
+  CapturaEvidenciaMuestraComponent,
+  IEvidenciaCapturada,
+} from '../../components/captura-evidencia-muestra/captura-evidencia-muestra.component';
 
 export interface IDialogRecoleccionMasivaData {
   origenAtencion: OrigenAtencionBandejaMuestra;
@@ -52,6 +56,7 @@ export interface IDialogRecoleccionMasivaData {
     MatInputModule,
     MatSelectModule,
     MatTableModule,
+    CapturaEvidenciaMuestraComponent,
   ],
   templateUrl: './dialog-recoleccion-masiva.component.html',
   styleUrl: './dialog-recoleccion-masiva.component.scss',
@@ -120,6 +125,19 @@ export class DialogRecoleccionMasivaComponent implements OnInit {
   huboCambios = false;
 
   readonly fechaMaximaToma = new Date();
+
+  evidenciaGrupal: IEvidenciaCapturada | null = null;
+
+  @ViewChild(CapturaEvidenciaMuestraComponent)
+  private capturaEvidenciaGrupal?: CapturaEvidenciaMuestraComponent;
+
+  get permiteEvidenciaGrupal(): boolean {
+    return this.data.origenAtencion === 'EMPRESA';
+  }
+
+  cambiarEvidenciaGrupal(evidencia: IEvidenciaCapturada | null): void {
+    this.evidenciaGrupal = evidencia;
+  }
 
   ngOnInit(): void {
     this.form.controls.tipoMuestraId.valueChanges.subscribe(() => {
@@ -524,10 +542,10 @@ export class DialogRecoleccionMasivaComponent implements OnInit {
 
     const confirmacion = await Swal.fire({
       icon: 'question',
-      title: '¿Registrar recolección masiva?',
+      title: '¿Registrar toma y recepción masiva?',
       html: `
         <div style="text-align: left;">
-          Se registrará la recolección de
+          Se registrará la toma y recepción de
           <strong>${cantidad}</strong>
           ${cantidad === 1 ? 'muestra seleccionada' : 'muestras seleccionadas'}.
           <div style="margin-top: 8px; font-size: 13px; color: #64748b;">
@@ -539,10 +557,15 @@ export class DialogRecoleccionMasivaComponent implements OnInit {
               this.form.controls.fechaRecoleccion.value,
             )}</strong>
           </div>
+          ${
+            this.permiteEvidenciaGrupal && this.evidenciaGrupal?.archivo
+              ? '<div style="margin-top: 8px;">La evidencia grupal se asociará a las muestras procesadas correctamente.</div>'
+              : ''
+          }
         </div>
       `,
       showCancelButton: true,
-      confirmButtonText: 'Sí, recolectar',
+      confirmButtonText: 'Sí, registrar',
       cancelButtonText: 'Cancelar',
       reverseButtons: true,
       confirmButtonColor: '#3085d6',
@@ -559,24 +582,43 @@ export class DialogRecoleccionMasivaComponent implements OnInit {
     this.procesando = true;
 
     this._muestraLaboratorioService
-      .recolectarMuestrasMasivamente({
-        muestras: payload,
-        observacionRecoleccion: observacion || undefined,
-        fechaRecoleccion: this.formatearFechaBackend(
-          this.form.controls.fechaRecoleccion.value,
-        ),
-      })
+      .tomarRecibirMuestrasMasivamente(
+        {
+          muestras: payload,
+          observacionRecoleccion: observacion || undefined,
+          fechaRecoleccion: this.formatearFechaBackend(
+            this.form.controls.fechaRecoleccion.value,
+          ),
+        },
+        this.permiteEvidenciaGrupal ? this.evidenciaGrupal?.archivo : undefined,
+      )
       .subscribe({
         next: async (response) => {
           this.procesando = false;
 
           if (response.resumen.recolectadas > 0) {
             this.huboCambios = true;
+            if (this.evidenciaGrupal?.archivo) {
+              this.capturaEvidenciaGrupal?.limpiar();
+            }
           }
 
           this.seleccionadas.clear();
 
-          await this.mostrarResultado(response);
+          if (response.resumen.noProcesadas === 0) {
+            void Swal.fire({
+              toast: true,
+              position: 'top-end',
+              icon: 'success',
+              title: 'Toma y recepción completadas',
+              text: `${response.resumen.recolectadas} muestras procesadas`,
+              timer: 2800,
+              timerProgressBar: true,
+              showConfirmButton: false,
+            });
+          } else {
+            await this.mostrarResultado(response);
+          }
 
           this.cargarMuestras();
         },
@@ -584,14 +626,14 @@ export class DialogRecoleccionMasivaComponent implements OnInit {
         error: (error) => {
           this.procesando = false;
 
-          console.error('Error al registrar recolección masiva:', error);
+          console.error('Error al registrar toma y recepción masiva:', error);
 
           Swal.fire({
             icon: 'error',
-            title: 'No se pudo registrar la recolección',
+            title: 'No se pudo registrar la toma / recepción',
             text:
               error?.error?.msg ||
-              'No se pudo completar la recolección masiva.',
+              'No se pudo completar la toma y recepción masiva.',
             confirmButtonText: 'Cerrar',
             confirmButtonColor: '#d33',
           });
@@ -637,9 +679,9 @@ export class DialogRecoleccionMasivaComponent implements OnInit {
 
     const titulo =
       resumen.noProcesadas === 0
-        ? 'Recolección completada'
+        ? 'Toma y recepción completadas'
         : resumen.recolectadas > 0
-          ? 'Recolección parcial'
+          ? 'Toma y recepción parcial'
           : 'No se procesaron muestras';
 
     const incidencias = response.noProcesadas
@@ -676,8 +718,8 @@ export class DialogRecoleccionMasivaComponent implements OnInit {
             <strong>${resumen.recolectadas}</strong>
             ${
               resumen.recolectadas === 1
-                ? 'muestra recolectada.'
-                : 'muestras recolectadas.'
+                ? 'muestra recepcionada.'
+                : 'muestras recepcionadas.'
             }
           </div>
 

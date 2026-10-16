@@ -214,6 +214,9 @@ export interface IEntregaRegistrada {
   tipoEntrega: 'PARCIAL' | 'FINAL';
   medio: 'PRESENCIAL' | 'WHATSAPP' | 'CORREO' | 'OTRO';
   receptorNombre: string;
+  receptorCorreo?: string | null;
+  receptorTelefono?: string | null;
+  despachoResultadoId?: string | null;
   fechaEntrega: string;
   usuarioEntrega: string;
   pruebasEntregadas: number;
@@ -250,4 +253,171 @@ export interface IRegistroEntregaResponse {
   tipoEntrega: 'PARCIAL' | 'FINAL';
   pruebasEntregadas: number;
   fechaEntrega: string;
+}
+
+// ====== Motor común de despacho ======
+export type CanalDespachoResultado =
+  | 'PRESENCIAL'
+  | 'WHATSAPP'
+  | 'CORREO'
+  | 'PORTAL'
+  | 'OTRO';
+
+export type ModoContenidoDespachoResultado =
+  | 'REGISTRO_PRESENCIAL'
+  | 'ENLACE_SEGURO'
+  | 'PDF_ADJUNTO'
+  | 'PDF_Y_ENLACE'
+  | 'PUBLICACION_PORTAL'
+  | 'OTRO';
+
+export type EstadoDespachoResultado =
+  | 'PENDIENTE'
+  | 'PROCESANDO'
+  | 'ENVIADO'
+  | 'ERROR'
+  | 'ENTREGADO'
+  | 'LEIDO'
+  | 'CANCELADO';
+
+export interface IDestinatarioDespachoResultado {
+  tipo: 'PACIENTE' | 'CONTACTO_EMPRESA' | 'OTRO';
+  nombre: string;
+  correo?: string | null;
+  telefono?: string | null;
+  cargo?: string | null;
+  referencia?: string | null;
+}
+
+export interface IResultadoIncluidoDespacho {
+  resultadoLaboratorioId: string;
+  claveUnidad: string;
+  codPruebaLab: string;
+  nombrePruebaLab: string;
+  numeroInstancia: number;
+  etiquetaInstancia?: string | null;
+  versionResultado: number;
+  fechaLiberacion: string;
+}
+
+export interface ISolicitudIncluidaDespacho {
+  solicitudAtencionId: string;
+  codSolicitud: string;
+  codigoLaboratorio: string;
+  paciente: {
+    pacienteId?: string | null;
+    nombreCompleto: string;
+    hc: string;
+    documento: string;
+  };
+  empresa?: {
+    empresaId?: string | null;
+    razonSocialEmpresa?: string | null;
+    programacionEmpresaId?: string | null;
+    codProgramacion?: string | null;
+    codProtocolo?: string | null;
+  } | null;
+  resultados: IResultadoIncluidoDespacho[];
+}
+
+export interface IIntentoDespachoResultado {
+  _id?: string;
+  numeroIntento: number;
+  estado: 'PROCESANDO' | 'ENVIADO' | 'ERROR';
+  proveedor?: string | null;
+  proveedorMensajeId?: string | null;
+  codigoRespuesta?: string | null;
+  errorCodigo?: string | null;
+  errorMensaje?: string | null;
+  fechaInicio: string;
+  fechaFin?: string | null;
+}
+
+export interface IRecursoDigitalDespachoResultado {
+  vigencia: 'PERMANENTE' | 'TEMPORAL';
+  estadoAcceso: 'ACTIVO' | 'REVOCADO';
+  fechaExpiracionAcceso?: string | null;
+  fechaPrimerAcceso?: string | null;
+  fechaUltimoAcceso?: string | null;
+  cantidadAccesos: number;
+  fechaRevocacion?: string | null;
+  motivoRevocacion?: string | null;
+}
+
+export interface IDespachoResultadoLaboratorio {
+  _id: string;
+  tipoDespacho: 'INDIVIDUAL' | 'LOTE_EMPRESA';
+  origenAtencion: 'PARTICULAR' | 'EMPRESA';
+  canal: CanalDespachoResultado;
+  modoContenido: ModoContenidoDespachoResultado;
+  destinatario: IDestinatarioDespachoResultado;
+  detalleCanal?: string | null;
+  observacion: string;
+  estadoDespacho: EstadoDespachoResultado;
+  fechaSolicitud: string;
+  fechaInicioProcesamiento?: string | null;
+  fechaEnvio?: string | null;
+  fechaEntregaConfirmada?: string | null;
+  fechaLectura?: string | null;
+  fechaError?: string | null;
+  ultimoError?: string | null;
+  fechaCancelacion?: string | null;
+  motivoCancelacion?: string | null;
+  usuarioSolicitud: string;
+  usuarioActualizacion?: string | null;
+  solicitudes: ISolicitudIncluidaDespacho[];
+  intentos: IIntentoDespachoResultado[];
+  recursoDigital?: IRecursoDigitalDespachoResultado | null;
+  entregaResultadoIds: string[];
+}
+
+export interface ICrearDespachoSolicitudBody {
+  resultadosIds: string[];
+  canal: CanalDespachoResultado;
+  modoContenido?: ModoContenidoDespachoResultado;
+  destinatario: IDestinatarioDespachoResultado;
+  detalleCanal?: string | null;
+  observacion?: string;
+  idempotencyKey: string;
+}
+
+export interface IDespachoResultadoResponse {
+  ok: boolean;
+  reutilizado?: boolean;
+  msg?: string;
+  despacho: IDespachoResultadoLaboratorio;
+}
+
+export interface IDespachosResultadoResponse {
+  ok: boolean;
+  total: number;
+  despachos: IDespachoResultadoLaboratorio[];
+}
+
+export interface IEnvioCorreoDespachoResponse {
+  ok: boolean;
+  reutilizado?: boolean;
+  msg: string;
+  entregaId?: string;
+  mensajeId?: string | null;
+  despacho: IDespachoResultadoLaboratorio;
+}
+
+export interface IEnvioWhatsappDespachoResponse {
+  ok: boolean;
+  reutilizado?: boolean;
+  msg: string;
+  entregaId?: string;
+  mensajeId?: string | null;
+  despacho: IDespachoResultadoLaboratorio;
+}
+
+export interface IAccesoPublicoResultadosResponse {
+  ok: boolean;
+  informe: IInformeEntregable;
+  acceso: {
+    fechaEnvio?: string | null;
+    canal: CanalDespachoResultado;
+    modoContenido: ModoContenidoDespachoResultado;
+  };
 }

@@ -149,20 +149,22 @@ export class DialogRechazarMuestraComponent {
         this.archivoEvidencia,
       )
       .subscribe({
-        next: async (response) => {
+        next: (response) => {
           this.procesando = false;
+          this._dialogRef.close(true);
 
-          await Swal.fire({
+          void Swal.fire({
+            toast: true,
+            position: 'top-end',
             icon: 'success',
             title: 'Muestra rechazada',
             text:
               response.msg ||
               'La muestra y su evidencia de rechazo fueron registradas correctamente.',
-            confirmButtonText: 'Continuar',
-            confirmButtonColor: '#3085d6',
+            timer: 2800,
+            timerProgressBar: true,
+            showConfirmButton: false,
           });
-
-          this._dialogRef.close(true);
         },
         error: (error) => {
           this.procesando = false;

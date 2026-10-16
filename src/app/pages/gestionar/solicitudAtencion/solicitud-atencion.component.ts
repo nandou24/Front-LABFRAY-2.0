@@ -278,6 +278,9 @@ export class SolicitudAtencionComponent implements OnInit, AfterViewInit {
 
   obtenerClaseEstadoSolicitud(estado: string): string {
     switch (estado) {
+      case 'PENDIENTE':
+        return 'estado-chip estado-pendiente';
+
       case 'EN PROCESO':
         return 'estado-chip estado-en-proceso';
 
@@ -288,7 +291,7 @@ export class SolicitudAtencionComponent implements OnInit, AfterViewInit {
         return 'estado-chip estado-anulado';
 
       default:
-        return 'estado-chip estado-generado';
+        return 'estado-chip estado-pendiente';
     }
   }
 

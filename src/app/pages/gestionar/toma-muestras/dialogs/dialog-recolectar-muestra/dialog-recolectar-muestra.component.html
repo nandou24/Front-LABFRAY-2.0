@@ -1,6 +1,6 @@
 <div class="dialog-header" mat-dialog-title>
   <div>
-    <div class="dialog-title">Registrar recolección</div>
+    <div class="dialog-title">Registrar toma y recepción</div>
     <div class="dialog-subtitle">
       Recipiente {{ data.numeroRecipiente || data.muestra.numeroRecipiente }} ·
       {{ data.muestra.codigoEtiqueta || data.muestra.codMuestra }}
@@ -164,7 +164,7 @@
 
     <section class="seccion-formulario">
       <mat-form-field appearance="outline" class="campo-completo">
-        <mat-label>Observación de recolección</mat-label>
+        <mat-label>Observaciones de la toma</mat-label>
 
         <textarea
           matInput
@@ -180,8 +180,8 @@
 
   <section class="evidencia-operacion">
     <app-captura-evidencia-muestra
-      titulo="Fotografía de recolección"
-      descripcion="Opcional. Registre una fotografía del recipiente recolectado. La cámara es la opción principal."
+      titulo="Fotografía de toma y recepción"
+      descripcion="Opcional. Registre una fotografía del recipiente recibido. La cámara es la opción principal."
       [requerido]="false"
       [disabled]="procesando"
       (evidenciaChange)="cambiarEvidencia($event)"
@@ -203,9 +203,9 @@
     mat-flat-button
     type="button"
     [disabled]="formRecoleccion.invalid || procesando"
-    (click)="registrarRecoleccion()"
+    (click)="registrarTomaRecepcion()"
   >
     <mat-icon>{{ procesando ? "hourglass_top" : "vaccines" }}</mat-icon>
-    {{ procesando ? "Registrando..." : "Registrar recolección" }}
+    {{ procesando ? "Registrando..." : "Registrar toma / recepción" }}
   </button>
 </mat-dialog-actions>

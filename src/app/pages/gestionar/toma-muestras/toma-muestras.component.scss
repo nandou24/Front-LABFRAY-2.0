@@ -85,10 +85,10 @@ td {
   --mdc-chip-label-text-color: currentColor;
 }
 
-.estado-generado.mat-mdc-chip {
-  color: #334155;
-  border-color: #cbd5e1;
-  --mdc-chip-elevated-container-color: #f1f5f9;
+.estado-pendiente.mat-mdc-chip {
+  color: #92400e;
+  border-color: #fcd34d;
+  --mdc-chip-elevated-container-color: #fef3c7;
 }
 
 .estado-en-proceso.mat-mdc-chip {

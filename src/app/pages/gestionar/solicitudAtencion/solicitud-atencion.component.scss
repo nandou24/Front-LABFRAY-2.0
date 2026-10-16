@@ -326,3 +326,10 @@ tr.example-element-row:not(.example-expanded-row):active {
   border-color: #fcd34d;
   --mdc-chip-elevated-container-color: #fef3c7;
 }
+
+// ====== Estado pendiente de solicitud ======
+.estado-pendiente.mat-mdc-chip {
+  color: #92400e;
+  border-color: #fcd34d;
+  --mdc-chip-elevated-container-color: #fef3c7;
+}
