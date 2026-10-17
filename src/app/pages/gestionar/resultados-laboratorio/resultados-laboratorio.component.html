@@ -184,26 +184,13 @@
           </ng-container>
 
           <ng-container matColumnDef="resultados">
-            <th mat-header-cell *matHeaderCellDef>Resultados</th>
+            <th mat-header-cell *matHeaderCellDef>Disponibles</th>
             <td mat-cell *matCellDef="let row">
               <div class="resumen-disponibilidad">
-                <strong>{{ obtenerTextoDisponibilidad(row) }}</strong>
-
-                <span
-                  *ngIf="
-                    row.solicitud.estadoOperativo.hayObligacionPendientePaciente
-                  "
-                >
-                  Muestra pendiente
-                </span>
-
-                <span
-                  *ngIf="
-                    row.solicitud.estadoOperativo.tieneResultadosDisponibles
-                  "
-                >
-                  Ya existen resultados liberados
-                </span>
+                <strong>
+                  {{ row.resultados.resumen?.disponibles ?? 0 }} de
+                  {{ row.resultados.resumen?.total ?? 0 }}
+                </strong>
               </div>
             </td>
           </ng-container>
@@ -212,18 +199,18 @@
             <th mat-header-cell *matHeaderCellDef></th>
             <td mat-cell *matCellDef="let row">
               <button
-                mat-stroked-button
+                mat-icon-button
                 type="button"
+                class="accion-expandir"
+                [attr.aria-expanded]="isExpandedParticular(row)"
+                [attr.aria-label]="
+                  isExpandedParticular(row)
+                    ? 'Cerrar detalle de resultados'
+                    : 'Expandir detalle de resultados'
+                "
                 (click)="toggleParticular(row); $event.stopPropagation()"
               >
-                <mat-icon>
-                  {{
-                    isExpandedParticular(row)
-                      ? "keyboard_arrow_up"
-                      : "keyboard_arrow_down"
-                  }}
-                </mat-icon>
-                {{ isExpandedParticular(row) ? "Cerrar" : "Gestionar" }}
+                <mat-icon>{{ isExpandedParticular(row) ? "keyboard_arrow_up" : "keyboard_arrow_down" }}</mat-icon>
               </button>
             </td>
           </ng-container>
@@ -252,6 +239,7 @@
             mat-row
             *matRowDef="let row; columns: columnasParticulares"
             class="fila-solicitud"
+            [class.fila-expandida-activa]="isExpandedParticular(row)"
           ></tr>
 
           <tr
@@ -455,26 +443,13 @@
           </ng-container>
 
           <ng-container matColumnDef="resultados">
-            <th mat-header-cell *matHeaderCellDef>Resultados</th>
+            <th mat-header-cell *matHeaderCellDef>Disponibles</th>
             <td mat-cell *matCellDef="let row">
               <div class="resumen-disponibilidad">
-                <strong>{{ obtenerTextoDisponibilidad(row) }}</strong>
-
-                <span
-                  *ngIf="
-                    row.solicitud.estadoOperativo.hayObligacionPendientePaciente
-                  "
-                >
-                  Muestra pendiente
-                </span>
-
-                <span
-                  *ngIf="
-                    row.solicitud.estadoOperativo.tieneResultadosDisponibles
-                  "
-                >
-                  Ya existen resultados liberados
-                </span>
+                <strong>
+                  {{ row.resultados.resumen?.disponibles ?? 0 }} de
+                  {{ row.resultados.resumen?.total ?? 0 }}
+                </strong>
               </div>
             </td>
           </ng-container>
@@ -483,14 +458,18 @@
             <th mat-header-cell *matHeaderCellDef></th>
             <td mat-cell *matCellDef="let row">
               <button
-                mat-stroked-button
+                mat-icon-button
                 type="button"
+                class="accion-expandir"
+                [attr.aria-expanded]="isExpandedEmpresa(row)"
+                [attr.aria-label]="
+                  isExpandedEmpresa(row)
+                    ? 'Cerrar detalle de resultados'
+                    : 'Expandir detalle de resultados'
+                "
                 (click)="toggleEmpresa(row); $event.stopPropagation()"
               >
-                <mat-icon>
-                  {{ isExpandedEmpresa(row) ? "expand_less" : "science" }}
-                </mat-icon>
-                {{ isExpandedEmpresa(row) ? "Cerrar" : "Gestionar" }}
+                <mat-icon>{{ isExpandedEmpresa(row) ? "keyboard_arrow_up" : "keyboard_arrow_down" }}</mat-icon>
               </button>
             </td>
           </ng-container>
@@ -519,6 +498,7 @@
             mat-row
             *matRowDef="let row; columns: columnasEmpresas"
             class="fila-solicitud"
+            [class.fila-expandida-activa]="isExpandedEmpresa(row)"
           ></tr>
 
           <tr

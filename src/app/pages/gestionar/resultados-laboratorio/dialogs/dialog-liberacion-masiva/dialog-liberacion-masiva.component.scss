@@ -123,3 +123,33 @@ mat-dialog-actions {
     margin-bottom: 4px;
   }
 }
+
+// ====== Alternativa C: identificación visual en operaciones masivas ======
+.tabla-container table.mat-mdc-table th.mat-mdc-header-cell,
+.tabla-container table.mat-mdc-table td.mat-mdc-cell {
+  text-align: center;
+}
+
+.tabla-container table.mat-mdc-table td.mat-column-paciente {
+  text-align: left;
+}
+
+.tabla-container table.mat-mdc-table tbody tr.mat-mdc-row > td.mat-mdc-cell {
+  transition: background-color 140ms ease;
+}
+
+.tabla-container table.mat-mdc-table tbody tr.mat-mdc-row:hover > td.mat-mdc-cell {
+  background-color: #bce8f3;
+}
+
+.tabla-container table.mat-mdc-table tbody tr.mat-mdc-row:has(mat-checkbox.mat-mdc-checkbox-checked) > td.mat-mdc-cell {
+  background-color: #c2d9fb;
+}
+
+.tabla-container table.mat-mdc-table tbody tr.mat-mdc-row:has(mat-checkbox.mat-mdc-checkbox-checked):hover > td.mat-mdc-cell {
+  background-color: #afd0f7;
+}
+
+.tabla-container table.mat-mdc-table tbody tr.mat-mdc-row:has(mat-checkbox.mat-mdc-checkbox-checked) > td.mat-mdc-cell:first-child {
+  box-shadow: inset 4px 0 0 #243d71;
+}

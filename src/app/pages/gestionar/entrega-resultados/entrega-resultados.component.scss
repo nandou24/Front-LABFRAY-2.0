@@ -15,7 +15,9 @@
 // ====== Búsqueda ======
 .busqueda-container {
   display: grid;
-  grid-template-columns: minmax(320px, 1fr) minmax(260px, 320px) 180px 180px auto auto;
+  grid-template-columns:
+    minmax(320px, 1fr) minmax(260px, 320px)
+    180px 180px auto auto;
   align-items: start;
   gap: 10px;
   margin-bottom: 14px;
@@ -218,7 +220,9 @@ table.tabla-empresa {
 
 @media (max-width: 1500px) {
   .busqueda-container {
-    grid-template-columns: minmax(300px, 1fr) minmax(240px, 300px) 170px 170px auto auto;
+    grid-template-columns:
+      minmax(300px, 1fr) minmax(240px, 300px)
+      170px 170px auto auto;
   }
 }
 
@@ -556,7 +560,6 @@ tbody tr.fila-plazo-vencido:hover {
   }
 }
 
-
 // ====== Modo de resultados vencidos ======
 .modo-vencidos-criticos {
   display: flex;
@@ -601,4 +604,50 @@ tbody tr.fila-plazo-vencido:hover {
     align-items: stretch;
     flex-direction: column;
   }
+}
+
+// ====== Alternativa C: alineación de columnas ======
+.tabla-scroll > table > thead > tr > th,
+.tabla-scroll > table > tbody > tr:not(.fila-seguimiento) > td,
+.tabla-seguimiento th,
+.tabla-seguimiento td {
+  text-align: center;
+}
+
+// ====== Alternativa C: hover de filas sin alertas ======
+.tabla-scroll > table > tbody > tr:not(.fila-seguimiento):not(.fila-plazo-proximo):not(.fila-plazo-hoy):not(.fila-plazo-vencido):not(.fila-expandida-activa):not(.fila-seleccionada):hover {
+  background-color: #bce8f3;
+}
+
+// ====== Alternativa C: seguimiento abierto y selección masiva ======
+.tabla-scroll > table > tbody > tr.fila-expandida-activa:not(.fila-plazo-proximo):not(.fila-plazo-hoy):not(.fila-plazo-vencido),
+.tabla-scroll > table > tbody > tr.fila-seleccionada:not(.fila-plazo-proximo):not(.fila-plazo-hoy):not(.fila-plazo-vencido) {
+  background-color: #c2d9fb;
+}
+
+.tabla-scroll > table > tbody > tr.fila-expandida-activa:not(.fila-plazo-proximo):not(.fila-plazo-hoy):not(.fila-plazo-vencido):hover,
+.tabla-scroll > table > tbody > tr.fila-seleccionada:not(.fila-plazo-proximo):not(.fila-plazo-hoy):not(.fila-plazo-vencido):hover {
+  background-color: #afd0f7;
+}
+
+.tabla-scroll > table > tbody > tr:is(.fila-expandida-activa, .fila-seleccionada) > td:first-child {
+  box-shadow: inset 4px 0 0 #243d71;
+}
+
+.tabla-scroll > table > tbody > tr.fila-seguimiento > td {
+  background-color: #ecf3fb;
+  box-shadow: inset 4px 0 0 #243d71;
+}
+
+.tabla-scroll > table > tbody > tr.fila-seguimiento .seguimiento-contenido {
+  border-top-color: #bfd4ef;
+}
+
+.tabla-seguimiento > tbody > tr:hover {
+  background-color: #bce8f3;
+}
+
+// ====== Paciente: únicamente los datos quedan a la izquierda ======
+.tabla-scroll > table > tbody > tr:not(.fila-seguimiento) > td.celda-paciente {
+  text-align: left;
 }

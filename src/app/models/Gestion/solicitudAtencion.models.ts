@@ -74,7 +74,13 @@ export interface ISolicitudAtencion {
   solicitanteId?: any | null;
   fechaEmision: Date | string;
   estado: string;
+  estadoOperativo?: IEstadoOperativoSeguimiento | null;
   usuarioEmisor?: string;
+}
+
+export interface IEstadoOperativoSeguimiento {
+  codigo: string;
+  descripcion: string;
 }
 
 export interface IServicioSolicitud {
@@ -82,6 +88,8 @@ export interface IServicioSolicitud {
   codServicio: string;
   nombreServicio: string;
   estado: string;
+  estadoSeguimiento?: string;
+  estadoOperativo?: IEstadoOperativoSeguimiento | null;
   medicoAtiende?: {
     medicoId: string;
     codRecHumano: string;

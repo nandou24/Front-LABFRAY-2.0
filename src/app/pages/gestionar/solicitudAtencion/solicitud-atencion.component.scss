@@ -44,9 +44,61 @@ input[type="number"]::-webkit-outer-spin-button {
   text-align: center;
 }
 
-.mat-mdc-row:hover .mat-mdc-cell {
-  background-color: #eaf3ff;
+// ====== Centrar encabezados y valores de Solicitudes ======
+.mat-mdc-table th.mat-mdc-header-cell,
+.mat-mdc-table td.mat-mdc-cell {
+  text-align: center;
+}
+
+// ====== Centrar títulos de columnas ordenables ======
+:host
+  ::ng-deep
+  .mat-mdc-table
+  th.mat-mdc-header-cell
+  .mat-sort-header-container {
+  justify-content: center;
+}
+
+// ====== Conservar el nombre del paciente a la izquierda ======
+.mat-mdc-table td.mat-column-nombreCompleto {
+  text-align: left;
+}
+
+// ====== Centrar chips y descripciones de estado ======
+.mat-mdc-table td.mat-column-estado .seguimiento-estado,
+.tabla-servicios-estilizada .seguimiento-estado {
+  align-items: center;
+}
+
+// ====== Alternativa C: hover y selección de filas ======
+tr.example-element-row.mat-mdc-row > td.mat-mdc-cell {
+  transition: background-color 140ms ease;
+}
+
+tr.example-element-row.mat-mdc-row:hover > td.mat-mdc-cell {
+  background-color: #bce8f3;
   cursor: pointer;
+}
+
+tr.example-element-row.example-expanded-row.mat-mdc-row > td.mat-mdc-cell {
+  background-color: #c2d9fb;
+}
+
+tr.example-element-row.example-expanded-row.mat-mdc-row:hover
+  > td.mat-mdc-cell {
+  background-color: #afd0f7;
+}
+
+tr.example-element-row.example-expanded-row.mat-mdc-row
+  > td.mat-mdc-cell:first-child {
+  box-shadow: inset 4px 0 0 #243d71;
+}
+
+tr.example-element-row.example-expanded-row
+  + tr.example-detail-row
+  > td.mat-mdc-cell {
+  background-color: #ecf3fb;
+  box-shadow: inset 4px 0 0 #243d71;
 }
 
 mat-option {
@@ -187,11 +239,11 @@ tr.example-element-row {
 }
 
 tr.example-element-row:not(.example-expanded-row):hover {
-  background: #eaf3ff;
+  background: #bce8f3;
 }
 
 tr.example-element-row:not(.example-expanded-row):active {
-  background: #efefef;
+  background: #a9ddea;
 }
 
 .example-element-row td {
@@ -251,12 +303,13 @@ tr.example-element-row:not(.example-expanded-row):active {
     color: #2e3c4d;
     font-weight: 600;
     padding: 8px 12px;
-    text-align: left;
+    text-align: center;
   }
 
   td {
     padding: 8px 12px;
     border-top: 1px solid #d0d7de;
+    text-align: center;
   }
 
   tr:last-child td {
@@ -264,7 +317,7 @@ tr.example-element-row:not(.example-expanded-row):active {
   }
 
   tbody tr:hover td {
-    background-color: #eaf3ff;
+    background-color: #bce8f3;
   }
 
   mat-chip {
@@ -332,4 +385,22 @@ tr.example-element-row:not(.example-expanded-row):active {
   color: #92400e;
   border-color: #fcd34d;
   --mdc-chip-elevated-container-color: #fef3c7;
+}
+
+// ====== Estado principal y operativo en una línea ======
+.seguimiento-estado {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 3px 0;
+  white-space: nowrap;
+}
+
+.seguimiento-operativo {
+  font-size: 12px;
+  line-height: 1.25;
+  color: #64748b;
+  white-space: nowrap;
 }

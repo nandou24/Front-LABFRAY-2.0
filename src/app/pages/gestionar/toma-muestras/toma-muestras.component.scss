@@ -59,21 +59,23 @@ td {
   padding: 12px 2px 0;
 }
 
-
-
 // ====== Estado operativo ======
 
 .estado-solicitud-operativo {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 3px 0;
+  white-space: nowrap;
 }
 
 .estado-solicitud-operativo span {
   font-size: 0.76rem;
-  line-height: 1.15;
+  line-height: 1.2;
   opacity: 0.8;
+  white-space: nowrap;
 }
 
 // ====== Colores de estado ======
@@ -109,40 +111,54 @@ td {
   --mdc-chip-elevated-container-color: #fee2e2;
 }
 
-
-// ====== Resaltar solicitud expandida ======
-.fila-solicitud {
-  transition: background-color 120ms ease;
+// ====== Alternativa C: alineación de la bandeja ======
+.table-container .mat-mdc-table th.mat-mdc-header-cell,
+.table-container .mat-mdc-table td.mat-mdc-cell {
+  text-align: center;
 }
 
-.fila-solicitud:hover td {
-  background: #eaf3ff;
+.table-container .mat-mdc-table td.mat-column-paciente {
+  text-align: left;
 }
 
-.fila-expandida-activa td {
-  background: #eef6ff !important;
-  border-top-color: #bfdbfe;
-  border-bottom-color: #bfdbfe;
+// ====== Alternativa C: hover y expansión de solicitudes ======
+.fila-solicitud > td.mat-mdc-cell {
+  transition: background-color 140ms ease;
 }
 
-.fila-expandida-activa td:first-child {
-  box-shadow: inset 4px 0 0 #2563eb;
+.fila-solicitud:not(.fila-expandida-activa):hover > td.mat-mdc-cell {
+  background-color: #bce8f3;
 }
 
-.fila-solicitud.fila-expandida-activa:hover td {
-  background: #eaf3ff !important;
+.fila-solicitud.fila-expandida-activa > td.mat-mdc-cell {
+  background-color: #c2d9fb;
+  border-top-color: #b3cff4;
+  border-bottom-color: #b3cff4;
 }
 
-.fila-detalle-expandida td {
+.fila-solicitud.fila-expandida-activa:hover > td.mat-mdc-cell {
+  background-color: #afd0f7;
+}
+
+.fila-solicitud.fila-expandida-activa > td.mat-mdc-cell:first-child {
+  box-shadow: inset 4px 0 0 #243d71;
+}
+
+.fila-detalle-expandida > td.mat-mdc-cell {
   padding: 0 !important;
   border-bottom: 0;
+}
+
+.fila-detalle-expandida[style*="table-row"] > td.mat-mdc-cell {
+  background-color: #ecf3fb;
+  box-shadow: inset 4px 0 0 #243d71;
 }
 
 .detalle-operativo-expandido {
   margin: 0 8px 12px;
   padding: 18px;
-  background: #f8fbff;
-  border: 1px solid #bfdbfe;
+  background-color: #ecf3fb;
+  border: 1px solid #bfd4ef;
   border-top: 0;
   border-radius: 0 0 10px 10px;
   box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);

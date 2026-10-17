@@ -261,6 +261,7 @@
           <tr
             [class.completa]="fila.resumen.tipoDisponibilidad === 'COMPLETA'"
             [ngClass]="claseSemaforoFila(fila)"
+            [class.fila-expandida-activa]="estaSeguimientoExpandido(fila)"
             [class.fila-seleccionada]="
               modoSeleccionEmpresa && estaSeleccionadaEmpresa(fila)
             "
@@ -309,7 +310,7 @@
             <td>{{ fila.fechaEmision | date: "dd/MM/yyyy HH:mm" }}</td>
             <td>{{ fila.paciente.hc }}</td>
             <td>{{ fila.paciente.documento }}</td>
-            <td>{{ fila.paciente.nombreCompleto }}</td>
+            <td class="celda-paciente">{{ fila.paciente.nombreCompleto }}</td>
 
             <td *ngIf="tabActivo === 1">
               <strong>{{ fila.empresa?.razonSocialEmpresa || "-" }}</strong>
