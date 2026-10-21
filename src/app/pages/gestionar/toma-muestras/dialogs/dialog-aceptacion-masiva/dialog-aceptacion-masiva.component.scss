@@ -183,3 +183,41 @@ mat-dialog-actions {
 .tabla-container table.mat-mdc-table tbody tr.mat-mdc-row:has(mat-checkbox.mat-mdc-checkbox-checked) > td.mat-mdc-cell:first-child {
   box-shadow: inset 4px 0 0 #243d71;
 }
+
+// ====== Responsable de toma / recepción ======
+.tabla-container table.mat-mdc-table th.mat-column-fechaRecepcion,
+.tabla-container table.mat-mdc-table td.mat-column-fechaRecepcion {
+  min-width: 205px;
+}
+
+.responsable-toma {
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+// ====== Mantener un solo scroll del contenido, sin scroll en la superficie ======
+:host {
+  display: flex;
+  flex-direction: column;
+  max-height: 92vh;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.dialog-header,
+mat-dialog-actions {
+  flex: 0 0 auto;
+}
+
+.dialog-content {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+  overflow-y: auto;
+}
+
+::ng-deep .labfray-dialog-masiva-scroll-interno .mat-mdc-dialog-surface {
+  overflow: hidden !important;
+}

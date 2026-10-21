@@ -22,6 +22,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { MatRadioModule } from '@angular/material/radio';
 import {
   MatTable,
   MatTableDataSource,
@@ -61,6 +62,7 @@ import { LaboratorioReferenciaService } from '../../../services/mantenimiento/la
     CommonModule,
     ReactiveFormsModule,
     MatSelectModule,
+    MatRadioModule,
     MatOptionModule,
     MatSlideToggleModule,
     MatTableModule,
@@ -284,6 +286,7 @@ export class MantPruebaLabComponent implements OnInit, AfterViewInit {
     return this._fb.group({
       tipoMuestraId: [opcion?.tipoMuestraId ?? null, [Validators.required]],
       tuboEnvaseId: [opcion?.tuboEnvaseId ?? null, [Validators.required]],
+      esPredeterminada: [opcion?.esPredeterminada === true],
     });
   }
 
@@ -316,15 +319,19 @@ export class MantPruebaLabComponent implements OnInit, AfterViewInit {
     const opcionesExistentes = requerimiento?.opciones ?? [];
 
     if (opcionesExistentes.length > 0) {
-      opcionesExistentes.forEach((opcion: any) => {
-        opciones.push(this.crearOpcionMuestra(opcion));
+      // ====== Compatibilidad con pruebas sin preferencia registrada ======
+      const indicePredeterminado = opcionesExistentes.findIndex(
+        (opcion: any) => opcion?.esPredeterminada === true,
+      );
+      opcionesExistentes.forEach((opcion: any, index: number) => {
+        opciones.push(this.crearOpcionMuestra({
+          ...opcion,
+          esPredeterminada: index === (indicePredeterminado >= 0 ? indicePredeterminado : 0),
+        }));
       });
     } else {
-      /*
-       * Un requerimiento nuevo comienza
-       * con una opción vacía.
-       */
-      opciones.push(this.crearOpcionMuestra());
+      // ====== Primer valor propuesto en un requerimiento nuevo ======
+      opciones.push(this.crearOpcionMuestra({ esPredeterminada: true }));
     }
 
     return grupo;
@@ -347,7 +354,20 @@ export class MantPruebaLabComponent implements OnInit, AfterViewInit {
   agregarOpcionMuestra(requerimientoIndex: number): void {
     const opciones = this.obtenerOpcionesRequerimiento(requerimientoIndex);
 
-    opciones.push(this.crearOpcionMuestra());
+    opciones.push(this.crearOpcionMuestra({
+      esPredeterminada: opciones.length === 0,
+    }));
+  }
+
+  seleccionarOpcionPredeterminada(
+    requerimientoIndex: number,
+    opcionIndex: number,
+  ): void {
+    const opciones = this.obtenerOpcionesRequerimiento(requerimientoIndex);
+
+    opciones.controls.forEach((opcion, index) => {
+      opcion.get('esPredeterminada')?.setValue(index === opcionIndex);
+    });
   }
 
   eliminarOpcionMuestra(requerimientoIndex: number, opcionIndex: number): void {
@@ -365,7 +385,14 @@ export class MantPruebaLabComponent implements OnInit, AfterViewInit {
       return;
     }
 
+    const eraPredeterminada =
+      opciones.at(opcionIndex).get('esPredeterminada')?.value === true;
+
     opciones.removeAt(opcionIndex);
+
+    if (eraPredeterminada) {
+      this.seleccionarOpcionPredeterminada(requerimientoIndex, 0);
+    }
   }
 
   // ====== Búsqueda de Items ======
@@ -936,6 +963,7 @@ export class MantPruebaLabComponent implements OnInit, AfterViewInit {
           return {
             tipoMuestraId: opcion.get('tipoMuestraId')?.value,
             tuboEnvaseId: opcion.get('tuboEnvaseId')?.value,
+            esPredeterminada: opcion.get('esPredeterminada')?.value === true,
           };
         }),
 
@@ -1015,6 +1043,22 @@ export class MantPruebaLabComponent implements OnInit, AfterViewInit {
       const alcance = requerimiento.get('alcance')?.value;
       const itemsAsociados: string[] =
         requerimiento.get('itemsAsociados')?.value ?? [];
+
+      // ====== Validar opción predeterminada ======
+      const opciones = requerimiento.get('opciones') as FormArray;
+      const totalPredeterminadas = opciones.controls.filter(
+        (opcion) => opcion.get('esPredeterminada')?.value === true,
+      ).length;
+
+      if (totalPredeterminadas !== 1) {
+        Swal.fire({
+          title: 'Recipiente predeterminado',
+          text: `Seleccione una sola opción predeterminada en el requerimiento ${i + 1}.`,
+          icon: 'warning',
+          confirmButtonText: 'Ok',
+        });
+        return false;
+      }
 
       // ====== Items específicos requiere selección ======
 

@@ -35,10 +35,17 @@ import {
   IEvidenciaCapturada,
 } from '../../components/captura-evidencia-muestra/captura-evidencia-muestra.component';
 
+// ====== Opciones preferidas para la toma masiva ======
+// La preferencia no depende del orden de opciones que devuelva la consulta.
+const RECIPIENTE_PREFERIDO_POR_TIPO: Readonly<Record<string, string>> = {
+  'ORINA ALEATORIA': 'FRASCO NO ESTERIL',
+};
+
 export interface IDialogRecoleccionMasivaData {
   origenAtencion: OrigenAtencionBandejaMuestra;
   fechaInicio: string;
   fechaFin: string;
+  alProcesarMuestras?: () => void;
 }
 
 @Component({
@@ -283,6 +290,27 @@ export class DialogRecoleccionMasivaComponent implements OnInit {
     );
   }
 
+  // ====== Resolver opción predeterminada ======
+  private normalizarNombreOpcion(valor: string): string {
+    return valor.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .trim().toUpperCase();
+  }
+
+  private obtenerOpcionPredeterminada(
+    opciones: IOpcionMuestraSnapshot[],
+  ): IOpcionMuestraSnapshot | null {
+    if (opciones.length === 0) return null;
+
+    // ====== Usar primero la preferencia guardada de la prueba ======
+    return opciones.find((opcion) => opcion.esPredeterminada === true)
+      ?? opciones.find((opcion) => {
+        const tipo = this.normalizarNombreOpcion(opcion.tipoMuestra.nombreTipoMuestra);
+        const recipiente = this.normalizarNombreOpcion(opcion.tuboEnvase.nombreTuboEnvase);
+        return RECIPIENTE_PREFERIDO_POR_TIPO[tipo] === recipiente;
+      })
+      ?? opciones[0];
+  }
+
   private sincronizarControlesOpcion(): void {
     this.muestrasTodas.forEach((muestra) => {
       const control = this.obtenerControlOpcion(muestra);
@@ -295,38 +323,15 @@ export class DialogRecoleccionMasivaComponent implements OnInit {
         ),
       );
 
-      if (muestra.opcionesPermitidas.length === 1) {
-        control.setValue(
-          this.construirClaveOpcion(muestra.opcionesPermitidas[0]),
-          {
-            emitEvent: false,
-          },
-        );
-
-        return;
-      }
-
       if (control.value && clavesVisibles.has(control.value)) {
         return;
       }
 
-      if (
-        this.form.controls.tipoMuestraId.value &&
-        opcionesVisibles.length === 1
-      ) {
-        control.setValue(
-          this.construirClaveOpcion(opcionesVisibles[0]),
-          {
-            emitEvent: false,
-          },
-        );
-
-        return;
-      }
-
-      control.setValue(null, {
-        emitEvent: false,
-      });
+      const predeterminada = this.obtenerOpcionPredeterminada(opcionesVisibles);
+      control.setValue(
+        predeterminada ? this.construirClaveOpcion(predeterminada) : null,
+        { emitEvent: false },
+      );
     });
   }
 
@@ -598,6 +603,8 @@ export class DialogRecoleccionMasivaComponent implements OnInit {
 
           if (response.resumen.recolectadas > 0) {
             this.huboCambios = true;
+            // ====== Actualizar bandeja sin esperar el cierre del diálogo ======
+            this.data.alProcesarMuestras?.();
             if (this.evidenciaGrupal?.archivo) {
               this.capturaEvidenciaGrupal?.limpiar();
             }

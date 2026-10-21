@@ -31,11 +31,18 @@ import {
 } from '../../../models/Gestion/muestraLaboratorio.models';
 
 import { MuestraLaboratorioService } from '../../../services/gestion/muestraLaboratorio/muestra-laboratorio.service';
+import { ArchivoPacienteService } from '../../../services/mantenimiento/paciente/archivo-paciente.service';
 import { AlertasCriticasResultadosService } from '../../../services/gestion/alertasResultados/alertas-criticas-resultados.service';
 import { DialogGestionarTomaComponent } from './dialogs/dialog-gestionar-toma/dialog-gestionar-toma.component';
+import { TomaInlineUnicaComponent } from './toma-inline-unica.component';
 import { DialogRecepcionMasivaComponent } from './dialogs/dialog-recepcion-masiva/dialog-recepcion-masiva.component';
 import { DialogAceptacionMasivaComponent } from './dialogs/dialog-aceptacion-masiva/dialog-aceptacion-masiva.component';
 import { DialogRecoleccionMasivaComponent } from './dialogs/dialog-recoleccion-masiva/dialog-recoleccion-masiva.component';
+
+interface IEstadoFotoPaciente {
+  estado: 'cargando' | 'disponible' | 'sin-foto' | 'error';
+  urlTemporal: string | null;
+}
 
 @Component({
   selector: 'app-toma-muestras',
@@ -55,6 +62,7 @@ import { DialogRecoleccionMasivaComponent } from './dialogs/dialog-recoleccion-m
     MatTableModule,
     MatTabsModule,
     MatDialogModule,
+    TomaInlineUnicaComponent,
   ],
   providers: [
     {
@@ -77,6 +85,11 @@ export class TomaMuestrasComponent implements OnInit, AfterViewInit {
   private readonly _snackBar = inject(MatSnackBar);
 
   private readonly _dialog = inject(MatDialog);
+
+  private readonly _archivoPacienteService = inject(ArchivoPacienteService);
+
+  // ====== Miniaturas solo para las filas expandidas ======
+  private readonly fotoPacientePorSolicitud = new Map<string, IEstadoFotoPaciente>();
 
   private readonly _adapter =
     inject<DateAdapter<unknown, unknown>>(DateAdapter);
@@ -226,6 +239,8 @@ export class TomaMuestrasComponent implements OnInit, AfterViewInit {
             (item) => item.solicitud.origenAtencion === 'EMPRESA',
           );
 
+          this.fotoPacientePorSolicitud.clear();
+
           this.reiniciarPaginadores();
 
           this.aplicarFiltroActual();
@@ -244,6 +259,10 @@ export class TomaMuestrasComponent implements OnInit, AfterViewInit {
             this.expandedParticular = particular ?? null;
 
             this.expandedEmpresa = empresa ?? null;
+
+            if (particular || empresa) {
+              this.cargarFotoPaciente(particular ?? empresa!);
+            }
           }
 
           this.cargando = false;
@@ -273,6 +292,8 @@ export class TomaMuestrasComponent implements OnInit, AfterViewInit {
           this.expandedParticular = null;
 
           this.expandedEmpresa = null;
+
+          this.fotoPacientePorSolicitud.clear();
 
           this.cargando = false;
 
@@ -319,6 +340,8 @@ export class TomaMuestrasComponent implements OnInit, AfterViewInit {
     this.expandedParticular = null;
 
     this.expandedEmpresa = null;
+
+    this.fotoPacientePorSolicitud.clear();
 
     this.paginatorParticulares?.firstPage();
 
@@ -434,6 +457,63 @@ export class TomaMuestrasComponent implements OnInit, AfterViewInit {
     this.buscarSolicitudes();
   }
 
+  // ====== Obtener estado de fotografía ======
+  obtenerEstadoFotoPaciente(item: IBandejaTomaMuestrasItem): IEstadoFotoPaciente | null {
+    return this.fotoPacientePorSolicitud.get(item.solicitud._id) ?? null;
+  }
+
+  // ====== Foto no accesible desde S3 ======
+  marcarFotoPacienteNoDisponible(item: IBandejaTomaMuestrasItem): void {
+    this.fotoPacientePorSolicitud.set(item.solicitud._id, {
+      estado: 'error',
+      urlTemporal: null,
+    });
+  }
+
+  // ====== Consultar foto solo al expandir ======
+  private cargarFotoPaciente(item: IBandejaTomaMuestrasItem): void {
+    const solicitudId = item.solicitud._id;
+    const pacienteId = item.solicitud.paciente.clienteId;
+
+    if (!pacienteId || !/^[a-f0-9]{24}$/i.test(String(pacienteId))) {
+      this.fotoPacientePorSolicitud.set(solicitudId, {
+        estado: 'sin-foto',
+        urlTemporal: null,
+      });
+      return;
+    }
+
+    const estadoInicial: IEstadoFotoPaciente = {
+      estado: 'cargando',
+      urlTemporal: null,
+    };
+
+    this.fotoPacientePorSolicitud.set(solicitudId, estadoInicial);
+
+    this._archivoPacienteService.obtenerFotoPerfil(String(pacienteId)).subscribe({
+      next: (respuesta) => {
+        if (this.fotoPacientePorSolicitud.get(solicitudId) !== estadoInicial) {
+          return;
+        }
+
+        const urlTemporal = respuesta.disponible ? respuesta.urlTemporal : null;
+        this.fotoPacientePorSolicitud.set(solicitudId, {
+          estado: urlTemporal ? 'disponible' : 'sin-foto',
+          urlTemporal,
+        });
+      },
+      error: () => {
+        if (this.fotoPacientePorSolicitud.get(solicitudId) !== estadoInicial) {
+          return;
+        }
+        this.fotoPacientePorSolicitud.set(solicitudId, {
+          estado: 'error',
+          urlTemporal: null,
+        });
+      },
+    });
+  }
+
   // ====== Expandir particular ======
 
   isExpandedParticular(item: IBandejaTomaMuestrasItem): boolean {
@@ -443,10 +523,15 @@ export class TomaMuestrasComponent implements OnInit, AfterViewInit {
   toggleParticular(item: IBandejaTomaMuestrasItem): void {
     if (this.isExpandedParticular(item)) {
       this.expandedParticular = null;
+      this.fotoPacientePorSolicitud.delete(item.solicitud._id);
       return;
     }
 
+    if (this.expandedParticular) {
+      this.fotoPacientePorSolicitud.delete(this.expandedParticular.solicitud._id);
+    }
     this.expandedParticular = item;
+    this.cargarFotoPaciente(item);
   }
 
   // ====== Expandir empresa ======
@@ -458,10 +543,15 @@ export class TomaMuestrasComponent implements OnInit, AfterViewInit {
   toggleEmpresa(item: IBandejaTomaMuestrasItem): void {
     if (this.isExpandedEmpresa(item)) {
       this.expandedEmpresa = null;
+      this.fotoPacientePorSolicitud.delete(item.solicitud._id);
       return;
     }
 
+    if (this.expandedEmpresa) {
+      this.fotoPacientePorSolicitud.delete(this.expandedEmpresa.solicitud._id);
+    }
     this.expandedEmpresa = item;
+    this.cargarFotoPaciente(item);
   }
 
   // ====== Abrir recolección masiva ======
@@ -502,6 +592,7 @@ export class TomaMuestrasComponent implements OnInit, AfterViewInit {
     }
 
     const dialogRef = this._dialog.open(DialogRecoleccionMasivaComponent, {
+      panelClass: 'labfray-dialog-masiva-scroll-interno',
       width: '1240px',
       maxWidth: '97vw',
       maxHeight: '92vh',
@@ -510,13 +601,23 @@ export class TomaMuestrasComponent implements OnInit, AfterViewInit {
         origenAtencion,
         fechaInicio: inicio.toISOString(),
         fechaFin: fin.toISOString(),
+        // ====== Refrescar bandeja tras cada registro exitoso ======
+        alProcesarMuestras: () => {
+          const solicitudAbierta = origenAtencion === 'EMPRESA'
+            ? this.expandedEmpresa?.solicitud._id ?? null
+            : this.expandedParticular?.solicitud._id ?? null;
+          this.buscarSolicitudes(solicitudAbierta, false);
+        },
       },
     });
 
     dialogRef.afterClosed().subscribe(
       (actualizarBandeja: boolean | undefined) => {
         if (actualizarBandeja === true) {
-          this.buscarSolicitudes(null, false);
+          const solicitudAbierta = origenAtencion === 'EMPRESA'
+            ? this.expandedEmpresa?.solicitud._id ?? null
+            : this.expandedParticular?.solicitud._id ?? null;
+          this.buscarSolicitudes(solicitudAbierta, false);
         }
       },
     );
@@ -612,7 +713,8 @@ export class TomaMuestrasComponent implements OnInit, AfterViewInit {
     }
 
     const dialogRef = this._dialog.open(DialogAceptacionMasivaComponent, {
-      width: '1180px',
+      panelClass: 'labfray-dialog-masiva-scroll-interno',
+      width: '1280px',
       maxWidth: '96vw',
       maxHeight: '92vh',
       autoFocus: false,
@@ -620,12 +722,22 @@ export class TomaMuestrasComponent implements OnInit, AfterViewInit {
         origenAtencion,
         fechaInicio: inicio.toISOString(),
         fechaFin: fin.toISOString(),
+        // ====== Refrescar bandeja tras cada aceptación confirmada ======
+        alProcesarMuestras: () => {
+          const solicitudAbierta = origenAtencion === 'EMPRESA'
+            ? this.expandedEmpresa?.solicitud._id ?? null
+            : this.expandedParticular?.solicitud._id ?? null;
+          this.buscarSolicitudes(solicitudAbierta, false);
+        },
       },
     });
 
     dialogRef.afterClosed().subscribe((actualizarBandeja: boolean | undefined) => {
       if (actualizarBandeja === true) {
-        this.buscarSolicitudes(null, false);
+        const solicitudAbierta = origenAtencion === 'EMPRESA'
+          ? this.expandedEmpresa?.solicitud._id ?? null
+          : this.expandedParticular?.solicitud._id ?? null;
+        this.buscarSolicitudes(solicitudAbierta, false);
       }
     });
   }

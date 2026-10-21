@@ -157,6 +157,24 @@
   margin-top: 4px;
 }
 
+// ====== Alertar requisitos faltantes ======
+.requisitos-pendientes {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+  margin: 12px 0 4px;
+  padding: 12px;
+  border: 1px solid #fbbf24;
+  border-left: 4px solid #d97706;
+  border-radius: 9px;
+  background: #fffbeb;
+  color: #92400e;
+  font-size: 12px;
+}
+.requisitos-pendientes mat-icon { flex: 0 0 auto; font-size: 20px; }
+.requisitos-pendientes ul { margin: 5px 0 0; padding-left: 18px; }
+.requisitos-pendientes li + li { margin-top: 3px; }
+
 .btn-corregir {
   background: #166534;
   color: #fff;

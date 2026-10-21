@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, OnInit } from '@angular/core';
+import { AfterViewInit, Component, inject, OnInit, ViewChild } from '@angular/core';
 import {
   FormBuilder,
   FormControl,
@@ -12,13 +12,17 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatSelectModule } from '@angular/material/select';
-import { MatPaginatorModule } from '@angular/material/paginator';
+import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
+import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import {
   DateAdapter,
+  MAT_DATE_FORMATS,
   MAT_DATE_LOCALE,
+  MatDateFormats,
   MatNativeDateModule,
+  NativeDateAdapter,
 } from '@angular/material/core';
 import {
   EstadoProgramacion,
@@ -28,9 +32,23 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { DialogCrearProgramacionEmpresaComponent } from './dialogs/dialog-crear-programacion-empresa/dialog-crear-programacion-empresa.component';
 import { DialogIniciarAtencionEmpresaComponent } from './dialogs/dialog-iniciar-atencion-empresa/dialog-iniciar-atencion-empresa.component';
+import { DialogRegularizarDocumentoEmpresaComponent } from './dialogs/dialog-regularizar-documento-empresa/dialog-regularizar-documento-empresa.component';
+import { DialogImportarProgramacionesEmpresaComponent } from './dialogs/dialog-importar-programaciones-empresa/dialog-importar-programaciones-empresa.component';
 import { ProgramacionEmpresaService } from '../../../../services/gestion/programacion/programacionEmpresas/programacion-empresa.service';
 import { catchError, of } from 'rxjs';
 import Swal from 'sweetalert2';
+
+// ====== Fechas dd/MM/yyyy solo en Programaciones de Empresas ======
+const FORMATOS_FECHA_PROGRAMACION: MatDateFormats = {
+  parse: { dateInput: null },
+  display: {
+    dateInput: { day: '2-digit', month: '2-digit', year: 'numeric' },
+    monthYearLabel: { month: 'short', year: 'numeric' },
+    dateA11yLabel: { day: 'numeric', month: 'long', year: 'numeric' },
+    monthYearA11yLabel: { month: 'long', year: 'numeric' },
+  },
+};
+
 @Component({
   selector: 'app-programacion-empresas',
   imports: [
@@ -43,15 +61,22 @@ import Swal from 'sweetalert2';
     MatTableModule,
     MatSelectModule,
     MatPaginatorModule,
+    MatSortModule,
     MatChipsModule,
     MatDatepickerModule,
     MatNativeDateModule,
   ],
-  providers: [{ provide: MAT_DATE_LOCALE, useValue: 'es-PE' }],
+  providers: [
+    { provide: MAT_DATE_LOCALE, useValue: 'es-PE' },
+    { provide: DateAdapter, useClass: NativeDateAdapter },
+    { provide: MAT_DATE_FORMATS, useValue: FORMATOS_FECHA_PROGRAMACION },
+  ],
   templateUrl: './programacion-empresas.component.html',
   styleUrl: './programacion-empresas.component.scss',
 })
-export class ProgramacionEmpresasComponent implements OnInit {
+export class ProgramacionEmpresasComponent implements OnInit, AfterViewInit {
+  @ViewChild(MatPaginator) private paginator!: MatPaginator;
+  @ViewChild(MatSort) private sort!: MatSort;
   private _fb = inject(FormBuilder);
   //private _solicitudService = inject(SolicitudAtencionService);
   //private _servicioService = inject(ServiciosService);
@@ -69,7 +94,64 @@ export class ProgramacionEmpresasComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this._adapter.setLocale('es-PE');
+
+    this.dataSourceProgramacion.filterPredicate = (row, filtro) =>
+      [
+        row.codProgramacion,
+        row.nroDoc,
+        row.tipoDoc,
+        row.apePatCliente,
+        row.apeMatCliente,
+        row.nombreCliente,
+        row.razonSocialEmpresa,
+        row.sede,
+        row.tipoEvaluacion,
+        row.tipoAtencion,
+        row.prioridad,
+        row.estadoProgramacion,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLocaleLowerCase()
+        .includes(filtro);
+
     this.buscarProgramacionesDelDia();
+  }
+
+  ngAfterViewInit(): void {
+    // ====== Conectar paginación y ordenación ======
+    this.dataSourceProgramacion.paginator = this.paginator;
+    this.dataSourceProgramacion.sortingDataAccessor = (row, columna) => {
+      // ====== Ordenar códigos por año y correlativo ======
+      if (columna === 'codProgramacion') {
+        const partes = /^PPE-(\d{4})-(\d+)$/i.exec(row.codProgramacion ?? '');
+        return partes
+          ? Number(partes[1]) * 1_000_000 + Number(partes[2])
+          : (row.codProgramacion ?? '').toLocaleLowerCase();
+      }
+
+      if (columna === 'fechaProgramacion') {
+        return new Date(String(row.fechaProgramada)).getTime();
+      }
+
+      const campos: Record<string, string> = {
+        codProgramacion: row.codProgramacion ?? '',
+        nombreCompleto: `${row.apePatCliente} ${row.apeMatCliente ?? ''} ${row.nombreCliente}`,
+        empresa: row.razonSocialEmpresa,
+        sede: row.sede ?? '',
+        tipoEvaluacion: row.tipoEvaluacion ?? '',
+        tipoAtencion: row.tipoAtencion ?? '',
+        prioridad: row.prioridad ?? '',
+        estado: row.estadoProgramacion,
+      };
+
+      return (campos[columna] ?? '').toLocaleLowerCase();
+    };
+
+    // ====== Mostrar primero la programación de mayor código ======
+    this.dataSourceProgramacion.sort = this.sort;
+    this.sort.sort({ id: 'codProgramacion', start: 'desc', disableClear: false });
   }
 
   //setear los anchos
@@ -101,12 +183,12 @@ export class ProgramacionEmpresasComponent implements OnInit {
     'ATENDIDO',
   ];
 
-  /** Checks whether an element is expanded. */
+  // ====== Fila expandible ======
   isExpandedProgramacion(element: IProgramacionEmpresa) {
     return this.expandedProgramacion === element;
   }
 
-  /** Toggles the expanded state of an element. */
+
   toggleProgramacion(element: IProgramacionEmpresa) {
     this.expandedProgramacion = this.isExpandedProgramacion(element)
       ? null
@@ -177,6 +259,49 @@ export class ProgramacionEmpresasComponent implements OnInit {
     });
   }
 
+  // ====== Importación Excel: recargar la bandeja tras registrar ======
+  abrirImportacionExcel(): void {
+    const dialogRef = this.dialog.open(DialogImportarProgramacionesEmpresaComponent, {
+      width: '96vw',
+      maxWidth: '1400px',
+      maxHeight: '93vh',
+      autoFocus: false,
+      disableClose: true,
+    });
+    dialogRef.afterClosed().subscribe((resultado) => {
+      if (resultado?.importadas) this.buscarProgramacion();
+    });
+  }
+
+  // ====== Regularizar documento después del inicio de atención ======
+  regularizarDocumento(element: IProgramacionEmpresa): void {
+    if (!element.pacienteId || element.estadoIdentificacionPaciente !== 'PENDIENTE') {
+      this.snackBar.open('Solo se regularizan historias clínicas con identificación PENDIENTE.', 'Cerrar', { duration: 3500 });
+      return;
+    }
+
+    const dialogRef = this.dialog.open(DialogRegularizarDocumentoEmpresaComponent, {
+      width: '92vw', maxWidth: '640px', maxHeight: '90vh',
+      data: { programacion: element },
+    });
+
+    dialogRef.afterClosed().subscribe((resultado) => {
+      if (!resultado?.ok || !resultado.programacion) return;
+      const actual = resultado.programacion as IProgramacionEmpresa;
+      this.dataSourceProgramacion.data = this.dataSourceProgramacion.data.map((item) =>
+        item.pacienteId && item.pacienteId === actual.pacienteId
+          ? {
+              ...item,
+              tipoDoc: actual.tipoDoc,
+              nroDoc: actual.nroDoc,
+              estadoIdentificacionPaciente: actual.estadoIdentificacionPaciente,
+            }
+          : item,
+      );
+      this.snackBar.open('Documento actualizado. La identificación sigue PENDIENTE de validación.', 'Cerrar', { duration: 4500 });
+    });
+  }
+
   iniciarAtencion(element: IProgramacionEmpresa) {
     if (element.estadoProgramacion === 'CANCELADO') {
       this.snackBar.open(
@@ -208,6 +333,10 @@ export class ProgramacionEmpresasComponent implements OnInit {
 
       const programacionActualizada =
         resultado.programacion as IProgramacionEmpresa;
+      if (resultado.paciente?.estadoIdentificacion) {
+        programacionActualizada.estadoIdentificacionPaciente =
+          resultado.paciente.estadoIdentificacion;
+      }
 
       if (!programacionActualizada?._id) {
         return;

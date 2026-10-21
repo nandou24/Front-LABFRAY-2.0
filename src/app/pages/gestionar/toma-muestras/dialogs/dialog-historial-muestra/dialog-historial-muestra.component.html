@@ -1,10 +1,11 @@
 <div mat-dialog-title class="historial-header">
   <div>
-    <h2>Historial de la muestra</h2>
+    <h2>{{ grupos.length > 1 ? 'Historial del recipiente' : 'Historial de la muestra' }}</h2>
     <div class="subtitulo">
       <strong>{{ data.muestra.codigoEtiqueta || data.muestra.codMuestra }}</strong>
       <span>Recipiente {{ data.muestra.numeroRecipiente }}</span>
-      <span>Intento {{ data.muestra.numeroIntento }}</span>
+      <span *ngIf="grupos.length === 1">Intento {{ data.muestra.numeroIntento }}</span>
+      <span *ngIf="grupos.length > 1">{{ grupos.length }} intentos</span>
       <span>{{ data.muestra.estadoMuestra }}</span>
     </div>
   </div>
@@ -15,22 +16,42 @@
 </div>
 
 <mat-dialog-content>
-  <div *ngIf="eventos.length > 0; else sinEventos" class="timeline">
-    <div *ngFor="let evento of eventos" class="evento">
-      <div class="evento-icono"><mat-icon>{{ evento.icono }}</mat-icon></div>
-
-      <div class="evento-contenido">
-        <div class="evento-cabecera">
-          <strong>{{ evento.titulo }}</strong>
-          <span>{{ evento.fecha | date: 'dd/MM/yyyy HH:mm:ss' }}</span>
+  <!-- ====== Historial de cada intento, incluido el anterior ====== -->
+  <div *ngIf="grupos.length > 0; else sinEventos" class="grupos-historial">
+    <section *ngFor="let grupo of grupos" class="grupo-intento">
+      <div *ngIf="grupos.length > 1" class="grupo-cabecera">
+        <div class="grupo-identidad">
+          <strong>Intento {{ grupo.muestra.numeroIntento }}</strong>
+          <span>{{ grupo.muestra.codigoEtiqueta || grupo.muestra.codMuestra }}</span>
+          <span *ngIf="grupo.actual" class="grupo-actual">Actual</span>
+          <span *ngIf="!grupo.actual" class="grupo-anterior">Anterior</span>
         </div>
-
-        <div class="evento-meta">Usuario: {{ evento.usuario || '-' }}</div>
-        <div class="evento-detalle" *ngIf="evento.detalle">{{ evento.detalle }}</div>
+        <span class="grupo-estado" [attr.data-estado]="grupo.muestra.estadoMuestra">
+          {{ grupo.muestra.estadoMuestra }}
+        </span>
       </div>
-    </div>
-  </div>
 
+      <div *ngIf="grupo.eventos.length > 0; else sinEventosIntento" class="timeline">
+        <div *ngFor="let evento of grupo.eventos" class="evento"
+          [class.evento-aceptado]="evento.estilo === 'ACEPTADA'"
+          [class.evento-rechazado]="evento.estilo === 'RECHAZADA'">
+          <div class="evento-icono"><mat-icon>{{ evento.icono }}</mat-icon></div>
+
+          <div class="evento-contenido">
+            <div class="evento-cabecera">
+              <strong>{{ evento.titulo }}</strong>
+              <span>{{ evento.fecha | date: (evento.fechaSoloDia ? 'dd/MM/yyyy' : 'dd/MM/yyyy HH:mm:ss') }}</span>
+            </div>
+            <div class="evento-meta">Responsable: {{ nombreVisible(evento.usuario) }}</div>
+            <div class="evento-detalle" *ngIf="evento.detalle">{{ evento.detalle }}</div>
+          </div>
+        </div>
+      </div>
+      <ng-template #sinEventosIntento>
+        <div class="sin-eventos">No existen eventos registrados para este intento.</div>
+      </ng-template>
+    </section>
+  </div>
   <ng-template #sinEventos>
     <div class="sin-eventos">No existen eventos registrados para esta muestra.</div>
   </ng-template>

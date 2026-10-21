@@ -896,7 +896,7 @@
                     [formGroupName]="j"
                     class="row-flex"
                   >
-                    <div [style.flex]="setFlex(40, '%')" class="flex-item">
+                    <div [style.flex]="setFlex(34, '%')" class="flex-item">
                       <mat-form-field appearance="outline" class="w-100">
                         <mat-label> Tipo de muestra </mat-label>
 
@@ -911,7 +911,7 @@
                       </mat-form-field>
                     </div>
 
-                    <div [style.flex]="setFlex(48, '%')" class="flex-item">
+                    <div [style.flex]="setFlex(39, '%')" class="flex-item">
                       <mat-form-field appearance="outline" class="w-100">
                         <mat-label> Tubo / Envase </mat-label>
 
@@ -926,7 +926,18 @@
                       </mat-form-field>
                     </div>
 
-                    <div [style.flex]="setFlex(12, '%')" class="flex-item">
+                    <div [style.flex]="setFlex(19, '%')" class="flex-item opcion-predeterminada">
+                      <mat-radio-button
+                        color="primary"
+                        [name]="'predeterminada-' + i"
+                        [checked]="opcionControl.get('esPredeterminada')?.value === true"
+                        (change)="seleccionarOpcionPredeterminada(i, j)"
+                      >
+                        Predeterminada
+                      </mat-radio-button>
+                    </div>
+
+                    <div [style.flex]="setFlex(8, '%')" class="flex-item">
                       <button
                         mat-icon-button
                         type="button"
@@ -955,7 +966,7 @@
                   <span
                     style="margin-left: 12px; font-size: 12px; color: #6c757d"
                   >
-                    Las alternativas funcionan como "O".
+                    Las alternativas funcionan como "O". Seleccione cuál se propondrá por defecto.
                   </span>
                 </div>
 

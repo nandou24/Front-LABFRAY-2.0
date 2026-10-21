@@ -29,14 +29,19 @@
 
     <div class="trazabilidad-grid">
       <div class="trazabilidad-item">
-        <span>Recolectada por</span>
+        <span>Toma registrada por</span>
         <strong>{{ data.muestra.usuarioRecoleccion || '-' }}</strong>
         <small>
           {{
-            data.muestra.fechaRecoleccion
-              ? (data.muestra.fechaRecoleccion | date: 'dd/MM/yyyy HH:mm')
-              : '-'
+            data.muestra.fechaRegistroRecoleccion
+              ? (data.muestra.fechaRegistroRecoleccion | date: 'dd/MM/yyyy HH:mm' : '-0500')
+              : data.muestra.fechaRecoleccion
+                ? (data.muestra.fechaRecoleccion | date: 'dd/MM/yyyy' : '-0500')
+                : '-'
           }}
+        </small>
+        <small *ngIf="data.muestra.fechaRecoleccion">
+          Fecha real de toma: {{ data.muestra.fechaRecoleccion | date: 'dd/MM/yyyy' : '-0500' }}
         </small>
       </div>
 
@@ -46,7 +51,7 @@
         <small>
           {{
             data.muestra.fechaRecepcion
-              ? (data.muestra.fechaRecepcion | date: 'dd/MM/yyyy HH:mm')
+              ? (data.muestra.fechaRecepcion | date: 'dd/MM/yyyy HH:mm' : '-0500')
               : '-'
           }}
         </small>
@@ -108,6 +113,14 @@
       (evidenciaChange)="cambiarEvidencia($event)"
     ></app-captura-evidencia-muestra>
   </section>
+  <!-- ====== Alertar requisitos pendientes ====== -->
+  <div *ngIf="faltantesRechazo.length > 0 && !procesando"
+    class="requisitos-pendientes" role="status" aria-live="polite">
+    <mat-icon>info_outline</mat-icon>
+    <div><strong>Para habilitar el rechazo, completa:</strong>
+      <ul><li *ngFor="let faltante of faltantesRechazo">{{ faltante }}</li></ul>
+    </div>
+  </div>
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">
@@ -119,7 +132,7 @@
     mat-flat-button
     type="button"
     class="btn-rechazar"
-    [disabled]="procesando || formRechazo.invalid || !archivoEvidencia"
+    [disabled]="procesando || formRechazo.invalid || faltantesRechazo.length > 0"
     (click)="rechazarMuestra()"
   >
     <mat-icon>{{ procesando ? 'hourglass_top' : 'block' }}</mat-icon>

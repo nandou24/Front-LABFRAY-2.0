@@ -527,6 +527,38 @@
   <!-- ====== Detalle operativo ====== -->
 
   <ng-template #detalleOperativo let-row>
+    <!-- ====== Fotografía identificativa del paciente ====== -->
+    <div class="identificacion-paciente-toma">
+      <div class="identificacion-paciente-toma__miniatura">
+        <img
+          *ngIf="obtenerEstadoFotoPaciente(row)?.urlTemporal as fotoUrl"
+          [src]="fotoUrl"
+          alt="Fotografía de identificación del paciente"
+          (error)="marcarFotoPacienteNoDisponible(row)"
+          loading="lazy"
+        />
+        <span *ngIf="!obtenerEstadoFotoPaciente(row)?.urlTemporal">
+          {{ obtenerEstadoFotoPaciente(row)?.estado === 'cargando' ? 'Cargando foto...' :
+             obtenerEstadoFotoPaciente(row)?.estado === 'error' ? 'Foto no disponible' :
+             'Sin fotografía' }}
+        </span>
+      </div>
+      <div class="identificacion-paciente-toma__datos">
+        <span class="identificacion-paciente-toma__etiqueta">Identificación del paciente</span>
+        <strong>{{ obtenerNombrePaciente(row) }}</strong>
+        <span>{{ obtenerDocumentoPaciente(row) || 'Documento pendiente' }}
+          · HC {{ obtenerHcPaciente(row) }}</span>
+      </div>
+    </div>
+
+    <!-- ====== Estación operativa con todos los recipientes ====== -->
+    <ng-container *ngIf="row.muestras.inicializadas && row.muestras.planToma.disponible;
+      else detalleOperativoAnterior">
+      <app-toma-inline-unica [item]="row"></app-toma-inline-unica>
+    </ng-container>
+
+    <!-- ====== Respaldo para planes aún no disponibles ====== -->
+    <ng-template #detalleOperativoAnterior>
     <div class="detalle-operativo-expandido">
       <div
         style="
@@ -1023,5 +1055,6 @@
         </mat-card>
       </div>
     </div>
+    </ng-template>
   </ng-template>
 </div>

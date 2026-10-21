@@ -60,6 +60,14 @@ export class DialogRechazarMuestraComponent {
     motivoRechazo: ['', [Validators.required]],
   });
 
+  // ====== Campos pendientes de rechazo ======
+  get faltantesRechazo(): string[] {
+    const pendientes: string[] = [];
+    if (!this.formRechazo.controls.motivoRechazo.value?.trim()) pendientes.push('Motivo del rechazo');
+    if (!this.archivoEvidencia) pendientes.push('Fotografía de rechazo');
+    return pendientes;
+  }
+
   // ====== Cerrar ======
 
   cerrar(): void {

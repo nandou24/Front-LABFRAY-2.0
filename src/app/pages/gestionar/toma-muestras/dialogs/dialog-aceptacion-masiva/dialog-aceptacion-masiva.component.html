@@ -220,13 +220,13 @@
       </ng-container>
 
       <ng-container matColumnDef="fechaRecepcion">
-        <th mat-header-cell *matHeaderCellDef>Recepción</th>
+        <th mat-header-cell *matHeaderCellDef>Toma / recepción</th>
 
         <td mat-cell *matCellDef="let muestra">
           {{ muestra.fechaRecepcion | date: "dd/MM/yyyy HH:mm" }}
 
-          <div class="dato-secundario">
-            {{ muestra.usuarioRecepcion || "-" }}
+          <div class="dato-secundario responsable-toma">
+            {{ obtenerNombreResponsable(muestra) }}
           </div>
         </td>
       </ng-container>

@@ -163,3 +163,63 @@ td {
   border-radius: 0 0 10px 10px;
   box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
 }
+
+// ====== Fotografía de identificación en fila expandida ======
+.identificacion-paciente-toma {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 8px 12px 10px;
+  padding: 8px 10px;
+  width: fit-content;
+  max-width: calc(100% - 24px);
+  border: 1px solid #c4d7ef;
+  border-radius: 8px;
+  background: #f8fbff;
+}
+
+.identificacion-paciente-toma__miniatura {
+  flex: 0 0 70px;
+  width: 70px;
+  height: 78px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid #d8e4f2;
+  border-radius: 6px;
+  background: #ecf2fa;
+  color: #64748b;
+  text-align: center;
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+.identificacion-paciente-toma__miniatura img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.identificacion-paciente-toma__datos {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  color: #334155;
+  font-size: 12px;
+}
+
+.identificacion-paciente-toma__datos strong {
+  font-size: 13px;
+  font-weight: 500;
+  color: #123465;
+  overflow-wrap: anywhere;
+}
+
+.identificacion-paciente-toma__etiqueta {
+  font-size: 11px;
+  font-weight: 500;
+  color: #1d4e87;
+}

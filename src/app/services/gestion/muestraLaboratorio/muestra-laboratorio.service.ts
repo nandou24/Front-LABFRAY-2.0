@@ -43,6 +43,14 @@ import {
   providedIn: 'root',
 })
 export class MuestraLaboratorioService {
+  // ====== Enviar versión del recipiente para evitar operaciones desactualizadas ======
+  private cabecerasDeOperacion(versionMuestra?: number): { [header: string]: string } {
+    const headers = this.auth.getAuthHeaders();
+    return Number.isSafeInteger(versionMuestra) && versionMuestra! >= 0
+      ? { ...headers, 'If-Match': String(versionMuestra) }
+      : headers;
+  }
+
   private readonly apiUrl = `${environment.baseUrl}/api/muestraLaboratorio`;
 
   private readonly http = inject(HttpClient);
@@ -309,13 +317,27 @@ export class MuestraLaboratorioService {
   tomarYRecibirMuestra(
     muestraLaboratorioId: string,
     body: ITomarRecibirMuestraDTO,
+    versionMuestra?: number,
   ): Observable<IAccionMuestraResponse> {
     return this.http.put<IAccionMuestraResponse>(
       `${this.apiUrl}/${muestraLaboratorioId}/tomar-recibir`,
       body,
       {
-        headers: this.auth.getAuthHeaders(),
+        headers: this.cabecerasDeOperacion(versionMuestra),
       },
+    );
+  }
+
+  // ====== Revertir toma / recepción con control de versión ======
+  revertirTomaRecepcion(
+    muestraLaboratorioId: string,
+    motivoReversion: string,
+    versionMuestra?: number,
+  ): Observable<IAccionMuestraResponse> {
+    return this.http.put<IAccionMuestraResponse>(
+      `${this.apiUrl}/${muestraLaboratorioId}/revertir-toma`,
+      { motivoReversion: motivoReversion.trim() },
+      { headers: this.cabecerasDeOperacion(versionMuestra) },
     );
   }
 
@@ -339,12 +361,13 @@ export class MuestraLaboratorioService {
   aceptarMuestra(
     muestraLaboratorioId: string,
     body: IAceptarMuestraDTO = {},
+    versionMuestra?: number,
   ): Observable<IAccionMuestraResponse> {
     return this.http.put<IAccionMuestraResponse>(
       `${this.apiUrl}/${muestraLaboratorioId}/aceptar`,
       body,
       {
-        headers: this.auth.getAuthHeaders(),
+        headers: this.cabecerasDeOperacion(versionMuestra),
       },
     );
   }
@@ -355,6 +378,7 @@ export class MuestraLaboratorioService {
     muestraLaboratorioId: string,
     body: ICorregirEvaluacionMuestraDTO,
     imagen?: File,
+    versionMuestra?: number,
   ): Observable<ICorregirEvaluacionMuestraResponse> {
     const formData = new FormData();
 
@@ -373,7 +397,7 @@ export class MuestraLaboratorioService {
       `${this.apiUrl}/${muestraLaboratorioId}/corregir-evaluacion`,
       formData,
       {
-        headers: this.auth.getAuthHeaders(),
+        headers: this.cabecerasDeOperacion(versionMuestra),
       },
     );
   }
@@ -384,6 +408,7 @@ export class MuestraLaboratorioService {
     muestraLaboratorioId: string,
     motivoRechazo: string,
     imagen: File,
+    versionMuestra?: number,
   ): Observable<IRechazarMuestraResponse> {
     const formData = new FormData();
 
@@ -395,7 +420,7 @@ export class MuestraLaboratorioService {
       `${this.apiUrl}/${muestraLaboratorioId}/rechazar`,
       formData,
       {
-        headers: this.auth.getAuthHeaders(),
+        headers: this.cabecerasDeOperacion(versionMuestra),
       },
     );
   }
@@ -405,12 +430,13 @@ export class MuestraLaboratorioService {
   anularMuestra(
     muestraLaboratorioId: string,
     body: IAnularMuestraDTO,
+    versionMuestra?: number,
   ): Observable<IAnularMuestraResponse> {
     return this.http.put<IAnularMuestraResponse>(
       `${this.apiUrl}/${muestraLaboratorioId}/anular`,
       body,
       {
-        headers: this.auth.getAuthHeaders(),
+        headers: this.cabecerasDeOperacion(versionMuestra),
       },
     );
   }
@@ -419,12 +445,13 @@ export class MuestraLaboratorioService {
 
   generarReintento(
     muestraLaboratorioId: string,
+    versionMuestra?: number,
   ): Observable<IReintentarMuestraResponse> {
     return this.http.post<IReintentarMuestraResponse>(
       `${this.apiUrl}/${muestraLaboratorioId}/reintentar`,
       {},
       {
-        headers: this.auth.getAuthHeaders(),
+        headers: this.cabecerasDeOperacion(versionMuestra),
       },
     );
   }

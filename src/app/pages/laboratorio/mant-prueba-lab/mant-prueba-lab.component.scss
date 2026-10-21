@@ -244,3 +244,12 @@ mat-option {
   border-color: #aebfd3;
   box-shadow: 0 2px 6px rgba(15, 51, 105, 0.08);
 }
+
+// ====== Selección predeterminada de recipiente ======
+.opcion-predeterminada {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 56px;
+  white-space: nowrap;
+}

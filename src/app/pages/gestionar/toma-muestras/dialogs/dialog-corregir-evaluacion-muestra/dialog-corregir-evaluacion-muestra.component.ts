@@ -80,6 +80,17 @@ export class DialogCorregirEvaluacionMuestraComponent {
     return this.estadoNuevo === 'RECHAZADA';
   }
 
+  // ====== Requisitos visibles antes de confirmar ======
+  get faltantesCorreccion(): string[] {
+    const form = this.formCorreccion.controls;
+    const pendientes: string[] = [];
+    if (!form.motivoCorreccion.value?.trim()) pendientes.push('Motivo de la corrección');
+    if (!form.nombreUsuarioAutorizador.value?.trim()) pendientes.push('Usuario autorizador');
+    if (!form.passwordAutorizador.value?.trim()) pendientes.push('Contraseña del autorizador');
+    if (this.requiereEvidencia && !this.archivoEvidencia) pendientes.push('Fotografía de rechazo');
+    return pendientes;
+  }
+
   // ====== Cerrar ======
 
   cerrar(): void {
@@ -178,6 +189,7 @@ export class DialogCorregirEvaluacionMuestraComponent {
           passwordAutorizador,
         },
         this.requiereEvidencia ? this.archivoEvidencia ?? undefined : undefined,
+        this.data.muestra.__v,
       )
       .subscribe({
         next: async (response) => {
@@ -210,6 +222,17 @@ export class DialogCorregirEvaluacionMuestraComponent {
         error: (error) => {
           this.procesando = false;
           this.formCorreccion.controls.passwordAutorizador.reset('');
+          if (error?.status === 409 && error?.error?.code === 'MUESTRA_DESACTUALIZADA') {
+            void Swal.fire({
+              toast: true, position: 'top-end', timer: 4500,
+              background: '#164e63', color: '#ffffff',
+              showConfirmButton: false, icon: 'warning',
+              title: 'Muestra actualizada por otro usuario',
+              text: error?.error?.msg,
+            });
+            this._dialogRef.close('actualizar');
+            return;
+          }
 
           console.error('Error al corregir evaluación de muestra:', error);
 

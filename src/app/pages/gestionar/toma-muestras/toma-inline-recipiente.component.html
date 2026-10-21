@@ -1,0 +1,266 @@
+<!-- ====== Fila operativa del recipiente ====== -->
+<div class="fila-recipient" *ngIf="muestra as actual">
+
+      <!-- ====== Card toma / recepción ====== -->
+      <section class="tarjeta-operativa">
+        <div class="cabecera-recipient">
+          <div class="identidad-recipiente">
+            <strong>Recipiente {{ actual.numeroRecipiente }}</strong>
+            <span>{{ actual.codigoEtiqueta || actual.codMuestra }}</span>
+            <small *ngIf="plan && plan.totalIntentos > 1">{{ plan.totalIntentos }} intentos</small>
+          </div>
+          <div class="estado-y-acciones">
+            <span class="estado-muestra" [attr.data-estado]="estado">{{ estado }}</span>
+            <div class="acciones-cabecera">
+              <button mat-icon-button type="button" matTooltip="Ver / imprimir etiqueta" aria-label="Etiqueta individual"
+                (click)="etiqueta()" [disabled]="!actual.codigoEtiqueta || estado === 'ANULADA'">
+                <mat-icon>label</mat-icon>
+              </button>
+              <button mat-icon-button type="button" matTooltip="Ver historial de la muestra" aria-label="Historial"
+                (click)="historial()">
+                <mat-icon>history</mat-icon>
+              </button>
+              <button mat-icon-button type="button" matTooltip="Ver evidencias fotográficas" aria-label="Evidencias"
+                *ngIf="estado !== 'PENDIENTE'" (click)="evidencias()">
+                <mat-icon>photo_camera</mat-icon>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <ng-container *ngIf="estado === 'PENDIENTE'; else tomaRegistrada">
+          <form [formGroup]="formToma">
+            <mat-radio-group formControlName="opcionFisica" class="opciones-fisicas">
+              <mat-radio-button *ngFor="let opcion of opciones"
+                [value]="claveOpcion(opcion)" class="opcion-fisica">
+                <span class="opcion-contenido">
+                  <span class="punto-recipient" [style.background]="colorRecipiente(opcion.tuboEnvase.color)"></span>
+                  <span><strong>{{ opcion.tuboEnvase.nombreTuboEnvase }}</strong>
+                    <small>{{ opcion.tipoMuestra.nombreTipoMuestra }}
+                      <ng-container *ngIf="opcion.tuboEnvase.capacidad !== null">
+                        · {{ opcion.tuboEnvase.capacidad }} {{ opcion.tuboEnvase.unidadCapacidad }}
+                      </ng-container>
+                    </small>
+                  </span>
+                </span>
+              </mat-radio-button>
+            </mat-radio-group>
+            <p class="mensaje-inline" *ngIf="opciones.length === 0">No hay opciones físicas compatibles para este recipiente.</p>
+
+
+            <button mat-button type="button" class="boton-discreto" (click)="mostrarDetalles = !mostrarDetalles">
+              <mat-icon>{{ mostrarDetalles ? 'expand_less' : 'tune' }}</mat-icon>
+              {{ mostrarDetalles ? 'Ocultar datos adicionales' : 'Fecha, volumen y observaciones (opcional)' }}
+            </button>
+
+            <div *ngIf="mostrarDetalles" class="datos-adicionales">
+              <div class="fila-datos">
+              <mat-form-field appearance="outline">
+                <mat-label>Fecha real de toma</mat-label>
+                <input matInput readonly [matDatepicker]="fechaTomaPicker"
+                  [max]="hoy" formControlName="fechaRecoleccion" />
+                <mat-datepicker-toggle matSuffix [for]="fechaTomaPicker"></mat-datepicker-toggle>
+                <mat-datepicker #fechaTomaPicker></mat-datepicker>
+              </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Volumen</mat-label>
+                  <input matInput type="number" step="any" min="0.000001" formControlName="volumenRecolectado" />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Unidad</mat-label>
+                  <mat-select formControlName="unidadVolumenRecolectado">
+                    <mat-option *ngFor="let unidad of unidades" [value]="unidad">{{ unidad }}</mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+              <small *ngIf="formToma.hasError('volumenIncompleto')" class="error-inline">Volumen y unidad deben registrarse juntos.</small>
+              <mat-form-field appearance="outline" class="ancho-completo">
+                <mat-label>Observaciones de la toma</mat-label>
+                <textarea matInput rows="2" formControlName="observacionRecoleccion"></textarea>
+              </mat-form-field>
+            </div>
+          </form>
+
+          <button mat-button type="button" class="boton-discreto" (click)="mostrarFotoToma = !mostrarFotoToma">
+            <mat-icon>photo_camera</mat-icon>
+            {{ mostrarFotoToma ? 'Ocultar fotografía' : 'Fotografía de toma (opcional)' }}
+          </button>
+          <div *ngIf="mostrarFotoToma" class="bloque-foto">
+            <app-captura-evidencia-muestra
+              titulo="Fotografía de toma / recepción" descripcion="Fotografía opcional del recipiente."
+              [requerido]="false" [disabled]="procesando"
+              (evidenciaChange)="cambiarFotoToma($event)">
+            </app-captura-evidencia-muestra>
+          </div>
+          <div class="acciones-tarjeta acciones-tarjeta-toma">
+            <button mat-flat-button type="button" class="accion-anular" [disabled]="procesando" (click)="anular()">
+              <mat-icon>cancel</mat-icon> Anular muestra
+            </button>
+            <button mat-flat-button type="button" [disabled]="procesando || formToma.invalid || opciones.length === 0"
+              (click)="registrarToma()">
+              <mat-icon>vaccines</mat-icon>
+              {{ procesando ? 'Registrando...' : 'Registrar toma / recepción' }}
+            </button>
+          </div>
+        </ng-container>
+
+        <ng-template #tomaRegistrada>
+          <div class="resumen-registrado" *ngIf="actual.tuboEnvase && actual.tipoMuestra">
+            <span class="punto-recipient" [style.background]="colorRecipiente(actual.tuboEnvase.color)"></span>
+            <div><strong>{{ actual.tuboEnvase.nombreTuboEnvase }}</strong>
+              <small>{{ actual.tipoMuestra.nombreTipoMuestra }}</small></div>
+          </div>
+          <p class="estado-ayuda" *ngIf="estado !== 'RECHAZADA' && estado !== 'ANULADA'">
+            <mat-icon>check_circle</mat-icon> Toma y recepción registradas.
+          </p>
+          <p class="estado-ayuda" *ngIf="estado === 'RECHAZADA' || estado === 'ANULADA'">
+            Intento cerrado. El historial y la etiqueta siguen disponibles.
+          </p>
+        </ng-template>
+
+        <!-- ====== Revertir solo antes de aceptar o rechazar ====== -->
+        <ng-container *ngIf="estado === 'RECEPCIONADA'">
+          <div class="panel-reversion" *ngIf="mostrarReversion">
+            <p><mat-icon>info_outline</mat-icon> Se regresará este recipiente a PENDIENTE.
+              La operación original quedará registrada en el historial.</p>
+            <mat-form-field appearance="outline" class="ancho-completo">
+              <mat-label>Motivo de reversión (obligatorio)</mat-label>
+              <textarea matInput rows="2" [formControl]="formReversion.controls.motivoReversion"></textarea>
+              <mat-error *ngIf="formReversion.controls.motivoReversion.hasError('required')">
+                Indica por qué se revierte la toma.
+              </mat-error>
+            </mat-form-field>
+            <div class="acciones-reversion-final">
+              <button mat-button type="button" [disabled]="procesando"
+                (click)="mostrarReversion = false; formReversion.reset()">Cancelar</button>
+              <button mat-flat-button type="button" class="accion-revertir-confirmar"
+                [disabled]="procesando || !formReversion.controls.motivoReversion.value?.trim()"
+                (click)="revertirTomaRecepcion()">
+                <mat-icon>undo</mat-icon> {{ procesando ? 'Revirtiendo...' : 'Confirmar reversión' }}
+              </button>
+            </div>
+          </div>
+        </ng-container>
+
+        <div class="acciones-secundarias acciones-secundarias-toma"
+          *ngIf="estado === 'RECOLECTADA' || estado === 'RECEPCIONADA'">
+          <button mat-flat-button type="button" class="accion-anular" [disabled]="procesando" (click)="anular()">
+            <mat-icon>cancel</mat-icon> Anular muestra
+          </button>
+          <button *ngIf="estado === 'RECEPCIONADA' && !mostrarReversion"
+            mat-stroked-button type="button" class="accion-revertir"
+            [disabled]="procesando" (click)="mostrarReversion = true">
+            <mat-icon>undo</mat-icon> Revertir toma / recepción
+          </button>
+        </div>
+      </section>
+
+      <!-- ====== Card evaluación ====== -->
+      <section class="tarjeta-operativa" [class.tarjeta-inactiva]="estado === 'PENDIENTE'">
+        <div class="cabecera-evaluacion">
+          <div><strong>Evaluación</strong><small>Aceptar o rechazar la muestra</small></div>
+          <!-- ====== Accesos compartidos durante evaluación ====== -->
+          <div class="acciones-cabecera"
+            *ngIf="estado === 'RECEPCIONADA' || estado === 'ACEPTADA' || estado === 'RECHAZADA'">
+            <button mat-icon-button type="button" matTooltip="Ver / imprimir etiqueta" aria-label="Etiqueta individual"
+              (click)="etiqueta()" [disabled]="!actual.codigoEtiqueta">
+              <mat-icon>label</mat-icon>
+            </button>
+            <button mat-icon-button type="button" matTooltip="Ver historial de la muestra" aria-label="Historial"
+              (click)="historial()">
+              <mat-icon>history</mat-icon>
+            </button>
+            <button mat-icon-button type="button" matTooltip="Ver evidencias fotográficas" aria-label="Evidencias"
+              (click)="evidencias()">
+              <mat-icon>photo_camera</mat-icon>
+            </button>
+          </div>
+        </div>
+
+        <div *ngIf="estado === 'PENDIENTE'" class="esperando">
+          <mat-icon>lock_outline</mat-icon>
+          Se habilitará cuando registres la toma / recepción.
+        </div>
+
+        <ng-container *ngIf="estado === 'RECEPCIONADA'">
+          <div *ngIf="!mostrarRechazo" class="evaluacion-controles">
+            <mat-form-field appearance="outline" class="ancho-completo">
+              <mat-label>Observación de aceptación (opcional)</mat-label>
+              <textarea matInput rows="2" [formControl]="formEvaluacion.controls.observacionAceptacion"></textarea>
+            </mat-form-field>
+            <button mat-button type="button" class="boton-discreto"
+              (click)="mostrarFotoEvaluacion = !mostrarFotoEvaluacion">
+              <mat-icon>photo_camera</mat-icon>
+              {{ mostrarFotoEvaluacion ? 'Ocultar fotografía' : 'Foto de aceptación (opcional)' }}
+            </button>
+            <div *ngIf="mostrarFotoEvaluacion" class="bloque-foto">
+              <app-captura-evidencia-muestra
+                titulo="Fotografía de aceptación" descripcion="Opcional."
+                [requerido]="false" [disabled]="procesando"
+                (evidenciaChange)="cambiarFotoEvaluacion($event)">
+              </app-captura-evidencia-muestra>
+            </div>
+            <div class="acciones-tarjeta acciones-tarjeta-evaluacion">
+              <button mat-flat-button type="button" class="accion-anular" [disabled]="procesando" (click)="anular()">
+                <mat-icon>cancel</mat-icon> Anular muestra
+              </button>
+              <button mat-stroked-button type="button" [disabled]="procesando" (click)="mostrarRechazo = true; fotoEvaluacion = null; mostrarFotoEvaluacion = true">
+                <mat-icon>block</mat-icon> Rechazar
+              </button>
+              <button mat-flat-button type="button" [disabled]="procesando" (click)="aceptar()">
+                <mat-icon>check_circle</mat-icon> {{ procesando ? 'Registrando...' : 'Aceptar muestra' }}
+              </button>
+            </div>
+          </div>
+          <div *ngIf="mostrarRechazo" class="evaluacion-controles">
+            <p class="aviso-rechazo">El rechazo cerrará este intento y necesitará una nueva muestra.</p>
+            <div *ngIf="faltantesRechazo.length > 0" class="requisitos-pendientes"
+              role="status" aria-live="polite">
+              <mat-icon>info_outline</mat-icon>
+              <div><strong>Para habilitar el rechazo, completa:</strong>
+                <ul><li *ngFor="let faltante of faltantesRechazo">{{ faltante }}</li></ul>
+              </div>
+            </div>
+            <mat-form-field appearance="outline" class="ancho-completo">
+              <mat-label>Motivo de rechazo (obligatorio)</mat-label>
+              <textarea matInput rows="2" [formControl]="formEvaluacion.controls.motivoRechazo"></textarea>
+              <mat-error *ngIf="formEvaluacion.controls.motivoRechazo.hasError('required')">Indica el motivo.</mat-error>
+            </mat-form-field>
+            <div class="bloque-foto">
+              <app-captura-evidencia-muestra
+                titulo="Fotografía de rechazo" descripcion="Obligatoria para registrar el rechazo."
+                [requerido]="true" [disabled]="procesando"
+                (evidenciaChange)="cambiarFotoEvaluacion($event)">
+              </app-captura-evidencia-muestra>
+            </div>
+            <div class="acciones-tarjeta acciones-tarjeta-evaluacion">
+              <button mat-flat-button type="button" class="accion-anular" [disabled]="procesando" (click)="anular()">
+                <mat-icon>cancel</mat-icon> Anular muestra
+              </button>
+              <button mat-button type="button" [disabled]="procesando" (click)="mostrarRechazo = false; fotoEvaluacion = null; mostrarFotoEvaluacion = false">Cancelar rechazo</button>
+              <button mat-flat-button type="button" class="accion-rechazar" [disabled]="procesando || faltantesRechazo.length > 0" (click)="rechazar()">
+                <mat-icon>block</mat-icon> Confirmar rechazo
+              </button>
+            </div>
+          </div>
+        </ng-container>
+
+        <ng-container *ngIf="estado === 'ACEPTADA'">
+          <p class="estado-ayuda"><mat-icon>check_circle</mat-icon> Muestra aceptada.</p>
+          <button mat-stroked-button type="button" (click)="corregir()"><mat-icon>published_with_changes</mat-icon> Corregir evaluación</button>
+        </ng-container>
+
+        <ng-container *ngIf="estado === 'RECHAZADA' || estado === 'ANULADA'">
+          <p class="estado-ayuda">{{ estado === 'RECHAZADA' ? 'Muestra rechazada' : 'Muestra anulada' }}. Se conserva este intento.</p>
+          <p *ngIf="estado === 'RECHAZADA' && actual.motivoRechazo" class="motivo">Motivo: {{ actual.motivoRechazo }}</p>
+          <div class="acciones-tarjeta">
+            <button mat-stroked-button type="button" *ngIf="estado === 'RECHAZADA'" (click)="corregir()">Corregir evaluación</button>
+            <button mat-flat-button type="button" *ngIf="puedeReintentar" [disabled]="procesando" (click)="generarReintento()">
+              <mat-icon>add_circle</mat-icon> {{ procesando ? 'Generando...' : 'Generar nueva muestra' }}
+            </button>
+          </div>
+        </ng-container>
+
+      </section>
+
+</div>

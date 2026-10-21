@@ -1,16 +1,53 @@
-.historial-header {
+// ====== Contener desbordamiento del historial ======
+:host {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
+  flex-direction: column;
+  // ====== Limitar la altura total del historial ======
+  max-height: calc(88vh - 24px);
+  overflow: hidden;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow-x: hidden;
 }
 
+.historial-header,
+mat-dialog-actions {
+  flex: 0 0 auto;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+// ====== Un único desplazamiento en el historial ======
+::ng-deep .labfray-historial-sin-scroll-horizontal .mat-mdc-dialog-surface {
+  overflow: hidden !important;
+}
+
+.historial-header {
+  display: block;
+  position: relative;
+}
+.historial-header > div { width: 100%; }
+.historial-header > button {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+
+.historial-header .subtitulo {
+  padding-right: 44px;
+}
 .historial-header h2 {
   margin: 0 0 4px;
   font-size: 1.25rem;
+  text-align: center;
 }
 
 .subtitulo {
+  min-width: 0;
+  overflow-wrap: anywhere;
   display: flex;
   flex-wrap: wrap;
   gap: 6px 14px;
@@ -19,8 +56,15 @@
 }
 
 mat-dialog-content {
-  width: min(760px, 92vw);
-  max-height: 70vh;
+  width: auto;
+  max-width: 100%;
+  box-sizing: border-box;
+  // ====== Una sola barra vertical para los eventos ======
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: min(70vh, calc(88vh - 210px));
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .timeline {
@@ -31,14 +75,34 @@ mat-dialog-content {
 }
 
 .evento {
+  min-width: 0;
+  box-sizing: border-box;
   display: grid;
-  grid-template-columns: 34px 1fr;
+  grid-template-columns: 34px minmax(0, 1fr);
   gap: 10px;
   padding: 10px;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   background: #fff;
 }
+
+// ====== Resaltar aceptación y rechazo ======
+.evento.evento-aceptado {
+  border-color: #86efac;
+  background: #ecfdf5;
+  border-left: 4px solid #15803d;
+}
+
+.evento.evento-rechazado {
+  border-color: #fca5a5;
+  background: #fff1f2;
+  border-left: 4px solid #b91c1c;
+}
+
+.evento.evento-aceptado .evento-icono,
+.evento.evento-aceptado .evento-cabecera strong { color: #166534; }
+.evento.evento-rechazado .evento-icono,
+.evento.evento-rechazado .evento-cabecera strong { color: #991b1b; }
 
 .evento-icono {
   color: #0b63c7;
@@ -50,6 +114,11 @@ mat-dialog-content {
   font-size: 20px;
   width: 20px;
   height: 20px;
+}
+
+.evento-contenido {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .evento-cabecera {
@@ -79,4 +148,49 @@ mat-dialog-content {
   padding: 24px;
   text-align: center;
   color: #64748b;
+}
+
+// ====== Encabezados de intento y estado histórico ======
+.grupos-historial { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.grupo-intento { min-width: 0; }
+.grupo-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 0 9px;
+  padding: 10px 12px;
+  border: 1px solid #cbdcea;
+  border-left: 4px solid #243d71;
+  border-radius: 8px;
+  background: #ecf3fb;
+}
+.grupo-identidad { display: flex; align-items: center; flex-wrap: wrap; gap: 5px 12px; }
+.grupo-identidad strong { color: #1b2441; }
+.grupo-identidad > span { font-size: 0.78rem; color: #475569; }
+.grupo-identidad .grupo-actual { color: #1d4ed8; font-weight: 600; }
+.grupo-identidad .grupo-anterior { color: #64748b; }
+.grupo-estado {
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: #f8fafc;
+  color: #475569;
+}
+.grupo-estado[data-estado='ACEPTADA'] { color: #166534; background: #dcfce7; border-color: #86efac; }
+.grupo-estado[data-estado='RECHAZADA'] { color: #991b1b; background: #fff1f2; border-color: #fca5a5; }
+.grupo-estado[data-estado='RECEPCIONADA'] { color: #1d4ed8; background: #eff6ff; border-color: #bfdbfe; }
+.grupo-estado[data-estado='PENDIENTE'] { color: #92400e; background: #fffbeb; border-color: #fcd34d; }
+.grupo-estado[data-estado='ANULADA'] { color: #9a3412; background: #fff7ed; border-color: #fdba74; }
+
+// ====== Mantener el desplazamiento en el contenido, no en el diálogo ======
+:host .mat-mdc-dialog-content {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: min(70vh, calc(88vh - 210px));
+  overflow-y: auto;
+  overflow-x: hidden;
 }

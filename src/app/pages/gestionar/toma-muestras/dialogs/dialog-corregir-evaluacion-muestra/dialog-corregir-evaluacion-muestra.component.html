@@ -53,7 +53,7 @@
       <small>
         {{
           data.muestra.fechaAceptacion
-            ? (data.muestra.fechaAceptacion | date: 'dd/MM/yyyy HH:mm')
+            ? (data.muestra.fechaAceptacion | date: 'dd/MM/yyyy HH:mm' : '-0500')
             : '-'
         }}
       </small>
@@ -65,7 +65,7 @@
       <small>
         {{
           data.muestra.fechaRechazo
-            ? (data.muestra.fechaRechazo | date: 'dd/MM/yyyy HH:mm')
+            ? (data.muestra.fechaRechazo | date: 'dd/MM/yyyy HH:mm' : '-0500')
             : '-'
         }}
       </small>
@@ -163,6 +163,15 @@
       (evidenciaChange)="cambiarEvidencia($event)"
     ></app-captura-evidencia-muestra>
   </section>
+  <!-- ====== Informar requisitos de corrección pendientes ====== -->
+  <div *ngIf="faltantesCorreccion.length > 0 && !procesando"
+    class="requisitos-pendientes" role="status" aria-live="polite">
+    <mat-icon>info_outline</mat-icon>
+    <div>
+      <strong>Para habilitar la corrección, completa:</strong>
+      <ul><li *ngFor="let faltante of faltantesCorreccion">{{ faltante }}</li></ul>
+    </div>
+  </div>
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">
@@ -178,7 +187,7 @@
     [disabled]="
       procesando ||
       formCorreccion.invalid ||
-      (requiereEvidencia && !archivoEvidencia)
+      faltantesCorreccion.length > 0
     "
     (click)="corregirEvaluacion()"
   >

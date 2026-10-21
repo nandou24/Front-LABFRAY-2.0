@@ -1,0 +1,83 @@
+<div class="estacion-toma">
+  <div *ngIf="cargando && !consulta" class="mensaje-estacion">Cargando pruebas y recipientes...</div>
+  <div *ngIf="!cargando && errorCarga" class="mensaje-estacion error-estacion">
+    {{ errorCarga }}
+    <button mat-stroked-button type="button" (click)="cargar()">Reintentar</button>
+  </div>
+
+  <ng-container *ngIf="consulta">
+    <div class="estacion-cabecera">
+      <div class="resumen-estacion">
+        <strong>{{ planes.length }} {{ planes.length === 1 ? 'recipiente' : 'recipientes' }}</strong>
+        <span>· {{ totalPruebasCubiertas }} de {{ item.solicitud.servicios.length }} pruebas con toma/recepción completa</span>
+      </div>
+    <!-- ====== Acciones pendientes por recipiente vigente ====== -->
+    <div class="indicadores-pendientes" aria-label="Resumen de recipientes pendientes">
+      <span class="indicador-pendiente indicador-total" [class.indicador-completo]="resumenRecipientes.pendientes === 0">
+        <mat-icon>{{ resumenRecipientes.pendientes === 0 ? 'check_circle' : 'pending_actions' }}</mat-icon>
+        <strong>{{ resumenRecipientes.pendientes === 0 ? 'Sin pendientes' : resumenRecipientes.pendientes + ' pendiente' + (resumenRecipientes.pendientes === 1 ? '' : 's') }}</strong>
+      </span>
+      <span class="indicador-pendiente" *ngIf="resumenRecipientes.porTomar > 0" title="Recipientes que aún necesitan toma y recepción">
+        <mat-icon>vaccines</mat-icon> {{ resumenRecipientes.porTomar }} por tomar
+      </span>
+      <span class="indicador-pendiente" *ngIf="resumenRecipientes.porRecibir > 0" title="Muestras recolectadas que aún necesitan recepción">
+        <mat-icon>inventory_2</mat-icon> {{ resumenRecipientes.porRecibir }} por recibir
+      </span>
+      <span class="indicador-pendiente indicador-evaluar" *ngIf="resumenRecipientes.porEvaluar > 0" title="Recipientes recepcionados pendientes de aceptación o rechazo">
+        <mat-icon>fact_check</mat-icon> {{ resumenRecipientes.porEvaluar }} por evaluar
+      </span>
+      <span class="indicador-pendiente indicador-incidencia" *ngIf="resumenRecipientes.conIncidencia > 0" title="Recipientes rechazados o anulados que requieren revisión o nuevo intento">
+        <mat-icon>error_outline</mat-icon> {{ resumenRecipientes.conIncidencia }} con incidencia
+      </span>
+      <span class="indicador-pendiente indicador-aceptadas" *ngIf="resumenRecipientes.aceptadas > 0" title="Recipientes aceptados">
+        <mat-icon>check_circle</mat-icon> {{ resumenRecipientes.aceptadas }} aceptada{{ resumenRecipientes.aceptadas === 1 ? '' : 's' }}
+      </span>
+    </div>
+      <button mat-stroked-button type="button" *ngIf="totalEtiquetas > 0" (click)="etiquetasTodas()">
+        <mat-icon>label</mat-icon> Ver todas las etiquetas ({{ totalEtiquetas }})
+      </button>
+    </div>
+
+    <div class="estacion-grid">
+      <!-- ====== Card 1: todas las pruebas ====== -->
+      <aside class="panel-pruebas">
+        <div class="panel-titulo">
+          <mat-icon>science</mat-icon>
+          <div><h5>Pruebas solicitadas</h5><small>Seguimiento por recipiente</small></div>
+        </div>
+        <div class="pruebas-contador">{{ totalPruebasCubiertas }} / {{ item.solicitud.servicios.length }} con toma completa</div>
+        <div class="lista-pruebas">
+          <div *ngFor="let servicio of item.solicitud.servicios" class="prueba-item"
+            [class.prueba-relacionada]="esPruebaResaltada(servicio)"
+            [attr.data-estado]="estadoServicio(servicio)">
+            <mat-icon class="icono-prueba">{{ estadoServicio(servicio) === 'ACEPTADA' ? 'check_circle' : estadoServicio(servicio) === 'RECEPCIONADA' ? 'check_circle' : estadoServicio(servicio) === 'INCIDENCIA' ? 'error_outline' : estadoServicio(servicio) === 'POR_RECIBIR' ? 'inventory_2' : estadoServicio(servicio) === 'PARCIAL' ? 'hourglass_top' : 'radio_button_unchecked' }}</mat-icon>
+            <div class="prueba-descripcion">
+              <strong>{{ servicio.codServicio }}</strong>
+              <span>{{ servicio.nombreServicio }}</span>
+              <small>{{ estadoServicio(servicio) === 'RECEPCIONADA' ? 'Pendiente de evaluación' : estadoServicio(servicio) === 'ACEPTADA' ? 'Muestra aceptada' : estadoServicio(servicio) === 'INCIDENCIA' ? 'Requiere nueva muestra o corrección' : estadoServicio(servicio) === 'POR_RECIBIR' ? 'Pendiente de recepción' : estadoServicio(servicio) === 'PARCIAL' ? 'Toma parcial' : estadoServicio(servicio) === 'SIN MUESTRA' ? 'No requiere muestra' : 'Pendiente de toma' }}</small>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- ====== Cards 2 y 3: dos por recipiente ====== -->
+      <div class="panel-procesos">
+        <div class="titulos-columnas">
+          <span><mat-icon>vaccines</mat-icon> Toma / recepción</span>
+          <span><mat-icon>fact_check</mat-icon> Aceptación / rechazo</span>
+        </div>
+        <app-toma-inline-recipiente
+          *ngFor="let plan of planes; trackBy: trackByPlan"
+          [item]="item"
+          [planActual]="plan"
+          [usuariosHistorial]="usuariosHistorial"
+          [class.recipiente-resaltado]="plan.claveMuestraPlan === planResaltado"
+          (mouseenter)="seleccionarPlan(plan)"
+          (focusin)="seleccionarPlan(plan)"
+          (actualizado)="cargar()">
+        </app-toma-inline-recipiente>
+        <div class="mensaje-estacion" *ngIf="planes.length === 0">No hay recipientes planificados.</div>
+      </div>
+    </div>
+  </ng-container>
+</div>

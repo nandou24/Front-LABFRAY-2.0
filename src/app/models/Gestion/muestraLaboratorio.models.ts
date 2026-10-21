@@ -73,6 +73,8 @@ export interface IOpcionMuestraSnapshot {
 
   tuboEnvaseId: string;
   tuboEnvase: ITuboEnvaseSnapshot;
+
+  esPredeterminada?: boolean;
 }
 
 // ====== Cobertura clínica ======
@@ -177,10 +179,34 @@ export interface ICorreccionEvaluacionMuestra {
   evidenciaRechazoId: string | null;
 }
 
+// ====== Reversiones auditadas de toma / recepción ======
+export interface IReversionTomaRecepcion {
+  _id: string;
+  motivo: string;
+  revertidoPor: string;
+  usuarioReversion: string | null;
+  fechaReversion: Date | string;
+  fechaRecoleccion: Date | string | null;
+  fechaRegistroRecoleccion: Date | string | null;
+  fechaRecepcion: Date | string | null;
+  usuarioRecoleccion: string | null;
+  usuarioRecepcion: string | null;
+  tipoMuestraId: string | null;
+  tipoMuestra: ITipoMuestraSnapshot | null;
+  tuboEnvaseId: string | null;
+  tuboEnvase: ITuboEnvaseSnapshot | null;
+  volumenRecolectado: number | null;
+  unidadVolumenRecolectado: UnidadVolumenMuestra | null;
+  observacionRecoleccion: string;
+  observacionRecepcion: string;
+}
+
 // ====== Muestra de laboratorio ======
 
 export interface IMuestraLaboratorio {
   _id: string;
+
+  __v?: number; // Versión de concurrencia de MongoDB
 
   solicitudAtencionId: string;
 
@@ -221,6 +247,9 @@ export interface IMuestraLaboratorio {
   estadoMuestra: EstadoMuestraLaboratorio;
 
   observacionGeneral: string;
+
+  // ====== Reversiones de toma / recepción ======
+  reversionesTomaRecepcion?: IReversionTomaRecepcion[];
 
   // ====== Recolección ======
 
@@ -419,6 +448,8 @@ export interface IConsultaMuestrasLaboratorioResponse {
   solicitud: ISolicitudMuestraLaboratorio;
 
   resumen: IResumenMuestrasLaboratorio;
+
+  usuariosHistorial?: Record<string, string>;
 
   planes: IPlanMuestraLaboratorio[];
 }
@@ -937,6 +968,8 @@ export interface IOpcionPlanToma {
   tuboEnvaseId: string;
 
   tuboEnvase: ITuboEnvasePlanToma;
+
+  esPredeterminada?: boolean;
 }
 
 // ====== Examen asociado a recipiente ======
@@ -1422,6 +1455,8 @@ export interface IMuestraAceptacionMasiva {
   recibidoPor: string | null;
 
   usuarioRecepcion: string | null;
+
+  usuarioRecepcionNombre?: string | null;
 
   fechaRecepcion: Date | string | null;
 

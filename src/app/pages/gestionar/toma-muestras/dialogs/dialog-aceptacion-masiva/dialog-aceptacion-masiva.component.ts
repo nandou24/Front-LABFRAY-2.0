@@ -33,6 +33,7 @@ export interface IDialogAceptacionMasivaData {
   origenAtencion: OrigenAtencionBandejaMuestra;
   fechaInicio: string;
   fechaFin: string;
+  alProcesarMuestras?: () => void;
 }
 
 @Component({
@@ -375,6 +376,8 @@ export class DialogAceptacionMasivaComponent implements OnInit {
 
           if (response.resumen.aceptadas > 0) {
             this.huboCambios = true;
+            // ====== Actualizar bandeja sin esperar el cierre del diálogo ======
+            this.data.alProcesarMuestras?.();
 
             if (this.evidenciaGrupal?.archivo) {
               this.capturaEvidenciaGrupal?.limpiar();
@@ -528,6 +531,22 @@ export class DialogAceptacionMasivaComponent implements OnInit {
       .filter(Boolean)
       .join(' ')
       .trim();
+  }
+
+  // ====== Nombre visible del responsable de toma / recepción ======
+
+  obtenerNombreResponsable(muestra: IMuestraAceptacionMasiva): string {
+    const nombre = muestra.usuarioRecepcionNombre?.trim();
+
+    if (!nombre) {
+      return muestra.usuarioRecepcion?.trim() || '-';
+    }
+
+    return nombre
+      .toLocaleLowerCase('es-PE')
+      .replace(/(^|[\s'-])([^\s'-])/g, (_, separador: string, letra: string) =>
+        separador + letra.toLocaleUpperCase('es-PE'),
+      );
   }
 
   // ====== Documento paciente ======

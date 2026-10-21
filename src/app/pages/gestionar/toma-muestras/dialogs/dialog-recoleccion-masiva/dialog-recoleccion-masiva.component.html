@@ -282,15 +282,27 @@
                 [formControl]="obtenerControlOpcion(muestra)"
                 [disabled]="procesando"
               >
+                <mat-select-trigger>
+                  <span class="opcion-selector-fila" *ngIf="obtenerOpcionSeleccionada(muestra) as elegida">
+                    <span class="opcion-selector-color"
+                      [style.background-color]="resolverColorRecipiente(elegida.tuboEnvase.color)"></span>
+                    <span class="opcion-selector-texto">
+                      {{ elegida.tipoMuestra.nombreTipoMuestra }} · {{ elegida.tuboEnvase.nombreTuboEnvase }}
+                    </span>
+                  </span>
+                </mat-select-trigger>
                 <mat-option
                   *ngFor="let opcion of obtenerOpcionesVisibles(muestra)"
                   [value]="construirClaveOpcion(opcion)"
                 >
-                  {{ opcion.tipoMuestra.nombreTipoMuestra }}
-                  · {{ opcion.tuboEnvase.nombreTuboEnvase }}
-                  <ng-container *ngIf="opcion.tuboEnvase.color">
-                    · {{ opcion.tuboEnvase.color }}
-                  </ng-container>
+                  <span class="opcion-selector-fila">
+                    <span class="opcion-selector-color"
+                      [style.background-color]="resolverColorRecipiente(opcion.tuboEnvase.color)"></span>
+                    <span class="opcion-selector-texto">
+                      {{ opcion.tipoMuestra.nombreTipoMuestra }} · {{ opcion.tuboEnvase.nombreTuboEnvase }}
+                      <ng-container *ngIf="opcion.tuboEnvase.color"> · {{ opcion.tuboEnvase.color }}</ng-container>
+                    </span>
+                  </span>
                 </mat-option>
               </mat-select>
             </mat-form-field>

@@ -248,42 +248,59 @@ export class DialogIniciarAtencionEmpresaComponent
     }
   }
 
-  capturarFoto(): void {
+  // ====== Fotografía optimizada como en Toma de Muestras ======
+  async capturarFoto(): Promise<void> {
     const video = this.cameraPreview?.nativeElement;
 
-    if (!video?.videoWidth || !video.videoHeight) {
+    if (!video?.videoWidth || !video.videoHeight || this.procesandoInicio) {
       return;
     }
 
+    const escala = Math.min(1, 1280 / Math.max(video.videoWidth, video.videoHeight));
     const canvas = document.createElement('canvas');
-
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    canvas.width = Math.max(1, Math.round(video.videoWidth * escala));
+    canvas.height = Math.max(1, Math.round(video.videoHeight * escala));
 
     const context = canvas.getContext('2d');
+    if (!context) {
+      await Swal.fire({ icon: 'error', title: 'No se pudo preparar la fotografía' });
+      return;
+    }
 
-    context?.translate(canvas.width, 0);
-    context?.scale(-1, 1);
+    // ====== Conservar la orientación de cámara frontal ======
+    context.translate(canvas.width, 0);
+    context.scale(-1, 1);
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    context?.drawImage(video, 0, 0, canvas.width, canvas.height);
+    try {
+      let resultado: Blob | null = null;
+      for (const calidad of [0.86, 0.76, 0.66, 0.56]) {
+        const blob = await new Promise<Blob | null>((resolve) =>
+          canvas.toBlob(resolve, 'image/jpeg', calidad),
+        );
+        if (!blob) continue;
+        resultado = blob;
+        if (blob.size <= 1_800_000) break;
+      }
 
-    canvas.toBlob(
-      (blob) => {
-        if (!blob) {
-          console.error('No se pudo generar la fotografía del paciente');
-          return;
-        }
+      if (!resultado || resultado.size > 1_800_000) {
+        await Swal.fire({
+          icon: 'warning',
+          title: 'Fotografía demasiado grande',
+          text: 'Vuelve a capturar la fotografía. Debe pesar menos de 1.8 MB.',
+        });
+        return;
+      }
 
-        this.fotoPaciente = blob;
-
-        this.fotoPacienteUrl = URL.createObjectURL(blob);
-
-        this.detenerCamara();
-        this._cdr.detectChanges();
-      },
-      'image/jpeg',
-      0.85,
-    );
+      if (this.fotoPacienteUrl) URL.revokeObjectURL(this.fotoPacienteUrl);
+      this.fotoPaciente = resultado;
+      this.fotoPacienteUrl = URL.createObjectURL(resultado);
+      this.detenerCamara();
+      this._cdr.detectChanges();
+    } catch (error) {
+      console.error('Error al procesar la fotografía:', error);
+      await Swal.fire({ icon: 'error', title: 'No se pudo capturar la fotografía' });
+    }
   }
 
   async repetirFoto(): Promise<void> {
@@ -310,6 +327,20 @@ export class DialogIniciarAtencionEmpresaComponent
       });
 
       return;
+    }
+
+    // ====== Confirmar atención con identificación pendiente ======
+    if (!this.programacion.nroDoc) {
+      const confirmacion = await Swal.fire({
+        title: 'Atención sin documento',
+        text: 'Se creará una historia clínica con identificación PENDIENTE. Verifique los nombres y apellidos del trabajador antes de continuar.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Continuar sin documento',
+        cancelButtonText: 'Volver',
+        reverseButtons: true,
+      });
+      if (!confirmacion.isConfirmed) return;
     }
 
     // ==========================================
@@ -436,6 +467,22 @@ export class DialogIniciarAtencionEmpresaComponent
           confirmButtonText: 'Entendido',
         });
 
+        return;
+      }
+
+      if (respuesta?.codigo === 'POSIBLE_PACIENTE_EXISTENTE') {
+        const historias = (respuesta.candidatos ?? [])
+          .map((c: { hc?: string; tipoDoc?: string; nroDoc?: string }) =>
+            [c.hc, c.tipoDoc, c.nroDoc].filter(Boolean).join(' · '),
+          )
+          .join(' | ');
+
+        await Swal.fire({
+          title: 'Posible paciente registrado',
+          text: `${respuesta.msg || 'Verifique la identidad antes de continuar.'}${historias ? ' Historias encontradas: ' + historias : ''}`,
+          icon: 'warning',
+          confirmButtonText: 'Entendido',
+        });
         return;
       }
 

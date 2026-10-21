@@ -1,0 +1,71 @@
+<div class="regularizacion">
+  <header class="cabecera-dialogo">
+    <div>
+      <h2>Regularizar documento</h2>
+      <p>Actualización de identidad del paciente vinculado</p>
+    </div>
+    <button mat-icon-button type="button" aria-label="Cerrar" (click)="cerrar()" [disabled]="guardando">
+      <mat-icon>close</mat-icon>
+    </button>
+  </header>
+
+  <mat-dialog-content>
+    <div class="identidad-paciente">
+      <span class="etiqueta">Historia clínica: {{ data.programacion.hc || '-' }}</span>
+      <strong>{{ nombreCompleto }}</strong>
+      <span>Documento actual: {{ data.programacion.nroDoc ? (data.programacion.tipoDoc + ' ' + data.programacion.nroDoc) : 'Pendiente' }}</span>
+    </div>
+
+    <p class="nota">
+      El documento se actualizará en el paciente, sus programaciones y las solicitudes de atención vinculadas.
+      La identificación seguirá PENDIENTE hasta su validación formal.
+    </p>
+
+    <form [formGroup]="formulario" (ngSubmit)="guardar()" id="form-regularizacion">
+      <div class="campos-documento">
+        <mat-form-field appearance="outline">
+          <mat-label>Tipo de documento</mat-label>
+          <mat-select formControlName="tipoDoc" (selectionChange)="actualizarTipoDocumento()">
+            <mat-option value="DNI">DNI</mat-option>
+            <mat-option value="CE">Carné de extranjería</mat-option>
+            <mat-option value="PASAPORTE">Pasaporte</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Número de documento</mat-label>
+          <input matInput formControlName="nroDoc" autocomplete="off" />
+          <mat-error *ngIf="formulario.controls.nroDoc.invalid">Número de documento no válido</mat-error>
+        </mat-form-field>
+      </div>
+      <mat-form-field appearance="outline" class="campo-motivo">
+        <mat-label>Motivo de la regularización o corrección</mat-label>
+        <textarea matInput formControlName="motivo" rows="2" maxlength="300"></textarea>
+        <mat-error>Indica un motivo de al menos 10 caracteres</mat-error>
+      </mat-form-field>
+      <div
+        class="confirmacion-identidad"
+        [class.confirmacion-identidad-invalida]="formulario.controls.identidadConfirmada.invalid && formulario.controls.identidadConfirmada.touched"
+      >
+        <mat-checkbox formControlName="identidadConfirmada" required>
+          Confirmo que he comprobado la identidad del trabajador antes de actualizar su documento.
+        </mat-checkbox>
+        <p
+          class="error-confirmacion"
+          *ngIf="formulario.controls.identidadConfirmada.invalid && formulario.controls.identidadConfirmada.touched"
+          role="alert"
+        >
+          Debes confirmar que verificaste la identidad del trabajador para continuar.
+        </p>
+      </div>
+      <p class="mensaje-error" *ngIf="mensajeError" role="alert">{{ mensajeError }}</p>
+    </form>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-stroked-button type="button" (click)="cerrar()" [disabled]="guardando">Cancelar</button>
+    <button mat-flat-button type="submit" form="form-regularizacion" [disabled]="guardando">
+      <mat-icon>save</mat-icon>
+      {{ guardando ? 'Guardando...' : 'Guardar documento' }}
+    </button>
+  </mat-dialog-actions>
+</div>

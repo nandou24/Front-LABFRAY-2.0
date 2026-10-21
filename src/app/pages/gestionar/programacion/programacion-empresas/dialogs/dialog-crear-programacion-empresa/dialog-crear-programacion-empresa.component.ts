@@ -3,6 +3,7 @@ import { Component, inject, Inject, OnInit } from '@angular/core';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import {
   MAT_DIALOG_DATA,
+  MatDialog,
   MatDialogModule,
   MatDialogRef,
 } from '@angular/material/dialog';
@@ -13,9 +14,12 @@ import { MatTableModule } from '@angular/material/table';
 import { MatSelectModule } from '@angular/material/select';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import {
+  DateAdapter,
+  MAT_DATE_FORMATS,
   MAT_DATE_LOCALE,
+  MatDateFormats,
   MatNativeDateModule,
-  provideNativeDateAdapter,
+  NativeDateAdapter,
 } from '@angular/material/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -53,6 +57,18 @@ import { PacienteService } from '../../../../../../services/mantenimiento/pacien
 import { IPaciente } from '../../../../../../models/Mantenimiento/paciente.models';
 import { IProgramacionEmpresa } from '../../../../../../models/Gestion/programacionEmpresa.models';
 import { ProgramacionEmpresaService } from '../../../../../../services/gestion/programacion/programacionEmpresas/programacion-empresa.service';
+import { DialogBuscarPacienteComponent } from '../../../../cotizacion/gest-coti-persona/dialogs/dialog-paciente/dialog-buscar-paciente.component';
+
+// ====== Formato peruano de fechas para el diálogo ======
+const FORMATOS_FECHA_DIALOGO: MatDateFormats = {
+  parse: { dateInput: null },
+  display: {
+    dateInput: { day: '2-digit', month: '2-digit', year: 'numeric' },
+    monthYearLabel: { month: 'short', year: 'numeric' },
+    dateA11yLabel: { day: 'numeric', month: 'long', year: 'numeric' },
+    monthYearA11yLabel: { month: 'long', year: 'numeric' },
+  },
+};
 
 @Component({
   selector: 'app-dialog-crear-programacion-empresa',
@@ -76,8 +92,9 @@ import { ProgramacionEmpresaService } from '../../../../../../services/gestion/p
     MatAutocompleteModule,
   ],
   providers: [
-    provideNativeDateAdapter(),
     { provide: MAT_DATE_LOCALE, useValue: 'es-PE' },
+    { provide: DateAdapter, useClass: NativeDateAdapter },
+    { provide: MAT_DATE_FORMATS, useValue: FORMATOS_FECHA_DIALOGO },
   ],
   templateUrl: './dialog-crear-programacion-empresa.component.html',
   styleUrl: './dialog-crear-programacion-empresa.component.scss',
@@ -96,13 +113,16 @@ export class DialogCrearProgramacionEmpresaComponent implements OnInit {
   private _programacionService = inject(ProgramacionEmpresaService);
 
   private _fb = inject(FormBuilder);
+  private _dialog = inject(MatDialog);
 
   public programacionForm: FormGroup = this._fb.group({
     _id: [null],
     hc: [null],
+    pacienteId: [null as string | null],
     estadoProgramacion: ['PROGRAMADO'],
-    tipoDoc: ['DNI'], // Valor por defecto: DNI
+    tipoDoc: ['DNI'],
     nroDoc: ['', [this._documentValidator.documentValidator('tipoDoc')]],
+    sinDocumento: [false],
     apePatCliente: [
       '',
       [Validators.required, Validators.pattern(/^[a-zA-ZÀ-ÿ\u00f1\u00d1\s]+$/)],
@@ -170,6 +190,10 @@ export class DialogCrearProgramacionEmpresaComponent implements OnInit {
 
   ngOnInit(): void {
     this.traerEmpresas();
+    this.actualizarModoDocumento();
+    this.programacionForm.get('tipoDoc')?.valueChanges.subscribe(() => {
+      this.programacionForm.get('nroDoc')?.updateValueAndValidity({ emitEvent: false });
+    });
 
     this.programacionForm
       .get('empresa')
@@ -246,15 +270,21 @@ export class DialogCrearProgramacionEmpresaComponent implements OnInit {
     this.programacionForm.patchValue({
       _id: programacion._id ?? null,
       hc: programacion.hc ?? null,
+      pacienteId: programacion.pacienteId ?? null,
       estadoProgramacion: programacion.estadoProgramacion ?? 'PROGRAMADO',
       tipoDoc: programacion.tipoDoc ?? 'DNI',
       nroDoc: programacion.nroDoc ?? '',
+      sinDocumento: !programacion.nroDoc,
       apePatCliente: programacion.apePatCliente ?? '',
       apeMatCliente: programacion.apeMatCliente ?? '',
       nombreCliente: programacion.nombreCliente ?? '',
       sexoCliente: programacion.sexoCliente ?? null,
-      fechaNacimiento: programacion.fechaNacimiento ?? '',
-      fechaProgramacion: programacion.fechaProgramada ?? new Date(),
+      fechaNacimiento: programacion.fechaNacimiento
+        ? new Date(programacion.fechaNacimiento)
+        : null,
+      fechaProgramacion: programacion.fechaProgramada
+        ? new Date(programacion.fechaProgramada)
+        : new Date(),
       empresa: empresaSeleccionada,
       empresaId: programacion.empresaId ?? '',
       rucEmpresa: programacion.rucEmpresa ?? '',
@@ -281,6 +311,10 @@ export class DialogCrearProgramacionEmpresaComponent implements OnInit {
     }
 
     this.aplicarEstadoVistaOEdicion();
+    this.actualizarModoDocumento();
+    if (programacion.pacienteId || programacion.estadoProgramacion !== 'PROGRAMADO') {
+      this.bloquearCamposPaciente();
+    }
   }
 
   private aplicarEstadoVistaOEdicion(): void {
@@ -453,54 +487,67 @@ export class DialogCrearProgramacionEmpresaComponent implements OnInit {
     return `0 0 ${valor}${unidad}`;
   }
 
-  buscarPaciente() {
-    const tipoDoc = this.programacionForm.get('tipoDoc')?.value;
-    const nroDoc = this.programacionForm.get('nroDoc')?.value?.trim();
+  // ====== Programación temporal sin documento ======
+  cambiarSinDocumento(activado: boolean): void {
+    if (this.programacionForm.get('pacienteId')?.value || this.esModoVista) {
+      return;
+    }
+    this.programacionForm.get('sinDocumento')?.setValue(activado);
+    if (activado) {
+      this.programacionForm.get('nroDoc')?.setValue('');
+    }
+    this.actualizarModoDocumento();
+  }
 
-    if (!tipoDoc || !nroDoc) {
-      this.programacionForm.get('tipoDoc')?.markAsTouched();
-      this.programacionForm.get('nroDoc')?.markAsTouched();
+  private actualizarModoDocumento(): void {
+    const sinDocumento = !!this.programacionForm.get('sinDocumento')?.value;
+    const vinculado = !!this.programacionForm.get('pacienteId')?.value;
+    const bloqueado = this.esModoVista ||
+      !this.puedeEditarProgramacion(this.programacionForm.get('estadoProgramacion')?.value);
+    const controlTipo = this.programacionForm.get('tipoDoc');
+    const controlNumero = this.programacionForm.get('nroDoc');
+
+    if (sinDocumento || vinculado || bloqueado) {
+      controlTipo?.disable({ emitEvent: false });
+      controlNumero?.disable({ emitEvent: false });
+    } else {
+      controlTipo?.enable({ emitEvent: false });
+      controlNumero?.enable({ emitEvent: false });
+    }
+    controlNumero?.setValidators([
+      ...(sinDocumento || vinculado ? [] : [Validators.required]),
+      this._documentValidator.documentValidator('tipoDoc'),
+    ]);
+    controlNumero?.updateValueAndValidity({ emitEvent: false });
+  }
+
+  // ====== Buscar paciente registrado desde el diálogo de Cotización Personas ======
+  abrirBusquedaPaciente(): void {
+    if (this.esModoVista || !this.puedeEditarProgramacion(
+      this.programacionForm.get('estadoProgramacion')?.value,
+    )) {
       return;
     }
 
-    if (this.programacionForm.get('nroDoc')?.invalid) {
-      this.programacionForm.get('nroDoc')?.markAsTouched();
-      return;
-    }
-
-    this._pacienteService
-      .getPatient(nroDoc)
-      .pipe(
-        catchError((error) => {
-          console.error('Error al buscar paciente:', error);
-          Swal.fire({
-            title: 'Error',
-            text: 'No se pudo buscar el paciente. Intenta nuevamente.',
-            icon: 'error',
-            confirmButtonText: 'Ok',
-          });
-          return of([] as IPaciente[]);
-        }),
-      )
-      .subscribe((pacientes) => {
-        const paciente = pacientes.find(
-          (item) => item.nroDoc === nroDoc && item.tipoDoc === tipoDoc,
-        );
-
-        if (!paciente) {
-          this.habilitarCamposPaciente();
-          this.limpiarDatosPacienteBuscado();
-          Swal.fire({
-            title: 'Paciente no encontrado',
-            text: 'No existe un paciente registrado con ese tipo y número de documento.',
-            icon: 'info',
-            confirmButtonText: 'Ok',
-          });
-          return;
-        }
-
+    this._dialog.open(DialogBuscarPacienteComponent, {
+      width: '900px',
+      maxWidth: '95vw',
+      data: {},
+    }).afterClosed().subscribe((paciente: IPaciente | undefined) => {
+      if (paciente?._id) {
+        this.habilitarCamposPaciente();
         this.seleccionarPacienteEncontrado(paciente);
-      });
+      }
+    });
+  }
+
+  // ====== Ingreso manual sin crear todavía un paciente ======
+  usarIngresoManual(): void {
+    if (this.modoDialog !== 'create') {
+      return;
+    }
+    this.habilitarCamposPaciente();
+    this.limpiarDatosPacienteBuscado();
   }
 
   actualizarEdad() {
@@ -540,8 +587,10 @@ export class DialogCrearProgramacionEmpresaComponent implements OnInit {
 
   private limpiarDatosPacienteBuscado(): void {
     this.programacionForm.patchValue({
-      _id: null,
+      pacienteId: null,
       hc: null,
+      tipoDoc: 'DNI',
+      nroDoc: '',
       sexoCliente: null,
       fechaNacimiento: '',
       apePatCliente: '',
@@ -550,24 +599,30 @@ export class DialogCrearProgramacionEmpresaComponent implements OnInit {
       edad: '',
     });
     this.phones.clear();
+    this.programacionForm.get('sinDocumento')?.setValue(false);
+    this.actualizarModoDocumento();
   }
 
   private seleccionarPacienteEncontrado(paciente: IPaciente): void {
     this.programacionForm.patchValue({
-      _id: paciente._id ?? null,
+      pacienteId: paciente._id ?? null,
       hc: paciente.hc ?? null,
+      sinDocumento: !paciente.nroDoc,
       tipoDoc: paciente.tipoDoc ?? this.programacionForm.get('tipoDoc')?.value,
       nroDoc: paciente.nroDoc ?? this.programacionForm.get('nroDoc')?.value,
       apePatCliente: paciente.apePatCliente ?? '',
       apeMatCliente: paciente.apeMatCliente ?? '',
       nombreCliente: paciente.nombreCliente ?? '',
-      fechaNacimiento: paciente.fechaNacimiento ?? '',
+      fechaNacimiento: paciente.fechaNacimiento
+        ? new Date(paciente.fechaNacimiento)
+        : null,
       sexoCliente: paciente.sexoCliente ?? null,
     });
 
     this.cargarTelefonos(paciente.phones ?? []);
     this.actualizarEdad();
     this.bloquearCamposPaciente();
+    this.actualizarModoDocumento();
   }
 
   seleccionarEmpresa(empresa: IEmpresa) {
@@ -576,7 +631,7 @@ export class DialogCrearProgramacionEmpresaComponent implements OnInit {
     this.programacionForm
       .get('razonSocialEmpresa')
       ?.setValue(empresa.razonSocial);
-    console.log('Form:', this.programacionForm.value);
+
   }
 
   cerrar() {
@@ -591,8 +646,8 @@ export class DialogCrearProgramacionEmpresaComponent implements OnInit {
       empresaId: raw.empresaId,
       rucEmpresa: raw.rucEmpresa,
       razonSocialEmpresa: raw.razonSocialEmpresa,
-      tipoDoc: raw.tipoDoc,
-      nroDoc: raw.nroDoc,
+      tipoDoc: raw.sinDocumento ? null : raw.tipoDoc,
+      nroDoc: raw.sinDocumento ? null : String(raw.nroDoc ?? '').trim().toUpperCase(),
       nombreCliente: raw.nombreCliente,
       apePatCliente: raw.apePatCliente,
       apeMatCliente: raw.apeMatCliente ?? '',
@@ -628,6 +683,11 @@ export class DialogCrearProgramacionEmpresaComponent implements OnInit {
     return payload;
   }
 
+  private normalizarNombre(valor: string | undefined): string {
+    return (valor ?? '').trim().replace(/\s+/g, ' ').normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '').toUpperCase();
+  }
+
   private validarDuplicadoProgramacion(payload: IProgramacionEmpresa) {
     const fecha = new Date(payload.fechaProgramada);
     const inicio = new Date(fecha);
@@ -648,8 +708,13 @@ export class DialogCrearProgramacionEmpresaComponent implements OnInit {
               programacion._id !== payload._id &&
               programacion.empresaId === payload.empresaId &&
               programacion.protocoloId === payload.protocoloId &&
-              programacion.tipoDoc === payload.tipoDoc &&
-              programacion.nroDoc === payload.nroDoc,
+              (payload.pacienteId && programacion.pacienteId === payload.pacienteId ||
+                payload.nroDoc && programacion.tipoDoc === payload.tipoDoc &&
+                programacion.nroDoc === payload.nroDoc ||
+                !payload.pacienteId && !payload.nroDoc && !programacion.nroDoc &&
+                this.normalizarNombre(programacion.nombreCliente) === this.normalizarNombre(payload.nombreCliente) &&
+                this.normalizarNombre(programacion.apePatCliente) === this.normalizarNombre(payload.apePatCliente) &&
+                this.normalizarNombre(programacion.apeMatCliente) === this.normalizarNombre(payload.apeMatCliente)),
           ),
         ),
       );
@@ -661,7 +726,7 @@ export class DialogCrearProgramacionEmpresaComponent implements OnInit {
       return;
     }
 
-    console.log('Formulario de programación:', this.programacionForm.value);
+
     this.formSubmitted = true;
 
     if (this.programacionForm.invalid) {
@@ -723,7 +788,9 @@ export class DialogCrearProgramacionEmpresaComponent implements OnInit {
         : '¿Confirmar registro?',
       text: this.esModoEdicion
         ? 'Se actualizará la programación con los datos ingresados.'
-        : 'Se registrará la programación con los datos ingresados.',
+        : this.programacionForm.get('sinDocumento')?.value
+          ? 'Se programará sin documento. Verifica cuidadosamente los nombres y completa el documento cuando lo recibas.'
+          : 'Se registrará la programación con los datos ingresados.',
       icon: 'question',
       showCancelButton: true,
       confirmButtonText: this.esModoEdicion

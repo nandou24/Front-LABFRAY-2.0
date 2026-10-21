@@ -143,7 +143,7 @@ export class DialogAnularMuestraComponent {
     this._muestraLaboratorioService
       .anularMuestra(this.data.muestra._id, {
         motivoAnulacion: motivo,
-      })
+      }, this.data.muestra.__v)
       .subscribe({
         next: async (response) => {
           this.procesando = false;
@@ -162,6 +162,17 @@ export class DialogAnularMuestraComponent {
         },
         error: (error) => {
           this.procesando = false;
+          if (error?.status === 409 && error?.error?.code === 'MUESTRA_DESACTUALIZADA') {
+            void Swal.fire({
+              toast: true, position: 'top-end', timer: 4500,
+              background: '#164e63', color: '#ffffff',
+              showConfirmButton: false, icon: 'warning',
+              title: 'Muestra actualizada por otro usuario',
+              text: error?.error?.msg,
+            });
+            this._dialogRef.close('actualizar');
+            return;
+          }
 
           console.error('Error al anular muestra:', error);
 

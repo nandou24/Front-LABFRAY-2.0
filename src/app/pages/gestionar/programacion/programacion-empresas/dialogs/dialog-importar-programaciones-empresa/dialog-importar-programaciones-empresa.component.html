@@ -1,0 +1,345 @@
+<div class="importacion-excel">
+  <header class="cabecera-dialogo">
+    <div class="cabecera-identidad">
+      <h2>Importación masiva de programaciones</h2>
+      <p *ngIf="filas.length === 0">Revisión y registro por lotes</p>
+      <span class="archivo-nombre" *ngIf="nombreArchivo" [title]="nombreArchivo">{{ nombreArchivo }}</span>
+    </div>
+    <section class="acciones-archivo" aria-label="Archivo de importación">
+      <button mat-stroked-button class="btn-plantilla" type="button" (click)="descargarPlantilla()">
+        <mat-icon>download</mat-icon> Descargar plantilla Excel
+      </button>
+      <input #selectorArchivo type="file" accept=".xlsx" hidden (change)="seleccionarArchivo($event)" />
+      <button mat-flat-button class="btn-seleccionar" type="button" (click)="selectorArchivo.click()" [disabled]="cargando || importacionIniciada">
+        <mat-icon>upload_file</mat-icon> Seleccionar Excel
+      </button>
+    </section>
+    <button mat-icon-button aria-label="Cerrar" type="button" (click)="cerrar()"><mat-icon>close</mat-icon></button>
+  </header>
+
+  <mat-dialog-content>
+    <div class="panel-informacion" *ngIf="filas.length === 0">
+      <mat-icon>info_outline</mat-icon>
+      <div>
+        <strong>Etapa de registro: revisa, valida y confirma antes de guardar programaciones.</strong>
+        <p>Selecciona el Excel para revisar los datos. Podrás corregir, validar y confirmar cada fila antes de registrar las programaciones.</p>
+      </div>
+    </div>
+    <p class="ayuda-formato" *ngIf="filas.length === 0">Archivo .xlsx · Máximo 5 MB y 1,000 filas · Fechas dd/MM/yyyy · La plantilla PE.4.1B sigue siendo válida. No modifiques sus encabezados.</p>
+    <p class="error-archivo" role="alert" *ngIf="mensajeError"><mat-icon>error_outline</mat-icon> {{ mensajeError }}</p>
+    <div class="cargando" *ngIf="cargando">Leyendo y validando el archivo…</div>
+
+    <ng-container *ngIf="filas.length > 0">
+      <section class="resumen" aria-label="Resumen de revisión">
+        <div class="resumen-item"><span>Filas</span><strong>{{ filas.length }}</strong><small *ngIf="totalExcluidas">{{ totalExcluidas }} excluidas</small></div>
+        <div class="resumen-item"><span>Formato válido</span><strong class="dato-correcto">{{ totalValidas }}</strong></div>
+        <div class="resumen-item"><span>Con errores</span><strong [class.dato-error]="totalConErrores > 0">{{ totalConErrores }}</strong></div>
+        <div class="resumen-item" title="Filas sin empresa o protocolo seleccionados"><span>Sin empresa/protocolo</span><strong>{{ sinConciliar }}</strong></div>
+        <div class="resumen-item"><span>Sin documento</span><strong>{{ sinDocumento }}</strong></div>
+      </section>
+
+      <div class="catalogo-estado" *ngIf="mensajeCatalogo || cargandoEmpresas">
+        <span>{{ cargandoEmpresas ? 'Cargando catálogo de empresas...' : mensajeCatalogo }}</span>
+        <button mat-button type="button" (click)="recargarEmpresas()" *ngIf="!cargandoEmpresas">Reintentar</button>
+      </div>
+
+      <div class="barra-revision">
+        <div class="filtros-revision">
+          <label class="campo-buscar">
+            <mat-icon>search</mat-icon>
+            <input type="search" [value]="textoFiltro" (input)="textoFiltro = $any($event.target).value; filtrar()" placeholder="Buscar fila, paciente, DNI, RUC o protocolo" aria-label="Buscar en filas del Excel" />
+          </label>
+          <button mat-stroked-button type="button" (click)="soloObservadas = !soloObservadas; filtrar()">
+            <mat-icon>{{ soloObservadas ? 'filter_alt_off' : 'filter_alt' }}</mat-icon>
+            {{ soloObservadas ? 'Mostrar todas' : 'Ver observadas' }}
+          </button>
+        </div>
+        <section class="panel-validacion-servidor" aria-label="Validación en sistema">
+          <button mat-flat-button type="button" class="btn-validar-sistema" (click)="validarContraMongoDB()"
+            title="Validar empresa, protocolo, HC y duplicados"
+            [disabled]="validando || cargando || !!filaEnEdicion || importacionIniciada">
+            <mat-icon>fact_check</mat-icon> {{ validando ? 'Validando...' : 'Validar con el sistema' }}
+          </button>
+        </section>
+        <div class="acciones-seleccion">
+          <strong>{{ seleccionadas.size }} seleccionadas</strong>
+          <button mat-button type="button" (click)="seleccionarTodas()" [disabled]="importacionIniciada">Seleccionar las {{ filasIncluidas.length }}</button>
+          <button mat-button type="button" (click)="limpiarSeleccion()" [disabled]="seleccionadas.size === 0 || importacionIniciada">Limpiar</button>
+        </div>
+      </div>
+
+      <p class="mensaje-validacion" role="status" *ngIf="mensajeValidacion && !ultimaValidacion">{{ mensajeValidacion }}</p>
+      <div class="resumen-validacion" *ngIf="ultimaValidacion" role="status" aria-label="Resultado de la validación del sistema">
+        <span><strong class="dato-correcto">{{ correctasServidor }}</strong> Correctas</span>
+        <span><strong class="dato-revisar">{{ revisarServidor }}</strong> Por revisar</span>
+        <span><strong class="dato-bloqueado">{{ bloqueadasServidor }}</strong> Bloqueadas</span>
+        <span *ngIf="totalExcluidas"><strong>{{ totalExcluidas }}</strong> Excluidas</span>
+        
+      </div>
+
+      <section class="panel-registro" *ngIf="ultimaValidacion || importacionIniciada">
+        <div class="descripcion-registro">
+          <strong>Registro por lotes</strong>
+          <span *ngIf="ultimaValidacion && pendientesPorConfirmar" class="texto-pendiente">{{ pendientesPorConfirmar }} fila(s) con observaciones pendientes de confirmación.</span>
+          <span *ngIf="importacionIniciada" class="texto-progreso">Lotes procesados: {{ progresoLotes }} de {{ totalLotes }}</span>
+        </div>
+        <button mat-flat-button type="button" (click)="registrarImportacion()"
+          [disabled]="!listaAptaParaRegistro || importacionCompleta || registrando">
+          <mat-icon>save</mat-icon> {{ registrando ? 'Registrando...' : importacionCompleta ? 'Importación completa' : importacionIniciada ? 'Reintentar registro' : 'Confirmar y registrar' }}
+        </button>
+      </section>
+      <p class="mensaje-registro" role="status" *ngIf="mensajeRegistro">{{ mensajeRegistro }}</p>
+      <div class="acciones-reporte" *ngIf="resultadosRegistro.length">
+        <span>{{ resultadosRegistro.length }} fila(s) registradas o reconocidas en el sistema.</span>
+        <button mat-stroked-button type="button" (click)="descargarReporte()"><mat-icon>download</mat-icon> Descargar reporte Excel</button>
+      </div>
+
+      <section class="panel-lote" *ngIf="seleccionadas.size > 0" [formGroup]="formularioLote">
+        <div class="titulo-lote">
+          <mat-icon>playlist_add_check</mat-icon>
+          <div><strong>Aplicar cambios a {{ seleccionadas.size }} trabajadores</strong><span>Los campos vacíos no modificarán las filas seleccionadas.</span></div>
+        </div>
+        <div class="selector-empresa-lote">
+          <label>Buscar empresa por RUC o razón social
+            <input type="search" [value]="filtroEmpresaLote" (input)="filtroEmpresaLote = $any($event.target).value" placeholder="Filtrar catálogo" />
+          </label>
+          <button mat-stroked-button type="button" (click)="buscarEnCatalogo('lote')" [disabled]="cargandoEmpresas">Buscar en sistema</button>
+        </div>
+        <div class="campos-lote">
+          <label>Empresa
+            <select formControlName="empresaId" (change)="cambioEmpresaLote()">
+              <option value="">No cambiar</option>
+              <option *ngFor="let empresa of empresasLote" [value]="empresa._id">{{ empresa.ruc }} — {{ empresa.razonSocial }}</option>
+            </select>
+          </label>
+          <label>Protocolo (de la empresa)
+            <select formControlName="protocoloId" [disabled]="!formularioLote.controls.empresaId.value">
+              <option value="">No cambiar</option>
+              <option *ngFor="let protocolo of protocolosLote" [value]="protocolo._id">{{ protocolo.nombreProtocolo }} — {{ protocolo.codigoProtocolo }}</option>
+            </select>
+          </label>
+          <label>Fecha programación
+            <span class="selector-fecha">
+              <input matInput [matDatepicker]="fechaLoteCalendario" [formControl]="fechaLoteControl" placeholder="No cambiar" readonly />
+              <mat-datepicker-toggle [for]="fechaLoteCalendario" aria-label="Seleccionar fecha común"></mat-datepicker-toggle>
+              <mat-datepicker #fechaLoteCalendario></mat-datepicker>
+            </span>
+          </label>
+          <label>Sede<select formControlName="sede"><option value="">No cambiar</option><option *ngFor="let sede of sedes" [value]="sede">{{ sede }}</option></select></label>
+          <label>Evaluación<select formControlName="tipoEvaluacion"><option value="">No cambiar</option><option *ngFor="let valor of evaluaciones" [value]="valor">{{ valor }}</option></select></label>
+          <label>Atención<select formControlName="tipoAtencion"><option value="">No cambiar</option><option *ngFor="let valor of tiposAtencion" [value]="valor">{{ valor }}</option></select></label>
+          <label>Prioridad<select formControlName="prioridad"><option value="">No cambiar</option><option *ngFor="let valor of prioridades" [value]="valor">{{ valor }}</option></select></label>
+        </div>
+        <div class="pie-lote">
+          <span class="mensaje-lote" *ngIf="mensajeLote">{{ mensajeLote }}</span>
+          <button mat-flat-button type="button" (click)="aplicarLote()" [disabled]="importacionIniciada"><mat-icon>done_all</mat-icon> Aplicar a seleccionados</button>
+        </div>
+      </section>
+      <p class="mensaje-lote" *ngIf="seleccionadas.size === 0 && mensajeLote">{{ mensajeLote }}</p>
+
+      <div class="tabla-scroll">
+        <table class="tabla-preview">
+          <colgroup>
+            <col class="col-seleccion" /><col class="col-fila" /><col class="col-trabajador" />
+            <col class="col-empresa" /><col class="col-protocolo" /><col class="col-fecha" />
+            <col class="col-evaluacion" /><col class="col-atencion" /><col class="col-prioridad" />
+            <col class="col-validacion" /><col class="col-editar" />
+          </colgroup>
+          <thead>
+            <tr>
+              <th><input type="checkbox" aria-label="Seleccionar página" [checked]="paginaSeleccionada" (change)="seleccionarPagina($any($event.target).checked)" [disabled]="importacionIniciada" /></th>
+              <th>Fila</th><th>Trabajador / documento</th><th>Empresa</th><th>Protocolo</th>
+              <th>Fecha / Sede</th><th>Evaluación</th><th>Atención</th><th>Prioridad</th>
+              <th>Estado / observaciones</th><th>Editar</th>
+            </tr>
+          </thead>
+          <tbody>
+            <ng-container *ngFor="let fila of filasVisibles">
+              <tr [class.fila-error]="!fila.excluida && (fila.errores.length > 0 || fila.validacionServidor?.estado === 'BLOQUEADO')" [class.fila-expandida]="filaEnEdicion?.filaExcel === fila.filaExcel" [class.fila-excluida]="fila.excluida">
+                <td><input type="checkbox" [attr.aria-label]="'Seleccionar fila ' + fila.filaExcel" [checked]="seleccionadas.has(fila.filaExcel)" (change)="cambiarSeleccion(fila.filaExcel, $any($event.target).checked)" [disabled]="importacionIniciada || fila.excluida" /></td>
+                <td class="celda-numero">{{ fila.filaExcel }}</td>
+                <td class="celda-trabajador">
+                  <span class="nombre-trabajador">{{ fila.datos.apePatCliente }} {{ fila.datos.apeMatCliente }} {{ fila.datos.nombreCliente }}</span>
+                  <span class="marca-editada" *ngIf="fila.modificada">Editada</span>
+                  <span class="documento-trabajador" [class.documento-pendiente]="!fila.datos.nroDoc">{{ fila.datos.nroDoc ? (fila.datos.tipoDoc + ' ' + fila.datos.nroDoc) : 'Documento pendiente' }}</span>
+                  <span class="hc-encontrada" *ngIf="fila.validacionServidor?.paciente?.hc">
+                    HC {{ fila.validacionServidor?.paciente?.hc }}
+                    <ng-container *ngIf="fila.validacionServidor?.paciente?.estado === 'HC_COINCIDE'">· Coincide</ng-container>
+                    <ng-container *ngIf="fila.validacionServidor?.paciente?.estado === 'IDENTIDAD_DIFERENTE'">· Revisar identidad</ng-container>
+                  </span>
+                  <span class="documento-trabajador" *ngIf="fila.validacionServidor?.paciente?.estado === 'NUEVO'">Paciente sin HC por documento</span>
+                  <span class="documento-trabajador" *ngIf="fila.validacionServidor?.paciente?.estado === 'COINCIDENCIA_NOMBRE'">Posible HC por nombres</span>
+                </td>
+                <td class="celda-empresa">{{ fila.datos.razonSocialEmpresa || fila.datos.rucEmpresa || 'Sin empresa' }}<span class="dato-secundario">{{ fila.empresaId ? 'Catálogo seleccionado' : 'Por seleccionar' }}</span></td>
+                <td class="celda-protocolo">{{ fila.datos.nombreProtocolo || fila.datos.codProtocolo || 'Por asignar' }}<span class="dato-secundario">{{ fila.protocoloId ? 'Protocolo seleccionado' : 'Por seleccionar' }}</span></td>
+                <td class="celda-fecha">{{ fila.datos.fechaProgramada }}<span class="dato-secundario">{{ fila.datos.sede || 'Sin sede' }}</span></td>
+                <td class="celda-condicion">{{ fila.datos.tipoEvaluacion || 'Por definir' }}</td>
+                <td class="celda-condicion">{{ fila.datos.tipoAtencion || 'Por definir' }}</td>
+                <td class="celda-prioridad"><span class="prioridad-valor" [class.prioridad-alta]="fila.datos.prioridad === 'Alta'">{{ fila.datos.prioridad || 'Por definir' }}</span></td>
+                <td class="celda-validacion">
+                  <ng-container *ngIf="fila.excluida; else filaIncluida">
+                    <span class="estado estado-excluido">Excluida</span>
+                    <div class="detalle-excluido" *ngIf="fila.motivoExclusion">{{ fila.motivoExclusion }}</div>
+                  </ng-container>
+                  <ng-template #filaIncluida>
+                  <ng-container *ngIf="fila.validacionServidor as verificado; else estadoLocal">
+                    <span class="estado" [class.estado-error]="verificado.estado === 'BLOQUEADO'"
+                      [class.estado-alerta]="verificado.estado === 'REVISAR'">
+                      {{ verificado.estado === 'CORRECTO' ? 'Validada' : verificado.estado === 'BLOQUEADO' ? 'Bloqueada' : 'Por revisar' }}
+                    </span>
+                    <div class="detalle-error" *ngFor="let error of verificado.errores">{{ error }}</div>
+                    <div class="detalle-advertencia" *ngFor="let alerta of verificado.advertencias">{{ alerta }}</div>
+                    <label *ngIf="verificado.estado === 'REVISAR' && verificado.paciente.estado !== 'COINCIDENCIA_NOMBRE'"
+                      class="confirmacion-fila">
+                      <input type="checkbox" [checked]="fila.revisionConfirmada === true" [disabled]="importacionIniciada"
+                        (change)="cambiarConfirmacionRevision(fila, $any($event.target).checked)" />
+                      He comprobado esta observación
+                    </label>
+                    <span *ngIf="verificado.paciente.estado === 'COINCIDENCIA_NOMBRE'" class="detalle-error">
+                      Debes identificar y vincular al paciente correcto antes de importar.
+                    </span>
+                  </ng-container>
+                  <ng-template #estadoLocal>
+                    <span class="estado" [class.estado-error]="fila.errores.length > 0"
+                      [class.estado-alerta]="fila.errores.length === 0 && fila.advertencias.length > 0">
+                      {{ fila.errores.length ? 'Revisar' : fila.advertencias.length ? 'Por conciliar' : 'Formato correcto' }}
+                    </span>
+                    <div class="detalle-error" *ngFor="let error of fila.errores">{{ error }}</div>
+                    <div class="detalle-advertencia" *ngFor="let alerta of fila.advertencias">{{ alerta }}</div>
+                  </ng-template>
+                  </ng-template>
+                  <button mat-button class="btn-cambiar-exclusion" type="button" (click)="cambiarExclusion(fila)"
+                    [disabled]="importacionIniciada || registrando || validando"
+                    [attr.aria-label]="(fila.excluida ? 'Volver a incluir fila ' : 'Excluir fila ') + fila.filaExcel">
+                    <mat-icon>{{ fila.excluida ? 'undo' : 'remove_circle_outline' }}</mat-icon>
+                    {{ fila.excluida ? 'Volver a incluir' : 'Excluir del lote' }}
+                  </button>
+                </td>
+                <td><button mat-icon-button type="button" [attr.aria-label]="'Editar fila ' + fila.filaExcel" (click)="abrirEdicion(fila)" [disabled]="importacionIniciada || fila.excluida"><mat-icon>{{ filaEnEdicion?.filaExcel === fila.filaExcel ? 'expand_less' : 'edit' }}</mat-icon></button></td>
+              </tr>
+              <tr *ngIf="filaEnEdicion?.filaExcel === fila.filaExcel" class="fila-editor">
+                <td colspan="11">
+                  <form [formGroup]="formularioEdicion" (ngSubmit)="guardarEdicion()" class="form-editor">
+                    <div class="editor-titulo"><strong>Editar trabajador · Fila {{ fila.filaExcel }}</strong><span>Completa los datos y guarda para recalcular sus validaciones.</span></div>
+                    <section class="comparacion-hc" *ngIf="fila.validacionServidor?.paciente?.datosMaestros as maestro" aria-label="Comparación con historia clínica">
+                      <div class="comparacion-hc-cabecera">
+                        <div>
+                          <strong><mat-icon aria-hidden="true">fact_check</mat-icon> Cotejo de identidad · HC {{ fila.validacionServidor?.paciente?.hc }}</strong>
+                          <span>Compara el Excel original con los datos registrados en el sistema. No se modificará la historia clínica.</span>
+                        </div>
+                        <button mat-stroked-button type="button" (click)="usarDatosHistoriaClinica(fila)"
+                          [disabled]="!puedeUsarDatosHC(fila)" title="Verifica el documento antes de reemplazar datos en el editor">
+                          <mat-icon>person_search</mat-icon> Usar datos de HC
+                        </button>
+                      </div>
+                      <div class="comparacion-hc-tabla">
+                        <table>
+                          <thead><tr><th>Dato</th><th>Excel original</th><th>Historia clínica</th><th>Comparación</th></tr></thead>
+                          <tbody>
+                            <tr [class.diferencia-hc]="!campoCoincide(fila.datosExcelOriginales.apePatCliente, maestro.apePatCliente)">
+                              <th>Apellido paterno</th><td>{{ fila.datosExcelOriginales.apePatCliente || 'Sin dato' }}</td><td>{{ maestro.apePatCliente || 'Sin dato' }}</td>
+                              <td>{{ campoCoincide(fila.datosExcelOriginales.apePatCliente, maestro.apePatCliente) ? 'Coincide' : 'Difiere' }}</td>
+                            </tr>
+                            <tr [class.diferencia-hc]="!campoCoincide(fila.datosExcelOriginales.apeMatCliente, maestro.apeMatCliente)">
+                              <th>Apellido materno</th><td>{{ fila.datosExcelOriginales.apeMatCliente || 'Sin dato' }}</td><td>{{ maestro.apeMatCliente || 'Sin dato' }}</td>
+                              <td>{{ campoCoincide(fila.datosExcelOriginales.apeMatCliente, maestro.apeMatCliente) ? 'Coincide' : 'Difiere' }}</td>
+                            </tr>
+                            <tr [class.diferencia-hc]="!campoCoincide(fila.datosExcelOriginales.nombreCliente, maestro.nombreCliente)">
+                              <th>Nombres</th><td>{{ fila.datosExcelOriginales.nombreCliente || 'Sin dato' }}</td><td>{{ maestro.nombreCliente || 'Sin dato' }}</td>
+                              <td>{{ campoCoincide(fila.datosExcelOriginales.nombreCliente, maestro.nombreCliente) ? 'Coincide' : 'Difiere' }}</td>
+                            </tr>
+                            <tr [class.diferencia-hc]="!campoCoincide(fila.datosExcelOriginales.sexoCliente, maestro.sexoCliente)">
+                              <th>Sexo</th><td>{{ fila.datosExcelOriginales.sexoCliente || 'Sin dato' }}</td><td>{{ maestro.sexoCliente || 'Sin dato' }}</td>
+                              <td>{{ campoCoincide(fila.datosExcelOriginales.sexoCliente, maestro.sexoCliente) ? 'Coincide' : 'Difiere' }}</td>
+                            </tr>
+                            <tr [class.diferencia-hc]="!campoCoincide(fila.datosExcelOriginales.fechaNacimiento, fechaMaestraVisible(maestro.fechaNacimiento) === 'Sin dato' ? '' : fechaMaestraVisible(maestro.fechaNacimiento))">
+                              <th>Fecha nacimiento</th><td>{{ fila.datosExcelOriginales.fechaNacimiento || 'Sin dato' }}</td><td>{{ fechaMaestraVisible(maestro.fechaNacimiento) }}</td>
+                              <td>{{ campoCoincide(fila.datosExcelOriginales.fechaNacimiento, fechaMaestraVisible(maestro.fechaNacimiento) === 'Sin dato' ? '' : fechaMaestraVisible(maestro.fechaNacimiento)) ? 'Coincide' : 'Difiere' }}</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                      <p class="nota-comparacion-hc">El DNI se utiliza solo para localizar la HC; confirma que pertenece al trabajador. Los datos copiados se aplican al guardar esta fila y requieren nueva validación.</p>
+                    </section>
+                    <div class="editor-bloque">
+                      <h4>Empresa y protocolo</h4>
+                      <div class="selector-empresa-lote">
+                        <label>Buscar empresa
+                          <input type="search" [value]="filtroEmpresaEdicion" (input)="filtroEmpresaEdicion = $any($event.target).value" placeholder="Filtrar por RUC o razón social" />
+                        </label>
+                        <button mat-stroked-button type="button" (click)="buscarEnCatalogo('edicion')" [disabled]="cargandoEmpresas">Buscar en sistema</button>
+                      </div>
+                      <div class="campos-editor">
+                        <label class="ancho-doble">Empresa del catálogo
+                          <select formControlName="empresaId" (change)="cambioEmpresaEdicion()">
+                            <option value="">Por seleccionar</option>
+                            <option *ngFor="let empresa of empresasEdicion" [value]="empresa._id">{{ empresa.ruc }} — {{ empresa.razonSocial }}</option>
+                          </select>
+                        </label>
+                        <label class="ancho-doble">Protocolo activo
+                          <select formControlName="protocoloId" (change)="cambioProtocoloEdicion()" [disabled]="!formularioEdicion.controls.empresaId.value">
+                            <option value="">Por seleccionar</option>
+                            <option *ngFor="let protocolo of protocolosEdicion" [value]="protocolo._id">{{ protocolo.nombreProtocolo }} — {{ protocolo.codigoProtocolo }}</option>
+                          </select>
+                        </label>
+                        <label>RUC<input formControlName="rucEmpresa" [readonly]="!!formularioEdicion.controls.empresaId.value" /></label>
+                        <label>Razón social<input formControlName="razonSocialEmpresa" [readonly]="!!formularioEdicion.controls.empresaId.value" /></label>
+                        <label>Código protocolo<input formControlName="codProtocolo" [readonly]="!!formularioEdicion.controls.protocoloId.value" /></label>
+                        <label>Nombre protocolo<input formControlName="nombreProtocolo" [readonly]="!!formularioEdicion.controls.protocoloId.value" /></label>
+                      </div>
+                    </div>
+                    <div class="editor-bloque">
+                      <h4>Identificación del trabajador</h4>
+                      <div class="campos-editor">
+                        <label>Apellido paterno<input formControlName="apePatCliente" /></label>
+                        <label>Apellido materno<input formControlName="apeMatCliente" /></label>
+                        <label class="ancho-doble">Nombres<input formControlName="nombreCliente" /></label>
+                        <label>Tipo documento<select formControlName="tipoDoc"><option value="">Pendiente</option><option *ngFor="let tipo of tiposDocumento" [value]="tipo">{{ tipo }}</option></select></label>
+                        <label>Número documento<input formControlName="nroDoc" placeholder="Dejar vacío si no tiene" /></label>
+                        <label>Sexo<select formControlName="sexoCliente"><option value="">Sin dato</option><option *ngFor="let sexo of sexos" [value]="sexo">{{ sexo }}</option></select></label>
+                        <label>Fecha nacimiento
+                          <span class="selector-fecha">
+                            <input matInput [matDatepicker]="fechaNacimientoCalendario" [formControl]="fechaNacimientoControl" placeholder="dd/MM/yyyy" readonly />
+                            <mat-datepicker-toggle [for]="fechaNacimientoCalendario" aria-label="Seleccionar fecha de nacimiento"></mat-datepicker-toggle>
+                            <mat-datepicker #fechaNacimientoCalendario></mat-datepicker>
+                          </span>
+                        </label>
+                      </div>
+                    </div>
+                    <div class="editor-bloque">
+                      <h4>Condiciones de programación</h4>
+                      <div class="campos-editor">
+                        <label>Fecha programación
+                          <span class="selector-fecha">
+                            <input matInput [matDatepicker]="fechaProgramadaCalendario" [formControl]="fechaEdicionControl" placeholder="dd/MM/yyyy" readonly />
+                            <mat-datepicker-toggle [for]="fechaProgramadaCalendario" aria-label="Seleccionar fecha de programación"></mat-datepicker-toggle>
+                            <mat-datepicker #fechaProgramadaCalendario></mat-datepicker>
+                          </span>
+                        </label>
+                        <label>Sede<select formControlName="sede"><option value="">Seleccionar</option><option *ngFor="let sede of sedes" [value]="sede">{{ sede }}</option></select></label>
+                        <label>Tipo evaluación<select formControlName="tipoEvaluacion"><option value="">Seleccionar</option><option *ngFor="let valor of evaluaciones" [value]="valor">{{ valor }}</option></select></label>
+                        <label>Tipo atención<select formControlName="tipoAtencion"><option *ngFor="let valor of tiposAtencion" [value]="valor">{{ valor }}</option></select></label>
+                        <label>Prioridad<select formControlName="prioridad"><option *ngFor="let valor of prioridades" [value]="valor">{{ valor }}</option></select></label>
+                        <label class="ancho-doble">Observaciones<input formControlName="observaciones" maxlength="200" /></label>
+                      </div>
+                    </div>
+                    <div class="acciones-editor">
+                      <button mat-stroked-button type="button" (click)="cancelarEdicion()">Cancelar</button>
+                      <button mat-flat-button type="submit"><mat-icon>save</mat-icon> Guardar cambios de fila</button>
+                    </div>
+                  </form>
+                </td>
+              </tr>
+            </ng-container>
+            <tr *ngIf="filasVisibles.length === 0"><td colspan="11" class="sin-filas">No hay filas para los filtros indicados.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="paginacion-editor">
+        <span>Mostrando {{ filasVisibles.length }} de {{ totalFiltradas }} filas filtradas · {{ filas.length }} en archivo</span>
+        <div><button mat-icon-button type="button" aria-label="Página anterior" [disabled]="paginaActual === 0" (click)="cambiarPagina(-1)"><mat-icon>chevron_left</mat-icon></button><span>Página {{ paginaActual + 1 }} / {{ paginasTotales }}</span><button mat-icon-button type="button" aria-label="Página siguiente" [disabled]="paginaActual >= paginasTotales - 1" (click)="cambiarPagina(1)"><mat-icon>chevron_right</mat-icon></button></div>
+      </div>
+
+    </ng-container>
+  </mat-dialog-content>
+</div>

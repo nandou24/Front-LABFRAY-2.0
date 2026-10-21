@@ -11,6 +11,12 @@ import {
   IProgramacionEmpresa,
   IGetProgramaciones,
   IGetProgramacionById,
+  IRegularizarDocumentoProgramacionResponse,
+  IRegularizarDocumentoProgramacionRequest,
+  IFilaValidacionImportacion,
+  IValidacionMasivaProgramacionesResponse,
+  IFilaRegistroImportacion,
+  IRespuestaRegistroImportacion,
 } from '../../../../models/Gestion/programacionEmpresa.models';
 
 @Injectable({
@@ -113,6 +119,41 @@ export class ProgramacionEmpresaService {
       {
         headers: this._auth.getAuthHeaders(),
       },
+    );
+  }
+
+  // ====== Regularizar documento del paciente vinculado ======
+  public regularizarDocumento(
+    id: string,
+    datos: IRegularizarDocumentoProgramacionRequest,
+  ): Observable<IRegularizarDocumentoProgramacionResponse> {
+    return this._http.put<IRegularizarDocumentoProgramacionResponse>(
+      `${this.apiUrl}/${id}/regularizar-documento`,
+      datos,
+      { headers: this._auth.getAuthHeaders() },
+    );
+  }
+
+  // ====== Validar lote contra maestros sin registrar ======
+  public validarImportacionMasiva(
+    filas: IFilaValidacionImportacion[],
+  ): Observable<IValidacionMasivaProgramacionesResponse> {
+    return this._http.post<IValidacionMasivaProgramacionesResponse>(
+      `${this.apiUrl}/validar-importacion`,
+      { filas },
+      { headers: this._auth.getAuthHeaders() },
+    );
+  }
+
+  // ====== Registrar un lote atómico e identificable ======
+  public registrarImportacionMasiva(
+    importacionId: string,
+    filas: IFilaRegistroImportacion[],
+  ): Observable<IRespuestaRegistroImportacion> {
+    return this._http.post<IRespuestaRegistroImportacion>(
+      `${this.apiUrl}/registrar-importacion`,
+      { importacionId, filas },
+      { headers: this._auth.getAuthHeaders() },
     );
   }
 

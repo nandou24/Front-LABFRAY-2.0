@@ -52,6 +52,7 @@ export interface IGrupoResultado {
 export interface IOpcionMuestra {
   tipoMuestraId: string;
   tuboEnvaseId: string;
+  esPredeterminada?: boolean;
 }
 
 // ====== Requerimiento de muestra ======

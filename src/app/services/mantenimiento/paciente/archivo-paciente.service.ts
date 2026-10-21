@@ -5,6 +5,13 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { AuthService } from '../../auth/auth.service';
 
+export interface IFotoPerfilPacienteResponse {
+  ok: boolean;
+  disponible: boolean;
+  urlTemporal: string | null;
+  fechaCaptura?: string | null;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -18,6 +25,14 @@ export class ArchivoPacienteService {
   // ==========================================
   // SUBIR / ACTUALIZAR FOTO DE PERFIL
   // ==========================================
+
+  // ====== Consultar foto de perfil activa ======
+  obtenerFotoPerfil(pacienteId: string): Observable<IFotoPerfilPacienteResponse> {
+    return this._http.get<IFotoPerfilPacienteResponse>(
+      `${this.apiUrl}/${pacienteId}/foto-perfil`,
+      { headers: this._auth.getAuthHeaders() },
+    );
+  }
 
   subirFotoPerfil(
     pacienteId: string,

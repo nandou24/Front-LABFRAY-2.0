@@ -1,0 +1,123 @@
+// ====== Estación operativa de muestras ======
+.estacion-toma {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 12px 14px 16px;
+  background: #ecf3fb;
+  border: 1px solid #c2d9fb;
+  border-top: 0;
+}
+
+.estacion-cabecera {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  column-gap: 16px;
+  row-gap: 8px;
+  margin-bottom: 12px;
+}
+.estacion-cabecera > button {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+.resumen-estacion { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-size: 12px; color: #64748b; }
+.resumen-estacion strong { font-size: 14px; color: #1b2441; }
+.estacion-grid { display: grid; grid-template-columns: minmax(240px, 26%) minmax(0, 1fr); align-items: stretch; gap: 12px; }
+.panel-pruebas { min-width: 0; padding: 16px; border: 1px solid #cbdcea; border-radius: 12px; background: #fff; }
+.panel-titulo { display: flex; align-items: center; gap: 9px; color: #243d71; }
+.panel-titulo h5 { margin: 0; font-size: 15px; color: #1b2441; }
+.panel-titulo small { display: block; margin-top: 2px; font-size: 11px; color: #64748b; }
+.pruebas-contador { padding: 12px 0; font-size: 12px; font-weight: 600; color: #164e63; }
+.lista-pruebas { display: flex; flex-direction: column; gap: 8px; }
+.prueba-item {
+  display: flex; align-items: flex-start; gap: 8px; min-width: 0;
+  padding: 10px; border: 1px solid #e2e8f0; border-radius: 9px;
+  background: #fff; transition: background-color .14s ease, border-color .14s ease;
+}
+.prueba-item[data-estado='ACEPTADA'] {
+  background: #e7f8f1; border-color: #a7e6cf;
+}
+.prueba-item[data-estado='RECEPCIONADA'],
+.prueba-item[data-estado='POR_RECIBIR'] {
+  background: #eff6ff; border-color: #bfdbfe;
+}
+.prueba-item[data-estado='PARCIAL'] { background: #fff9e9; border-color: #fde68a; }
+.prueba-item[data-estado='INCIDENCIA'] { background: #fff1f2; border-color: #fecdd3; }
+.prueba-item.prueba-relacionada {
+  background: #dff5fa; border-color: #168da6; box-shadow: inset 3px 0 0 #087c96;
+}
+.prueba-item .icono-prueba {
+  color: #94a3b8;
+  font-size: 26px;
+  width: 26px;
+  height: 26px;
+  line-height: 26px;
+  flex: 0 0 26px;
+}
+.prueba-item[data-estado='ACEPTADA'] .icono-prueba { color: #15803d; }
+.prueba-item[data-estado='RECEPCIONADA'] .icono-prueba { color: #15803d; }
+.prueba-item[data-estado='POR_RECIBIR'] .icono-prueba { color: #1d4ed8; }
+.prueba-item[data-estado='PARCIAL'] .icono-prueba { color: #a16207; }
+.prueba-item[data-estado='INCIDENCIA'] .icono-prueba { color: #b91c1c; }
+.prueba-descripcion { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 3px; }
+.prueba-descripcion strong { font-size: 12px; color: #1b2441; }
+.prueba-descripcion span { font-size: 12px; color: #334155; overflow-wrap: anywhere; }
+.prueba-descripcion small { color: #64748b; font-size: 11px; }
+.panel-procesos { min-width: 0; }
+.titulos-columnas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 10px; }
+.titulos-columnas span {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 36px; background: #e4f0f9; border: 1px solid #c5dbea; border-radius: 8px;
+  color: #243d71; font-size: 13px; font-weight: 700;
+}
+.titulos-columnas mat-icon { font-size: 18px; width: 18px; height: 18px; }
+.mensaje-estacion { padding: 16px; color: #475569; }
+.error-estacion { color: #b91c1c; }
+@media (max-width: 1100px) {
+  .estacion-grid { grid-template-columns: 1fr; }
+  .panel-pruebas { padding: 12px; }
+  .lista-pruebas { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+}
+@media (max-width: 690px) { .titulos-columnas { display: none; } }
+
+// ====== Indicadores de pendientes de la estación ======
+.indicadores-pendientes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  min-width: 0;
+}
+.indicador-pendiente {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 9px;
+  border: 1px solid #bfdbfe;
+  border-radius: 7px;
+  background: #eff6ff;
+  color: #1e40af;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.indicador-pendiente mat-icon {
+  font-size: 17px;
+  width: 17px;
+  height: 17px;
+}
+.indicador-total {
+  background: #fff7ed;
+  border-color: #fdba74;
+  color: #9a3412;
+}
+.indicador-evaluar { background: #e0f2fe; color: #075985; border-color: #7dd3fc; }
+.indicador-incidencia { background: #fff1f2; color: #b91c1c; border-color: #fda4af; }
+.indicador-aceptadas,
+.indicador-completo { background: #ecfdf5; color: #166534; border-color: #86efac; }
+
+// ====== Cabecera compacta y adaptable ======
+@media (max-width: 900px) {
+  .estacion-cabecera > button { margin-left: 0; }
+}

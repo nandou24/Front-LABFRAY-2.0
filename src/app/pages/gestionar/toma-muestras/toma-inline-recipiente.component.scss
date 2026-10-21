@@ -1,0 +1,112 @@
+// ====== Una fila de dos tarjetas por recipiente ======
+:host { display: block; min-width: 0; }
+.fila-recipient {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px;
+  margin-bottom: 12px; align-items: stretch;
+}
+.tarjeta-operativa {
+  min-width: 0; padding: 14px; border: 1px solid #d8e3ef;
+  border-radius: 12px; background: #fff;
+}
+:host(.recipiente-resaltado) .tarjeta-operativa { border-color: #8bbbd3; }
+.tarjeta-inactiva { background: #f8fafc; }
+.cabecera-recipient, .cabecera-evaluacion {
+  display: flex; justify-content: space-between; gap: 10px;
+  align-items: center; flex-wrap: wrap; min-height: 30px; margin-bottom: 12px;
+}
+.identidad-recipiente { display: flex; flex-wrap: wrap; align-items: baseline; gap: 7px; }
+.identidad-recipiente strong { color: #1b2441; font-size: 14px; }
+.identidad-recipiente span, .identidad-recipiente small { color: #64748b; font-size: 11px; }
+.cabecera-evaluacion strong { color: #1b2441; font-size: 14px; }
+.cabecera-evaluacion small { display: block; font-size: 11px; color: #64748b; }
+.estado-y-acciones { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 5px; }
+.acciones-cabecera { display: flex; align-items: center; gap: 0; }
+.acciones-cabecera button { color: #243d71; }
+.acciones-cabecera button:hover:not(:disabled) { background: #e6f4fa; }
+.estado-muestra { display: inline-flex; padding: 4px 8px; font-size: 11px; font-weight: 700; border: 1px solid #93c5fd; border-radius: 7px; background: #eff6ff; color: #1d4ed8; }
+.estado-muestra[data-estado='PENDIENTE'] { color: #92400e; border-color: #fcd34d; background: #fffbeb; }
+.estado-muestra[data-estado='ACEPTADA'] { color: #166534; border-color: #86efac; background: #f0fdf4; }
+.estado-muestra[data-estado='RECHAZADA'], .estado-muestra[data-estado='ANULADA'] { color: #b91c1c; border-color: #fca5a5; background: #fff1f2; }
+.etiqueta-campo { margin-bottom: 6px; font-size: 12px; font-weight: 700; color: #334155; }
+.opciones-fisicas { display: flex; flex-wrap: wrap; gap: 6px; }
+.opcion-fisica { flex: 1 1 185px; min-width: 0; border-radius: 8px; border: 1px solid #e2e8f0; background: #f4f8fc; padding: 2px 5px; }
+.opcion-fisica.mat-mdc-radio-checked { border-color: #91c2f5; background: #eff6ff; }
+.opcion-contenido, .resumen-registrado, .acciones-tarjeta, .acciones-secundarias { display: flex; align-items: center; gap: 8px; }
+.opcion-contenido { white-space: normal; min-height: 36px; }
+.opcion-contenido strong, .resumen-registrado strong { font-size: 11px; color: #1e293b; }
+.opcion-contenido small, .resumen-registrado small { display: block; font-size: 11px; color: #64748b; }
+.punto-recipient { display: inline-block; width: 23px; height: 23px; flex: 0 0 23px; border-radius: 50%; border: 1px solid rgba(15, 23, 42, .15); }
+.boton-discreto { display: flex; max-width: 100%; margin: 6px 0; font-size: 12px; }
+.datos-adicionales { border-top: 1px dashed #cbd5e1; padding-top: 12px; }
+.fila-datos { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr); gap: 6px; }
+.fila-datos mat-form-field { min-width: 0; width: 100%; }
+.ancho-completo { width: 100%; }
+.bloque-foto { margin: 10px 0; }
+.acciones-tarjeta { justify-content: flex-end; flex-wrap: wrap; margin-top: 12px; padding-top: 10px; border-top: 1px solid #e2e8f0; }
+.acciones-secundarias { margin-top: 7px; justify-content: flex-end; }
+.resumen-registrado { margin-bottom: 9px; border-radius: 8px; padding: 10px; background: #eff6ff; }
+.estado-ayuda { display: flex; align-items: center; gap: 5px; margin: 10px 0; font-size: 12px; color: #166534; }
+.estado-ayuda mat-icon { font-size: 17px; width: 18px; height: 18px; }
+.esperando { color: #64748b; font-size: 12px; background: #f1f5f9; padding: 17px; border-radius: 8px; display: flex; gap: 9px; align-items: center; }
+// ====== Indicar motivo y foto faltantes ======
+.requisitos-pendientes {
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 10px 12px; border-radius: 8px;
+  border: 1px solid #fbbf24; border-left: 4px solid #d97706;
+  background: #fffbeb; color: #92400e; font-size: 12px;
+  margin: 10px 0 18px;
+}
+.requisitos-pendientes mat-icon { flex: 0 0 auto; font-size: 20px; }
+.requisitos-pendientes ul { margin: 4px 0 0; padding-left: 18px; }
+.requisitos-pendientes li + li { margin-top: 3px; }
+.aviso-rechazo { font-size: 12px; color: #b91c1c; }
+.motivo { font-size: 12px; color: #64748b; }
+.accion-rechazar { background: #b91c1c !important; color: #fff !important; }
+// ====== Acciones de anulación ======
+.acciones-tarjeta-toma { justify-content: space-between; }
+.acciones-tarjeta-evaluacion .accion-anular { margin-right: auto; }
+.acciones-secundarias-toma {
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid #e2e8f0;
+  justify-content: space-between;
+}
+.accion-anular {
+  background-color: #b91c1c !important;
+  color: #fff !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  -webkit-text-stroke: 0;
+  font-weight: 500;
+}
+.accion-anular mat-icon { color: #fff !important; }
+.accion-anular:hover:not(:disabled) { background-color: #991b1b !important; }
+.accion-anular:disabled { opacity: .55; }
+.mensaje-inline { font-size: 12px; padding: 8px; }
+.error-inline { color: #b91c1c; }
+@media (max-width: 690px) { .fila-recipient { grid-template-columns: 1fr; } .fila-datos { grid-template-columns: 1fr; } }
+
+// ====== Reversión de toma / recepción ======
+.acciones-reversion { display: flex; justify-content: flex-start; padding-top: 8px; }
+.accion-revertir { color: #9a3412 !important; border-color: #fdba74 !important; }
+.panel-reversion {
+  margin-top: 10px; padding: 12px; border: 1px solid #fdba74;
+  border-radius: 9px; background: #fff7ed;
+}
+.panel-reversion p {
+  display: flex; align-items: center; gap: 7px;
+  color: #9a3412; font-size: 12px; margin: 0 0 10px;
+}
+.panel-reversion p mat-icon { font-size: 18px; width: 18px; height: 18px; flex-shrink: 0; }
+.acciones-reversion-final { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+.accion-revertir-confirmar { background: #9a3412 !important; color: white !important; }
+
+.acciones-secundarias-toma { flex-wrap: wrap; gap: 8px; }
+
+// ====== Acciones de toma en las esquinas inferiores ======
+.fila-recipient > .tarjeta-operativa:first-child {
+  display: flex;
+  flex-direction: column;
+}
+.acciones-secundarias-toma .accion-revertir { margin-left: auto; }
