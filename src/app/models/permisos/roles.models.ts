@@ -4,7 +4,8 @@ export type PermisoAccion =
   | 'RESULTADOS_REGISTRAR'
   | 'RESULTADOS_VALIDAR'
   | 'RESULTADOS_LIBERAR'
-  | 'RESULTADOS_ANULAR';
+  | 'RESULTADOS_ANULAR'
+  | 'RESULTADOS_GESTIONAR_FIRMANTES';
 
 export interface IRol {
   _id: string;

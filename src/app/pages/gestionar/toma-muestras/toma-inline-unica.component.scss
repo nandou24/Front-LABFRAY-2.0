@@ -121,3 +121,20 @@
 @media (max-width: 900px) {
   .estacion-cabecera > button { margin-left: 0; }
 }
+
+// ====== Identificación en cabecera de pruebas ======
+.panel-identificacion-resumen {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  min-width: 0;
+}
+.panel-identificacion-textos { flex: 1 1 auto; min-width: 0; }
+.panel-identificacion-resumen .pruebas-contador { padding: 10px 0 0; }
+.panel-identificacion-resumen app-foto-paciente-miniatura { flex: 0 0 auto; }
+@media (max-width: 450px) {
+  .panel-identificacion-resumen { align-items: flex-start; }
+}
+

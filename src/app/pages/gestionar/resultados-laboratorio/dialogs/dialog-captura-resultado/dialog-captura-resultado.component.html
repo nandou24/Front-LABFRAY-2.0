@@ -71,6 +71,38 @@
 </div>
 
 <mat-dialog-content>
+  <section class="comparacion-historica">
+    <button mat-stroked-button type="button" (click)="alternarComparacionHistorica()">
+      <mat-icon>history</mat-icon>
+      {{ comparacionHistoricaVisible ? 'Ocultar resultados anteriores' : 'Comparar con resultados anteriores' }}
+    </button>
+
+    <div *ngIf="comparacionHistoricaVisible" class="comparacion-historica-contenido">
+      <p *ngIf="cargandoComparacionHistorica">Consultando resultados anteriores...</p>
+      <p *ngIf="errorComparacionHistorica" class="comparacion-historica-error">
+        {{ errorComparacionHistorica }}
+      </p>
+      <ng-container *ngIf="!cargandoComparacionHistorica && comparacionHistoricaActual as comparacion">
+        <p *ngIf="comparacion.totalItemsConHistorial === 0">
+          No se encontraron resultados previos comparables para esta prueba.
+        </p>
+        <div *ngFor="let item of comparacion.items" class="comparacion-historica-item">
+          <ng-container *ngIf="item.anteriores.length > 0">
+            <strong>{{ item.nombreInforme }}</strong>
+            <div class="comparacion-historica-actual">
+              Valor actual: {{ valorActualComparacion(item.valorActual) }} {{ item.unidadesRef }}
+            </div>
+            <div *ngFor="let anterior of item.anteriores" class="comparacion-historica-anterior">
+              {{ anterior.fechaLiberacion | date:'dd/MM/yyyy HH:mm' }} ·
+              {{ anterior.codSolicitud }} ·
+              {{ anterior.valor }} {{ anterior.unidadesRef }}
+            </div>
+          </ng-container>
+        </div>
+        <small>Solo se muestran mediciones liberadas con la misma prueba, método, tipo y unidad.</small>
+      </ng-container>
+    </div>
+  </section>
   <div class="aviso-anulacion" *ngIf="resultadoActual.estadoResultado === 'ANULADO'">
     <mat-icon>block</mat-icon>
     <div>

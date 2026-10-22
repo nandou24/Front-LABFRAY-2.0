@@ -36,3 +36,19 @@ mat-dialog-actions button { font-weight: 500; box-shadow: none; }
   font-weight: 400;
   line-height: 1.35;
 }
+
+// ====== Autorización y trazabilidad ======
+.btn-historial { margin-bottom: 12px; font-size: 12px; }
+.historial-documentos { max-height: 260px; overflow: auto; margin: 0 0 16px; padding: 10px; background: #f6f9fe; border: 1px solid #d9e5f4; border-radius: 9px; }
+.registro-auditoria { padding: 10px; border: 1px solid #dbe5f3; background: white; border-radius: 7px; font-size: 12px; margin: 0 0 9px; }
+.registro-auditoria:last-child { margin-bottom: 0; }
+.registro-cabecera { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; padding-bottom: 7px; color: #1f477c; }
+.registro-cabecera strong { font-weight: 500; }
+.cambio-auditado { display: flex; gap: 7px; align-items: center; margin: 3px 0; }
+.cambio-auditado mat-icon { font-size: 15px; width: 15px; height: 15px; }
+.motivo-auditoria { margin-top: 7px; }
+.autorizacion-correccion { margin: 13px 0; border: 1px solid #c6d8f0; background: #f1f6ff; padding: 11px 12px 0; border-radius: 9px; }
+.autorizacion-correccion p { margin: 6px 0 12px; font-size: 12px; color: #516581; line-height: 1.4; }
+.autorizacion-titulo { display: flex; align-items: center; gap: 8px; color: #16477d; font-size: 13px; }
+.autorizacion-titulo strong { font-weight: 500; }
+.autorizacion-titulo mat-icon { font-size: 19px; height: 19px; width: 19px; }

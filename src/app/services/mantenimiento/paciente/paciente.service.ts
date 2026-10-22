@@ -87,4 +87,20 @@ export class PacienteService {
       { headers: this._auth.getAuthHeaders() },
     );
   }
+  // ====== Actualizar únicamente datos complementarios desde programación ======
+  actualizarDatosComplementarios(
+    pacienteId: string,
+    cambios: {
+      sexoCliente?: string | null;
+      fechaNacimiento?: string | null;
+      phones?: { phoneNumber: string; descriptionPhone: string }[];
+    },
+  ): Observable<IPaciente> {
+    return this._http.patch<{ ok: boolean; paciente: IPaciente }>(
+      `${this.apiUrl}/datosComplementarios/${pacienteId}`,
+      cambios,
+      { headers: this._auth.getAuthHeaders() },
+    ).pipe(map((respuesta) => respuesta.paciente));
+  }
+
 }

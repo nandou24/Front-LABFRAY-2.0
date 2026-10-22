@@ -24,6 +24,86 @@ export class HojaTrabajoLabPdfService {
   sexo = '';
   datoSolicitante = {} as IRefMedico;
 
+  // ====== Adaptar snapshots y estructuras anteriores ======
+  private normalizarPruebasHojaTrabajo(registros: any[]): any[] {
+    if (!Array.isArray(registros)) return [];
+
+    return registros
+      .filter((registro) => registro?.estado !== 'ANULADO')
+      .map((registro, indice) => {
+        const prueba = registro.snapshotClinico ?? registro;
+        const grupos = Array.isArray(prueba.gruposResultado)
+          ? [...prueba.gruposResultado].sort(
+              (a: any, b: any) => (a.ordenGrupo ?? 0) - (b.ordenGrupo ?? 0),
+            )
+          : [];
+
+        const itemsNormalizados: any[] = [];
+
+        for (const grupo of grupos) {
+          const configuraciones = Array.isArray(grupo.items)
+            ? [...grupo.items].sort(
+                (a: any, b: any) =>
+                  (a.ordenItem ?? a.snapshotItem?.ordenImpresion ?? 0) -
+                  (b.ordenItem ?? b.snapshotItem?.ordenImpresion ?? 0),
+              )
+            : [];
+
+          for (const configuracion of configuraciones) {
+            if (configuracion.mostrarItem === false) continue;
+            const item = configuracion.snapshotItem ?? configuracion.itemLabId;
+            if (!item || typeof item !== 'object' ||
+                item.estadoItem === 'INACTIVO') continue;
+
+            itemsNormalizados.push({
+              itemLabId: {
+                nombreHojaTrabajo: item.nombreHojaTrabajo ?? item.nombreInforme ?? '',
+                unidadesRef: item.unidadesRef ?? '',
+                valoresHojaTrabajo: item.valoresHojaTrabajo ?? '',
+                ordenImpresion: itemsNormalizados.length,
+                grupoItemLab: grupo.mostrarTitulo !== false
+                  ? String(grupo.nombreGrupo ?? '').trim()
+                  : '',
+              },
+            });
+          }
+        }
+
+        // ====== Compatibilidad con pruebas sin grupos ======
+        if (!grupos.length && Array.isArray(prueba.itemsComponentes)) {
+          for (const configuracion of prueba.itemsComponentes) {
+            const item = configuracion.itemLabId;
+            if (!item || typeof item !== 'object') continue;
+            if (item.estadoItem === 'INACTIVO') continue;
+            itemsNormalizados.push({ itemLabId: item });
+          }
+        }
+
+        let nombrePrueba = String(
+          prueba.nombrePruebaLab ?? registro.nombreExamen ?? 'Prueba de laboratorio',
+        );
+
+        // ====== Distinguir unidades repetidas ======
+        if (registro.snapshotClinico) {
+          if (Number(registro.numeroServicio ?? 1) > 1) {
+            nombrePrueba += ` (Servicio ${registro.numeroServicio})`;
+          }
+          if (Number(registro.numeroInstancias ?? 1) > 1) {
+            const etiqueta = registro.etiquetaInstancia ||
+              `Instancia ${registro.numeroInstancia ?? 1}`;
+            nombrePrueba += ` (${etiqueta})`;
+          }
+        }
+
+        return {
+          nombrePruebaLab: nombrePrueba,
+          ordenImpresion: registro.ordenImpresion ?? indice,
+          itemsComponentes: itemsNormalizados,
+        };
+      })
+      .filter((prueba) => prueba.itemsComponentes.length > 0);
+  }
+
   async generarHojaTrabajoLabPDF(
     data: any,
     pruebasLaboratorio: any,
@@ -31,6 +111,11 @@ export class HojaTrabajoLabPdfService {
     this.datoPaciente = {} as IPaciente;
     this.edad = '';
     this.datoSolicitante = {} as IRefMedico;
+
+    const pruebasNormalizadas = this.normalizarPruebasHojaTrabajo(pruebasLaboratorio);
+    if (pruebasNormalizadas.length === 0) {
+      throw new Error('No hay ítems de laboratorio disponibles en la solicitud');
+    }
 
     // console.log(
     //   'Datos para generar PDF de Hoja de Trabajo de Laboratorio:',
@@ -49,25 +134,32 @@ export class HojaTrabajoLabPdfService {
     }
 
     try {
-      this.edad = this._fechasServices.calcularEdadEnFecha(
-        this.datoPaciente.fechaNacimiento,
-        data.fechaEmision,
-      );
+      const fechaNacimiento = this.datoPaciente?.fechaNacimiento ??
+        data.fechaNacimientoPaciente;
+      if (fechaNacimiento) {
+        this.edad = this._fechasServices.calcularEdadEnFecha(
+          fechaNacimiento,
+          data.fechaEmision,
+        );
+      }
     } catch (error) {
       console.error('Error al calcular la edad:', error);
     }
 
     try {
-      if (data.solicitanteId) {
+      if (data.solicitanteId?._id) {
         this.datoSolicitante = await firstValueFrom(
           this._refMedicoService.getRefMedicobyId(data.solicitanteId._id),
         );
+      } else if (data.solicitanteId &&
+                 typeof data.solicitanteId === 'object') {
+        this.datoSolicitante = data.solicitanteId;
       }
     } catch (error) {
       console.error('Error al obtener los datos del solicitante:', error);
     }
 
-    this.sexo = this.datoPaciente?.sexoCliente ?? '';
+    this.sexo = this.datoPaciente?.sexoCliente ?? data.sexoPaciente ?? '';
 
     const doc = new jsPDF({
       orientation: 'portrait',
@@ -127,6 +219,37 @@ export class HojaTrabajoLabPdfService {
     const rectHeight = 18; // Más alto para A4
     doc.rect(squareX, squareY, rectWidth, rectHeight);
 
+    // ====== Imprimir código de laboratorio ======
+    const codigoLaboratorio = String(data?.codigoLaboratorio ?? '')
+      .trim()
+      .toUpperCase();
+    if (codigoLaboratorio) {
+      const partesCodigo = codigoLaboratorio.match(/^(L\d{4}-)(\d{4})$/);
+      const centroRecuadro = squareX + rectWidth / 2;
+
+      doc.setTextColor(0, 0, 0);
+      if (partesCodigo) {
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10);
+        doc.text(partesCodigo[1], centroRecuadro, squareY + 5.5, {
+          align: 'center',
+        });
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(24);
+        doc.text(partesCodigo[2], centroRecuadro, squareY + rectHeight - 1.7, {
+          align: 'center',
+        });
+      } else {
+        // ====== Compatibilidad con códigos anteriores ======
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10);
+        doc.text(codigoLaboratorio, centroRecuadro, squareY + 11, {
+          align: 'center',
+        });
+      }
+    }
+
     doc.setLineWidth(0.3);
     doc.line(8, 30, 200, 30); // línea horizontal debajo del encabezado (ajustada para A4)
 
@@ -147,7 +270,7 @@ export class HojaTrabajoLabPdfService {
       yValueDatosPaciente,
     );
     doc.text(
-      `${data.tipoDoc} ${data.nroDoc}`,
+      `${data.tipoDoc ?? ''} ${data.nroDoc ?? ''}`.trim() || 'PENDIENTE',
       xValueDatosPaciente + 130, // Ajustado
       yValueDatosPaciente,
     );
@@ -185,8 +308,8 @@ export class HojaTrabajoLabPdfService {
     // Línea vertical divisoria entre columnas
     doc.line(105, 50, 105, limiteInferior);
 
-    // Ordenar pruebas por ordenImpresion
-    pruebasLaboratorio.sort((a: any, b: any) => {
+    // ====== Ordenar pruebas sin mutar la solicitud ======
+    pruebasNormalizadas.sort((a: any, b: any) => {
       const ordenA = a.ordenImpresion ?? 0;
       const ordenB = b.ordenImpresion ?? 0;
       return ordenA - ordenB;
@@ -214,7 +337,7 @@ export class HojaTrabajoLabPdfService {
       }
     };
 
-    for (const prueba of pruebasLaboratorio) {
+    for (const prueba of pruebasNormalizadas) {
       const items = prueba.itemsComponentes || [];
 
       // Si hay solo 1 item, mostrar como prueba numerada sin viñeta
@@ -267,7 +390,9 @@ export class HojaTrabajoLabPdfService {
         // Si hay más de 1 item, mostrar encabezado numerado y items con viñeta
 
         // Convertir a mayúsculas para mejor visibilidad
-        const nombrePruebaCapitalizado = prueba.nombrePruebaLab.toUpperCase();
+        const nombrePruebaCapitalizado = String(
+          prueba.nombrePruebaLab ?? 'Prueba de laboratorio',
+        ).toUpperCase();
 
         // Agregar fondo gris oscuro para destacar el nombre de la prueba
         doc.setFillColor(200, 200, 200); // Gris más oscuro (RGB)
@@ -344,7 +469,7 @@ export class HojaTrabajoLabPdfService {
         }
 
         // Procesamos los grupos ordenados alfabéticamente
-        const gruposOrdenados = Array.from(gruposMap.keys()).sort();
+        const gruposOrdenados = Array.from(gruposMap.keys());
 
         for (const nombreGrupo of gruposOrdenados) {
           const itemsDelGrupo = gruposMap.get(nombreGrupo);

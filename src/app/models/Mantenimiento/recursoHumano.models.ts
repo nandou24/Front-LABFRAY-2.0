@@ -21,6 +21,31 @@ export interface IProfesionRRHH {
   especialidades: IEspecialidadRRHH[];
 }
 
+export interface IPresentacionFirmaRRHH {
+  perfilId: string;
+  etiqueta: string;
+  tratamiento: string;
+  profesionRecursoId: string;
+  especialidadId: string | null;
+  mostrarProfesion: boolean;
+  mostrarEspecialidad: boolean;
+  mostrarColegiatura: boolean;
+  mostrarRne: boolean;
+  siglaColegiatura: string;
+  siglaEspecialidad: string;
+  serviciosAutorizados: string[];
+  esPrincipal: boolean;
+}
+
+export interface IFirmaConfigProfesional {
+  habilitado: boolean;
+  profesionRecursoId: string | null;
+  serviciosAutorizados: string[];
+  predeterminadoLaboratorio: boolean;
+  referenciaAutorizacion: string;
+  presentaciones?: IPresentacionFirmaRRHH[];
+}
+
 export interface IRecHumano {
   _id?: string;
   codRecHumano: string;
@@ -39,7 +64,8 @@ export interface IRecHumano {
   phones: Array<any>[];
   gradoInstruccion: string;
   profesionesRecurso: IProfesionRRHH[];
-  atiendeConsultas: boolean; // si atiende consultas
+  atiendeConsultas: boolean;
+  firmaLaboratorio?: IFirmaConfigProfesional; // si atiende consultas
   usuarioSistema: boolean;
   datosLogueo: {
     nombreUsuario: string; // solo si accede al sistema

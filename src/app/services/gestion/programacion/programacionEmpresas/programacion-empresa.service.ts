@@ -13,6 +13,10 @@ import {
   IGetProgramacionById,
   IRegularizarDocumentoProgramacionResponse,
   IRegularizarDocumentoProgramacionRequest,
+  ICorregirDocumentoProgramacionRequest,
+  IHistorialDocumentoProgramacionResponse,
+  IVerificacionDocumentoHC,
+  TipoDocumentoProgramacion,
   IFilaValidacionImportacion,
   IValidacionMasivaProgramacionesResponse,
   IFilaRegistroImportacion,
@@ -122,6 +126,40 @@ export class ProgramacionEmpresaService {
     );
   }
 
+
+  // ====== Coincidencias independientes por documento y por nombres ======
+  consultarCoincidenciasVinculacion(id: string): Observable<{
+    ok: boolean; vinculada: boolean;
+    porDocumento: Array<{
+      pacienteId: string; hc: string | null; tipoDoc: string | null; nroDoc: string | null;
+      nombreCliente: string; apePatCliente: string; apeMatCliente: string;
+      documentoExacto: boolean; nombresExactos: boolean; vinculacionPermitida: boolean;
+      tipoCoincidencia: string;
+    }>;
+    porNombres: Array<{
+      pacienteId: string; hc: string | null; tipoDoc: string | null; nroDoc: string | null;
+      nombreCliente: string; apePatCliente: string; apeMatCliente: string;
+      documentoExacto: boolean; nombresExactos: boolean; vinculacionPermitida: boolean;
+      tipoCoincidencia: string;
+    }>;
+    masPorDocumento: boolean; masPorNombres: boolean;
+  }> {
+    return this._http.get<any>(`${this.apiUrl}/${id}/coincidencias-vinculacion`,
+      { headers: this._auth.getAuthHeaders() });
+  }
+
+  vincularPacienteInicial(id:string, pacienteId:string):Observable<any> {
+    return this._http.post<any>(`${this.apiUrl}/${id}/vincular-paciente`, {pacienteId},
+      {headers:this._auth.getAuthHeaders()});
+  }
+
+  obtenerHistorialVinculaciones(id:string):Observable<{ok:boolean; historial:Array<{
+    tipo:string; hcAnterior:string|null; hcNueva:string|null; fecha:string; usuario:string
+  }>}> {
+    return this._http.get<any>(`${this.apiUrl}/${id}/historial-vinculaciones`,
+      {headers:this._auth.getAuthHeaders()});
+  }
+
   // ====== Regularizar documento del paciente vinculado ======
   public regularizarDocumento(
     id: string,
@@ -130,6 +168,36 @@ export class ProgramacionEmpresaService {
     return this._http.put<IRegularizarDocumentoProgramacionResponse>(
       `${this.apiUrl}/${id}/regularizar-documento`,
       datos,
+      { headers: this._auth.getAuthHeaders() },
+    );
+  }
+
+  // ====== Corregir identidad registrada previa autorización ======
+  public corregirDocumento(
+    id: string,
+    datos: ICorregirDocumentoProgramacionRequest,
+  ): Observable<IRegularizarDocumentoProgramacionResponse> {
+    return this._http.put<IRegularizarDocumentoProgramacionResponse>(
+      `${this.apiUrl}/${id}/corregir-documento`, datos,
+      { headers: this._auth.getAuthHeaders() },
+    );
+  }
+
+  // ====== Verificar coincidencias antes de guardar ======
+  public verificarDocumento(
+    id: string,
+    datos: { tipoDoc: TipoDocumentoProgramacion; nroDoc: string },
+  ): Observable<IVerificacionDocumentoHC> {
+    return this._http.post<IVerificacionDocumentoHC>(
+      `${this.apiUrl}/${id}/verificar-documento`, datos,
+      { headers: this._auth.getAuthHeaders() },
+    );
+  }
+
+  // ====== Historial de cambios de documento ======
+  public historialDocumentos(id: string): Observable<IHistorialDocumentoProgramacionResponse> {
+    return this._http.get<IHistorialDocumentoProgramacionResponse>(
+      `${this.apiUrl}/${id}/historial-documentos`,
       { headers: this._auth.getAuthHeaders() },
     );
   }
@@ -157,10 +225,13 @@ export class ProgramacionEmpresaService {
     );
   }
 
-  public iniciarAtencionProgramacion(id: string): Observable<any> {
+  public iniciarAtencionProgramacion(
+    id: string,
+    confirmacion?: { confirmarNuevaHC: boolean; motivoNuevaHC: string },
+  ): Observable<any> {
     return this._http.post<any>(
       `${this.apiUrl}/${id}/iniciar-atencion`,
-      {},
+      confirmacion ?? {},
       {
         headers: this._auth.getAuthHeaders(),
       },

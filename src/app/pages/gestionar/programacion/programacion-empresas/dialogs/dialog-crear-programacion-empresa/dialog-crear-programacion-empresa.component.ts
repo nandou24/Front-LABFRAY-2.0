@@ -159,15 +159,28 @@ export class DialogCrearProgramacionEmpresaComponent implements OnInit {
   protocolosDisponibles: IProtocoloEmpresa[] = [];
   serviciosProtocoloSeleccionado: IServicioProtocolo[] = [];
   columnasServiciosProtocolo: string[] = ['codigo', 'nombre'];
-  private readonly camposPacienteBloqueables = [
+  private readonly camposIdentidadProtegidos = [
     'tipoDoc',
     'nroDoc',
-    'sexoCliente',
-    'fechaNacimiento',
     'apePatCliente',
     'apeMatCliente',
     'nombreCliente',
   ];
+  private readonly camposComplementarios = ['sexoCliente', 'fechaNacimiento'];
+  private contactoOriginal: string | null = null;
+  public guardandoDatosPaciente = false;
+
+  public get puedeActualizarDatosPaciente(): boolean {
+    return this.modoDialog === 'create' &&
+      !!this.programacionForm.get('pacienteId')?.value &&
+      this.puedeEditarProgramacion(this.programacionForm.get('estadoProgramacion')?.value);
+  }
+
+  public get datosPacientePendientes(): boolean {
+    return this.puedeActualizarDatosPaciente &&
+      this.contactoOriginal !== null &&
+      this.contactoActualSerializado() !== this.contactoOriginal;
+  }
   public guardandoProgramacion = false;
   public get modoDialog(): 'create' | 'edit' | 'view' {
     return (this.data?.mode as 'create' | 'edit' | 'view') ?? 'create';
@@ -189,6 +202,7 @@ export class DialogCrearProgramacionEmpresaComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.dialogRef.disableClose = true;
     this.traerEmpresas();
     this.actualizarModoDocumento();
     this.programacionForm.get('tipoDoc')?.valueChanges.subscribe(() => {
@@ -465,18 +479,18 @@ export class DialogCrearProgramacionEmpresaComponent implements OnInit {
   }
 
   agregarTelefono() {
-    const telefonoForm = this._fb.group({
-      phoneNumber: [
-        '',
-        [Validators.required, Validators.pattern(/^\d{9,11}$/)],
-      ],
-      descriptionPhone: ['', [Validators.required, Validators.maxLength(30)]],
-    });
-
-    this.phones.push(telefonoForm);
+    if (this.esModoVista || this.guardandoDatosPaciente ||
+      !this.puedeEditarProgramacion(this.programacionForm.get('estadoProgramacion')?.value)) return;
+    if (this.phones.length >= 15) {
+      Swal.fire('Límite de teléfonos', 'Se admiten hasta 15 teléfonos.', 'info');
+      return;
+    }
+    this.phones.push(this.crearTelefonoGroup({ phoneNumber: '', descriptionPhone: '' }));
   }
 
   eliminarTelefono(index: number) {
+    if (this.esModoVista || this.guardandoDatosPaciente ||
+      !this.puedeEditarProgramacion(this.programacionForm.get('estadoProgramacion')?.value)) return;
     this.phones.removeAt(index);
   }
 
@@ -532,11 +546,28 @@ export class DialogCrearProgramacionEmpresaComponent implements OnInit {
     this._dialog.open(DialogBuscarPacienteComponent, {
       width: '900px',
       maxWidth: '95vw',
-      data: {},
+      // ====== Mostrar hasta 100 pacientes recientes en Programaciones ======
+      data: { cantidadRecientes: 100 },
     }).afterClosed().subscribe((paciente: IPaciente | undefined) => {
       if (paciente?._id) {
-        this.habilitarCamposPaciente();
-        this.seleccionarPacienteEncontrado(paciente);
+        const seleccionar = () => {
+          // ====== Cargar complementarios reales; la búsqueda solo trae identidad ======
+          this._pacienteService.getPatientbyId(paciente._id!).subscribe({
+            next: (datos) => {
+              this.habilitarCamposPaciente();
+              this.seleccionarPacienteEncontrado({ ...paciente, ...datos });
+            },
+            error: () => Swal.fire('No se pudo consultar el paciente',
+              'Vuelve a buscarlo antes de modificar sus datos.', 'error'),
+          });
+        };
+        if (this.datosPacientePendientes) {
+          this.confirmarDescartarDatosPaciente().then((confirmado) => {
+            if (confirmado) seleccionar();
+          });
+        } else {
+          seleccionar();
+        }
       }
     });
   }
@@ -546,8 +577,17 @@ export class DialogCrearProgramacionEmpresaComponent implements OnInit {
     if (this.modoDialog !== 'create') {
       return;
     }
-    this.habilitarCamposPaciente();
-    this.limpiarDatosPacienteBuscado();
+    const volverAManual = () => {
+      this.habilitarCamposPaciente();
+      this.limpiarDatosPacienteBuscado();
+    };
+    if (this.datosPacientePendientes) {
+      this.confirmarDescartarDatosPaciente().then((confirmado) => {
+        if (confirmado) volverAManual();
+      });
+    } else {
+      volverAManual();
+    }
   }
 
   actualizarEdad() {
@@ -561,8 +601,8 @@ export class DialogCrearProgramacionEmpresaComponent implements OnInit {
     descriptionPhone: string;
   }): FormGroup {
     return this._fb.group({
-      phoneNumber: [phone.phoneNumber ?? ''],
-      descriptionPhone: [phone.descriptionPhone ?? ''],
+      phoneNumber: [phone.phoneNumber ?? '', [Validators.required, Validators.pattern(/^\d{9,11}$/)]],
+      descriptionPhone: [phone.descriptionPhone ?? '', [Validators.required, Validators.maxLength(30)]],
     });
   }
 
@@ -574,15 +614,22 @@ export class DialogCrearProgramacionEmpresaComponent implements OnInit {
   }
 
   private bloquearCamposPaciente(): void {
-    this.camposPacienteBloqueables.forEach((campo) =>
-      this.programacionForm.get(campo)?.disable(),
+    this.camposIdentidadProtegidos.forEach((campo) =>
+      this.programacionForm.get(campo)?.disable({ emitEvent: false }),
     );
+    this.camposComplementarios.forEach((campo) => {
+      const control = this.programacionForm.get(campo);
+      if (this.puedeActualizarDatosPaciente) {
+        control?.enable({ emitEvent: false });
+      } else {
+        control?.disable({ emitEvent: false });
+      }
+    });
   }
 
   private habilitarCamposPaciente(): void {
-    this.camposPacienteBloqueables.forEach((campo) =>
-      this.programacionForm.get(campo)?.enable(),
-    );
+    [...this.camposIdentidadProtegidos, ...this.camposComplementarios]
+      .forEach((campo) => this.programacionForm.get(campo)?.enable({ emitEvent: false }));
   }
 
   private limpiarDatosPacienteBuscado(): void {
@@ -599,6 +646,7 @@ export class DialogCrearProgramacionEmpresaComponent implements OnInit {
       edad: '',
     });
     this.phones.clear();
+    this.contactoOriginal = null;
     this.programacionForm.get('sinDocumento')?.setValue(false);
     this.actualizarModoDocumento();
   }
@@ -613,9 +661,7 @@ export class DialogCrearProgramacionEmpresaComponent implements OnInit {
       apePatCliente: paciente.apePatCliente ?? '',
       apeMatCliente: paciente.apeMatCliente ?? '',
       nombreCliente: paciente.nombreCliente ?? '',
-      fechaNacimiento: paciente.fechaNacimiento
-        ? new Date(paciente.fechaNacimiento)
-        : null,
+      fechaNacimiento: this.fechaNacimientoDesdePaciente(paciente.fechaNacimiento),
       sexoCliente: paciente.sexoCliente ?? null,
     });
 
@@ -623,6 +669,105 @@ export class DialogCrearProgramacionEmpresaComponent implements OnInit {
     this.actualizarEdad();
     this.bloquearCamposPaciente();
     this.actualizarModoDocumento();
+    this.contactoOriginal = this.contactoActualSerializado();
+  }
+
+  // ====== Evitar desfases UTC al abrir fechas antiguas de la HC ======
+  private fechaNacimientoDesdePaciente(valor: Date | string | null): Date | null {
+    if (!valor) return null;
+    const iso = valor instanceof Date ? valor.toISOString().slice(0, 10) : String(valor).slice(0, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return null;
+    const [anio, mes, dia] = iso.split('-').map(Number);
+    return new Date(anio, mes - 1, dia);
+  }
+
+  // ====== Comparar únicamente datos complementarios ======
+  private fechaContactoISO(fecha: Date | string | null): string | null {
+    if (!fecha) return null;
+    const d = fecha instanceof Date ? fecha : new Date(fecha);
+    if (Number.isNaN(d.getTime())) return null;
+    return [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'),
+      String(d.getDate()).padStart(2, '0')].join('-');
+  }
+
+  private contactoActual() {
+    const raw = this.programacionForm.getRawValue();
+    return {
+      sexoCliente: raw.sexoCliente || null,
+      fechaNacimiento: this.fechaContactoISO(raw.fechaNacimiento),
+      phones: this.phones.getRawValue().map((tel: any) => ({
+        phoneNumber: String(tel.phoneNumber ?? '').trim(),
+        descriptionPhone: String(tel.descriptionPhone ?? '').trim(),
+      })),
+    };
+  }
+
+  private contactoActualSerializado(): string {
+    return JSON.stringify(this.contactoActual());
+  }
+
+  private confirmarDescartarDatosPaciente(): Promise<boolean> {
+    return Swal.fire({
+      title: 'Cambios del paciente sin guardar',
+      text: 'Los datos complementarios modificados no se han guardado. ¿Deseas descartarlos?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Descartar cambios',
+      cancelButtonText: 'Volver',
+    }).then((result) => !!result.isConfirmed);
+  }
+
+  // ====== Guardar solo sexo, nacimiento y teléfonos en la HC ======
+  async guardarDatosPaciente(): Promise<void> {
+    const pacienteId = this.programacionForm.get('pacienteId')?.value as string | null;
+    if (!this.puedeActualizarDatosPaciente || !pacienteId ||
+      !this.datosPacientePendientes || this.guardandoDatosPaciente) return;
+    if (this.programacionForm.get('sexoCliente')?.invalid ||
+      this.programacionForm.get('fechaNacimiento')?.invalid || this.phones.invalid ||
+      this.phones.length > 15) {
+      this.programacionForm.get('fechaNacimiento')?.markAsTouched();
+      this.phones.markAllAsTouched();
+      await Swal.fire('Datos incompletos', 'Verifica fecha de nacimiento y teléfonos.', 'warning');
+      return;
+    }
+    const estadoAnterior = JSON.parse(this.contactoOriginal || '{}');
+    const actual = this.contactoActual();
+    const cambios: {
+      sexoCliente?: string | null;
+      fechaNacimiento?: string | null;
+      phones?: { phoneNumber: string; descriptionPhone: string }[];
+    } = {};
+    if (estadoAnterior.sexoCliente !== actual.sexoCliente) cambios.sexoCliente = actual.sexoCliente;
+    if (estadoAnterior.fechaNacimiento !== actual.fechaNacimiento) cambios.fechaNacimiento = actual.fechaNacimiento;
+    if (JSON.stringify(estadoAnterior.phones) !== JSON.stringify(actual.phones)) cambios.phones = actual.phones;
+
+    if (cambios.phones &&
+      new Set(cambios.phones.map((tel) => tel.phoneNumber)).size !== cambios.phones.length) {
+      await Swal.fire('Teléfonos duplicados', 'No repitas un mismo número de teléfono.', 'warning');
+      return;
+    }
+
+    const confirmacion = await Swal.fire({
+      title: 'Actualizar datos del paciente',
+      text: 'Se actualizarán únicamente los datos complementarios en la historia clínica. DNI, nombres y apellidos permanecerán intactos.',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Guardar datos del paciente',
+      cancelButtonText: 'Cancelar',
+    });
+    if (!confirmacion.isConfirmed) return;
+
+    this.guardandoDatosPaciente = true;
+    this._pacienteService.actualizarDatosComplementarios(pacienteId, cambios)
+      .pipe(finalize(() => { this.guardandoDatosPaciente = false; }))
+      .subscribe({
+        next: (paciente) => {
+          this.seleccionarPacienteEncontrado(paciente);
+          Swal.fire('Paciente actualizado', 'Los datos complementarios fueron guardados en la HC.', 'success');
+        },
+        error: (err) => Swal.fire('No se pudo guardar',
+          err?.error?.msg || 'Verifica los datos e intenta nuevamente.', 'error'),
+      });
   }
 
   seleccionarEmpresa(empresa: IEmpresa) {
@@ -635,6 +780,13 @@ export class DialogCrearProgramacionEmpresaComponent implements OnInit {
   }
 
   cerrar() {
+    if (this.guardandoDatosPaciente || this.guardandoProgramacion) return;
+    if (this.datosPacientePendientes) {
+      this.confirmarDescartarDatosPaciente().then((confirmado) => {
+        if (confirmado) this.dialogRef.close();
+      });
+      return;
+    }
     this.dialogRef.close();
   }
 
@@ -725,7 +877,12 @@ export class DialogCrearProgramacionEmpresaComponent implements OnInit {
       this.cerrar();
       return;
     }
-
+    if (this.guardandoDatosPaciente) return;
+    if (this.datosPacientePendientes) {
+      Swal.fire('Datos del paciente sin guardar',
+        'Guarda los datos complementarios del paciente antes de crear la programación.', 'warning');
+      return;
+    }
 
     this.formSubmitted = true;
 

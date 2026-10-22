@@ -164,6 +164,7 @@
 
             <td mat-cell *matCellDef="let row">
               {{ obtenerHcPaciente(row) }}
+              <ng-container *ngIf="row.solicitud.paciente.hc"><div style="font-size: 10px; line-height: 1.2; margin-top: 2px; font-weight: 600" [style.color]="row.solicitud.paciente.tipoHC === 'PROVISIONAL' ? '#9f5a00' : row.solicitud.paciente.tipoHC === 'PRINCIPAL' ? '#17694b' : '#687384'">{{ row.solicitud.paciente.tipoHC === 'PROVISIONAL' ? (row.solicitud.paciente.estadoConciliacion === 'CONCILIADA' ? 'Conciliada' : 'Provisional') : row.solicitud.paciente.tipoHC === 'PRINCIPAL' ? 'Principal' : 'Sin clasificar' }}</div></ng-container>
             </td>
           </ng-container>
 
@@ -240,6 +241,8 @@
               [attr.colspan]="columnasParticularesConExpand.length"
               style="padding: 0"
             >
+              <ng-container *ngIf="isExpandedParticular(row)">
+              <ng-container *ngIf="isExpandedEmpresa(row)">
               <ng-container
                 *ngTemplateOutlet="
                   detalleOperativo;
@@ -248,6 +251,8 @@
                   }
                 "
               ></ng-container>
+              </ng-container>
+              </ng-container>
             </td>
           </ng-container>
 
@@ -370,6 +375,7 @@
 
             <td mat-cell *matCellDef="let row">
               {{ obtenerHcPaciente(row) }}
+              <ng-container *ngIf="row.solicitud.paciente.hc"><div style="font-size: 10px; line-height: 1.2; margin-top: 2px; font-weight: 600" [style.color]="row.solicitud.paciente.tipoHC === 'PROVISIONAL' ? '#9f5a00' : row.solicitud.paciente.tipoHC === 'PRINCIPAL' ? '#17694b' : '#687384'">{{ row.solicitud.paciente.tipoHC === 'PROVISIONAL' ? (row.solicitud.paciente.estadoConciliacion === 'CONCILIADA' ? 'Conciliada' : 'Provisional') : row.solicitud.paciente.tipoHC === 'PRINCIPAL' ? 'Principal' : 'Sin clasificar' }}</div></ng-container>
             </td>
           </ng-container>
 
@@ -527,30 +533,6 @@
   <!-- ====== Detalle operativo ====== -->
 
   <ng-template #detalleOperativo let-row>
-    <!-- ====== Fotografía identificativa del paciente ====== -->
-    <div class="identificacion-paciente-toma">
-      <div class="identificacion-paciente-toma__miniatura">
-        <img
-          *ngIf="obtenerEstadoFotoPaciente(row)?.urlTemporal as fotoUrl"
-          [src]="fotoUrl"
-          alt="Fotografía de identificación del paciente"
-          (error)="marcarFotoPacienteNoDisponible(row)"
-          loading="lazy"
-        />
-        <span *ngIf="!obtenerEstadoFotoPaciente(row)?.urlTemporal">
-          {{ obtenerEstadoFotoPaciente(row)?.estado === 'cargando' ? 'Cargando foto...' :
-             obtenerEstadoFotoPaciente(row)?.estado === 'error' ? 'Foto no disponible' :
-             'Sin fotografía' }}
-        </span>
-      </div>
-      <div class="identificacion-paciente-toma__datos">
-        <span class="identificacion-paciente-toma__etiqueta">Identificación del paciente</span>
-        <strong>{{ obtenerNombrePaciente(row) }}</strong>
-        <span>{{ obtenerDocumentoPaciente(row) || 'Documento pendiente' }}
-          · HC {{ obtenerHcPaciente(row) }}</span>
-      </div>
-    </div>
-
     <!-- ====== Estación operativa con todos los recipientes ====== -->
     <ng-container *ngIf="row.muestras.inicializadas && row.muestras.planToma.disponible;
       else detalleOperativoAnterior">

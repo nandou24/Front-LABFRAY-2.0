@@ -47,8 +47,13 @@ export class DialogBuscarPacienteComponent implements OnInit {
     @Inject(MAT_DIALOG_DATA) public data: any,
   ) {}
 
+  // ====== El límite es configurable por el diálogo que abre la búsqueda ======
+  get cantidadRecientes(): number {
+    return this.data?.cantidadRecientes === 100 ? 100 : 25;
+  }
+
   ngOnInit(): void {
-    this.ultimosPacientes(25);
+    this.ultimosPacientes(this.cantidadRecientes);
     this.configurarBusquedaPacientes();
   }
 
@@ -90,7 +95,7 @@ export class DialogBuscarPacienteComponent implements OnInit {
           } else if (termino.length > 0) {
             this.dataSourcePacientes.data = [];
           } else {
-            this.ultimosPacientes(25); // ← carga los pacientes recientes
+            this.ultimosPacientes(this.cantidadRecientes); // ====== Recuperar pacientes recientes ======
           }
         }),
       )

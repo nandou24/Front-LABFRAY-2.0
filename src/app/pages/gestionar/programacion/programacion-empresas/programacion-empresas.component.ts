@@ -37,6 +37,7 @@ import { DialogImportarProgramacionesEmpresaComponent } from './dialogs/dialog-i
 import { ProgramacionEmpresaService } from '../../../../services/gestion/programacion/programacionEmpresas/programacion-empresa.service';
 import { catchError, of } from 'rxjs';
 import Swal from 'sweetalert2';
+import { FotoPacienteMiniaturaComponent } from '../../../../shared/components/foto-paciente-miniatura/foto-paciente-miniatura.component';
 
 // ====== Fechas dd/MM/yyyy solo en Programaciones de Empresas ======
 const FORMATOS_FECHA_PROGRAMACION: MatDateFormats = {
@@ -65,6 +66,7 @@ const FORMATOS_FECHA_PROGRAMACION: MatDateFormats = {
     MatChipsModule,
     MatDatepickerModule,
     MatNativeDateModule,
+    FotoPacienteMiniaturaComponent,
   ],
   providers: [
     { provide: MAT_DATE_LOCALE, useValue: 'es-PE' },
@@ -151,7 +153,7 @@ export class ProgramacionEmpresasComponent implements OnInit, AfterViewInit {
 
     // ====== Mostrar primero la programación de mayor código ======
     this.dataSourceProgramacion.sort = this.sort;
-    this.sort.sort({ id: 'codProgramacion', start: 'desc', disableClear: false });
+    // ====== Orden inicial configurado en matSort del HTML ======
   }
 
   //setear los anchos
@@ -205,6 +207,91 @@ export class ProgramacionEmpresasComponent implements OnInit, AfterViewInit {
     return (
       estadoNormalizado !== 'ATENDIDO' && estadoNormalizado !== 'CANCELADO'
     );
+  }
+
+  // ====== Resolver primera vinculación con HC existente ======
+  revisarVinculacion(programacion: IProgramacionEmpresa): void {
+    const programacionId = programacion._id;
+    if (!programacionId) return;
+    this._programacionService.consultarCoincidenciasVinculacion(programacionId).subscribe({
+      next: async ({ porDocumento, porNombres, vinculada, masPorDocumento, masPorNombres }) => {
+        if (vinculada) {
+          await Swal.fire('HC vinculada', 'Esta programación ya tiene una primera vinculación.', 'info');
+          return;
+        }
+        if (!porDocumento.length && !porNombres.length) {
+          await Swal.fire('Sin coincidencias',
+            'No se encontraron coincidencias por documento ni por nombres y apellidos. La programación permanece sin HC.', 'info');
+          return;
+        }
+
+        // ====== Mostrar por separado la coincidencia documental y la de nombres ======
+        const escapar = (valor: unknown): string => String(valor ?? '')
+          .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        type Candidato = typeof porDocumento[number];
+        const fila = (c: Candidato): string => {
+          const nombre = [c.apePatCliente, c.apeMatCliente, c.nombreCliente].filter(Boolean).join(' ');
+          const etiqueta = c.vinculacionPermitida ? 'Documento y nombres coinciden' :
+            c.documentoExacto ? 'Documento coincidente; revisar nombres o estado de HC' :
+              'Nombres coincidentes; documento distinto (solo revisión)';
+          return `<label style="display:block;padding:9px;text-align:left;border-bottom:1px solid #ddd">
+            <input type="radio" name="pacienteVinculo" value="${escapar(c.pacienteId)}" ${c.vinculacionPermitida ? '' : 'disabled'}>
+            <strong>${escapar(nombre)}</strong> · HC ${escapar(c.hc || 'Sin HC')}<br>
+            <small>${escapar(c.tipoDoc || 'Sin documento')} ${escapar(c.nroDoc)} · ${escapar(etiqueta)}</small>
+          </label>`;
+        };
+        const grupo = (titulo: string, candidatos: Candidato[], hayMas: boolean): string =>
+          `<div style="text-align:left;margin-top:12px"><strong>${titulo} (${candidatos.length})</strong></div>
+          ${candidatos.length ? candidatos.map(fila).join('') : '<p style="text-align:left;font-size:12px">Sin coincidencias en este criterio.</p>'}
+          ${hayMas ? '<p style="font-size:12px;color:#a16207">Hay más posibles candidatos. Solicita una revisión completa antes de crear otra HC.</p>' : ''}`;
+        const html = `<div style="max-height:380px;overflow:auto">
+          ${grupo('Coincidencias por documento', porDocumento, masPorDocumento)}
+          ${grupo('Coincidencias por nombres y apellidos', porNombres, masPorNombres)}
+        </div><p style="font-size:12px">Solo es posible vincular directamente cuando documento y nombres coinciden. Las demás coincidencias requieren revisión.</p>`;
+        const puedeVincular = porDocumento.some(c => c.vinculacionPermitida);
+        const elegido = await Swal.fire({
+          title: 'Coincidencias en el maestro', html, width: 680,
+          showCancelButton: puedeVincular,
+          confirmButtonText: puedeVincular ? 'Vincular HC existente' : 'Cerrar', cancelButtonText: 'Cancelar',
+          preConfirm: () => {
+            if (!puedeVincular) return null;
+            const checked = Swal.getPopup()?.querySelector<HTMLInputElement>('input[name="pacienteVinculo"]:checked');
+            if (!checked) {
+              Swal.showValidationMessage('Seleccione un paciente con documento y nombres coincidentes');
+              return false;
+            }
+            return checked.value;
+          },
+        });
+        if (!elegido.isConfirmed || typeof elegido.value !== 'string') return;
+        this._programacionService.vincularPacienteInicial(programacionId, elegido.value).subscribe({
+          next: () => {
+            this.snackBar.open('HC vinculada; evento registrado en historial', 'Cerrar', { duration: 4000 });
+            this.buscarProgramacion();
+          },
+          error: e => Swal.fire('No se pudo vincular', e.error?.msg || 'Revise la identidad', 'error'),
+        });
+      },
+      error: e => Swal.fire('Error', e.error?.msg || 'No se pudieron buscar coincidencias', 'error'),
+    });
+  }
+
+  // ====== Historial auditable de la programación ======
+  verHistorialVinculacion(programacion:IProgramacionEmpresa):void {
+    if (!programacion._id) return;
+    this._programacionService.obtenerHistorialVinculaciones(programacion._id).subscribe({
+      next:({historial}) => {
+        const detalle = historial.length ? historial.map(x =>
+          `<div style="padding:9px;border-bottom:1px solid #ddd;text-align:left">
+          <strong>${x.tipo}</strong> · ${new Date(x.fecha).toLocaleString('es-PE')}<br>
+          HC anterior: ${x.hcAnterior || 'Ninguna'} → HC nueva: ${x.hcNueva || '-'}<br>
+          Usuario: ${(x.usuario || '-').replace(/[&<>"']/g,'')}
+          </div>`).join('') : 'Todavía no hay eventos de vinculación registrados.';
+        Swal.fire({title:'Historial de vinculación',html:detalle,confirmButtonText:'Cerrar'});
+      },
+      error:e => Swal.fire('Error',e.error?.msg || 'No se pudo consultar el historial','error')
+    });
   }
 
   editarProgramacion(element: IProgramacionEmpresa) {
@@ -273,13 +360,14 @@ export class ProgramacionEmpresasComponent implements OnInit, AfterViewInit {
     });
   }
 
-  // ====== Regularizar documento después del inicio de atención ======
+  // ====== Regularizar o corregir identidad con auditoría ======
   regularizarDocumento(element: IProgramacionEmpresa): void {
-    if (!element.pacienteId || element.estadoIdentificacionPaciente !== 'PENDIENTE') {
-      this.snackBar.open('Solo se regularizan historias clínicas con identificación PENDIENTE.', 'Cerrar', { duration: 3500 });
+    if (!element.pacienteId || !element.accionDocumentoPaciente) {
+      this.snackBar.open('La programación no tiene una historia clínica vinculada.', 'Cerrar', { duration: 3500 });
       return;
     }
 
+    const esCorreccion = element.accionDocumentoPaciente === 'CORREGIR';
     const dialogRef = this.dialog.open(DialogRegularizarDocumentoEmpresaComponent, {
       width: '92vw', maxWidth: '640px', maxHeight: '90vh',
       data: { programacion: element },
@@ -294,11 +382,17 @@ export class ProgramacionEmpresasComponent implements OnInit, AfterViewInit {
               ...item,
               tipoDoc: actual.tipoDoc,
               nroDoc: actual.nroDoc,
-              estadoIdentificacionPaciente: actual.estadoIdentificacionPaciente,
+              accionDocumentoPaciente: actual.accionDocumentoPaciente,
             }
           : item,
       );
-      this.snackBar.open('Documento actualizado. La identificación sigue PENDIENTE de validación.', 'Cerrar', { duration: 4500 });
+      this.buscarProgramacion();
+      this.snackBar.open(
+        esCorreccion
+          ? 'Documento corregido con autorización y auditoría.'
+          : 'Documento actualizado. La identificación sigue PENDIENTE de validación.',
+        'Cerrar', { duration: 4500 },
+      );
     });
   }
 
@@ -333,10 +427,6 @@ export class ProgramacionEmpresasComponent implements OnInit, AfterViewInit {
 
       const programacionActualizada =
         resultado.programacion as IProgramacionEmpresa;
-      if (resultado.paciente?.estadoIdentificacion) {
-        programacionActualizada.estadoIdentificacionPaciente =
-          resultado.paciente.estadoIdentificacion;
-      }
 
       if (!programacionActualizada?._id) {
         return;

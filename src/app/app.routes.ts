@@ -193,6 +193,13 @@ export const routes: Routes = [
     ],
   },
   {
+    path: 'resultados/verificar',
+    loadComponent: () =>
+      import(
+        './pages/publico/verificacion-informe/verificacion-informe.component'
+      ).then((m) => m.VerificacionInformeComponent),
+  },
+  {
     path: 'resultados/consulta',
     loadComponent: () =>
       import(

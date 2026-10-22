@@ -308,7 +308,7 @@
             </td>
 
             <td>{{ fila.fechaEmision | date: "dd/MM/yyyy HH:mm" }}</td>
-            <td>{{ fila.paciente.hc }}</td>
+            <td>{{ fila.paciente.hc }}<div style="font-size: 10px; line-height: 1.2; margin-top: 2px; font-weight: 600" [style.color]="fila.paciente.tipoHC === 'PROVISIONAL' ? '#9f5a00' : fila.paciente.tipoHC === 'PRINCIPAL' ? '#17694b' : '#687384'">{{ fila.paciente.tipoHC === 'PROVISIONAL' ? (fila.paciente.estadoConciliacion === 'CONCILIADA' ? 'Conciliada' : 'Provisional') : fila.paciente.tipoHC === 'PRINCIPAL' ? 'Principal' : 'Sin clasificar' }}</div></td>
             <td>{{ fila.paciente.documento }}</td>
             <td class="celda-paciente">{{ fila.paciente.nombreCompleto }}</td>
 
@@ -388,12 +388,19 @@
             >
               <div class="seguimiento-contenido">
                 <div class="seguimiento-titulo">
-                  <strong>Seguimiento de pruebas</strong>
-                  <span>
-                    Información operativa para recepción e informes. La fecha de
-                    entrega se calcula desde la fecha real de toma usando el
-                    plazo aplicable.
-                  </span>
+                  <div class="seguimiento-encabezado-textos">
+                    <strong>Seguimiento de pruebas</strong>
+                    <span>
+                      Información operativa para recepción e informes. La fecha de
+                      entrega se calcula desde la fecha real de toma usando el
+                      plazo aplicable.
+                    </span>
+                  </div>
+                  <app-foto-paciente-miniatura tamano="grande"
+                    [pacienteId]="fila.paciente.pacienteId"
+                    [hc]="fila.paciente.hc"
+                    [programacionEmpresaId]="fila.empresa?.programacionEmpresaId">
+                  </app-foto-paciente-miniatura>
                 </div>
 
                 <div class="seguimiento-tabla-scroll">

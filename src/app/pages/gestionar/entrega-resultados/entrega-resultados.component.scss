@@ -283,10 +283,19 @@ table.tabla-empresa {
 
 .seguimiento-titulo {
   display: flex;
-  flex-direction: column;
-  gap: 3px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   margin-bottom: 10px;
   color: #1e293b;
+}
+
+.seguimiento-encabezado-textos {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
 }
 
 .seguimiento-titulo span {

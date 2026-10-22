@@ -979,3 +979,29 @@ export interface IReabrirResultadoResponse {
   resultado: IResultadoLaboratorio;
 }
 
+
+// ====== Comparación histórica de resultados ======
+export interface IValorHistoricoComparable {
+  fechaLiberacion: string;
+  codSolicitud: string;
+  valor: string | number;
+  unidadesRef: string;
+}
+
+export interface IItemComparacionHistorica {
+  itemLabId: string;
+  nombreInforme: string;
+  tipoResultado: TipoResultadoLaboratorio;
+  unidadesRef: string;
+  valorActual: ValorResultadoLaboratorio;
+  anteriores: IValorHistoricoComparable[];
+}
+
+export interface IComparacionHistoricaResultadoResponse {
+  ok: boolean;
+  resultadoLaboratorioId: string;
+  codPruebaLab: string;
+  nombrePruebaLab: string;
+  totalItemsConHistorial: number;
+  items: IItemComparacionHistorica[];
+}

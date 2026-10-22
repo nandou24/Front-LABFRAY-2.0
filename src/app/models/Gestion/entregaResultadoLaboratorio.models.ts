@@ -7,6 +7,9 @@ export interface IPacienteEntrega {
   nombreCompleto: string;
   nombreInforme?: string;
   hc: string;
+  // ====== Identificación de historia clínica en Entrega ======
+  tipoHC?: string | null;
+  estadoConciliacion?: string | null;
   documento: string;
   sexo?: string | null;
   fechaNacimiento?: string | null;
@@ -194,6 +197,14 @@ export interface IItemInformeEntrega {
   alertasDetectadas?: Array<{ nivelAlerta: string; mensaje: string }>;
 }
 
+export interface IFechaMuestraInformeEntrega {
+  nombreMuestra: string;
+  fechaRecoleccion?: string | null;
+  fechaRecepcion?: string | null;
+  tomaRecepcionUnificada?: boolean;
+  fechaTomaRecepcion?: string | null;
+}
+
 export interface IPruebaInformeEntrega {
   _id: string;
   codPruebaLab: string;
@@ -203,6 +214,7 @@ export interface IPruebaInformeEntrega {
   versionResultado: number;
   fechaValidacion?: string | null;
   muestras?: string[];
+  fechasMuestras?: IFechaMuestraInformeEntrega[];
   fechaLiberacion: string | null;
   usuarioLiberacion: string | null;
   observacionGeneral: string;
@@ -220,6 +232,36 @@ export interface IEntregaRegistrada {
   fechaEntrega: string;
   usuarioEntrega: string;
   pruebasEntregadas: number;
+}
+
+// ====== Responsables de informes para PDF ======
+export interface IFirmaInformePdf {
+  recursoHumanoId: string;
+  nombreCompleto: string;
+  tratamiento?: string | null;
+  perfilId?: string | null;
+  siglaColegiatura?: string | null;
+  siglaEspecialidad?: string | null;
+  mostrarProfesion?: boolean;
+  mostrarEspecialidad?: boolean;
+  mostrarColegiatura?: boolean;
+  mostrarRne?: boolean;
+  nombres?: string | null;
+  apellidoPaterno?: string | null;
+  apellidoMaterno?: string | null;
+  sexo?: string | null;
+  profesion: string;
+  especialidad?: string | null;
+  nroColegiatura: string;
+  rne?: string | null;
+  pruebas: string[];
+  imagenPngBase64: string;
+}
+
+export interface IFirmasInformePdfResponse {
+  ok: boolean;
+  firmas: IFirmaInformePdf[];
+  pruebasSinFirma: string[];
 }
 
 export interface IInformeEntregable {

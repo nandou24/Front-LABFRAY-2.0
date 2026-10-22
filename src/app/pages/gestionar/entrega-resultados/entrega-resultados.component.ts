@@ -27,6 +27,7 @@ import { EmpresaService } from '../../../services/mantenimiento/empresa/empresa.
 import { InformeLaboratorioPdfService } from '../../../services/utilitarios/pdf/laboratorio/informe-laboratorio-pdf.service';
 import { ZipArchivosService } from '../../../services/utilitarios/zip/zip-archivos.service';
 import { DialogEntregaResultadosComponent } from './dialogs/dialog-entrega-resultados/dialog-entrega-resultados.component';
+import { FotoPacienteMiniaturaComponent } from '../../../shared/components/foto-paciente-miniatura/foto-paciente-miniatura.component';
 
 interface IEmpresaSelectorEntrega {
   empresaId: string;
@@ -53,6 +54,7 @@ interface IEmpresaSelectorEntrega {
     MatSelectModule,
     MatTabsModule,
     MatSnackBarModule,
+    FotoPacienteMiniaturaComponent,
   ],
   providers: [
     {

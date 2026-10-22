@@ -36,6 +36,8 @@ import { HojaTrabajoLabPdfService } from '../../../services/utilitarios/pdf/hoja
 import { ServiciosService } from '../../../services/mantenimiento/servicios/servicios.service';
 import { DialogServiciosSunatComponent } from './dialogs/dialog-servicios-sunat/dialog-servicios-sunat.component';
 import { MatTabsModule } from '@angular/material/tabs';
+import { FotoPacienteMiniaturaComponent } from '../../../shared/components/foto-paciente-miniatura/foto-paciente-miniatura.component';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-solicitud-atencion',
@@ -53,6 +55,7 @@ import { MatTabsModule } from '@angular/material/tabs';
     MatDatepickerModule,
     MatNativeDateModule,
     MatTabsModule,
+    FotoPacienteMiniaturaComponent,
   ],
   providers: [{ provide: MAT_DATE_LOCALE, useValue: 'es-PE' }],
   templateUrl: './solicitud-atencion.component.html',
@@ -313,10 +316,8 @@ export class SolicitudAtencionComponent implements OnInit, AfterViewInit {
     }
   }
 
-  async imprimirSolicitud(solicitud: any) {
-    console.log('Servicios:', solicitud.servicios);
-    // Implementar generación de PDF
-
+  async imprimirSolicitud(solicitud: any): Promise<void> {
+    // ====== Validar solicitud ======
     if (!solicitud) {
       this.snackBar.open('No hay datos para generar el PDF', 'Cerrar', {
         duration: 3000,
@@ -324,41 +325,92 @@ export class SolicitudAtencionComponent implements OnInit, AfterViewInit {
       return;
     }
 
-    let pdfSrc;
-    //let servicios;
+    try {
+      if (solicitud.tipo === 'Consulta') {
+        const pdfSrc =
+          await this._pdfConsultaMedicaService.generarHojaConsultaMedicaPDF(
+            solicitud,
+          );
+        if (!pdfSrc) throw new Error('No se pudo generar el PDF de consulta');
+        this.opendialog(pdfSrc);
+        return;
+      }
 
-    if (solicitud.tipo === 'Consulta') {
-      pdfSrc =
-        await this._pdfConsultaMedicaService.generarHojaConsultaMedicaPDF(
-          solicitud,
-        );
-    } else if (solicitud.tipo === 'Laboratorio') {
-      this._servicioService
-        .getPruebasLaboratorioItems(solicitud.servicios)
-        .subscribe({
-          next: async (pruebasConItems) => {
-            pdfSrc =
-              await this._pdfHojaTrabajoLabService.generarHojaTrabajoLabPDF(
-                solicitud,
-                pruebasConItems,
-              );
-            this.opendialog(pdfSrc);
-          },
-          error: (err) => {
-            console.error('Error al obtener pruebas de laboratorio:', err);
-            this.snackBar.open(
-              'Error al obtener pruebas de laboratorio',
-              'Cerrar',
-              {
-                duration: 3000,
-              },
-            );
-          },
+      if (solicitud.tipo !== 'Laboratorio') {
+        this.snackBar.open('Impresión no disponible para este tipo de atención', 'Cerrar', {
+          duration: 3500,
         });
-      return;
-    }
+        return;
+      }
 
-    this.opendialog(pdfSrc);
+      // ====== Priorizar el snapshot clínico de la solicitud ======
+      const unidades = Array.isArray(solicitud.unidadesLaboratorio)
+        ? solicitud.unidadesLaboratorio.filter(
+            (unidad: any) => unidad.estado !== 'ANULADO',
+          )
+        : [];
+      const unidadesConSnapshot = unidades.filter(
+        (unidad: any) => unidad.snapshotClinico,
+      );
+
+      if (unidadesConSnapshot.length > 0 &&
+          unidadesConSnapshot.length !== unidades.length) {
+        throw new Error('La solicitud tiene unidades sin información clínica para imprimir');
+      }
+
+      let pruebasParaImprimir: any[] = unidadesConSnapshot;
+
+      // ====== Compatibilidad con solicitudes anteriores al snapshot ======
+      if (!pruebasParaImprimir.length && unidades.length === 0 &&
+          Array.isArray(solicitud.unidadesLaboratorio) &&
+          solicitud.unidadesLaboratorio.length > 0) {
+        throw new Error('No hay unidades de laboratorio vigentes para imprimir');
+      }
+
+      if (!pruebasParaImprimir.length) {
+        const servicioIds = [
+          ...new Set<string>(
+            (solicitud.servicios ?? [])
+              .filter((servicio: any) => servicio.estado !== 'ANULADO')
+              .map((servicio: any) => {
+                const id = servicio?.servicioId;
+                return String(id?._id ?? id ?? '');
+              })
+              .filter((id: string) => id.length > 0),
+          ),
+        ];
+
+        if (!servicioIds.length) {
+          throw new Error('La solicitud no tiene servicios para imprimir');
+        }
+
+        const respuesta = await firstValueFrom(
+          this._servicioService.getPruebasLaboratorioItems(servicioIds),
+        );
+        pruebasParaImprimir = Array.isArray(respuesta)
+          ? respuesta
+          : (respuesta?.pruebasLab ?? []);
+      }
+
+      if (!pruebasParaImprimir.length) {
+        throw new Error('No se encontraron pruebas para la hoja de trabajo');
+      }
+
+      const pdfSrc =
+        await this._pdfHojaTrabajoLabService.generarHojaTrabajoLabPDF(
+          solicitud,
+          pruebasParaImprimir,
+        );
+      if (!pdfSrc) throw new Error('No se pudo generar la hoja de trabajo');
+      this.opendialog(pdfSrc);
+    } catch (error) {
+      console.error('Error al imprimir solicitud:', error);
+      this.snackBar.open(
+        error instanceof Error ? error.message : 'Error al generar la hoja de trabajo',
+        'Cerrar',
+        { duration: 4500 },
+      );
+    }
   }
 
   opendialog(pdfSrc: any) {

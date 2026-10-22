@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { FotoPacienteMiniaturaComponent } from '../../../shared/components/foto-paciente-miniatura/foto-paciente-miniatura.component';
 import { Component, Input, OnInit, inject, ViewChildren, QueryList } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
@@ -16,7 +17,7 @@ import { TomaInlineRecipienteComponent } from './toma-inline-recipiente.componen
 @Component({
   selector: 'app-toma-inline-unica',
   standalone: true,
-  imports: [CommonModule, MatButtonModule, MatIconModule, TomaInlineRecipienteComponent],
+  imports: [CommonModule, MatButtonModule, MatIconModule, TomaInlineRecipienteComponent, FotoPacienteMiniaturaComponent],
   templateUrl: './toma-inline-unica.component.html',
   styleUrl: './toma-inline-unica.component.scss',
 })

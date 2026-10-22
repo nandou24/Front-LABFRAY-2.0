@@ -1,9 +1,15 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
+import { AuthService } from '../../../auth/auth.service';
+import { environment } from '../../../../../environments/environment';
 import { jsPDF } from 'jspdf';
+import * as QRCode from 'qrcode';
 import autoTable from 'jspdf-autotable';
 
 import {
   IInformeEntregable,
+  IFirmasInformePdfResponse,
   IItemInformeEntrega,
   IPruebaInformeEntrega,
   IReferenciaAplicadaEntrega,
@@ -13,8 +19,20 @@ import {
 type ModoInformePdf = 'DIGITAL' | 'IMPRESION';
 type IndicadorResultado = 'ALTO' | 'BAJO' | '';
 
+interface IRegistroInformeVerificable {
+  ok: boolean;
+  codigoInforme: string;
+  tokenVerificacion: string;
+  tipoInforme: 'PARCIAL' | 'FINAL';
+  fechaRegistro: string;
+}
+
+
 @Injectable({ providedIn: 'root' })
 export class InformeLaboratorioPdfService {
+  private readonly _http = inject(HttpClient);
+  private readonly _auth = inject(AuthService);
+
   // ====== Imprimir con encabezado opcional ======
   async imprimir(
     informe: IInformeEntregable,
@@ -89,8 +107,6 @@ export class InformeLaboratorioPdfService {
       modo === 'IMPRESION' && incluirLogoImpresion
         ? await this.cargarImagen('/images/logo labfray.png')
         : null;
-    const margenSuperiorContinuacion = 86;
-
     this.aplicarPlantillaPagina(doc, modo);
 
     let y = this.dibujarCabeceraPrincipal(
@@ -100,11 +116,15 @@ export class InformeLaboratorioPdfService {
       logoImpresion,
     );
 
+    // ====== Acercar la tabla al título en páginas de continuación ======
+    const margenSuperiorContinuacion = y + 4;
+
     // ====== Pruebas liberadas seleccionadas ======
     pruebas.forEach((prueba) => {
-      const limiteInicioPrueba = modo === 'DIGITAL' ? altoPagina - 48 : altoPagina - 38;
-
-      if (y > limiteInicioPrueba) {
+      // ====== Evitar títulos huérfanos y reservar dos determinaciones ======
+      const altoCabecera = this.estimarAltoCabeceraPrueba(doc, prueba, anchoPagina, margen);
+      const altoInicio = altoCabecera + 9 + Math.min(2, prueba.items.length) * 7;
+      if (y + altoInicio > altoPagina - margenInferiorTabla) {
         doc.addPage();
         this.aplicarPlantillaPagina(doc, modo);
         y = this.dibujarCabeceraPrincipal(doc, informe, modo, logoImpresion);
@@ -157,6 +177,7 @@ export class InformeLaboratorioPdfService {
         theme: 'plain',
         tableWidth: 'auto',
         showHead: 'everyPage',
+        rowPageBreak: 'avoid',
         columns: mostrarValorReferencial
           ? [
               { header: 'Determinación', dataKey: 'determinacion' },
@@ -401,13 +422,7 @@ export class InformeLaboratorioPdfService {
               modo,
               logoImpresion,
             );
-            this.dibujarCabeceraPrueba(
-              doc,
-              prueba,
-              yCabecera,
-              margen,
-              anchoPagina,
-            );
+            this.dibujarTituloPruebaContinuacion(doc, prueba, yCabecera, margen);
           }
         },
       });
@@ -416,60 +431,124 @@ export class InformeLaboratorioPdfService {
         ((doc as unknown as { lastAutoTable?: { finalY?: number } })
           .lastAutoTable?.finalY ?? y) + 4;
 
-      // ====== Referencia / interpretación compartida por grupo ======
+      // ====== Interpretaciones y observaciones con salto seguro ======
+      const crearPaginaContinuacion = (): number => {
+        doc.addPage();
+        this.aplicarPlantillaPagina(doc, modo);
+        const yCabecera = this.dibujarCabeceraPrincipal(doc, informe, modo, logoImpresion);
+        return this.dibujarTituloPruebaContinuacion(doc, prueba, yCabecera, margen);
+      };
+
       for (const referenciaGrupo of this.comentariosGrupo(prueba)) {
-        const tituloGrupo = referenciaGrupo.nombreGrupo
+        const titulo = referenciaGrupo.nombreGrupo
           ? `Referencia / interpretación · ${referenciaGrupo.nombreGrupo}:`
           : 'Referencia / interpretación:';
-        const lineas = doc.splitTextToSize(
-          referenciaGrupo.comentario,
-          anchoPagina - margen * 2,
+        y = this.dibujarBloquePaginado(
+          doc, titulo, referenciaGrupo.comentario, y, margen,
+          anchoPagina, altoPagina - margenInferiorTabla, crearPaginaContinuacion,
         );
-        const altoBloque = 4 + lineas.length * 3.4 + 3;
-
-        if (y + altoBloque > altoPagina - margenInferiorTabla) {
-          doc.addPage();
-          this.aplicarPlantillaPagina(doc, modo);
-          y = this.dibujarCabeceraPrincipal(doc, informe, modo, logoImpresion);
-          y = this.dibujarCabeceraPrueba(
-            doc,
-            prueba,
-            y,
-            margen,
-            anchoPagina,
-          );
-        }
-
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(7.2);
-        doc.setTextColor(55, 55, 55);
-        doc.text(tituloGrupo, margen, y);
-        y += 3.6;
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(85, 85, 85);
-        doc.text(lineas, margen, y);
-        y += lineas.length * 3.4 + 3;
       }
 
       if (prueba.observacionGeneral) {
-        doc.setFont('helvetica', 'italic');
-        doc.setFontSize(7.5);
-        doc.setTextColor(50, 50, 50);
-        const texto = doc.splitTextToSize(
-          `Observación: ${prueba.observacionGeneral}`,
-          anchoPagina - margen * 2,
+        y = this.dibujarBloquePaginado(
+          doc, 'Observación:', prueba.observacionGeneral, y, margen,
+          anchoPagina, altoPagina - margenInferiorTabla, crearPaginaContinuacion,
         );
-        doc.text(texto, margen, y);
-        y += texto.length * 3.6 + 2;
       }
     });
 
-    // ====== Pie de página ======
+    // ====== Firma de responsabilidad vinculada a la liberación ======
+    const firmaRespuesta = await firstValueFrom(this._http.post<IFirmasInformePdfResponse>(
+      `${environment.baseUrl}/api/resultadoLaboratorio/entrega/solicitud/${informe.solicitud.solicitudAtencionId}/firmas-pdf`,
+      { resultados: pruebas.map((prueba) => ({ _id: prueba._id, versionResultado: prueba.versionResultado })) },
+      { headers: this._auth.getAuthHeaders() },
+    ));
+    if (!firmaRespuesta.ok) {
+      throw new Error('No se pudo verificar la firma del informe');
+    }
+
+    const limitePie = modo === 'DIGITAL' ? altoPagina - 32 : altoPagina - 20;
+    for (const firma of firmaRespuesta.firmas) {
+      if (!firma.imagenPngBase64) {
+        throw new Error('La firma del profesional está incompleta');
+      }
+      if (y + 38 > limitePie) {
+        doc.addPage();
+        this.aplicarPlantillaPagina(doc, modo);
+        y = this.dibujarCabeceraPrincipal(doc, informe, modo, logoImpresion) + 7;
+      }
+
+      y += 5;
+      const centroX = anchoPagina / 2;
+      const imagenDataUrl = `data:image/png;base64,${firma.imagenPngBase64}`;
+      const medidaFirma = this.calcularMedidasFirma(doc, imagenDataUrl, 44, 15);
+      const imagenX = centroX - medidaFirma.ancho / 2;
+      doc.addImage(imagenDataUrl, 'PNG', imagenX, y, medidaFirma.ancho, medidaFirma.alto);
+      y += medidaFirma.alto + 2.4;
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8);
+      doc.setTextColor(20, 20, 20);
+      doc.text(this.nombreFirmanteInforme(firma), centroX, y, { align: 'center' });
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7);
+      for (const linea of [this.descripcionProfesionFirma(firma), this.descripcionRegistrosFirma(firma)].filter(Boolean)) {
+        y += 4.1;
+        doc.text(linea, centroX, y, { align: 'center', maxWidth: anchoPagina - 40 });
+      }
+
+      if (firmaRespuesta.firmas.length > 1) {
+        y += 3.5;
+        doc.setFontSize(6.5);
+        doc.text(`Pruebas: ${firma.pruebas.join(', ')}`, centroX, y, { align: 'center', maxWidth: anchoPagina - 36 });
+      }
+      y += 3;
+    }
+
+    if (firmaRespuesta.pruebasSinFirma.length) {
+      if (y + 12 > limitePie) {
+        doc.addPage();
+        this.aplicarPlantillaPagina(doc, modo);
+        y = this.dibujarCabeceraPrincipal(doc, informe, modo, logoImpresion) + 7;
+      }
+      doc.setFont('helvetica', 'italic');
+      doc.setFontSize(7);
+      doc.setTextColor(75, 75, 75);
+      doc.text('Pruebas sin firma gráfica asociada: ' + firmaRespuesta.pruebasSinFirma.join(', '),
+        margen, y + 5, { maxWidth: anchoPagina - margen * 2 });
+      y += 12;
+    }
+
+    // ====== Emitir registro verificable del conjunto seleccionado ======
+    const registro = await firstValueFrom(
+      this._http.post<IRegistroInformeVerificable>(
+        `${environment.baseUrl}/api/resultadoLaboratorio/entrega/solicitud/${informe.solicitud.solicitudAtencionId}/informes-verificables`,
+        {
+          resultados: pruebas.map((prueba) => ({
+            _id: prueba._id,
+            versionResultado: Number(prueba.versionResultado),
+          })),
+        },
+        { headers: this._auth.getAuthHeaders() },
+      ),
+    );
+
+    if (!registro.ok || !registro.codigoInforme ||
+        !/^[a-f0-9]{64}$/i.test(registro.tokenVerificacion || '')) {
+      throw new Error('No se pudo registrar la verificación del informe');
+    }
+
+    // ====== QR de autenticidad sin acceso a datos clínicos ======
+    await this.dibujarQrDeVerificacion(doc, registro, modo, informe, logoImpresion, y);
+
+    // ====== Tipo oficial de informe registrado por el backend ======
     const paginas = doc.getNumberOfPages();
     const generado = this.formatearFechaHora(new Date());
 
     for (let pagina = 1; pagina <= paginas; pagina += 1) {
       doc.setPage(pagina);
+      this.dibujarTipoInforme(doc, informe, registro.tipoInforme);
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(7);
       doc.setTextColor(70, 70, 70);
@@ -511,6 +590,49 @@ export class InformeLaboratorioPdfService {
     }
 
     return doc;
+  }
+
+  // ====== Dibujar QR privado de verificación en la última página ======
+  private async dibujarQrDeVerificacion(
+    doc: jsPDF,
+    registro: IRegistroInformeVerificable,
+    modo: ModoInformePdf,
+    informe: IInformeEntregable,
+    logoImpresion: string | null,
+    yFinContenido: number,
+  ): Promise<void> {
+    const anchoPagina = doc.internal.pageSize.getWidth();
+    const altoPagina = doc.internal.pageSize.getHeight();
+    const lado = 32;
+    const x = anchoPagina - 17 - lado;
+    const yQr = modo === 'DIGITAL' ? altoPagina - 72 : altoPagina - 63;
+
+    // ====== Evitar cubrir tablas, comentarios o firmas ======
+    if (yFinContenido + 5 > yQr) {
+      doc.addPage();
+      this.aplicarPlantillaPagina(doc, modo);
+      this.dibujarCabeceraPrincipal(doc, informe, modo, logoImpresion);
+    }
+
+    // ====== El token solo se coloca en la URL del QR ======
+    const url = `${window.location.origin}/resultados/verificar#t=${encodeURIComponent(registro.tokenVerificacion)}`;
+    const qrPng = await QRCode.toDataURL(url, {
+      errorCorrectionLevel: 'M',
+      margin: 2,
+      width: 360,
+      color: { dark: '#11203A', light: '#FFFFFF' },
+    });
+
+    doc.addImage(qrPng, 'PNG', x, yQr, lado, lado);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(6.5);
+    doc.setTextColor(28, 45, 69);
+    doc.text('Verificar autenticidad', x + lado / 2, yQr + lado + 3.5, { align: 'center' });
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(5.9);
+    doc.text(registro.codigoInforme, x + lado / 2, yQr + lado + 6.5, {
+      align: 'center', maxWidth: 41,
+    });
   }
 
   // ====== Plantilla según destino ======
@@ -620,6 +742,20 @@ export class InformeLaboratorioPdfService {
     doc.text('Solicitud:', margen, y);
     doc.setFont('helvetica', 'normal');
     doc.text(informe.solicitud.codSolicitud || '-', margen + 22, y);
+
+    // ====== Identificación del laboratorio junto a la solicitud ======
+    const codigoLaboratorio = String(informe.solicitud.codigoLaboratorio ?? '').trim();
+    if (codigoLaboratorio) {
+      doc.setFont('helvetica', 'bold');
+      doc.text('Código Lab.:', 127, y);
+      doc.setFont('helvetica', 'normal');
+      doc.text(codigoLaboratorio, 154, y, { maxWidth: 39 });
+    }
+
+    // ====== Reservar espacio para el estado oficial del informe ======
+    y = this.obtenerYTipoInforme(informe);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Tipo de informe:', margen, y);
     y += 4.5;
 
     doc.setDrawColor(145);
@@ -627,6 +763,26 @@ export class InformeLaboratorioPdfService {
     doc.line(margen, y, anchoPagina - margen, y);
 
     return y + 5;
+  }
+
+  // ====== Posición del tipo de informe en ambas modalidades ======
+  private obtenerYTipoInforme(informe: IInformeEntregable): number {
+    const tieneEmpresa = informe.solicitud.origenAtencion === 'EMPRESA'
+      && Boolean(informe.solicitud.empresa);
+    return 43 + 15 + (tieneEmpresa ? 5 : 0) + 5;
+  }
+
+  // ====== Mostrar estado respaldado por el registro verificable ======
+  private dibujarTipoInforme(
+    doc: jsPDF,
+    informe: IInformeEntregable,
+    tipo: IRegistroInformeVerificable['tipoInforme'],
+  ): void {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8.3);
+    doc.setTextColor(20, 45, 75);
+    doc.text(`INFORME ${tipo}`, 49, this.obtenerYTipoInforme(informe));
+    doc.setTextColor(0, 0, 0);
   }
 
   // ====== Cabecera de prueba ======
@@ -664,18 +820,14 @@ export class InformeLaboratorioPdfService {
     doc.setFontSize(7.5);
     doc.setTextColor(65, 65, 65);
 
-    const muestrasPrueba = Array.isArray(prueba.muestras)
-      ? prueba.muestras.filter(Boolean)
-      : [];
-
-    if (muestrasPrueba.length > 0) {
-      const lineasMuestra = doc.splitTextToSize(
-        `Muestra: ${muestrasPrueba.join(', ')}`,
-        anchoPagina - margen * 2,
-      );
-      doc.text(lineasMuestra, margen, y);
-      y += lineasMuestra.length * 3.1;
+    // ====== Unificar nombre y fechas de las muestras ======
+    doc.setFontSize(7.2);
+    const lineasMuestras = this.obtenerLineasResumenMuestras(doc, prueba, anchoPagina, margen);
+    if (lineasMuestras.length > 0) {
+      doc.text(lineasMuestras, margen, y);
+      y += lineasMuestras.length * 3.1;
     }
+    doc.setFontSize(7.5);
 
     doc.text(
       `Fecha de validación: ${this.formatearFechaHoraValor(prueba.fechaValidacion)}`,
@@ -684,6 +836,166 @@ export class InformeLaboratorioPdfService {
     );
 
     return y + 2.3;
+  }
+
+  // ====== Resumir tipos y fechas de muestra en una sola línea ======
+  private obtenerLineasResumenMuestras(
+    doc: jsPDF,
+    prueba: IPruebaInformeEntrega,
+    anchoPagina: number,
+    margen: number,
+  ): string[] {
+    const normalizarNombre = (valor: unknown): string =>
+      String(valor ?? '').trim().replace(/\s+/g, ' ');
+    const claveNombre = (valor: string): string => valor.toLocaleUpperCase('es-PE');
+    const nombresOriginales = (prueba.muestras ?? [])
+      .map(normalizarNombre)
+      .filter(Boolean);
+
+    // ====== Agrupar recipientes con el mismo momento operativo ======
+    const grupos = new Map<string, string[]>();
+    const nombresFechados = new Set<string>();
+    for (const muestra of prueba.fechasMuestras ?? []) {
+      const nombre = normalizarNombre(muestra.nombreMuestra);
+      if (!nombre) continue;
+
+      const fechas: string[] = [];
+      const fechaUnificada = muestra.tomaRecepcionUnificada
+        ? (muestra.fechaTomaRecepcion || muestra.fechaRecepcion)
+        : null;
+      if (fechaUnificada) {
+        fechas.push(`Toma/recepción: ${this.formatearFechaHoraMuestra(fechaUnificada)}`);
+      } else {
+        if (muestra.fechaRecoleccion) {
+          fechas.push(`Fecha de toma: ${this.formatearFechaMuestra(muestra.fechaRecoleccion)}`);
+        }
+        if (muestra.fechaRecepcion) {
+          fechas.push(`Recepción: ${this.formatearFechaHoraMuestra(muestra.fechaRecepcion)}`);
+        }
+      }
+
+      const detalle = fechas.join(' · ');
+      const nombres = grupos.get(detalle) ?? [];
+      if (!nombres.some((registrado) => claveNombre(registrado) === claveNombre(nombre))) {
+        nombres.push(nombre);
+      }
+      grupos.set(detalle, nombres);
+      nombresFechados.add(claveNombre(nombre));
+    }
+
+    const segmentos = [...grupos.entries()].map(([detalle, nombres]) =>
+      `${nombres.join(', ')}${detalle ? ` · ${detalle}` : ''}`,
+    );
+    const nombresSinFecha = [...new Set(nombresOriginales)]
+      .filter((nombre) => !nombresFechados.has(claveNombre(nombre)));
+    if (nombresSinFecha.length) {
+      segmentos.push(nombresSinFecha.join(', '));
+    }
+    if (!segmentos.length) return [];
+
+    // ====== Ajustar ancho solo cuando la línea realmente no cabe ======
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.2);
+    return doc.splitTextToSize(
+      `Muestra: ${segmentos.join(' | ')}`,
+      anchoPagina - margen * 2,
+    ) as string[];
+  }
+
+  // ====== Formato de fechas operativas en hora de Perú ======
+  private formatearFechaMuestra(valor: string | Date): string {
+    const fecha = new Date(valor);
+    if (Number.isNaN(fecha.getTime())) return '-';
+    return new Intl.DateTimeFormat('es-PE', {
+      timeZone: 'America/Lima',
+      day: '2-digit', month: '2-digit', year: 'numeric',
+    }).format(fecha);
+  }
+
+  private formatearFechaHoraMuestra(valor: string | Date): string {
+    const fecha = new Date(valor);
+    if (Number.isNaN(fecha.getTime())) return '-';
+    const partes = new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'America/Lima',
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+    }).formatToParts(fecha);
+    const d = Object.fromEntries(partes.map((parte) => [parte.type, parte.value]));
+    return `${d['day']}/${d['month']}/${d['year']} ${d['hour']}:${d['minute']}:${d['second']}`;
+  }
+
+  // ====== Medir cabecera antes de cambiar de página ======
+  private estimarAltoCabeceraPrueba(
+    doc: jsPDF,
+    prueba: IPruebaInformeEntrega,
+    anchoPagina: number,
+    margen: number,
+  ): number {
+    const lineasMuestras = this.obtenerLineasResumenMuestras(doc, prueba, anchoPagina, margen);
+    return 4.2 + lineasMuestras.length * 3.1 + 2.3;
+  }
+
+  // ====== Indicar prueba continuada sin repetir fechas ni información inicial ======
+  private dibujarTituloPruebaContinuacion(
+    doc: jsPDF,
+    prueba: IPruebaInformeEntrega,
+    y: number,
+    margen: number,
+  ): number {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.setTextColor(40, 40, 40);
+    doc.text(`${prueba.codPruebaLab} - ${prueba.nombrePruebaLab} (continuación)`, margen, y);
+    return y + 6;
+  }
+
+  // ====== Mantener juntas las interpretaciones cortas y dividir las extensas ======
+  private dibujarBloquePaginado(
+    doc: jsPDF,
+    titulo: string,
+    texto: string,
+    yInicial: number,
+    margen: number,
+    anchoPagina: number,
+    limite: number,
+    nuevaPagina: () => number,
+  ): number {
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.2);
+    const lineas = doc.splitTextToSize(texto, anchoPagina - margen * 2) as string[];
+    if (!lineas.length) return yInicial;
+    const altoTotal = 3.6 + lineas.length * 3.4 + 3;
+    let y = yInicial;
+
+    // ====== Si cabe completo en la siguiente página, evitar fragmentarlo ======
+    if (y + altoTotal > limite && altoTotal <= limite - 105) {
+      y = nuevaPagina();
+    }
+
+    let indice = 0;
+    while (indice < lineas.length) {
+      if (y + 10 > limite) y = nuevaPagina();
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7.2);
+      doc.setTextColor(55, 55, 55);
+      doc.text(indice === 0 ? titulo : `${titulo} (continuación)`, margen, y);
+      y += 3.6;
+
+      const disponibles = Math.floor((limite - y - 2) / 3.4);
+      if (disponibles < 1) {
+        y = nuevaPagina();
+        continue;
+      }
+      const bloque = lineas.slice(indice, indice + disponibles);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7.2);
+      doc.setTextColor(85, 85, 85);
+      doc.text(bloque, margen, y);
+      y += bloque.length * 3.4 + 3;
+      indice += bloque.length;
+    }
+    return y;
   }
 
   private nombrePacienteInforme(
@@ -1227,6 +1539,95 @@ export class InformeLaboratorioPdfService {
       .replace(/^_+|_+$/g, '')
       .slice(0, 80)
       .toUpperCase();
+  }
+
+  // ====== Respetar proporción original de la firma ======
+  private calcularMedidasFirma(
+    doc: jsPDF,
+    imagenDataUrl: string,
+    maxAncho: number,
+    maxAlto: number,
+  ): { ancho: number; alto: number } {
+    try {
+      const propiedades = doc.getImageProperties(imagenDataUrl);
+      const anchoOriginal = Number(propiedades.width) || maxAncho;
+      const altoOriginal = Number(propiedades.height) || maxAlto;
+      const escala = Math.min(maxAncho / anchoOriginal, maxAlto / altoOriginal);
+      return {
+        ancho: Number((anchoOriginal * escala).toFixed(2)),
+        alto: Number((altoOriginal * escala).toFixed(2)),
+      };
+    } catch {
+      return { ancho: maxAncho, alto: maxAlto };
+    }
+  }
+
+  // ====== Nombre formal del firmante ======
+  private nombreFirmanteInforme(firma: {
+    nombreCompleto?: string | null;
+    nombres?: string | null;
+    apellidoPaterno?: string | null;
+    apellidoMaterno?: string | null;
+    sexo?: string | null;
+    profesion?: string | null;
+    tratamiento?: string | null;
+  }): string {
+    const titulo = String(firma.tratamiento ?? '').trim();
+    const apellidos = [firma.apellidoPaterno, firma.apellidoMaterno]
+      .map((valor) => String(valor ?? '').trim())
+      .filter(Boolean)
+      .join(' ');
+    const nombres = String(firma.nombres ?? '').trim();
+
+    const nombreOrdenado = [apellidos, nombres]
+      .filter(Boolean)
+      .join(' ')
+      .trim();
+
+    const nombreBase = nombreOrdenado || String(firma.nombreCompleto ?? '').trim() || '-';
+    return `${titulo} ${this.formatearNombrePropio(nombreBase)}`.trim();
+  }
+
+  private descripcionProfesionFirma(firma: {
+    profesion?: string | null;
+    especialidad?: string | null;
+    mostrarProfesion?: boolean;
+    mostrarEspecialidad?: boolean;
+  }): string {
+    const profesion = firma.mostrarProfesion === false ? '' :
+      this.formatearNombrePropio(String(firma.profesion ?? '').trim());
+    const especialidad = firma.mostrarEspecialidad === false ? '' :
+      this.formatearNombrePropio(String(firma.especialidad ?? '').trim());
+    return [profesion, especialidad].filter(Boolean).join(' / ');
+  }
+
+  private descripcionRegistrosFirma(firma: {
+    nroColegiatura?: string | null;
+    rne?: string | null;
+    siglaColegiatura?: string | null;
+    siglaEspecialidad?: string | null;
+    mostrarColegiatura?: boolean;
+    mostrarRne?: boolean;
+  }): string {
+    const codigos: string[] = [];
+    const colegiatura = String(firma.nroColegiatura ?? '').trim();
+    const rne = String(firma.rne ?? '').trim();
+    if (firma.mostrarColegiatura !== false && colegiatura) {
+      const sigla = String(firma.siglaColegiatura || 'Colegiatura').trim();
+      codigos.push(`${sigla}. ${colegiatura}`);
+    }
+    if (firma.mostrarRne !== false && rne) {
+      const sigla = String(firma.siglaEspecialidad || 'RNE').trim();
+      codigos.push(`${sigla}. ${rne}`);
+    }
+    return codigos.join('    ');
+  }
+
+  private formatearNombrePropio(valor: string): string {
+    return String(valor || '')
+      .toLowerCase()
+      .replace(/(^|\s|-|\/)([a-záéíóúñ])/g, (_, separador, letra) => `${separador}${letra.toUpperCase()}`)
+      .trim();
   }
 
   private async cargarImagen(url: string): Promise<string | null> {

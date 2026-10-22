@@ -7,7 +7,10 @@
 .formulario-programacion {
   display: flex;
   flex-direction: column;
-  max-height: 95vh;
+  // ====== La cabecera y las acciones permanecen fijas ======
+  max-height: 90vh;
+  min-height: 0;
+  overflow: hidden;
   background: #f7f9fd;
 }
 
@@ -42,14 +45,19 @@
 .contenido-dialogo.mat-mdc-dialog-content {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 12px 18px;
+  flex: 1 1 auto;
+  min-height: 0;
+  gap: 8px;
+  padding: 10px 16px;
   max-height: none;
   overflow-y: auto;
+  overscroll-behavior-y: contain;
   overflow-x: hidden;
 }
 
 .tarjeta-formulario {
+  flex: 0 0 auto;
+  min-height: min-content;
   border: 1px solid #dce5f2;
   border-radius: 11px;
   overflow: hidden;
@@ -61,7 +69,7 @@
   display: flex;
   align-items: center;
   gap: 9px;
-  padding: 10px 15px;
+  padding: 8px 14px;
   border-bottom: 1px solid #dae6f5;
   background: #eef4fc;
   color: #174476;
@@ -72,7 +80,7 @@
 }
 
 .cuerpo-seccion {
-  padding: 12px 15px 11px;
+  padding: 10px 14px 10px;
 }
 
 // ====== Búsqueda y vínculo del paciente ======
@@ -82,8 +90,8 @@
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 12px;
-  margin-bottom: 14px;
-  padding: 10px 12px;
+  margin-bottom: 10px;
+  padding: 8px 11px;
   background: #f6f9fe;
   border: 1px solid #e0eaf6;
   border-radius: 9px;
@@ -156,7 +164,7 @@ mat-form-field { width: 100%; min-width: 0; }
 .grilla-campos {
   display: grid;
   align-items: start;
-  gap: 10px;
+  gap: 8px;
 }
 
 .grilla-identidad {
@@ -184,7 +192,7 @@ mat-form-field { width: 100%; min-width: 0; }
 
 // ====== Teléfonos ======
 .telefonos-seccion {
-  padding: 10px 12px 5px;
+  padding: 8px 11px 4px;
   margin-top: 1px;
   border: 1px solid #e2e9f3;
   border-radius: 9px;
@@ -197,7 +205,7 @@ mat-form-field { width: 100%; min-width: 0; }
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 8px;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 
   > span { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #174476; font-weight: 500; }
   mat-icon { width: 16px; height: 16px; font-size: 16px; }
@@ -366,7 +374,45 @@ mat-form-field { width: 100%; min-width: 0; }
   mat-icon { width: 16px; height: 16px; font-size: 16px; }
 }
 .nota-vinculo {
-  margin: -5px 0 12px;
+  margin: -2px 0 9px;
   color: #64748b;
   font-size: 12px;
+}
+
+// ====== Actualización controlada de datos de paciente vinculado ======
+.nota-vinculo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  mat-icon { font-size: 16px; width: 16px; height: 16px; flex: 0 0 16px; }
+}
+.guardar-contacto {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 11px;
+  margin-top: 8px;
+  border: 1px solid #dce7f3;
+  border-radius: 8px;
+  background: #f5f9fe;
+}
+.guardar-contacto-mensaje {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #44617e;
+  font-size: 12px;
+  mat-icon { width: 17px; height: 17px; font-size: 17px; }
+}
+.btn-actualizar-paciente.mat-mdc-outlined-button {
+  min-height: 35px;
+  border-radius: 8px;
+  border-color: #8fb7df;
+  color: #075bbb;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: normal;
+  &:hover:not(:disabled) { background: #e6f1fc; }
 }

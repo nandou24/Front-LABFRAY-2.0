@@ -26,6 +26,7 @@ import {
   IValidarResultadosMasivosDTO,
   IValidarResultadosMasivosResponse,
   IReabrirResultadoResponse,
+  IComparacionHistoricaResultadoResponse,
 } from '../../../models/Gestion/resultadoLaboratorio.models';
 
 @Injectable({
@@ -118,6 +119,17 @@ export class ResultadoLaboratorioService {
       {
         headers: this._auth.getAuthHeaders(),
       },
+    );
+  }
+
+  // ====== Consulta de resultados históricos comparables ======
+
+  obtenerComparacionHistorica(
+    resultadoLaboratorioId: string,
+  ): Observable<IComparacionHistoricaResultadoResponse> {
+    return this._http.get<IComparacionHistoricaResultadoResponse>(
+      `${this.apiUrl}/${resultadoLaboratorioId}/historico`,
+      { headers: this._auth.getAuthHeaders() },
     );
   }
 

@@ -41,11 +41,22 @@
     <div class="estacion-grid">
       <!-- ====== Card 1: todas las pruebas ====== -->
       <aside class="panel-pruebas">
-        <div class="panel-titulo">
-          <mat-icon>science</mat-icon>
-          <div><h5>Pruebas solicitadas</h5><small>Seguimiento por recipiente</small></div>
+        <div class="panel-identificacion-resumen">
+          <div class="panel-identificacion-textos">
+            <div class="panel-titulo">
+              <mat-icon>science</mat-icon>
+              <div><h5>Pruebas solicitadas</h5><small>Seguimiento por recipiente</small></div>
+            </div>
+            <div class="pruebas-contador">{{ totalPruebasCubiertas }} / {{ item.solicitud.servicios.length }} con toma completa</div>
+          </div>
+          <app-foto-paciente-miniatura
+            tamano="grande"
+            [pacienteId]="item.solicitud.paciente.clienteId"
+            [hc]="item.solicitud.paciente.hc"
+            [programacionEmpresaId]="item.solicitud.empresa?.programacionEmpresaId"
+            [solicitudAtencionId]="item.solicitud._id">
+          </app-foto-paciente-miniatura>
         </div>
-        <div class="pruebas-contador">{{ totalPruebasCubiertas }} / {{ item.solicitud.servicios.length }} con toma completa</div>
         <div class="lista-pruebas">
           <div *ngFor="let servicio of item.solicitud.servicios" class="prueba-item"
             [class.prueba-relacionada]="esPruebaResaltada(servicio)"

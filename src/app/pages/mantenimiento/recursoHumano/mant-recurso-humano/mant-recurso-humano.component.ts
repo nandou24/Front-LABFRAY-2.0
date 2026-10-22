@@ -33,6 +33,7 @@ import {
 import { MatTabsModule } from '@angular/material/tabs';
 
 import Swal from 'sweetalert2';
+import { firstValueFrom } from 'rxjs';
 
 import { DateAdapter, MAT_DATE_LOCALE } from '@angular/material/core';
 import { RolesService } from '../../../../services/permisos/roles/roles.service';
@@ -44,7 +45,7 @@ import { EspecialidadService } from '../../../../services/mantenimiento/especial
 import { FechaValidatorService } from '../../../../services/utilitarios/validators/fechasValidator/fecha-validator.service';
 import { DocValidatorService } from '../../../../services/utilitarios/validators/docValidator/doc-validator.service';
 import { IRol } from '../../../../models/permisos/roles.models';
-import { IRecHumano } from '../../../../models/Mantenimiento/recursoHumano.models';
+import { IRecHumano, IPresentacionFirmaRRHH } from '../../../../models/Mantenimiento/recursoHumano.models';
 
 @Component({
   selector: 'app-mant-recurso-humano',
@@ -73,6 +74,7 @@ import { IRecHumano } from '../../../../models/Mantenimiento/recursoHumano.model
   styleUrl: './mant-recurso-humano.component.scss',
 })
 export class MantRecursoHumanoComponent implements OnInit, AfterViewInit {
+  private _fb = inject(FormBuilder);
   private _rolesService = inject(RolesService);
   private _recHumanoService = inject(RecursoHumanoService);
   private _ubigeoService = inject(UbigeoService);
@@ -80,6 +82,356 @@ export class MantRecursoHumanoComponent implements OnInit, AfterViewInit {
   private _especialidadService = inject(EspecialidadService);
   private readonly _adapter =
     inject<DateAdapter<unknown, unknown>>(DateAdapter);
+
+  // ====== Firma de informes: administración independiente ======
+  readonly serviciosFirmables = [
+    'Laboratorio', 'Ecografía', 'Rayos X', 'Consulta', 'Procedimiento',
+  ];
+  profesionalFirma: IRecHumano | null = null;
+  imagenFirmaPreview: string | null = null;
+  archivoFirmaPendiente: File | null = null;
+  guardandoFirma = false;
+  cargandoImagenFirma = false;
+  estadoImagenFirma = '';
+  private solicitudImagenFirma = 0;
+  perfilesFirma: IPresentacionFirmaRRHH[] = [];
+  perfilFirmaActualId = '';
+  especialidadesCatalogoFirma: any[] = [];
+  private archivosPendientesFirma = new Map<string, File>();
+  private previewsPendientesFirma = new Map<string, string>();
+  readonly tratamientosFirma = ['Dr.', 'Dra.', 'Lic.', 'Licda.', 'Mg.', 'Mgt.', 'Obst.', 'Enf.', 'Blgo.', 'Q.F.', 'Tec.', 'Otro'];
+  readonly formFirmaLaboratorio = this._fb.nonNullable.group({
+    habilitado: false,
+    profesionRecursoId: '',
+    serviciosAutorizados: this._fb.nonNullable.control<string[]>([]),
+    predeterminadoLaboratorio: false,
+    predeterminadoGeneral: false,
+    referenciaAutorizacion: '',
+    etiqueta: 'Firma profesional',
+    tratamiento: '',
+    tratamientoPersonalizado: '',
+    especialidadId: '',
+    mostrarProfesion: true,
+    mostrarEspecialidad: true,
+    mostrarColegiatura: true,
+    mostrarRne: true,
+    siglaColegiatura: 'Colegiatura',
+    siglaEspecialidad: 'RNE',
+  });
+
+  // ====== Formatos de firma independientes del maestro profesional ======
+  private crearPresentacionFirma(profesionRecursoId = ''): IPresentacionFirmaRRHH {
+    return {
+      perfilId: crypto.randomUUID(), etiqueta: 'Nueva firma', tratamiento: '',
+      profesionRecursoId, especialidadId: null,
+      mostrarProfesion: true, mostrarEspecialidad: true,
+      mostrarColegiatura: true, mostrarRne: true,
+      siglaColegiatura: 'Colegiatura', siglaEspecialidad: 'RNE',
+      serviciosAutorizados: ['Laboratorio'], esPrincipal: true,
+    };
+  }
+
+  private presentacionActiva(): IPresentacionFirmaRRHH | undefined {
+    return this.perfilesFirma.find((item) => item.perfilId === this.perfilFirmaActualId);
+  }
+
+  private guardarEdicionPerfilEnMemoria(): void {
+    const perfil = this.presentacionActiva();
+    if (!perfil) return;
+    const datos = this.formFirmaLaboratorio.getRawValue();
+    perfil.etiqueta = datos.etiqueta.trim();
+    perfil.tratamiento = datos.tratamiento === 'Otro' ? datos.tratamientoPersonalizado.trim() : datos.tratamiento.trim();
+    perfil.profesionRecursoId = datos.profesionRecursoId;
+    perfil.especialidadId = datos.especialidadId || null;
+    perfil.serviciosAutorizados = [...datos.serviciosAutorizados];
+    perfil.mostrarProfesion = datos.mostrarProfesion;
+    perfil.mostrarEspecialidad = datos.mostrarEspecialidad;
+    perfil.mostrarColegiatura = datos.mostrarColegiatura;
+    perfil.mostrarRne = datos.mostrarRne;
+    perfil.siglaColegiatura = datos.siglaColegiatura.trim();
+    perfil.siglaEspecialidad = datos.siglaEspecialidad.trim();
+    perfil.esPrincipal = datos.predeterminadoLaboratorio;
+    if (perfil.esPrincipal) {
+      this.perfilesFirma.forEach((otra) => {
+        if (otra.perfilId !== perfil.perfilId) otra.esPrincipal = false;
+      });
+    }
+  }
+
+  seleccionarPerfilFirma(perfilId: string, guardarAnterior = true): void {
+    if (guardarAnterior) this.guardarEdicionPerfilEnMemoria();
+    this.perfilFirmaActualId = perfilId;
+    const perfil = this.presentacionActiva();
+    if (!perfil || !this.profesionalFirma) return;
+    this.formFirmaLaboratorio.patchValue({
+      etiqueta: perfil.etiqueta,
+      tratamiento: this.tratamientosFirma.includes(perfil.tratamiento) ? perfil.tratamiento : (perfil.tratamiento ? 'Otro' : ''),
+      tratamientoPersonalizado: this.tratamientosFirma.includes(perfil.tratamiento) ? '' : perfil.tratamiento,
+      profesionRecursoId: perfil.profesionRecursoId,
+      especialidadId: perfil.especialidadId ?? '',
+      serviciosAutorizados: [...perfil.serviciosAutorizados],
+      predeterminadoLaboratorio: perfil.esPrincipal,
+      mostrarProfesion: perfil.mostrarProfesion,
+      mostrarEspecialidad: perfil.mostrarEspecialidad,
+      mostrarColegiatura: perfil.mostrarColegiatura,
+      mostrarRne: perfil.mostrarRne,
+      siglaColegiatura: perfil.siglaColegiatura,
+      siglaEspecialidad: perfil.siglaEspecialidad,
+    });
+    this.cargarEspecialidadesFirma();
+    this.cargarImagenFirma(this.profesionalFirma.codRecHumano, perfilId);
+  }
+
+  agregarPerfilFirma(): void {
+    if (this.perfilesFirma.length >= 6) {
+      this.mostrarAlertaError('Máximo 6 presentaciones de firma por profesional');
+      return;
+    }
+    this.guardarEdicionPerfilEnMemoria();
+    const profesion = this.profesionesFirmante[0]?._id ?? '';
+    const nuevo = this.crearPresentacionFirma(profesion);
+    nuevo.esPrincipal = this.perfilesFirma.length === 0;
+    this.perfilesFirma.push(nuevo);
+    this.seleccionarPerfilFirma(nuevo.perfilId, false);
+  }
+
+  eliminarPerfilFirma(): void {
+    const perfil = this.presentacionActiva();
+    if (!perfil || this.perfilesFirma.length < 2) {
+      this.mostrarAlertaError('Debe conservar al menos una presentación');
+      return;
+    }
+    this.perfilesFirma = this.perfilesFirma.filter((item) => item.perfilId !== perfil.perfilId);
+    this.archivosPendientesFirma.delete(perfil.perfilId);
+    this.previewsPendientesFirma.delete(perfil.perfilId);
+    if (perfil.esPrincipal) this.perfilesFirma[0].esPrincipal = true;
+    this.seleccionarPerfilFirma(this.perfilesFirma[0].perfilId, false);
+  }
+
+  // ====== Especialidades reales de la profesión seleccionada ======
+  get especialidadesFirma(): Array<{ id: string; nombre: string; rne: string }> {
+    const id = this.formFirmaLaboratorio.controls.profesionRecursoId.value;
+    const profesion = this.profesionesFirmante.find((p) => String(p._id) === id);
+    return (profesion?.especialidades ?? []).map((esp: any) => ({
+      id: String(esp._id ?? ''),
+      nombre: this.especialidadesCatalogoFirma.find(
+        (item) => String(item._id) === String(esp.especialidadRef?._id ?? esp.especialidadRef),
+      )?.nombreEspecialidad ?? 'Especialidad registrada',
+      rne: String(esp.rne ?? ''),
+    }));
+  }
+
+  cargarEspecialidadesFirma(): void {
+    const id = this.formFirmaLaboratorio.controls.profesionRecursoId.value;
+    const profesion = this.profesionesFirmante.find((p) => String(p._id) === id);
+    const profesionMaestraId = String(profesion?.profesionRef?._id ?? profesion?.profesionRef ?? '');
+    if (!profesionMaestraId) { this.especialidadesCatalogoFirma = []; return; }
+    this._especialidadService.getEspecialidadesPorProfesion(profesionMaestraId).subscribe({
+      next: (datos) => { this.especialidadesCatalogoFirma = datos; },
+      error: () => { this.especialidadesCatalogoFirma = []; },
+    });
+  }
+
+  cambiarProfesionFirma(): void {
+    this.formFirmaLaboratorio.controls.especialidadId.setValue('');
+    this.cargarEspecialidadesFirma();
+  }
+
+  get nombrePrevisualizacionFirma(): string {
+    const r = this.profesionalFirma;
+    if (!r) return '';
+    const nombre = [r.apePatRecHumano, r.apeMatRecHumano, r.nombreRecHumano]
+      .filter(Boolean).join(' ').toLowerCase()
+      .replace(/(^|\s)([a-záéíóúñ])/g, (_, esp, letra) => `${esp}${letra.toUpperCase()}`);
+    const tituloSeleccionado = this.formFirmaLaboratorio.controls.tratamiento.value;
+    const titulo = tituloSeleccionado === 'Otro' ?
+      this.formFirmaLaboratorio.controls.tratamientoPersonalizado.value.trim() : tituloSeleccionado;
+    return `${titulo ? titulo + ' ' : ''}${nombre}`;
+  }
+
+  get profesionPrevisualizacionFirma(): string {
+    const form = this.formFirmaLaboratorio.controls;
+    if (!form.mostrarProfesion.value) return '';
+    const profesion = this.profesionesFirmante.find((p) => String(p._id) === form.profesionRecursoId.value);
+    return profesion ? this.nombreProfesionFirma(profesion) : '';
+  }
+
+  get especialidadPrevisualizacionFirma(): string {
+    if (!this.formFirmaLaboratorio.controls.mostrarEspecialidad.value) return '';
+    return this.especialidadesFirma.find(
+      (x) => x.id === this.formFirmaLaboratorio.controls.especialidadId.value,
+    )?.nombre ?? '';
+  }
+
+  get registrosPrevisualizacionFirma(): string {
+    const form = this.formFirmaLaboratorio.controls;
+    const profesion = this.profesionesFirmante.find((p) => String(p._id) === form.profesionRecursoId.value);
+    const registro = form.mostrarColegiatura.value && profesion?.nroColegiatura ?
+      `${form.siglaColegiatura.value}. ${profesion.nroColegiatura}` : '';
+    const espec = this.especialidadesFirma.find((x) => x.id === form.especialidadId.value);
+    const especialidad = form.mostrarRne.value && espec?.rne ?
+      `${form.siglaEspecialidad.value}. ${espec.rne}` : '';
+    return [registro, especialidad].filter(Boolean).join(' · ');
+  }
+
+  get profesionesFirmante() {
+    return (this.profesionalFirma?.profesionesRecurso ?? []).filter(
+      (p) => Boolean(String(p.nroColegiatura ?? '').trim()),
+    );
+  }
+
+  nombreProfesionFirma(profesion: any): string {
+    const id = String(profesion?.profesionRef?._id ?? profesion?.profesionRef ?? '');
+    return this.profesiones.find((p) => String(p._id) === id)?.nombreProfesion ?? 'Profesión registrada';
+  }
+
+  // ====== Verificar cabecera PNG recibida ======
+  private async esImagenPng(archivo: Blob): Promise<boolean> {
+    if (archivo.type !== 'image/png' || archivo.size < 40) return false;
+    const cabecera = new Uint8Array(await archivo.slice(0, 8).arrayBuffer());
+    const firmaPng = [137, 80, 78, 71, 13, 10, 26, 10];
+    return firmaPng.every((valor, indice) => cabecera[indice] === valor);
+  }
+
+  // ====== Recuperar y previsualizar firma desde MongoDB ======
+  private async cargarImagenFirma(codigo: string, perfilId = 'legacy'): Promise<void> {
+    const solicitud = ++this.solicitudImagenFirma;
+    this.imagenFirmaPreview = this.previewsPendientesFirma.get(perfilId) ?? null;
+    if (this.imagenFirmaPreview) {
+      this.cargandoImagenFirma = false;
+      this.estadoImagenFirma = 'Vista previa local: pendiente de guardar';
+      return;
+    }
+    this.estadoImagenFirma = 'Consultando imagen registrada...';
+    this.cargandoImagenFirma = true;
+    try {
+      const archivo = await firstValueFrom(this._recHumanoService.consultarImagenFirma(codigo, perfilId));
+      if (solicitud !== this.solicitudImagenFirma ||
+          this.profesionalFirma?.codRecHumano !== codigo || this.perfilFirmaActualId !== perfilId) return;
+      if (!(await this.esImagenPng(archivo))) {
+        throw new Error('El servidor no devolvió una imagen PNG válida');
+      }
+      const lector = new FileReader();
+      lector.onload = () => {
+        if (solicitud !== this.solicitudImagenFirma ||
+            this.profesionalFirma?.codRecHumano !== codigo || this.perfilFirmaActualId !== perfilId) return;
+        const vista = String(lector.result ?? '');
+        if (!vista.startsWith('data:image/png;base64,')) {
+          this.estadoImagenFirma = 'No fue posible leer la firma almacenada';
+          this.imagenFirmaPreview = null;
+          return;
+        }
+        this.imagenFirmaPreview = vista;
+        this.estadoImagenFirma = 'Firma PNG registrada en MongoDB';
+      };
+      lector.onerror = () => {
+        if (solicitud === this.solicitudImagenFirma) {
+          this.imagenFirmaPreview = null;
+          this.estadoImagenFirma = 'Error al leer la imagen de firma';
+        }
+      };
+      lector.readAsDataURL(archivo);
+    } catch (error: any) {
+      if (solicitud !== this.solicitudImagenFirma ||
+          this.profesionalFirma?.codRecHumano !== codigo || this.perfilFirmaActualId !== perfilId) return;
+      this.imagenFirmaPreview = null;
+      let detalle: { codigo?: string; msg?: string } = {};
+      if (error?.error instanceof Blob) {
+        try { detalle = JSON.parse(await error.error.text()); } catch { detalle = {}; }
+      }
+      if (error?.status === 404 && detalle.codigo === 'FIRMA_SIN_IMAGEN') {
+        this.estadoImagenFirma = 'Aún no hay una firma PNG registrada';
+      } else if (error?.status === 403) {
+        this.estadoImagenFirma = 'No tiene permiso para consultar esta firma';
+      } else {
+        this.estadoImagenFirma = detalle.msg || error?.message ||
+          'No se pudo recuperar la imagen de firma';
+      }
+    } finally {
+      if (solicitud === this.solicitudImagenFirma) {
+        this.cargandoImagenFirma = false;
+      }
+    }
+  }
+
+  seleccionarImagenFirma(evento: Event): void {
+    const input = evento.target as HTMLInputElement;
+    const archivo = input.files?.[0] ?? null;
+    if (!archivo) return;
+    if (archivo.type !== 'image/png' || archivo.size > 300 * 1024) {
+      this.mostrarAlertaError('La firma debe ser PNG transparente y pesar máximo 300 KB');
+      input.value = '';
+      return;
+    }
+    const solicitud = ++this.solicitudImagenFirma;
+    const codigo = this.profesionalFirma?.codRecHumano;
+    const perfilId = this.perfilFirmaActualId;
+    this.cargandoImagenFirma = false;
+    this.archivoFirmaPendiente = archivo;
+    this.archivosPendientesFirma.set(this.perfilFirmaActualId, archivo);
+    this.estadoImagenFirma = 'Vista previa local: pendiente de guardar';
+    const lector = new FileReader();
+    lector.onload = () => {
+      if (solicitud === this.solicitudImagenFirma &&
+          this.profesionalFirma?.codRecHumano === codigo && this.perfilFirmaActualId === perfilId) {
+        this.imagenFirmaPreview = String(lector.result ?? '');
+        this.previewsPendientesFirma.set(this.perfilFirmaActualId, this.imagenFirmaPreview);
+      }
+    };
+    lector.onerror = () => {
+      if (solicitud === this.solicitudImagenFirma) {
+        this.imagenFirmaPreview = null;
+        this.estadoImagenFirma = 'No fue posible previsualizar el PNG seleccionado';
+      }
+    };
+    lector.readAsDataURL(archivo);
+  }
+
+  async guardarFirmaLaboratorio(): Promise<void> {
+    const codigo = this.profesionalFirma?.codRecHumano;
+    if (!codigo || this.guardandoFirma) return;
+    this.guardarEdicionPerfilEnMemoria();
+    const datos = this.formFirmaLaboratorio.getRawValue();
+    const principal = this.perfilesFirma.find((p) => p.esPrincipal);
+    if (datos.habilitado && (!principal || !datos.referenciaAutorizacion.trim())) {
+      this.mostrarAlertaError('Configure una firma principal y referencia de autorización');
+      return;
+    }
+    this.guardandoFirma = true;
+    try {
+      const configuracion = {
+        habilitado: datos.habilitado,
+        profesionRecursoId: principal?.profesionRecursoId ?? null,
+        serviciosAutorizados: [...new Set(this.perfilesFirma.flatMap((p) => p.serviciosAutorizados))],
+        predeterminadoLaboratorio: datos.habilitado && datos.predeterminadoGeneral,
+        referenciaAutorizacion: datos.referenciaAutorizacion.trim(),
+        presentaciones: this.perfilesFirma.map((p) => ({ ...p })),
+      };
+      // ====== Configuración antes de subir los PNG individuales ======
+      await firstValueFrom(this._recHumanoService.configurarFirmaLaboratorio(codigo, configuracion));
+      for (const [perfilId, archivo] of this.archivosPendientesFirma) {
+        await firstValueFrom(this._recHumanoService.subirImagenFirma(codigo, archivo, perfilId));
+      }
+      this.archivosPendientesFirma.clear();
+      this.previewsPendientesFirma.clear();
+      this.archivoFirmaPendiente = null;
+      if (this.profesionalFirma?.codRecHumano === codigo) {
+        this.profesionalFirma = { ...this.profesionalFirma,
+          firmaLaboratorio: {
+            ...configuracion,
+            presentaciones: configuracion.presentaciones,
+          },
+        };
+      }
+      this.mostrarAlertaExito('Presentaciones de firma guardadas');
+      this.ultimosRecHumano();
+      this.cargarImagenFirma(codigo, this.perfilFirmaActualId);
+    } catch (error: any) {
+      this.mostrarAlertaError(error?.error?.msg || 'No se pudo guardar el perfil de firma o su imagen');
+    } finally {
+      this.guardandoFirma = false;
+    }
+  }
 
   constructor() {}
 
@@ -96,7 +448,6 @@ export class MantRecursoHumanoComponent implements OnInit, AfterViewInit {
     this._adapter.setLocale('es-PE'); // Establecer el locale para el adaptador de fecha
   }
 
-  private _fb = inject(FormBuilder);
   private _fechaService = inject(FechaValidatorService);
   private _documentValidator = inject(DocValidatorService);
 
@@ -147,6 +498,7 @@ export class MantRecursoHumanoComponent implements OnInit, AfterViewInit {
 
   crearProfesion(): FormGroup {
     return this._fb.group({
+      _id: [undefined],
       profesionRef: [''],
       //codProfesion: ['', Validators.required],
       nivelProfesion: ['', Validators.required],
@@ -160,6 +512,7 @@ export class MantRecursoHumanoComponent implements OnInit, AfterViewInit {
 
   crearEspecialidad(): FormGroup {
     return this._fb.group({
+      _id: [undefined],
       especialidadRef: [''],
       //codEspecialidad: ['', Validators.required],
       rne: ['', Validators.required],
@@ -298,6 +651,29 @@ export class MantRecursoHumanoComponent implements OnInit, AfterViewInit {
   cargarRecursoHumano(recursoHumano: IRecHumano, index: number): void {
     this.filaSeleccionadaIndex = index;
     this.recHumanoSeleccionado = true;
+    this.profesionalFirma = recursoHumano;
+    this.archivoFirmaPendiente = null;
+    this.archivosPendientesFirma.clear();
+    this.previewsPendientesFirma.clear();
+    const configuracion = recursoHumano.firmaLaboratorio;
+    const perfiles = configuracion?.presentaciones ?? [];
+    this.perfilesFirma = perfiles.length
+      ? perfiles.map((item) => ({ ...item, perfilId: item.perfilId || 'legacy',
+          profesionRecursoId: String(item.profesionRecursoId ?? ''),
+          especialidadId: item.especialidadId ? String(item.especialidadId) : null }))
+      : [{ ...this.crearPresentacionFirma(String(configuracion?.profesionRecursoId ??
+            recursoHumano.profesionesRecurso?.[0]?._id ?? '')),
+          perfilId: 'legacy', etiqueta: 'Firma principal',
+          serviciosAutorizados: configuracion?.serviciosAutorizados?.length ?
+            [...configuracion.serviciosAutorizados] : ['Laboratorio'], esPrincipal: true }];
+    this.formFirmaLaboratorio.patchValue({
+      habilitado: configuracion?.habilitado ?? false,
+      predeterminadoGeneral: configuracion?.predeterminadoLaboratorio ?? false,
+      referenciaAutorizacion: configuracion?.referenciaAutorizacion ?? '',
+    });
+    this.perfilFirmaActualId = '';
+    this.seleccionarPerfilFirma(this.perfilesFirma.find((p) => p.esPrincipal)?.perfilId ??
+      this.perfilesFirma[0].perfilId, false);
 
     // Usuario sistema: activar o desactivar grupo de login
     this.myFormRecHumano
@@ -381,6 +757,7 @@ export class MantRecursoHumanoComponent implements OnInit, AfterViewInit {
     }
 
     return this._fb.group({
+      _id: [profesion._id ?? undefined],
       profesionRef: [profesion.profesionRef],
       nivelProfesion: [profesion.nivelProfesion],
       titulo: [profesion.titulo],
@@ -394,6 +771,7 @@ export class MantRecursoHumanoComponent implements OnInit, AfterViewInit {
 
   private crearEspecialidadGroup(especialidad: any): FormGroup {
     return this._fb.group({
+      _id: [especialidad._id ?? undefined],
       especialidadRef: [especialidad.especialidadRef],
       codEspecialidad: [especialidad.codEspecialidad],
       rne: [especialidad.rne],
@@ -586,6 +964,22 @@ export class MantRecursoHumanoComponent implements OnInit, AfterViewInit {
   }
 
   nuevoRecHumano() {
+    this.profesionalFirma = null;
+    ++this.solicitudImagenFirma;
+    this.imagenFirmaPreview = null;
+    this.estadoImagenFirma = '';
+    this.archivoFirmaPendiente = null;
+    this.perfilesFirma = [];
+    this.perfilFirmaActualId = '';
+    this.archivosPendientesFirma.clear();
+    this.previewsPendientesFirma.clear();
+    this.formFirmaLaboratorio.reset({
+      habilitado: false, profesionRecursoId: '', serviciosAutorizados: [],
+      predeterminadoLaboratorio: false, predeterminadoGeneral: false, referenciaAutorizacion: '',
+      etiqueta: '', tratamiento: '', tratamientoPersonalizado: '', especialidadId: '', mostrarProfesion: true,
+      mostrarEspecialidad: true, mostrarColegiatura: true, mostrarRne: true,
+      siglaColegiatura: 'Colegiatura', siglaEspecialidad: 'RNE',
+    });
     this.myFormRecHumano.reset(); // Reinicia todos los campos del formulario
     this.formSubmitted = false; // Restablece el estado de validación del formulario
     this.phones.clear(); // Limpia el FormArray de teléfonos, si es necesario

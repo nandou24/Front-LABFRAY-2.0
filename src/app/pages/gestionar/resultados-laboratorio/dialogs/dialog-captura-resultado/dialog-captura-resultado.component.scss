@@ -829,3 +829,33 @@ kbd {
   background: #0b63c7 !important;
   color: #fff !important;
 }
+
+// ====== Consulta histórica no editable ======
+.comparacion-historica {
+  margin: 0 0 12px;
+  button { margin-bottom: 4px; }
+}
+.comparacion-historica-contenido {
+  margin-top: 8px;
+  padding: 12px;
+  border: 1px solid #d7e3f4;
+  border-radius: 8px;
+  background: #f8fbff;
+  font-size: 12px;
+  small { display: block; margin-top: 10px; color: #63748a; }
+}
+.comparacion-historica-item {
+  margin: 8px 0;
+  padding: 8px;
+  border-bottom: 1px solid #dde5f0;
+}
+.comparacion-historica-actual {
+  margin: 5px 0;
+  color: #174c8e;
+  font-weight: 600;
+}
+.comparacion-historica-anterior {
+  margin: 2px 0;
+  color: #3f5065;
+}
+.comparacion-historica-error { color: #a20f27; }

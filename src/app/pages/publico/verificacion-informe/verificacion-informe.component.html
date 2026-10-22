@@ -1,0 +1,45 @@
+<main class="verificacion">
+  <section class="contenedor" aria-labelledby="titulo-verificacion">
+    <header class="cabecera">
+      <img src="/images/logo labfray.png" alt="LABFRAY Policlínico" />
+      <div>
+        <p class="subtitulo">LABFRAY POLICLÍNICO</p>
+        <h1 id="titulo-verificacion">Verificación de informe de laboratorio</h1>
+      </div>
+    </header>
+
+    <div *ngIf="cargando" class="cargando" role="status">Consultando autenticidad del informe…</div>
+
+    <div *ngIf="!cargando && error" class="mensaje-error" role="alert">
+      <h2>Verificación no disponible</h2>
+      <p>{{ error }}</p>
+    </div>
+
+    <ng-container *ngIf="!cargando && informe as datos">
+      <div class="estado" [class.vigente]="datos.vigente" [class.no-vigente]="!datos.vigente" role="status">
+        <span class="indicador" aria-hidden="true">{{ datos.vigente ? '✓' : '!' }}</span>
+        <span>{{ estadoTexto }}</span>
+      </div>
+
+      <dl class="detalle">
+        <div><dt>Código del informe</dt><dd>{{ datos.codigoInforme }}</dd></div>
+        <div><dt>Código de laboratorio</dt><dd>{{ datos.codigoLaboratorio || 'No consignado' }}</dd></div>
+        <div><dt>Solicitud</dt><dd>{{ datos.codSolicitud }}</dd></div>
+        <div><dt>Tipo de informe</dt><dd>{{ datos.tipoInforme === 'PARCIAL' ? 'Parcial' : 'Final' }}</dd></div>
+        <div><dt>Pruebas incluidas</dt><dd>{{ datos.cantidadPruebas }}</dd></div>
+        <div><dt>Registro de emisión</dt><dd>{{ datos.fechaRegistro | date:'dd/MM/yyyy HH:mm':'-0500' }}</dd></div>
+      </dl>
+
+      <p class="advertencia" *ngIf="!datos.vigente">
+        Este registro ya no se encuentra vigente. Solicite un informe actualizado al laboratorio.
+      </p>
+      <p class="aclaracion">
+        Esta consulta confirma el estado del registro clínico de emisión.
+        No verifica todavía la integridad criptográfica del archivo PDF.
+        Los resultados clínicos y datos personales no se muestran en esta página.
+      </p>
+    </ng-container>
+
+    <footer>LABFRAY · Verificación de autenticidad documental</footer>
+  </section>
+</main>

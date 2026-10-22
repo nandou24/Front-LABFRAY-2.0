@@ -33,6 +33,8 @@ export interface IProgramacionEmpresaSolicitud {
 
 export interface ISolicitudAtencion {
   _id?: string;
+  tipoHC?: 'PRINCIPAL' | 'PROVISIONAL' | null;
+  estadoConciliacion?: string | null;
   codSolicitud: string;
   codigoLaboratorio?: string | null;
   origenAtencion: OrigenAtencion;

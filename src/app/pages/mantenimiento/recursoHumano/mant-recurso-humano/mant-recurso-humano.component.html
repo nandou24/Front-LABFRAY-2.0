@@ -613,6 +613,133 @@
           </fieldset>
         </mat-tab>
 
+        <mat-tab label="Firma de informes">
+          <section class="config-firma-laboratorio mt-3" [formGroup]="formFirmaLaboratorio">
+            <ng-container *ngIf="profesionalFirma; else seleccioneRecursoFirma">
+              <h4>Firmas de informes · {{ profesionalFirma.codRecHumano }}</h4>
+              <p class="ayuda-firma">Cada presentación pertenece a este recurso humano. Solo personal con el permiso
+                Gestionar firmantes puede cambiarla. La autorización debe cubrir los servicios que firma.</p>
+              <mat-slide-toggle formControlName="habilitado" color="primary">
+                Profesional habilitado para firmar informes
+              </mat-slide-toggle>
+              <mat-slide-toggle formControlName="predeterminadoGeneral" color="primary">
+                Profesional predeterminado para informes de Laboratorio
+              </mat-slide-toggle>
+              <mat-form-field appearance="outline" class="campo-autorizacion">
+                <mat-label>Referencia de autorización expresa</mat-label>
+                <input matInput formControlName="referenciaAutorizacion" maxlength="300"
+                  placeholder="Ej. Autorización suscrita por la profesional, fecha y alcance" />
+              </mat-form-field>
+
+              <div class="selector-firmas">
+                <mat-form-field appearance="outline">
+                  <mat-label>Presentaciones de firma registradas</mat-label>
+                  <mat-select [value]="perfilFirmaActualId" (selectionChange)="seleccionarPerfilFirma($event.value)">
+                    <mat-option *ngFor="let perfil of perfilesFirma" [value]="perfil.perfilId">
+                      {{ perfil.etiqueta }} {{ perfil.esPrincipal ? '(Principal)' : '' }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <button mat-stroked-button type="button" (click)="agregarPerfilFirma()">
+                  <mat-icon>add</mat-icon> Otra firma
+                </button>
+                <button mat-stroked-button color="warn" type="button" (click)="eliminarPerfilFirma()"
+                  [disabled]="perfilesFirma.length < 2">
+                  <mat-icon>remove_circle_outline</mat-icon> Quitar presentación
+                </button>
+              </div>
+
+              <h5>Presentación y credenciales</h5>
+              <div class="campos-firma">
+                <mat-form-field appearance="outline">
+                  <mat-label>Nombre de esta presentación</mat-label>
+                  <input matInput formControlName="etiqueta" maxlength="80" placeholder="Ej. Patología Clínica" />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Tratamiento que figura en el informe</mat-label>
+                  <mat-select formControlName="tratamiento">
+                    <mat-option value="">Sin tratamiento</mat-option>
+                    <mat-option *ngFor="let titulo of tratamientosFirma" [value]="titulo">{{ titulo }}</mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field appearance="outline" *ngIf="formFirmaLaboratorio.controls.tratamiento.value === 'Otro'">
+                  <mat-label>Tratamiento personalizado</mat-label>
+                  <input matInput formControlName="tratamientoPersonalizado" maxlength="18"
+                    placeholder="Ej. Mg., Q.F., Bioq." />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Profesión y colegiatura de esta firma</mat-label>
+                  <mat-select formControlName="profesionRecursoId" (selectionChange)="cambiarProfesionFirma()">
+                    <mat-option *ngFor="let profesion of profesionesFirmante" [value]="profesion._id">
+                      {{ nombreProfesionFirma(profesion) }} · {{ profesion.nroColegiatura }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Especialidad que aparecerá</mat-label>
+                  <mat-select formControlName="especialidadId">
+                    <mat-option value="">Sin especialidad</mat-option>
+                    <mat-option *ngFor="let especialidad of especialidadesFirma" [value]="especialidad.id">
+                      {{ especialidad.nombre }} {{ especialidad.rne ? '· ' + especialidad.rne : '' }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Servicios autorizados para esta firma</mat-label>
+                  <mat-select multiple formControlName="serviciosAutorizados">
+                    <mat-option *ngFor="let tipo of serviciosFirmables" [value]="tipo">{{ tipo }}</mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+              <mat-slide-toggle formControlName="predeterminadoLaboratorio" color="primary">
+                Usar esta presentación como firma principal del profesional
+              </mat-slide-toggle>
+              <div class="campos-firma">
+                <div class="opcion-firma">
+                  <mat-slide-toggle formControlName="mostrarProfesion">Mostrar profesión</mat-slide-toggle>
+                  <mat-slide-toggle formControlName="mostrarEspecialidad">Mostrar especialidad</mat-slide-toggle>
+                </div>
+                <div class="opcion-firma">
+                  <mat-slide-toggle formControlName="mostrarColegiatura">Mostrar colegiatura</mat-slide-toggle>
+                  <mat-slide-toggle formControlName="mostrarRne">Mostrar registro de especialidad</mat-slide-toggle>
+                </div>
+                <mat-form-field appearance="outline">
+                  <mat-label>Sigla del registro profesional</mat-label>
+                  <input matInput formControlName="siglaColegiatura" maxlength="24" placeholder="CMP, CTMP, CEP..." />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Sigla del registro de especialidad</mat-label>
+                  <input matInput formControlName="siglaEspecialidad" maxlength="24" placeholder="RNE" />
+                </mat-form-field>
+              </div>
+              <div class="carga-firma">
+                <label for="firmaProfesionalPng">Firma PNG de esta presentación (máximo 300 KB, fondo transparente)</label>
+                <input id="firmaProfesionalPng" type="file" accept="image/png"
+                  (change)="seleccionarImagenFirma($event)" />
+                <div class="vista-firma" *ngIf="imagenFirmaPreview || profesionalFirma">
+                  <img *ngIf="imagenFirmaPreview" [src]="imagenFirmaPreview" alt="Previsualización del PNG de la firma" />
+                  <strong>{{ nombrePrevisualizacionFirma }}</strong>
+                  <small *ngIf="profesionPrevisualizacionFirma || especialidadPrevisualizacionFirma">
+                    {{ profesionPrevisualizacionFirma }}
+                    {{ profesionPrevisualizacionFirma && especialidadPrevisualizacionFirma ? ' / ' : '' }}
+                    {{ especialidadPrevisualizacionFirma }}
+                  </small>
+                  <small *ngIf="registrosPrevisualizacionFirma">{{ registrosPrevisualizacionFirma }}</small>
+                </div>
+                <p class="estado-firma-imagen" *ngIf="estadoImagenFirma">{{ estadoImagenFirma }}</p>
+              </div>
+              <button mat-flat-button color="primary" type="button" [disabled]="guardandoFirma"
+                (click)="guardarFirmaLaboratorio()">
+                <mat-icon>verified_user</mat-icon>
+                {{ guardandoFirma ? 'Guardando...' : 'Guardar configuraciones de firma' }}
+              </button>
+            </ng-container>
+            <ng-template #seleccioneRecursoFirma>
+              <p>Seleccione primero un recurso humano registrado para gestionar sus firmas.</p>
+            </ng-template>
+          </section>
+        </mat-tab>
+
         <mat-tab label="Permisos">
           <div class="row-flex mt-3">
             <div [style.flex]="setFlex(20, '%')" class="flex-item mb-3">

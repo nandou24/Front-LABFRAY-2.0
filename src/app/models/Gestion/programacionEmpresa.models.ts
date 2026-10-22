@@ -79,6 +79,9 @@ export interface IProgramacionEmpresa {
   // Si ya existe como paciente formal
   pacienteId?: string | null;
   hc?: string | null;
+  tipoHC?: 'PRINCIPAL' | 'PROVISIONAL' | null;
+  estadoConciliacion?: 'NO_APLICA' | 'SIN_CONCILIAR' | 'EN_REVISION' | 'CONCILIADA' | null;
+  hcPrincipal?: string | null;
 
   // PROTOCOLO
 
@@ -106,6 +109,7 @@ export interface IProgramacionEmpresa {
 
   estadoProgramacion: EstadoProgramacion;
   estadoIdentificacionPaciente?: 'PENDIENTE' | 'REGISTRADA' | null;
+  accionDocumentoPaciente?: 'REGULARIZAR' | 'CORREGIR' | null;
   pendientes?: PendienteProgramacion[];
 
   // ATENCIÓN
@@ -151,6 +155,40 @@ export interface IRegularizarDocumentoProgramacionRequest {
   tipoDoc: TipoDocumentoProgramacion;
   nroDoc: string;
   motivo: string;
+  identidadConfirmada: boolean;
+}
+
+export interface ICorregirDocumentoProgramacionRequest extends IRegularizarDocumentoProgramacionRequest {
+  nombreUsuarioAutorizador: string;
+  passwordAutorizador: string;
+}
+
+export interface ICambioDocumentoPaciente {
+  campo: 'tipoDoc' | 'nroDoc';
+  valorAnterior: string | null;
+  valorNuevo: string | null;
+}
+
+export interface IHistorialDocumentoPaciente {
+  fecha: string;
+  tipoOperacion: 'REGULARIZACION' | 'CORRECCION_AUTORIZADA';
+  tipoDocAnterior: string | null;
+  nroDocAnterior: string | null;
+  tipoDocNuevo: string;
+  nroDocNuevo: string;
+  motivo: string;
+  uid: string;
+  nombreUsuario: string | null;
+  autorizadoPor: string | null;
+  usuarioAutorizacion: string | null;
+  rolAutorizacion: string | null;
+  cambios: ICambioDocumentoPaciente[];
+}
+
+export interface IHistorialDocumentoProgramacionResponse {
+  ok: boolean;
+  hc: string;
+  historial: IHistorialDocumentoPaciente[];
 }
 
 export interface IRegularizarDocumentoProgramacionResponse {
@@ -159,6 +197,25 @@ export interface IRegularizarDocumentoProgramacionResponse {
   codigo?: string;
   programacion?: IProgramacionEmpresa;
   paciente?: { _id: string; hc: string; estadoIdentificacion: string };
+}
+
+export interface ICandidatoConciliacionHC {
+  pacienteId: string;
+  hc: string;
+  nombreCompleto: string;
+  tipoHC: 'PRINCIPAL' | 'PROVISIONAL' | null;
+  estadoConciliacion: string | null;
+  coincidencia: 'DOCUMENTO_ACTUAL' | 'HISTORIAL_DOCUMENTO';
+}
+
+export interface IVerificacionDocumentoHC {
+  ok: boolean;
+  msg: string;
+  tipoDoc: TipoDocumentoProgramacion;
+  nroDoc: string;
+  hayCoincidencias: boolean;
+  masResultados: boolean;
+  candidatos: ICandidatoConciliacionHC[];
 }
 
 // ====== Revisión masiva previa al registro ======

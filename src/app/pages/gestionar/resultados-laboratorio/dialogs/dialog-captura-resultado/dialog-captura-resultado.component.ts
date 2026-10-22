@@ -44,6 +44,7 @@ import {
   IReglaAlertaSnapshot,
   IResultadoLaboratorio,
   IResultadoLaboratorioItem,
+  IComparacionHistoricaResultadoResponse,
   ValorResultadoLaboratorio,
 } from '../../../../../models/Gestion/resultadoLaboratorio.models';
 import { ResultadoLaboratorioService } from '../../../../../services/gestion/resultadosLaboratorio/resultados-laboratorio.service';
@@ -236,6 +237,53 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
 
   ultimoEstadoSolicitud: string | null = null;
   ultimoEstadoOperativo: IEstadoOperativoSolicitud | null = null;
+
+  // ====== Comparación histórica solo de lectura ======
+  comparacionHistoricaVisible = false;
+  cargandoComparacionHistorica = false;
+  errorComparacionHistorica: string | null = null;
+
+  private readonly _comparacionesHistoricas = new Map<
+    string, IComparacionHistoricaResultadoResponse
+  >();
+
+  get comparacionHistoricaActual(): IComparacionHistoricaResultadoResponse | null {
+    return this._comparacionesHistoricas.get(this.resultadoActual?._id) ?? null;
+  }
+
+  async alternarComparacionHistorica(): Promise<void> {
+    if (this.comparacionHistoricaVisible) {
+      this.comparacionHistoricaVisible = false;
+      return;
+    }
+    this.comparacionHistoricaVisible = true;
+    this.errorComparacionHistorica = null;
+    const id = this.resultadoActual?._id;
+    if (!id || this._comparacionesHistoricas.has(id)) return;
+
+    this.cargandoComparacionHistorica = true;
+    try {
+      const respuesta = await firstValueFrom(
+        this._resultadoLaboratorioService.obtenerComparacionHistorica(id),
+      );
+      this._comparacionesHistoricas.set(id, respuesta);
+    } catch (error: any) {
+      if (this.resultadoActual?._id === id) {
+        this.errorComparacionHistorica = error?.error?.msg ||
+          'No se pudieron consultar los resultados anteriores.';
+      }
+    } finally {
+      if (this.resultadoActual?._id === id) {
+        this.cargandoComparacionHistorica = false;
+      }
+    }
+  }
+
+  valorActualComparacion(valor: ValorResultadoLaboratorio): string {
+    if (valor === null || valor === undefined) return '-';
+    return typeof valor === 'string' || typeof valor === 'number'
+      ? String(valor) : 'Resultado no escalar';
+  }
 
   formResultado = this.crearFormularioActual();
 
@@ -647,6 +695,9 @@ export class DialogCapturaResultadoComponent implements OnDestroy {
 
     this.guardarBorradorActual();
     this.indiceActual = indice;
+    this.comparacionHistoricaVisible = false;
+    this.cargandoComparacionHistorica = false;
+    this.errorComparacionHistorica = null;
     this.formResultado = this.crearFormularioActual();
     this.itemActivoIndex = null;
   }

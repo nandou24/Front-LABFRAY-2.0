@@ -78,6 +78,11 @@ export class RolesComponent implements OnInit, AfterViewInit {
       nombre: 'Anular resultados',
       descripcion: 'Anular resultados conservando la trazabilidad clínica.',
     },
+    {
+      codigo: 'RESULTADOS_GESTIONAR_FIRMANTES',
+      nombre: 'Gestionar firmantes de laboratorio',
+      descripcion: 'Habilitar o deshabilitar profesionales autorizados para firmar informes.',
+    },
   ];
 
   public formRol: FormGroup = this._fb.group({

@@ -12,6 +12,8 @@ import { firstValueFrom } from 'rxjs';
 import {
   IProgramacionEmpresa,
   TipoDocumentoProgramacion,
+  IHistorialDocumentoPaciente,
+  IVerificacionDocumentoHC,
 } from '../../../../../../models/Gestion/programacionEmpresa.models';
 import { ProgramacionEmpresaService } from '../../../../../../services/gestion/programacion/programacionEmpresas/programacion-empresa.service';
 
@@ -29,6 +31,7 @@ export class DialogRegularizarDocumentoEmpresaComponent {
   private readonly service = inject(ProgramacionEmpresaService);
   readonly data = inject(MAT_DIALOG_DATA) as { programacion: IProgramacionEmpresa };
 
+  readonly esCorreccion = this.data.programacion.accionDocumentoPaciente === 'CORREGIR';
   readonly formulario = new FormGroup({
     tipoDoc: new FormControl<TipoDocumentoProgramacion>(
       (this.data.programacion.tipoDoc as TipoDocumentoProgramacion) || 'DNI',
@@ -43,10 +46,28 @@ export class DialogRegularizarDocumentoEmpresaComponent {
     identidadConfirmada: new FormControl(false, {
       nonNullable: true, validators: [Validators.requiredTrue],
     }),
+    nombreUsuarioAutorizador: new FormControl('', { nonNullable: true }),
+    passwordAutorizador: new FormControl('', { nonNullable: true }),
   });
 
   guardando = false;
   mensajeError = '';
+  mostrandoHistorial = false;
+  cargandoHistorial = false;
+  errorHistorial = '';
+  historial: IHistorialDocumentoPaciente[] = [];
+  verificacion: IVerificacionDocumentoHC | null = null;
+  verificando = false;
+  errorVerificacion = '';
+
+  // ====== Habilitar guardado solo con verificación vigente ======
+  get puedeGuardarDocumento(): boolean {
+    const resultado = this.verificacion;
+    return !this.guardando && !this.verificando && this.formulario.valid &&
+      resultado?.ok === true && resultado.hayCoincidencias === false &&
+      resultado.tipoDoc === this.formulario.controls.tipoDoc.value &&
+      resultado.nroDoc === this.formulario.controls.nroDoc.value.trim().toUpperCase();
+  }
 
   get nombreCompleto(): string {
     const p = this.data.programacion;
@@ -65,11 +86,71 @@ export class DialogRegularizarDocumentoEmpresaComponent {
     this.formulario.controls.nroDoc.setValidators([
       Validators.required, Validators.pattern(formato[tipo]),
     ]);
-    this.formulario.controls.nroDoc.updateValueAndValidity();
+    this.formulario.controls.nroDoc.updateValueAndValidity({ emitEvent: false });
   }
 
   constructor() {
     this.actualizarTipoDocumento();
+    this.formulario.controls.tipoDoc.valueChanges.subscribe(() => this.limpiarVerificacion());
+    this.formulario.controls.nroDoc.valueChanges.subscribe(() => this.limpiarVerificacion());
+    if (this.esCorreccion) {
+      this.formulario.controls.nombreUsuarioAutorizador.addValidators(Validators.required);
+      this.formulario.controls.passwordAutorizador.addValidators(Validators.required);
+      this.formulario.controls.nombreUsuarioAutorizador.updateValueAndValidity();
+      this.formulario.controls.passwordAutorizador.updateValueAndValidity();
+    }
+  }
+
+  // ====== Consultar historial solo cuando se solicita ======
+  async alternarHistorial(): Promise<void> {
+    this.mostrandoHistorial = !this.mostrandoHistorial;
+    if (!this.mostrandoHistorial || this.cargandoHistorial || this.historial.length) return;
+    const id = this.data.programacion._id;
+    if (!id) return;
+    this.cargandoHistorial = true;
+    this.errorHistorial = '';
+    try {
+      const respuesta = await firstValueFrom(this.service.historialDocumentos(id));
+      this.historial = respuesta.historial ?? [];
+    } catch (error: any) {
+      this.errorHistorial = error?.error?.msg || 'No se pudo consultar el historial.';
+    } finally {
+      this.cargandoHistorial = false;
+    }
+  }
+
+
+  // ====== Reiniciar revisión ante cambios de documento ======
+  private limpiarVerificacion(): void {
+    this.verificacion = null;
+    this.errorVerificacion = '';
+    this.mensajeError = '';
+  }
+
+  // ====== Buscar HC con documento actual o histórico ======
+  async verificarDocumento(): Promise<boolean> {
+    this.mensajeError = '';
+    this.errorVerificacion = '';
+    this.actualizarTipoDocumento();
+    if (!this.data.programacion._id || this.formulario.controls.nroDoc.invalid ||
+        this.formulario.controls.tipoDoc.invalid || this.verificando) return false;
+    this.verificando = true;
+    this.errorVerificacion = '';
+    this.verificacion = null;
+    const tipoDoc = this.formulario.controls.tipoDoc.value;
+    const nroDoc = this.formulario.controls.nroDoc.value.trim().toUpperCase();
+    try {
+      const resultado = await firstValueFrom(this.service.verificarDocumento(this.data.programacion._id, { tipoDoc, nroDoc }));
+      if (tipoDoc !== this.formulario.controls.tipoDoc.value ||
+          nroDoc !== this.formulario.controls.nroDoc.value.trim().toUpperCase()) return false;
+      this.verificacion = resultado;
+      return resultado.ok && !resultado.hayCoincidencias;
+    } catch (error: any) {
+      this.errorVerificacion = error?.error?.msg || 'No se pudo comprobar el documento.';
+      return false;
+    } finally {
+      this.verificando = false;
+    }
   }
 
   async guardar(): Promise<void> {
@@ -79,14 +160,29 @@ export class DialogRegularizarDocumentoEmpresaComponent {
       return;
     }
 
-    this.guardando = true;
+    if (!this.puedeGuardarDocumento) {
+      this.mensajeError = 'Verifica el documento y confirma que no existan coincidencias antes de guardar.';
+      return;
+    }
     this.mensajeError = '';
-    const { tipoDoc, nroDoc, motivo } = this.formulario.getRawValue();
+    // ====== El backend vuelve a validar conflictos durante el guardado ======
+    this.guardando = true;
+    const valores = this.formulario.getRawValue();
+    const datos = {
+      tipoDoc: valores.tipoDoc,
+      nroDoc: valores.nroDoc.trim().toUpperCase(),
+      motivo: valores.motivo.trim(),
+      identidadConfirmada: valores.identidadConfirmada,
+    };
     try {
-      const resultado = await firstValueFrom(this.service.regularizarDocumento(
-        this.data.programacion._id,
-        { tipoDoc, nroDoc: nroDoc.trim().toUpperCase(), motivo: motivo.trim() },
-      ));
+      const solicitud = this.esCorreccion
+        ? this.service.corregirDocumento(this.data.programacion._id, {
+            ...datos,
+            nombreUsuarioAutorizador: valores.nombreUsuarioAutorizador.trim(),
+            passwordAutorizador: valores.passwordAutorizador,
+          })
+        : this.service.regularizarDocumento(this.data.programacion._id, datos);
+      const resultado = await firstValueFrom(solicitud);
       if (resultado.ok && resultado.programacion) {
         this.dialogRef.close(resultado);
       } else {
@@ -94,6 +190,10 @@ export class DialogRegularizarDocumentoEmpresaComponent {
       }
     } catch (error: any) {
       this.mensajeError = error?.error?.msg || 'No se pudo actualizar el documento.';
+      if (error?.error?.coincidencias?.hayCoincidencias) {
+        this.verificacion = { ok: true, msg: this.mensajeError,
+          tipoDoc: valores.tipoDoc, nroDoc: datos.nroDoc, ...error.error.coincidencias };
+      }
     } finally {
       this.guardando = false;
     }

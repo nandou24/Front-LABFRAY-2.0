@@ -44,6 +44,7 @@ import { DocValidatorService } from '../../../../../../services/utilitarios/vali
 import { EmpresaService } from '../../../../../../services/mantenimiento/empresa/empresa.service';
 import { PacienteService } from '../../../../../../services/mantenimiento/paciente/paciente.service';
 import { ProgramacionEmpresaService } from '../../../../../../services/gestion/programacion/programacionEmpresas/programacion-empresa.service';
+import { ArchivoPacienteService } from '../../../../../../services/mantenimiento/paciente/archivo-paciente.service';
 import {
   IEmpresa,
   IProtocoloEmpresa,
@@ -96,6 +97,7 @@ export class DialogIniciarAtencionEmpresaComponent
   private _empresaService = inject(EmpresaService);
   private _pacienteService = inject(PacienteService);
   private _programacionService = inject(ProgramacionEmpresaService);
+  private _archivoPacienteService = inject(ArchivoPacienteService);
   private _fb = inject(FormBuilder);
   private _cdr = inject(ChangeDetectorRef);
 
@@ -370,38 +372,83 @@ export class DialogIniciarAtencionEmpresaComponent
     // ==========================================
 
     this.procesandoInicio = true;
+    this.dialogRef.disableClose = true;
 
     try {
-      const respuesta = await firstValueFrom(
-        this._programacionService.iniciarAtencionProgramacion(
-          this.programacion._id,
-        ),
-      );
+      // ====== Resolver coincidencia de nombres antes de crear una nueva HC ======
+      let respuesta: any;
+      try {
+        respuesta = await firstValueFrom(
+          this._programacionService.iniciarAtencionProgramacion(this.programacion._id),
+        );
+      } catch (error: any) {
+        if (error?.error?.codigo !== 'POSIBLE_PACIENTE_EXISTENTE') throw error;
 
-      // ==========================================
-      // 4. RESPUESTA CORRECTA
-      // ==========================================
+        const candidatos = (error.error.candidatos ?? [])
+          .map((paciente: { hc?: string; tipoDoc?: string; nroDoc?: string }) =>
+            [paciente.hc, paciente.tipoDoc, paciente.nroDoc].filter(Boolean).join(' · '),
+          ).join(' | ');
+        const confirmacion = await Swal.fire({
+          title: 'Posibles historias clínicas existentes',
+          text: `Se encontraron pacientes con los mismos nombres. ${candidatos ? 'HC encontradas: ' + candidatos + '. ' : ''}Si corresponde al mismo paciente, cancela y selecciónalo desde la búsqueda. Para una persona distinta, justifica por qué necesitas continuar con una nueva historia clínica.`,
+          icon: 'warning',
+          input: 'textarea',
+          inputLabel: 'Motivo para registrar una nueva historia clínica',
+          inputPlaceholder: 'Explica cómo verificaste que se trata de otro trabajador...',
+          inputAttributes: { maxlength: '300' },
+          showCancelButton: true,
+          confirmButtonText: 'Continuar con nueva HC',
+          cancelButtonText: 'Cancelar y revisar',
+          reverseButtons: true,
+          inputValidator: (valor) => {
+            const longitud = String(valor ?? '').trim().length;
+            return longitud < 10 || longitud > 300
+              ? 'Indica un motivo de 10 a 300 caracteres.'
+              : undefined;
+          },
+        });
+        if (!confirmacion.isConfirmed) return;
 
+        respuesta = await firstValueFrom(
+          this._programacionService.iniciarAtencionProgramacion(this.programacion._id, {
+            confirmarNuevaHC: true,
+            motivoNuevaHC: String(confirmacion.value).trim(),
+          }),
+        );
+      }
+
+      // ====== Guardar fotografía con el paciente confirmado por el backend ======
+      const pacienteId = respuesta?.paciente?._id;
+      const fotoCapturada = !!this.fotoPaciente;
+      let fotografiaGuardada = false;
+      if (fotoCapturada && pacienteId) {
+        fotografiaGuardada = await this.guardarFotoEvaluacionConReintento(
+          String(pacienteId),
+          String(this.programacion._id),
+        );
+      } else if (fotoCapturada) {
+        console.error('La atención no devolvió pacienteId para asociar la fotografía');
+      }
+
+      const fotografiaPendiente = fotoCapturada && !fotografiaGuardada;
       await Swal.fire({
-        title: 'Correcto',
-        text: respuesta?.msg || 'La atención fue iniciada correctamente.',
-        icon: 'success',
-        confirmButtonText: 'Ok',
+        title: fotografiaPendiente ? 'Atención iniciada; foto pendiente' : 'Correcto',
+        text: fotografiaPendiente
+          ? 'Se inició la atención, pero la fotografía no quedó registrada. Debe completarse posteriormente.'
+          : fotografiaGuardada
+            ? 'Atención iniciada y fotografía de evaluación guardada correctamente.'
+            : respuesta?.msg || 'La atención fue iniciada correctamente.', 
+        icon: fotografiaPendiente ? 'warning' : 'success',
+        confirmButtonText: 'Entendido',
+        allowOutsideClick: false,
       });
-
-      // ==========================================
-      // 5. CERRAR DIÁLOGO
-      // ==========================================
 
       this.dialogRef.close({
         ok: true,
-
-        fotoPaciente: this.fotoPaciente,
-
+        fotografiaGuardada,
+        fotografiaPendiente,
         paciente: respuesta?.paciente,
-
         programacion: respuesta?.programacion,
-
         respuestaBackend: respuesta,
       });
     } catch (error: any) {
@@ -514,6 +561,40 @@ export class DialogIniciarAtencionEmpresaComponent
       });
     } finally {
       this.procesandoInicio = false;
+      this.dialogRef.disableClose = false;
+    }
+  }
+
+
+  // ====== Reintentar foto sin duplicar solicitudes ni historias clínicas ======
+  private async guardarFotoEvaluacionConReintento(pacienteId: string, programacionId: string): Promise<boolean> {
+    if (!this.fotoPaciente) return false;
+    while (true) {
+      try {
+        const respuesta = await firstValueFrom(
+          this._archivoPacienteService.subirFotoEvaluacion(
+            pacienteId, this.fotoPaciente, programacionId,
+          ),
+        );
+        if (respuesta?.ok !== true || !respuesta?.archivo?._id || !respuesta?.archivo?.storageKey) {
+          throw new Error('El backend no confirmó el archivo y la ruta S3');
+        }
+        return true;
+      } catch (error: unknown) {
+        console.error('Falló la grabación de la foto de evaluación:', error);
+        const resultado = await Swal.fire({
+          title: 'Fotografía no guardada',
+          text: 'La atención ya está iniciada. Puedes reintentar únicamente la fotografía, sin crear otra atención.',
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonText: 'Reintentar fotografía',
+          cancelButtonText: 'Continuar sin fotografía',
+          allowOutsideClick: false,
+          allowEscapeKey: false,
+          reverseButtons: true,
+        });
+        if (!resultado.isConfirmed) return false;
+      }
     }
   }
 

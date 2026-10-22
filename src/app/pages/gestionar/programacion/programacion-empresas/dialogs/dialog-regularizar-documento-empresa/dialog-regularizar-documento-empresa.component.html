@@ -1,8 +1,8 @@
 <div class="regularizacion">
   <header class="cabecera-dialogo">
     <div>
-      <h2>Regularizar documento</h2>
-      <p>Actualización de identidad del paciente vinculado</p>
+      <h2>{{ esCorreccion ? 'Corrección autorizada de documento' : 'Regularizar documento' }}</h2>
+      <p>{{ esCorreccion ? 'Requiere autorización de otro usuario y registra auditoría' : 'Actualización de identidad del paciente vinculado' }}</p>
     </div>
     <button mat-icon-button type="button" aria-label="Cerrar" (click)="cerrar()" [disabled]="guardando">
       <mat-icon>close</mat-icon>
@@ -17,9 +17,30 @@
     </div>
 
     <p class="nota">
-      El documento se actualizará en el paciente, sus programaciones y las solicitudes de atención vinculadas.
-      La identificación seguirá PENDIENTE hasta su validación formal.
+      El documento se actualizará en el paciente, sus programaciones y las solicitudes vinculadas.
+      {{ esCorreccion ? 'La identificación continuará PENDIENTE; esta corrección requiere autorización y quedará auditada.' : 'La identificación seguirá PENDIENTE hasta su validación formal.' }}
     </p>
+    <button mat-stroked-button type="button" class="btn-historial" (click)="alternarHistorial()" [disabled]="guardando">
+      <mat-icon>history</mat-icon>{{ mostrandoHistorial ? 'Ocultar historial' : 'Ver historial de documentos' }}
+    </button>
+    <section *ngIf="mostrandoHistorial" class="historial-documentos" aria-label="Historial de documentos">
+      <p *ngIf="cargandoHistorial">Cargando historial...</p>
+      <p class="mensaje-error" *ngIf="errorHistorial" role="alert">{{ errorHistorial }}</p>
+      <p *ngIf="!cargandoHistorial && !errorHistorial && !historial.length">No hay cambios de documento registrados.</p>
+      <article *ngFor="let item of historial" class="registro-auditoria">
+        <div class="registro-cabecera">
+          <strong>{{ item.tipoOperacion === 'CORRECCION_AUTORIZADA' ? 'Corrección autorizada' : 'Regularización' }}</strong>
+          <span>{{ item.fecha | date:'dd/MM/yyyy HH:mm' }}</span>
+        </div>
+        <div *ngFor="let campo of item.cambios" class="cambio-auditado">
+          <span>{{ campo.campo === 'nroDoc' ? 'Número' : 'Tipo' }}:</span>
+          {{ campo.valorAnterior || 'Pendiente' }} <mat-icon>arrow_forward</mat-icon> {{ campo.valorNuevo }}
+        </div>
+        <p class="motivo-auditoria">Motivo: {{ item.motivo }}</p>
+        <p>Operador: {{ item.nombreUsuario || item.uid }}</p>
+        <p *ngIf="item.autorizadoPor">Autorizó: {{ item.usuarioAutorizacion || item.autorizadoPor }} <span *ngIf="item.rolAutorizacion">({{ item.rolAutorizacion }})</span></p>
+      </article>
+    </section>
 
     <form [formGroup]="formulario" (ngSubmit)="guardar()" id="form-regularizacion">
       <div class="campos-documento">
@@ -37,35 +58,56 @@
           <mat-error *ngIf="formulario.controls.nroDoc.invalid">Número de documento no válido</mat-error>
         </mat-form-field>
       </div>
+      <div style="margin: 0 0 12px">
+        <button mat-stroked-button type="button" (click)="verificarDocumento()" [disabled]="verificando || guardando || formulario.controls.nroDoc.invalid">
+          <mat-icon>fact_check</mat-icon> {{ verificando ? 'Comprobando...' : 'Verificar coincidencias de HC' }}
+        </button>
+        <p *ngIf="errorVerificacion" class="mensaje-error" role="alert">{{ errorVerificacion }}</p>
+        <section *ngIf="verificacion" aria-live="polite" style="margin-top: 10px; padding: 12px; border: 1px solid #bed0e8; border-radius: 8px; background: #f2f6fd">
+          <strong>{{ verificacion.hayCoincidencias ? 'Atención: se encontraron HC coincidentes' : 'Sin coincidencias documentales detectadas' }}</strong>
+          <p style="margin: 6px 0">{{ verificacion.msg }}</p>
+          <div *ngFor="let candidato of verificacion.candidatos" style="padding: 8px; margin-top: 6px; background: white; border-radius: 6px; border: 1px solid #d9e3ef">
+            <strong>HC {{ candidato.hc }}</strong> · {{ candidato.coincidencia === 'DOCUMENTO_ACTUAL' ? 'Documento actual' : 'Documento en historial' }}
+            <div>{{ candidato.nombreCompleto }}</div>
+          </div>
+          <p *ngIf="verificacion.masResultados">Hay más coincidencias. Solicita una revisión completa.</p>
+          <p *ngIf="verificacion.hayCoincidencias" class="mensaje-error" style="margin: 8px 0 0">No se realizará ninguna modificación ni vinculación automática.</p>
+        </section>
+      </div>
       <mat-form-field appearance="outline" class="campo-motivo">
         <mat-label>Motivo de la regularización o corrección</mat-label>
         <textarea matInput formControlName="motivo" rows="2" maxlength="300"></textarea>
         <mat-error>Indica un motivo de al menos 10 caracteres</mat-error>
       </mat-form-field>
-      <div
-        class="confirmacion-identidad"
-        [class.confirmacion-identidad-invalida]="formulario.controls.identidadConfirmada.invalid && formulario.controls.identidadConfirmada.touched"
-      >
-        <mat-checkbox formControlName="identidadConfirmada" required>
-          Confirmo que he comprobado la identidad del trabajador antes de actualizar su documento.
-        </mat-checkbox>
-        <p
-          class="error-confirmacion"
-          *ngIf="formulario.controls.identidadConfirmada.invalid && formulario.controls.identidadConfirmada.touched"
-          role="alert"
-        >
-          Debes confirmar que verificaste la identidad del trabajador para continuar.
-        </p>
-      </div>
+      <section *ngIf="esCorreccion" class="autorizacion-correccion">
+        <div class="autorizacion-titulo"><mat-icon>verified_user</mat-icon><strong>Autorización de un segundo responsable</strong></div>
+        <p>El responsable debe tener su cuenta activa, acceso a Programaciones de Empresas y ser distinto del operador actual.</p>
+        <div class="campos-documento">
+          <mat-form-field appearance="outline">
+            <mat-label>Usuario autorizador</mat-label>
+            <input matInput formControlName="nombreUsuarioAutorizador" autocomplete="off" />
+            <mat-error>Indique el usuario autorizador</mat-error>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Contraseña del autorizador</mat-label>
+            <input matInput type="password" formControlName="passwordAutorizador" autocomplete="new-password" />
+            <mat-error>Indique la contraseña</mat-error>
+          </mat-form-field>
+        </div>
+      </section>
+      <mat-checkbox formControlName="identidadConfirmada">
+        Confirmo que he comprobado la identidad del trabajador antes de actualizar su documento.
+      </mat-checkbox>
+      <p class="mensaje-error" *ngIf="formulario.controls.identidadConfirmada.invalid && formulario.controls.identidadConfirmada.touched">Debes confirmar que verificaste la identidad.</p>
       <p class="mensaje-error" *ngIf="mensajeError" role="alert">{{ mensajeError }}</p>
     </form>
   </mat-dialog-content>
 
   <mat-dialog-actions align="end">
     <button mat-stroked-button type="button" (click)="cerrar()" [disabled]="guardando">Cancelar</button>
-    <button mat-flat-button type="submit" form="form-regularizacion" [disabled]="guardando">
+    <button mat-flat-button type="submit" form="form-regularizacion" [disabled]="!puedeGuardarDocumento">
       <mat-icon>save</mat-icon>
-      {{ guardando ? 'Guardando...' : 'Guardar documento' }}
+      {{ guardando ? 'Guardando...' : (esCorreccion ? 'Solicitar autorización y guardar' : 'Guardar documento') }}
     </button>
   </mat-dialog-actions>
 </div>

@@ -340,6 +340,8 @@ export interface IMuestraLaboratorio {
 
 export interface IPacienteSolicitudMuestra {
   hc: string | null;
+  tipoHC?: 'PRINCIPAL' | 'PROVISIONAL' | null;
+  estadoConciliacion?: string | null;
 
   clienteId: string | null;
 

@@ -45,8 +45,11 @@
           </div>
         </div>
 
-        <p class="nota-vinculo" *ngIf="programacionForm.get('pacienteId')?.value && esModoEdicion">
-          Los datos de identidad del paciente vinculado se gestionan desde su ficha para mantener la historia clínica consistente.
+        <p class="nota-vinculo" *ngIf="programacionForm.get('pacienteId')?.value">
+          <mat-icon>lock_outline</mat-icon>
+          DNI, nombres y apellidos están protegidos. {{ puedeActualizarDatosPaciente
+          ? 'Puedes completar sexo, nacimiento y teléfonos y guardarlos directamente en su HC.'
+          : 'Los cambios de identidad deben realizarse mediante su procedimiento autorizado.' }}
         </p>
         <div class="modo-documento" *ngIf="!programacionForm.get('pacienteId')?.value && !esModoVista">
           <mat-slide-toggle
@@ -127,7 +130,8 @@
           <div class="telefonos-cabecera">
             <span><mat-icon>phone</mat-icon> Teléfonos de contacto</span>
             <button mat-stroked-button type="button" (click)="agregarTelefono()"
-              *ngIf="!esModoVista && puedeEditarProgramacion(programacionForm.get('estadoProgramacion')?.value)">
+              *ngIf="!esModoVista && puedeEditarProgramacion(programacionForm.get('estadoProgramacion')?.value)"
+              [disabled]="guardandoDatosPaciente || phones.length >= 15 || (programacionForm.get('pacienteId')?.value && !puedeActualizarDatosPaciente)">
               <mat-icon>add</mat-icon> Agregar teléfono
             </button>
           </div>
@@ -146,12 +150,28 @@
                 <mat-error *ngIf="telGroup.get('descriptionPhone')?.hasError('maxlength')">Máximo 30 caracteres</mat-error>
               </mat-form-field>
               <button mat-icon-button type="button" aria-label="Eliminar teléfono"
-                *ngIf="!esModoVista && puedeEditarProgramacion(programacionForm.get('estadoProgramacion')?.value)" (click)="eliminarTelefono(i)">
+                *ngIf="!esModoVista && puedeEditarProgramacion(programacionForm.get('estadoProgramacion')?.value)"
+                [disabled]="guardandoDatosPaciente || (programacionForm.get('pacienteId')?.value && !puedeActualizarDatosPaciente)"
+                (click)="eliminarTelefono(i)">
                 <mat-icon>delete_outline</mat-icon>
               </button>
             </div>
             <span class="sin-telefonos" *ngIf="phones.length === 0">No se han agregado teléfonos.</span>
           </div>
+        </div>
+        <div class="guardar-contacto" *ngIf="puedeActualizarDatosPaciente">
+          <div class="guardar-contacto-mensaje">
+            <mat-icon>{{ datosPacientePendientes ? 'info_outline' : 'verified' }}</mat-icon>
+            <span>{{ datosPacientePendientes
+              ? 'Cambios sin guardar en la ficha del paciente.'
+              : 'Datos de la ficha del paciente sincronizados.' }}</span>
+          </div>
+          <button mat-stroked-button type="button" class="btn-actualizar-paciente"
+            [disabled]="!datosPacientePendientes || guardandoDatosPaciente || guardandoProgramacion"
+            (click)="guardarDatosPaciente()">
+            <mat-icon>save</mat-icon>
+            {{ guardandoDatosPaciente ? 'Guardando datos...' : 'Guardar datos del paciente' }}
+          </button>
         </div>
       </div>
     </section>
@@ -272,7 +292,7 @@
       {{ esModoVista ? 'Cerrar' : 'Cancelar' }}
     </button>
     <button mat-flat-button type="button" class="btn-guardar" *ngIf="!esModoVista"
-      [disabled]="guardandoProgramacion || !puedeEditarProgramacion(programacionForm.get('estadoProgramacion')?.value)"
+      [disabled]="guardandoProgramacion || guardandoDatosPaciente || !puedeEditarProgramacion(programacionForm.get('estadoProgramacion')?.value)"
       (click)="registraProgramacion()">
       <mat-icon>save</mat-icon>
       {{ guardandoProgramacion ? 'Guardando...' : esModoEdicion ? 'Guardar cambios' : 'Crear programación' }}

@@ -57,8 +57,8 @@
   <div>
     <mat-paginator
       #MatPaginatorPacientes
-      [pageSize]="10"
-      [pageSizeOptions]="[5, 10, 25]"
+      [pageSize]="data?.cantidadRecientes === 100 ? 25 : 10"
+      [pageSizeOptions]="data?.cantidadRecientes === 100 ? [10, 25, 50, 100] : [5, 10, 25]"
       showFirstLastButtons
     ></mat-paginator>
   </div>
