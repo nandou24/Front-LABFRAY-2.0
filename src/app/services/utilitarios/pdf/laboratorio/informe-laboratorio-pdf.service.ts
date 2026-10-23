@@ -6,6 +6,7 @@ import { environment } from '../../../../../environments/environment';
 import { jsPDF } from 'jspdf';
 import * as QRCode from 'qrcode';
 import autoTable from 'jspdf-autotable';
+import { IComparacionHistoricaResultadoResponse } from '../../../../models/Gestion/resultadoLaboratorio.models';
 
 import {
   IInformeEntregable,
@@ -18,6 +19,7 @@ import {
 
 type ModoInformePdf = 'DIGITAL' | 'IMPRESION';
 type IndicadorResultado = 'ALTO' | 'BAJO' | '';
+type ComparacionesPdf = Record<string, IComparacionHistoricaResultadoResponse>;
 
 interface IRegistroInformeVerificable {
   ok: boolean;
@@ -38,6 +40,7 @@ export class InformeLaboratorioPdfService {
     informe: IInformeEntregable,
     pruebas: IPruebaInformeEntrega[],
     incluirLogo = true,
+    comparaciones: ComparacionesPdf = {},
   ): Promise<void> {
     const ventana = window.open('', '_blank');
 
@@ -47,6 +50,7 @@ export class InformeLaboratorioPdfService {
         pruebas,
         'IMPRESION',
         incluirLogo,
+        comparaciones,
       );
       doc.autoPrint();
 
@@ -69,8 +73,9 @@ export class InformeLaboratorioPdfService {
   async generarArchivoDigital(
     informe: IInformeEntregable,
     pruebas: IPruebaInformeEntrega[],
+    comparaciones: ComparacionesPdf = {},
   ): Promise<{ nombreArchivo: string; blob: Blob }> {
-    const doc = await this.construirDocumento(informe, pruebas, 'DIGITAL', true);
+    const doc = await this.construirDocumento(informe, pruebas, 'DIGITAL', true, comparaciones);
 
     return {
       nombreArchivo: this.construirNombreArchivoInforme(informe),
@@ -82,8 +87,9 @@ export class InformeLaboratorioPdfService {
   async descargar(
     informe: IInformeEntregable,
     pruebas: IPruebaInformeEntrega[],
+    comparaciones: ComparacionesPdf = {},
   ): Promise<void> {
-    const doc = await this.construirDocumento(informe, pruebas, 'DIGITAL', true);
+    const doc = await this.construirDocumento(informe, pruebas, 'DIGITAL', true, comparaciones);
     doc.save(this.construirNombreArchivoInforme(informe));
   }
 
@@ -93,6 +99,7 @@ export class InformeLaboratorioPdfService {
     pruebas: IPruebaInformeEntrega[],
     modo: ModoInformePdf,
     incluirLogoImpresion: boolean,
+    comparaciones: ComparacionesPdf,
   ): Promise<jsPDF> {
     if (!pruebas.length) {
       throw new Error('Debe seleccionar al menos un resultado para el informe');
@@ -140,6 +147,24 @@ export class InformeLaboratorioPdfService {
 
       const mostrarValorReferencial = this.mostrarColumnaReferencia(prueba);
 
+      // ====== Comparar solo las pruebas elegidas y con antecedentes válidos ======
+      const respuestaHistorica = comparaciones[prueba._id];
+      const antecedentes = new Map<string, { valor: string; fecha: string }>();
+      const fechaActualMuestra = this.obtenerFechaPrincipalMuestra(prueba);
+      if (respuestaHistorica?.ok && respuestaHistorica.resultadoLaboratorioId === prueba._id) {
+        for (const itemHistorico of respuestaHistorica.items) {
+          const anterior = itemHistorico.anteriores?.[0];
+          if (!anterior || anterior.valor === null || anterior.valor === undefined) continue;
+          antecedentes.set(String(itemHistorico.itemLabId), {
+            valor: String(anterior.valor),
+            fecha: anterior.fechaMuestra
+              ? this.formatearFechaComparacionAnterior(anterior.fechaMuestra, fechaActualMuestra)
+              : 'Sin fecha de muestra',
+          });
+        }
+      }
+      const incluirAnterior = antecedentes.size > 0;
+
       const filas = prueba.items.map((item) => {
         const indicador = this.indicador(item);
 
@@ -148,6 +173,7 @@ export class InformeLaboratorioPdfService {
           muestra: item.muestra || '',
           metodo: item.metodo || '',
           resultado: this.formatearValorResultado(item),
+          anterior: item.itemLabId ? antecedentes.get(String(item.itemLabId)) ?? null : null,
           hallazgosResultado: this.obtenerHallazgosResultado(item),
           referencia: this.referencias(item),
           unidad: item.unidadesRef || '',
@@ -161,6 +187,7 @@ export class InformeLaboratorioPdfService {
         __indiceFila: String(indiceFila),
         determinacion: fila.determinacion,
         resultado: fila.resultado,
+        anterior: fila.anterior ? `${fila.anterior.valor}\n${fila.anterior.fecha}` : '—',
         referencia: fila.referencia,
         espacioReferencia: '',
         unidad: fila.unidad,
@@ -178,19 +205,34 @@ export class InformeLaboratorioPdfService {
         tableWidth: 'auto',
         showHead: 'everyPage',
         rowPageBreak: 'avoid',
-        columns: mostrarValorReferencial
-          ? [
-              { header: 'Determinación', dataKey: 'determinacion' },
-              { header: 'Resultado', dataKey: 'resultado' },
-              { header: 'Valor referencial', dataKey: 'referencia' },
-              { header: 'Unidades', dataKey: 'unidad' },
-            ]
-          : [
-              { header: 'Determinación', dataKey: 'determinacion' },
-              { header: 'Resultado', dataKey: 'resultado' },
-              { header: '', dataKey: 'espacioReferencia' },
-              { header: 'Unidades', dataKey: 'unidad' },
-            ],
+        columns: incluirAnterior
+          ? (mostrarValorReferencial
+              ? [
+                  { header: 'Determinación', dataKey: 'determinacion' },
+                  { header: 'Resultado actual', dataKey: 'resultado' },
+                  { header: 'Resultado anterior', dataKey: 'anterior' },
+                  { header: 'Valor referencial', dataKey: 'referencia' },
+                  { header: 'Unidades', dataKey: 'unidad' },
+                ]
+              : [
+                  { header: 'Determinación', dataKey: 'determinacion' },
+                  { header: 'Resultado actual', dataKey: 'resultado' },
+                  { header: 'Resultado anterior', dataKey: 'anterior' },
+                  { header: 'Unidades', dataKey: 'unidad' },
+                ])
+          : (mostrarValorReferencial
+              ? [
+                  { header: 'Determinación', dataKey: 'determinacion' },
+                  { header: 'Resultado', dataKey: 'resultado' },
+                  { header: 'Valor referencial', dataKey: 'referencia' },
+                  { header: 'Unidades', dataKey: 'unidad' },
+                ]
+              : [
+                  { header: 'Determinación', dataKey: 'determinacion' },
+                  { header: 'Resultado', dataKey: 'resultado' },
+                  { header: '', dataKey: 'espacioReferencia' },
+                  { header: 'Unidades', dataKey: 'unidad' },
+                ]),
         body: filasTabla,
         styles: {
           font: 'helvetica',
@@ -210,20 +252,34 @@ export class InformeLaboratorioPdfService {
           valign: 'middle',
           halign: 'center',
         },
-        columnStyles: mostrarValorReferencial
-          ? {
-              determinacion: { cellWidth: 60, halign: 'left' },
-              resultado: { cellWidth: 56, halign: 'center' },
-              referencia: { cellWidth: 42, halign: 'center' },
-              unidad: { cellWidth: 20, halign: 'center' },
-            }
-          : {
-              // ====== Conservar la misma grilla visual sin referencia ======
-              determinacion: { cellWidth: 60, halign: 'left' },
-              resultado: { cellWidth: 56, halign: 'center' },
-              espacioReferencia: { cellWidth: 42, halign: 'center' },
-              unidad: { cellWidth: 20, halign: 'center' },
-            },
+        columnStyles: incluirAnterior
+          ? (mostrarValorReferencial
+              ? {
+                  determinacion: { cellWidth: 52, halign: 'left' },
+                  resultado: { cellWidth: 39, halign: 'center' },
+                  anterior: { cellWidth: 36, halign: 'center' },
+                  referencia: { cellWidth: 34, halign: 'center' },
+                  unidad: { cellWidth: 17, halign: 'center' },
+                }
+              : {
+                  determinacion: { cellWidth: 60, halign: 'left' },
+                  resultado: { cellWidth: 45, halign: 'center' },
+                  anterior: { cellWidth: 45, halign: 'center' },
+                  unidad: { cellWidth: 28, halign: 'center' },
+                })
+          : (mostrarValorReferencial
+              ? {
+                  determinacion: { cellWidth: 60, halign: 'left' },
+                  resultado: { cellWidth: 56, halign: 'center' },
+                  referencia: { cellWidth: 42, halign: 'center' },
+                  unidad: { cellWidth: 20, halign: 'center' },
+                }
+              : {
+                  determinacion: { cellWidth: 60, halign: 'left' },
+                  resultado: { cellWidth: 56, halign: 'center' },
+                  espacioReferencia: { cellWidth: 42, halign: 'center' },
+                  unidad: { cellWidth: 20, halign: 'center' },
+                }),
         didParseCell: (data) => {
           if (data.section !== 'body') {
             return;
@@ -256,7 +312,7 @@ export class InformeLaboratorioPdfService {
 
           // ====== Jerarquía tipográfica del informe ======
           if (data.column.dataKey === 'resultado') {
-            data.cell.styles.fontSize = 8;
+            data.cell.styles.fontSize = incluirAnterior ? 8.6 : 8;
 
             if (raw.hallazgosResultado?.length) {
               // ====== Reservar una línea por hallazgo; se dibujan manualmente ======
@@ -270,6 +326,12 @@ export class InformeLaboratorioPdfService {
             } else if (raw.fueraReferencia) {
               data.cell.styles.fontStyle = 'bold';
             }
+          }
+
+          if (data.column.dataKey === 'anterior') {
+            data.cell.styles.fontSize = 6.1;
+            data.cell.styles.textColor = [55, 80, 111];
+            data.cell.styles.minCellHeight = 7.5;
           }
 
           if (data.column.dataKey === 'referencia') {
@@ -438,6 +500,19 @@ export class InformeLaboratorioPdfService {
         const yCabecera = this.dibujarCabeceraPrincipal(doc, informe, modo, logoImpresion);
         return this.dibujarTituloPruebaContinuacion(doc, prueba, yCabecera, margen);
       };
+
+      if (incluirAnterior) {
+        y = this.dibujarBloquePaginado(
+          doc,
+          'Resultado anterior:',
+          'La fecha corresponde a la toma o recepción de la muestra; — indica que no hay antecedente.',
+          y,
+          margen,
+          anchoPagina,
+          altoPagina - margenInferiorTabla,
+          crearPaginaContinuacion,
+        );
+      }
 
       for (const referenciaGrupo of this.comentariosGrupo(prueba)) {
         const titulo = referenciaGrupo.nombreGrupo
@@ -741,7 +816,7 @@ export class InformeLaboratorioPdfService {
     doc.setFont('helvetica', 'bold');
     doc.text('Solicitud:', margen, y);
     doc.setFont('helvetica', 'normal');
-    doc.text(informe.solicitud.codSolicitud || '-', margen + 22, y);
+    doc.text(informe.solicitud.codSolicitud || '-', margen + 25, y);
 
     // ====== Identificación del laboratorio junto a la solicitud ======
     const codigoLaboratorio = String(informe.solicitud.codigoLaboratorio ?? '').trim();
@@ -778,11 +853,11 @@ export class InformeLaboratorioPdfService {
     informe: IInformeEntregable,
     tipo: IRegistroInformeVerificable['tipoInforme'],
   ): void {
-    doc.setFont('helvetica', 'bold');
+    // ====== Mostrar solo el tipo, alineado con los datos del encabezado ======
+    doc.setFont('helvetica', 'normal');
     doc.setFontSize(8.3);
-    doc.setTextColor(20, 45, 75);
-    doc.text(`INFORME ${tipo}`, 49, this.obtenerYTipoInforme(informe));
     doc.setTextColor(0, 0, 0);
+    doc.text(tipo === 'FINAL' ? 'Final' : 'Parcial', 41, this.obtenerYTipoInforme(informe));
   }
 
   // ====== Cabecera de prueba ======
@@ -915,13 +990,57 @@ export class InformeLaboratorioPdfService {
   private formatearFechaHoraMuestra(valor: string | Date): string {
     const fecha = new Date(valor);
     if (Number.isNaN(fecha.getTime())) return '-';
-    const partes = new Intl.DateTimeFormat('en-GB', {
+
+    return new Intl.DateTimeFormat('es-PE', {
       timeZone: 'America/Lima',
-      day: '2-digit', month: '2-digit', year: 'numeric',
-      hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
-    }).formatToParts(fecha);
-    const d = Object.fromEntries(partes.map((parte) => [parte.type, parte.value]));
-    return `${d['day']}/${d['month']}/${d['year']} ${d['hour']}:${d['minute']}:${d['second']}`;
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    }).format(fecha);
+  }
+
+  // ====== Fecha del resultado anterior con hora solo si coincide el mismo día ======
+  private formatearFechaComparacionAnterior(
+    fechaAnterior: string | Date,
+    fechaActual: string | Date | null,
+  ): string {
+    const anterior = new Date(fechaAnterior);
+    if (Number.isNaN(anterior.getTime())) return '-';
+
+    if (!fechaActual) {
+      return this.formatearFechaMuestra(anterior);
+    }
+
+    const actual = new Date(fechaActual);
+    if (Number.isNaN(actual.getTime())) {
+      return this.formatearFechaMuestra(anterior);
+    }
+
+    const mismaFecha =
+      anterior.getFullYear() === actual.getFullYear() &&
+      anterior.getMonth() === actual.getMonth() &&
+      anterior.getDate() === actual.getDate();
+
+    return mismaFecha
+      ? this.formatearFechaHoraMuestra(anterior)
+      : this.formatearFechaMuestra(anterior);
+  }
+
+  // ====== Fecha principal de la prueba para decidir si mostrar hora en el histórico ======
+  private obtenerFechaPrincipalMuestra(prueba: IPruebaInformeEntrega): string | Date | null {
+    for (const muestra of prueba.fechasMuestras ?? []) {
+      if (muestra.tomaRecepcionUnificada && (muestra.fechaTomaRecepcion || muestra.fechaRecepcion)) {
+        return muestra.fechaTomaRecepcion || muestra.fechaRecepcion || null;
+      }
+
+      if (muestra.fechaRecoleccion) return muestra.fechaRecoleccion;
+      if (muestra.fechaRecepcion) return muestra.fechaRecepcion;
+    }
+
+    return null;
   }
 
   // ====== Medir cabecera antes de cambiar de página ======
@@ -1033,8 +1152,9 @@ export class InformeLaboratorioPdfService {
     doc.setFont('helvetica', 'bold');
     doc.text(etiquetaIzquierda, xIzquierda, y);
     doc.setFont('helvetica', 'normal');
-    doc.text(valorIzquierda, xIzquierda + 22, y, {
-      maxWidth: Math.max(35, xDerecha - (xIzquierda + 27)),
+    // ====== Alinear todos los valores izquierdos con Final / Parcial ======
+    doc.text(valorIzquierda, xIzquierda + 25, y, {
+      maxWidth: Math.max(35, xDerecha - (xIzquierda + 30)),
     });
 
     doc.setFont('helvetica', 'bold');

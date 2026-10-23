@@ -25,6 +25,8 @@ import {
 } from '../../../../../models/Gestion/entregaResultadoLaboratorio.models';
 import { EntregaResultadosService } from '../../../../../services/gestion/entregaResultados/entrega-resultados.service';
 import { InformeLaboratorioPdfService } from '../../../../../services/utilitarios/pdf/laboratorio/informe-laboratorio-pdf.service';
+import { ResultadoLaboratorioService } from '../../../../../services/gestion/resultadosLaboratorio/resultados-laboratorio.service';
+import { IComparacionHistoricaResultadoResponse } from '../../../../../models/Gestion/resultadoLaboratorio.models';
 
 export interface IDialogEntregaData {
   solicitudAtencionId: string;
@@ -52,6 +54,7 @@ export class DialogEntregaResultadosComponent implements OnInit {
   private readonly _ref = inject(MatDialogRef<DialogEntregaResultadosComponent>);
   private readonly _service = inject(EntregaResultadosService);
   private readonly _pdf = inject(InformeLaboratorioPdfService);
+  private readonly _historico = inject(ResultadoLaboratorioService);
   private readonly _snack = inject(MatSnackBar);
   private readonly _fb = inject(FormBuilder);
 
@@ -65,6 +68,7 @@ export class DialogEntregaResultadosComponent implements OnInit {
   private claveIdempotenciaWhatsapp = '';
   private firmaIdempotenciaWhatsapp = '';
   seleccionados = new Set<string>();
+  historicosSeleccionados = new Set<string>();
 
   readonly incluirLogoImpresion = this._fb.nonNullable.control(true);
 
@@ -145,6 +149,40 @@ export class DialogEntregaResultadosComponent implements OnInit {
     }
 
     this.seleccionados = siguiente;
+    if (!marcado) {
+      this.historicosSeleccionados.delete(id);
+    }
+  }
+
+  // ====== Elegir comparación únicamente para pruebas seleccionadas ======
+  cambiarComparacion(id: string, marcado: boolean): void {
+    const siguiente = new Set(this.historicosSeleccionados);
+    if (marcado && this.seleccionados.has(id)) {
+      siguiente.add(id);
+    } else {
+      siguiente.delete(id);
+    }
+    this.historicosSeleccionados = siguiente;
+  }
+
+  // ====== Consultar solo cuando se genera un PDF ======
+  private async consultarComparacionesPdf(): Promise<Record<string, IComparacionHistoricaResultadoResponse>> {
+    const ids = this.resultadosSeleccionados
+      .filter((prueba) => this.historicosSeleccionados.has(prueba._id))
+      .map((prueba) => prueba._id);
+    if (!ids.length) return {};
+
+    const consultas = await Promise.all(ids.map((id) =>
+      firstValueFrom(this._historico.obtenerComparacionHistorica(id)),
+    ));
+    const respuesta: Record<string, IComparacionHistoricaResultadoResponse> = {};
+    consultas.forEach((comparacion, i) => {
+      if (!comparacion.ok || comparacion.resultadoLaboratorioId !== ids[i]) {
+        throw new Error('La comparación histórica no corresponde a la prueba solicitada');
+      }
+      respuesta[ids[i]] = comparacion;
+    });
+    return respuesta;
   }
 
   seleccionarTodas(): void {
@@ -155,6 +193,7 @@ export class DialogEntregaResultadosComponent implements OnInit {
 
   desmarcarTodas(): void {
     this.seleccionados = new Set<string>();
+    this.historicosSeleccionados = new Set<string>();
   }
 
   cerrar(): void {
@@ -174,6 +213,10 @@ export class DialogEntregaResultadosComponent implements OnInit {
           this.informe = informe;
           this.seleccionados = new Set(
             informe.resultados.map((resultado) => resultado._id),
+          );
+          // ====== Mantener únicamente comparaciones de pruebas disponibles ======
+          this.historicosSeleccionados = new Set(
+            [...this.historicosSeleccionados].filter((id) => this.seleccionados.has(id)),
           );
 
           const receptorActual = this.formEntrega.controls.receptorNombre.value;
@@ -522,14 +565,16 @@ export class DialogEntregaResultadosComponent implements OnInit {
     this.generandoPdf = true;
 
     try {
+      const comparaciones = await this.consultarComparacionesPdf();
       await this._pdf.imprimir(
         this.informe,
         this.resultadosSeleccionados,
         this.incluirLogoImpresion.value,
+        comparaciones,
       );
     } catch (error) {
       console.error('Error al generar informe de laboratorio:', error);
-      this._snack.open('No se pudo generar el informe para impresión', 'Cerrar', {
+      this._snack.open(error instanceof Error ? error.message : 'No se pudo generar el informe para impresión', 'Cerrar', {
         duration: 4500,
       });
     } finally {
@@ -546,13 +591,15 @@ export class DialogEntregaResultadosComponent implements OnInit {
     this.generandoPdf = true;
 
     try {
+      const comparaciones = await this.consultarComparacionesPdf();
       await this._pdf.descargar(
         this.informe,
         this.resultadosSeleccionados,
+        comparaciones,
       );
     } catch (error) {
       console.error('Error al descargar informe de laboratorio:', error);
-      this._snack.open('No se pudo generar el PDF', 'Cerrar', { duration: 4500 });
+      this._snack.open(error instanceof Error ? error.message : 'No se pudo generar el PDF', 'Cerrar', { duration: 4500 });
     } finally {
       this.generandoPdf = false;
     }
@@ -670,10 +717,12 @@ export class DialogEntregaResultadosComponent implements OnInit {
     this.generandoPdf = incluyePdf;
 
     try {
+      const comparaciones = incluyePdf ? await this.consultarComparacionesPdf() : {};
       const archivo = incluyePdf
         ? await this._pdf.generarArchivoDigital(
             this.informe,
             this.resultadosSeleccionados,
+            comparaciones,
           )
         : null;
 

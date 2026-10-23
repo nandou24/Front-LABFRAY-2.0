@@ -983,6 +983,7 @@ export interface IReabrirResultadoResponse {
 // ====== Comparación histórica de resultados ======
 export interface IValorHistoricoComparable {
   fechaLiberacion: string;
+  fechaMuestra?: string | null;
   codSolicitud: string;
   valor: string | number;
   unidadesRef: string;

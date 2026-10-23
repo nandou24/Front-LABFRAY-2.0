@@ -177,6 +177,7 @@ export type ValorInformeEntrega =
 export interface IItemInformeEntrega {
   nombreInforme: string;
   codItemLab: string | null;
+  itemLabId?: string | null;
   tipoResultado?: 'NUMERICO' | 'TEXTO' | 'CATEGORICO' | 'ESTRUCTURADO';
   muestra?: string | null;
   metodo?: string | null;

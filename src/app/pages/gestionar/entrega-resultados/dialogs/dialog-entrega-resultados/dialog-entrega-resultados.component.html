@@ -320,6 +320,17 @@
         >
       </div>
 
+      <!-- ====== Comparación opcional solo en el PDF de esta prueba ====== -->
+      <div class="metadato" style="margin: 6px 0 8px 24px">
+        <mat-checkbox
+          [checked]="historicosSeleccionados.has(prueba._id)"
+          [disabled]="!seleccionados.has(prueba._id) || generandoPdf || procesando"
+          (change)="cambiarComparacion(prueba._id, $event.checked)"
+        >
+          Mostrar resultado anterior en el PDF
+        </mat-checkbox>
+      </div>
+
       <p class="metadato" *ngIf="prueba.muestras?.length">
         Muestra: {{ prueba.muestras?.join(", ") }}
       </p>
