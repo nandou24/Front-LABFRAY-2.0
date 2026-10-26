@@ -615,9 +615,15 @@ export class DialogImportarProgramacionesEmpresaComponent implements OnInit {
   }
 
   // ====== Cotejar Excel con historia clínica encontrada por documento ======
-  fechaMaestraVisible(fechaISO: string | null | undefined): string {
-    if (!fechaISO || !/^\d{4}-\d{2}-\d{2}$/.test(fechaISO)) return 'Sin dato';
-    const [anio, mes, dia] = fechaISO.split('-');
+  fechaMaestraVisible(fecha: string | Date | null | undefined): string {
+    if (!fecha) return 'Sin dato';
+    // ====== Admitir fecha del maestro como Date o texto ISO ======
+    const valor = fecha instanceof Date
+      ? (Number.isNaN(fecha.getTime()) ? '' : fecha.toISOString().slice(0, 10))
+      : fecha.trim();
+    const coincidencia = /^(\d{4})-(\d{2})-(\d{2})(?:T.*)?$/.exec(valor);
+    if (!coincidencia) return 'Sin dato';
+    const [, anio, mes, dia] = coincidencia;
     return `${dia}/${mes}/${anio}`;
   }
 

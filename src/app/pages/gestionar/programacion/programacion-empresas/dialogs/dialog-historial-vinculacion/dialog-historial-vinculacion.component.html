@@ -1,0 +1,110 @@
+<div class="historial-dialogo">
+  <header class="cabecera">
+    <div class="titulo">
+      <mat-icon>history</mat-icon>
+      <div>
+        <h2>Historial de vinculación de HC</h2>
+        <p>Registro auditable de vinculaciones de la programación</p>
+      </div>
+    </div>
+    <button mat-icon-button type="button" aria-label="Cerrar historial" (click)="cerrar()">
+      <mat-icon>close</mat-icon>
+    </button>
+  </header>
+
+  <mat-dialog-content>
+    <section class="resumen" aria-label="Datos de programación">
+      <div><span>Programación</span><strong>{{ data.programacion.codProgramacion }}</strong></div>
+      <div><span>Trabajador</span><strong>{{ data.programacion.apePatCliente }} {{ data.programacion.apeMatCliente }} {{ data.programacion.nombreCliente }}</strong></div>
+      <div><span>Documento</span><strong>{{ data.programacion.nroDoc ? (data.programacion.tipoDoc + ' ' + data.programacion.nroDoc) : 'Sin documento' }}</strong></div>
+      <div><span>HC vinculada</span><strong>{{ data.programacion.hc || 'No vinculada' }}</strong></div>
+    </section>
+
+    <div class="cargando" *ngIf="cargando" aria-live="polite">
+      <mat-spinner [diameter]="28"></mat-spinner>
+      <span>Consultando historial...</span>
+    </div>
+
+    <div class="error" *ngIf="error" role="alert">
+      <mat-icon>error_outline</mat-icon>
+      <span>{{ error }}</span>
+      <button mat-stroked-button type="button" (click)="cargarHistorial()">Reintentar</button>
+    </div>
+
+    <section *ngIf="!cargando && !error && estadosCandidatos.length" class="eventos" aria-label="Estado actual de coincidencias">
+      <div class="eventos-titulo"><mat-icon>people_alt</mat-icon>
+        <strong>Situación actual por HC candidata ({{ estadosCandidatos.length }})</strong></div>
+      <div class="estado-candidato" *ngFor="let candidato of estadosCandidatos" style="border:1px solid #d7e4fa;border-radius:9px;padding:12px 14px;margin:9px 0;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+        <div><strong>{{ candidato.hc || 'Sin HC' }}</strong><span style="margin-left:8px">{{ candidato.nombreCompleto }}</span></div>
+        <strong [style.color]="candidato.estado === 'PERSONA_DISTINTA' ? '#246c50' : candidato.estado === 'SIN_REVISAR' ? '#7e8796' : '#a45b00'">{{ tituloEstado(candidato.estado) }}</strong>
+      </div>
+      <p style="font-size:12px;color:#64748b">Se muestra la última decisión por candidato; el historial inferior conserva todos los eventos.</p>
+    </section>
+
+    <div class="vacio" *ngIf="!cargando && !error && !historial.length && !revisiones.length && !estadosCandidatos.length">
+      <mat-icon>history_toggle_off</mat-icon>
+      <p>Aún no se han registrado eventos de revisión o vinculación para esta programación.</p>
+    </div>
+
+    <section class="eventos" *ngIf="!cargando && !error && historial.length" aria-label="Eventos de vinculación">
+      <div class="eventos-titulo">
+        <mat-icon>fact_check</mat-icon>
+        <strong>Eventos registrados ({{ historial.length }})</strong>
+      </div>
+      <article class="evento" *ngFor="let item of historial; let i = index">
+        <div class="evento-marca"><mat-icon>link</mat-icon></div>
+        <div class="evento-contenido">
+          <div class="evento-cabecera">
+            <strong>{{ tituloEvento(item.tipo) }}</strong>
+            <time>{{ item.fecha | date:'dd/MM/yyyy, hh:mm:ss a' }}</time>
+          </div>
+          <div class="movimiento">
+            <div class="hc-campo"><span>HC anterior</span><strong>{{ item.hcAnterior || 'Ninguna' }}</strong></div>
+            <mat-icon>arrow_forward</mat-icon>
+            <div class="hc-campo nueva"><span>HC vinculada</span><strong>{{ item.hcNueva || 'Sin HC' }}</strong></div>
+          </div>
+          <div class="detalle" *ngIf="item.tipoResolucion === 'ALTA_NUEVA_EMPRESA'">
+            <div><mat-icon>person_add</mat-icon><span>Paciente nuevo y HC creados al iniciar atención. Documento informado por la empresa.</span></div>
+          </div>
+          <div class="detalle" *ngIf="item.tipoResolucion === 'DISCREPANCIA_DOCUMENTO_COINCIDENTE' || item.motivoDecision">
+            <div><mat-icon>fact_check</mat-icon><span>Vinculación confirmada con discrepancia de nombres</span></div>
+            <div *ngIf="item.motivoDecision"><mat-icon>notes</mat-icon><span>Motivo: {{ item.motivoDecision }}</span></div>
+          </div>
+          <div class="detalle">
+            <div><mat-icon>badge</mat-icon><span>Responsable: <strong>{{ nombreOperador(item) }}</strong></span></div>
+            <div *ngIf="item.usuario"><mat-icon>account_circle</mat-icon><span>Usuario de acceso: {{ item.usuario }}</span></div>
+            <div *ngIf="item.origenDocumento"><mat-icon>source</mat-icon><span>Origen: {{ item.origenDocumento === 'EMPRESA' ? 'Datos informados por la empresa' : item.origenDocumento }}</span></div>
+          </div>
+        </div>
+      </article>
+    </section>
+    <section class="eventos" *ngIf="!cargando && !error && revisiones.length" aria-label="Revisiones de identidad">
+      <div class="eventos-titulo"><mat-icon>manage_search</mat-icon>
+        <strong>Revisiones de identidad ({{ revisiones.length }})</strong></div>
+      <article class="evento" *ngFor="let revision of revisiones">
+        <div class="evento-marca"><mat-icon>fact_check</mat-icon></div>
+        <div class="evento-contenido">
+          <div class="evento-cabecera"><strong>{{ revision.decision === 'DISTINTO' ? 'Se confirmó que no corresponde al trabajador programado' : 'Pendiente de revisión' }}</strong>
+            <time>{{ revision.fecha | date:'dd/MM/yyyy, hh:mm:ss a' }}</time></div>
+          <div class="movimiento"><div class="hc-campo"><span>HC revisada</span>
+            <strong>{{ revision.hcCandidata || 'No disponible' }}</strong></div>
+            <div class="hc-campo"><span>Coincidencia documental</span>
+              <strong>{{ revision.documentoCoincidente ? 'Sí · requiere resolución' : 'No' }}</strong></div></div>
+          <div class="detalle">
+            <div *ngIf="revision.decision === 'DISTINTO'"><mat-icon>person_off</mat-icon><span>No se vinculó la HC revisada. El paciente registrado permanece sin modificaciones.</span></div>
+            <div *ngIf="revision.decision === 'PENDIENTE'"><mat-icon>help_outline</mat-icon><span>La identidad no fue confirmada y no se vinculó esta HC.</span></div>
+          </div>
+          <div class="detalle">
+            <div><mat-icon>badge</mat-icon><span>Responsable: <strong>{{ nombreOperador(revision) }}</strong></span></div>
+            <div *ngIf="revision.usuario"><mat-icon>account_circle</mat-icon><span>Usuario: {{ revision.usuario }}</span></div>
+            <div *ngIf="revision.motivo"><mat-icon>notes</mat-icon><span>Motivo: {{ revision.motivo }}</span></div>
+          </div>
+        </div>
+      </article>
+    </section>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-flat-button color="primary" type="button" (click)="cerrar()">Cerrar</button>
+  </mat-dialog-actions>
+</div>

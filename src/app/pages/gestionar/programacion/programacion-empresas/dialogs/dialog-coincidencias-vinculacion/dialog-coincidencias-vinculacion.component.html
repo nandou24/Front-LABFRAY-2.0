@@ -1,0 +1,120 @@
+<div class="revision-dialogo">
+  <header class="cabecera">
+    <div class="cabecera-titulo">
+      <mat-icon>groups</mat-icon>
+      <div><h2>Revisar posible coincidencia de paciente</h2>
+        <p>Compare los datos informados por la empresa con los pacientes registrados y defina si corresponde a la misma persona.</p></div>
+    </div>
+    <button mat-icon-button type="button" aria-label="Cerrar" (click)="cerrar()" [disabled]="guardando"><mat-icon>close</mat-icon></button>
+  </header>
+  <mat-dialog-content>
+    <div *ngIf="cargando" class="espera"><mat-spinner diameter="28"></mat-spinner> Consultando todo el maestro de pacientes...</div>
+    <p class="error" *ngIf="mensajeError" role="alert">{{ mensajeError }}</p>
+    <ng-container *ngIf="!cargando">
+      <div class="resumen-coincidencias">
+        <div class="contador"><mat-icon>badge</mat-icon><strong>{{ porDocumento.length }}</strong><span>Coincidencias por documento</span></div>
+        <div class="contador"><mat-icon>people</mat-icon><strong>{{ porNombres.length }}</strong><span>Por nombres y apellidos</span></div>
+        <div class="contador"><mat-icon>person</mat-icon><strong>{{ totalPacientesUnicos }}</strong><span>Pacientes únicos encontrados</span></div>
+      </div>
+      <div class="resumen-programacion">
+        <span><strong>Programación:</strong> {{ programacion.codProgramacion }}</span>
+        <span><strong>Empresa:</strong> {{ programacion.razonSocialEmpresa }}</span>
+        <span><strong>Trabajador:</strong> {{ programacion.apePatCliente }} {{ programacion.apeMatCliente }} {{ programacion.nombreCliente }}</span>
+        <span><strong>Documento:</strong> {{ programacion.nroDoc ? programacion.tipoDoc + ' ' + programacion.nroDoc : 'Sin documento' }}</span>
+      </div>
+      <div class="vacio" *ngIf="!unicos.length"><mat-icon>person_off</mat-icon>
+        <div><strong>Sin coincidencias</strong><p>La programación permanece sin HC. La creación de una nueva HC al iniciar atención corresponde a PE.6.5A.4.</p></div></div>
+      <ng-container *ngIf="unicos.length">
+        <section class="selector-candidatos" *ngIf="unicos.length > 1">
+          <h3>Pacientes candidatos ({{ unicos.length }})</h3>
+          <mat-radio-group [value]="seleccion.value" (change)="cambiarSeleccion($event.value)" class="candidatos-opciones">
+            <mat-radio-button *ngFor="let candidato of unicos" [value]="candidato.pacienteId" [disabled]="vinculada || guardando">
+              <strong>{{ nombrePaciente(candidato) }}</strong> · HC {{ candidato.hc || 'Sin HC' }}
+              <span class="chip" *ngIf="idsPorDocumento.has(candidato.pacienteId)">Documento</span>
+              <span class="chip" *ngIf="idsPorNombres.has(candidato.pacienteId)">Nombres</span>
+            </mat-radio-button>
+          </mat-radio-group>
+        </section>
+        <ng-container *ngIf="seleccionado as candidato">
+          <section class="bloque-comparacion">
+            <div class="titulo-bloque"><strong>{{ nombrePaciente(candidato) }}</strong><span>HC {{ candidato.hc || 'Sin HC' }}</span>
+              <span class="chip" *ngIf="idsPorDocumento.has(candidato.pacienteId)">Coincidencia por documento</span>
+              <span class="chip" *ngIf="idsPorNombres.has(candidato.pacienteId)">Coincidencia por nombres</span>
+            </div>
+            <div class="tabla-scroll">
+              <div class="tabla-comparacion">
+                <div class="encabezado encabezado-programacion">Datos de la programación</div>
+                <div class="encabezado encabezado-paciente">Datos del paciente registrado</div>
+                <div class="encabezado encabezado-comparacion">Evaluación / observaciones</div>
+                <ng-container *ngFor="let fila of candidato.filas">
+                  <div class="celda programacion"><span>{{ fila.etiqueta }}</span><strong>{{ fila.programacion }}</strong></div>
+                  <div class="celda paciente"><span>{{ fila.etiqueta }}</span><strong>{{ fila.paciente }}</strong></div>
+                  <div class="celda estado" [ngClass]="fila.estado">
+                    <mat-icon>{{ fila.estado === 'coincide' ? 'check_circle' : fila.estado === 'faltante' || fila.estado === 'diferente' ? 'warning' : fila.estado === 'informativo' ? 'info' : 'remove_circle_outline' }}</mat-icon>
+                    <span>{{ fila.detalle }}</span>
+                  </div>
+                </ng-container>
+              </div>
+            </div>
+          </section>
+          <div class="paneles-inferiores">
+            <section class="panel-visual">
+              <h3><mat-icon>image</mat-icon> Apoyo visual</h3>
+              <div class="foto-contenido" *ngIf="candidato.fotoReferencia; else sinFoto">
+                <app-foto-paciente-miniatura [pacienteId]="candidato.pacienteId" [hc]="candidato.hc"
+                  [programacionEmpresaId]="candidato.fotoReferencia.programacionEmpresaId"
+                  [solicitudAtencionId]="candidato.fotoReferencia.solicitudAtencionId" tamano="grande"></app-foto-paciente-miniatura>
+                <div><strong>Fotografía referencial de evaluación anterior</strong>
+                  <p>Úsela solamente como apoyo; no acredita por sí sola la identidad.</p>
+                  <span>Capturada: {{ candidato.fotoReferencia.fechaCaptura | date:'dd/MM/yyyy':'UTC' }}</span></div>
+              </div>
+              <ng-template #sinFoto><div class="sin-foto"><mat-icon>no_photography</mat-icon>
+                <p>No hay fotografía de evaluación previa asociada a esta HC.</p></div></ng-template>
+            </section>
+            <section class="panel-decision">
+              <h3><mat-icon>task_alt</mat-icon> Seleccione una decisión</h3>
+              <mat-radio-group [value]="decision.value" (change)="cambiarDecision($event.value)" class="decisiones">
+                <label class="decision" [class.activa]="decision.value === 'MISMO'" [class.inhabilitada]="!candidato.documentoExacto || candidato.identificacionPendiente || !candidato.hc">
+                  <mat-radio-button value="MISMO" [disabled]="vinculada || guardando || !candidato.documentoExacto || candidato.identificacionPendiente || !candidato.hc"></mat-radio-button>
+                  <div><strong>Sí, es el mismo paciente</strong>
+                    <span>Reutilizar la HC existente. Si existen discrepancias, se requiere confirmación expresa; el motivo es opcional.</span></div>
+                </label>
+                <label class="decision" [class.activa]="decision.value === 'DISTINTO'">
+                  <mat-radio-button value="DISTINTO" [disabled]="vinculada || guardando"></mat-radio-button>
+                  <div><strong>No, es una persona distinta</strong><span>Registrar la decisión sin vincular ni crear HC.</span></div>
+                </label>
+                <label class="decision" [class.activa]="decision.value === 'PENDIENTE'">
+                  <mat-radio-button value="PENDIENTE" [disabled]="vinculada || guardando"></mat-radio-button>
+                  <div><strong>No estoy seguro</strong><span>Guardar para revisión posterior, sin vincular HC.</span></div>
+                </label>
+              </mat-radio-group>
+              <p class="advertencia" *ngIf="!candidato.documentoExacto">
+                <mat-icon>warning_amber</mat-icon> El documento es diferente: la vinculación directa está bloqueada, aunque los nombres coincidan.
+              </p>
+              <p class="advertencia" *ngIf="decision.value === 'DISTINTO' && candidato.documentoExacto">
+                <mat-icon>warning_amber</mat-icon> El DNI coincide con el de otra HC. La decisión queda auditada y el conflicto no se resuelve creando otra HC.
+              </p>
+              <mat-form-field appearance="outline" *ngIf="decision.value" class="motivo">
+                <mat-label>Motivo de la decisión (opcional)</mat-label>
+                <textarea matInput rows="2" maxlength="300" [formControl]="motivo"></textarea>
+                <mat-hint align="end">{{ motivo.value?.length || 0 }}/300</mat-hint>
+              </mat-form-field>
+              <mat-checkbox *ngIf="decision.value === 'MISMO' && !candidato.nombresExactos"
+                [formControl]="confirmacionExpresa" color="primary">
+                Confirmo que revisé los datos y corresponde al mismo paciente.
+              </mat-checkbox>
+            </section>
+          </div>
+          <div class="aviso"><mat-icon>info</mat-icon><span>La primera vinculación no requiere segundo autorizador, pero queda auditada. Una corrección posterior sí lo requerirá. Esta pantalla no modifica los datos maestros.</span></div>
+        </ng-container>
+      </ng-container>
+      <p class="advertencia" *ngIf="vinculada">Esta programación ya está vinculada. Para cambiar la HC se requiere el procedimiento autorizado.</p>
+    </ng-container>
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-stroked-button type="button" (click)="cerrar()" [disabled]="guardando">Cancelar</button>
+    <button mat-stroked-button type="button" (click)="verHistorial()"><mat-icon>history</mat-icon> Ver historial</button>
+    <button mat-flat-button color="primary" type="button" (click)="confirmarDecision()" [disabled]="!puedeConfirmar">
+      <mat-icon>task_alt</mat-icon>{{ guardando ? 'Procesando...' : 'Confirmar decisión' }}</button>
+  </mat-dialog-actions>
+</div>

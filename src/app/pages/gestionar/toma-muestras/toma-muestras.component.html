@@ -164,7 +164,6 @@
 
             <td mat-cell *matCellDef="let row">
               {{ obtenerHcPaciente(row) }}
-              <ng-container *ngIf="row.solicitud.paciente.hc"><div style="font-size: 10px; line-height: 1.2; margin-top: 2px; font-weight: 600" [style.color]="row.solicitud.paciente.tipoHC === 'PROVISIONAL' ? '#9f5a00' : row.solicitud.paciente.tipoHC === 'PRINCIPAL' ? '#17694b' : '#687384'">{{ row.solicitud.paciente.tipoHC === 'PROVISIONAL' ? (row.solicitud.paciente.estadoConciliacion === 'CONCILIADA' ? 'Conciliada' : 'Provisional') : row.solicitud.paciente.tipoHC === 'PRINCIPAL' ? 'Principal' : 'Sin clasificar' }}</div></ng-container>
             </td>
           </ng-container>
 
@@ -375,7 +374,6 @@
 
             <td mat-cell *matCellDef="let row">
               {{ obtenerHcPaciente(row) }}
-              <ng-container *ngIf="row.solicitud.paciente.hc"><div style="font-size: 10px; line-height: 1.2; margin-top: 2px; font-weight: 600" [style.color]="row.solicitud.paciente.tipoHC === 'PROVISIONAL' ? '#9f5a00' : row.solicitud.paciente.tipoHC === 'PRINCIPAL' ? '#17694b' : '#687384'">{{ row.solicitud.paciente.tipoHC === 'PROVISIONAL' ? (row.solicitud.paciente.estadoConciliacion === 'CONCILIADA' ? 'Conciliada' : 'Provisional') : row.solicitud.paciente.tipoHC === 'PRINCIPAL' ? 'Principal' : 'Sin clasificar' }}</div></ng-container>
             </td>
           </ng-container>
 

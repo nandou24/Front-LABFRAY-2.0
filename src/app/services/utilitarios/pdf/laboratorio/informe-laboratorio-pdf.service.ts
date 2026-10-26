@@ -126,10 +126,13 @@ export class InformeLaboratorioPdfService {
     // ====== Acercar la tabla al título en páginas de continuación ======
     const margenSuperiorContinuacion = y + 4;
 
+    // ====== Fechas de muestras visibles excepto en informes de Empresa ======
+    const mostrarFechasMuestra = informe.solicitud.origenAtencion !== 'EMPRESA';
+
     // ====== Pruebas liberadas seleccionadas ======
     pruebas.forEach((prueba) => {
       // ====== Evitar títulos huérfanos y reservar dos determinaciones ======
-      const altoCabecera = this.estimarAltoCabeceraPrueba(doc, prueba, anchoPagina, margen);
+      const altoCabecera = this.estimarAltoCabeceraPrueba(doc, prueba, anchoPagina, margen, mostrarFechasMuestra);
       const altoInicio = altoCabecera + 9 + Math.min(2, prueba.items.length) * 7;
       if (y + altoInicio > altoPagina - margenInferiorTabla) {
         doc.addPage();
@@ -143,6 +146,7 @@ export class InformeLaboratorioPdfService {
         y,
         margen,
         anchoPagina,
+        mostrarFechasMuestra,
       );
 
       const mostrarValorReferencial = this.mostrarColumnaReferencia(prueba);
@@ -157,9 +161,9 @@ export class InformeLaboratorioPdfService {
           if (!anterior || anterior.valor === null || anterior.valor === undefined) continue;
           antecedentes.set(String(itemHistorico.itemLabId), {
             valor: String(anterior.valor),
-            fecha: anterior.fechaMuestra
+            fecha: mostrarFechasMuestra && anterior.fechaMuestra
               ? this.formatearFechaComparacionAnterior(anterior.fechaMuestra, fechaActualMuestra)
-              : 'Sin fecha de muestra',
+              : '',
           });
         }
       }
@@ -187,7 +191,7 @@ export class InformeLaboratorioPdfService {
         __indiceFila: String(indiceFila),
         determinacion: fila.determinacion,
         resultado: fila.resultado,
-        anterior: fila.anterior ? `${fila.anterior.valor}\n${fila.anterior.fecha}` : '—',
+        anterior: fila.anterior ? [fila.anterior.valor, fila.anterior.fecha].filter(Boolean).join('\n') : '—',
         referencia: fila.referencia,
         espacioReferencia: '',
         unidad: fila.unidad,
@@ -505,7 +509,9 @@ export class InformeLaboratorioPdfService {
         y = this.dibujarBloquePaginado(
           doc,
           'Resultado anterior:',
-          'La fecha corresponde a la toma o recepción de la muestra; — indica que no hay antecedente.',
+          mostrarFechasMuestra
+            ? 'La fecha corresponde a la toma o recepción de la muestra; — indica que no hay antecedente.'
+            : '— indica que no hay antecedente.',
           y,
           margen,
           anchoPagina,
@@ -867,6 +873,7 @@ export class InformeLaboratorioPdfService {
     yInicial: number,
     margen: number,
     anchoPagina: number,
+    mostrarFechasMuestra: boolean,
   ): number {
     let y = yInicial;
 
@@ -897,7 +904,7 @@ export class InformeLaboratorioPdfService {
 
     // ====== Unificar nombre y fechas de las muestras ======
     doc.setFontSize(7.2);
-    const lineasMuestras = this.obtenerLineasResumenMuestras(doc, prueba, anchoPagina, margen);
+    const lineasMuestras = this.obtenerLineasResumenMuestras(doc, prueba, anchoPagina, margen, mostrarFechasMuestra);
     if (lineasMuestras.length > 0) {
       doc.text(lineasMuestras, margen, y);
       y += lineasMuestras.length * 3.1;
@@ -919,6 +926,7 @@ export class InformeLaboratorioPdfService {
     prueba: IPruebaInformeEntrega,
     anchoPagina: number,
     margen: number,
+    mostrarFechasMuestra: boolean,
   ): string[] {
     const normalizarNombre = (valor: unknown): string =>
       String(valor ?? '').trim().replace(/\s+/g, ' ');
@@ -926,6 +934,24 @@ export class InformeLaboratorioPdfService {
     const nombresOriginales = (prueba.muestras ?? [])
       .map(normalizarNombre)
       .filter(Boolean);
+
+    // ====== Empresa: mostrar tipos de muestra sin fechas operativas ======
+    if (!mostrarFechasMuestra) {
+      const nombres = [
+        ...nombresOriginales,
+        ...(prueba.fechasMuestras ?? []).map((muestra) => normalizarNombre(muestra.nombreMuestra)),
+      ].filter(Boolean);
+      const nombresUnicos = nombres.filter((nombre, indice) =>
+        nombres.findIndex((otro) => claveNombre(otro) === claveNombre(nombre)) === indice,
+      );
+      if (!nombresUnicos.length) return [];
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7.2);
+      return doc.splitTextToSize(
+        `Muestra: ${nombresUnicos.join(', ')}`,
+        anchoPagina - margen * 2,
+      ) as string[];
+    }
 
     // ====== Agrupar recipientes con el mismo momento operativo ======
     const grupos = new Map<string, string[]>();
@@ -1049,8 +1075,9 @@ export class InformeLaboratorioPdfService {
     prueba: IPruebaInformeEntrega,
     anchoPagina: number,
     margen: number,
+    mostrarFechasMuestra: boolean,
   ): number {
-    const lineasMuestras = this.obtenerLineasResumenMuestras(doc, prueba, anchoPagina, margen);
+    const lineasMuestras = this.obtenerLineasResumenMuestras(doc, prueba, anchoPagina, margen, mostrarFechasMuestra);
     return 4.2 + lineasMuestras.length * 3.1 + 2.3;
   }
 

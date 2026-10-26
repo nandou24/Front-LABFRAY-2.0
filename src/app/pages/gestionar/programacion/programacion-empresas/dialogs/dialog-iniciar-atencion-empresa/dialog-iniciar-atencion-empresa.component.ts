@@ -332,13 +332,14 @@ export class DialogIniciarAtencionEmpresaComponent
     }
 
     // ====== Confirmar atención con identificación pendiente ======
-    if (!this.programacion.nroDoc) {
+    const sinDocumento = !this.programacion.nroDoc && !this.programacion.pacienteId;
+    if (sinDocumento) {
       const confirmacion = await Swal.fire({
-        title: 'Atención sin documento',
-        text: 'Se creará una historia clínica con identificación PENDIENTE. Verifique los nombres y apellidos del trabajador antes de continuar.',
+        title: 'Iniciar atención temporal',
+        text: 'Se generarán solicitudes sin crear paciente ni HC. Se podrán procesar muestras y validar resultados, pero no liberarlos hasta registrar el documento y resolver la identidad.',
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonText: 'Continuar sin documento',
+        confirmButtonText: 'Iniciar atención temporal',
         cancelButtonText: 'Volver',
         reverseButtons: true,
       });
@@ -349,7 +350,7 @@ export class DialogIniciarAtencionEmpresaComponent
     // 2. SI NO HAY FOTOGRAFÍA
     // ==========================================
 
-    if (!this.fotoPaciente) {
+    if (!this.fotoPaciente && !sinDocumento) {
       const resultado = await Swal.fire({
         title: '¿Iniciar sin fotografía?',
         text:
@@ -390,14 +391,14 @@ export class DialogIniciarAtencionEmpresaComponent
           ).join(' | ');
         const confirmacion = await Swal.fire({
           title: 'Posibles historias clínicas existentes',
-          text: `Se encontraron pacientes con los mismos nombres. ${candidatos ? 'HC encontradas: ' + candidatos + '. ' : ''}Si corresponde al mismo paciente, cancela y selecciónalo desde la búsqueda. Para una persona distinta, justifica por qué necesitas continuar con una nueva historia clínica.`,
+          text: `Se encontraron pacientes con los mismos nombres. ${candidatos ? 'HC encontradas: ' + candidatos + '. ' : ''}Si corresponde al mismo paciente, cancela y selecciónalo desde la búsqueda. Para una persona distinta, justifica por qué crearás otra HC provisional.`,
           icon: 'warning',
           input: 'textarea',
-          inputLabel: 'Motivo para registrar una nueva historia clínica',
+          inputLabel: 'Motivo para continuar con una nueva HC provisional',
           inputPlaceholder: 'Explica cómo verificaste que se trata de otro trabajador...',
           inputAttributes: { maxlength: '300' },
           showCancelButton: true,
-          confirmButtonText: 'Continuar con nueva HC',
+          confirmButtonText: 'Crear HC provisional',
           cancelButtonText: 'Cancelar y revisar',
           reverseButtons: true,
           inputValidator: (valor) => {
@@ -528,6 +529,17 @@ export class DialogIniciarAtencionEmpresaComponent
           title: 'Posible paciente registrado',
           text: `${respuesta.msg || 'Verifique la identidad antes de continuar.'}${historias ? ' Historias encontradas: ' + historias : ''}`,
           icon: 'warning',
+          confirmButtonText: 'Entendido',
+        });
+        return;
+      }
+
+      if (['COINCIDENCIA_DOCUMENTO_EXISTENTE', 'COINCIDENCIAS_IDENTIDAD_PENDIENTES',
+        'REVISION_IDENTIDAD_PENDIENTE'].includes(respuesta?.codigo)) {
+        await Swal.fire({
+          icon: 'warning', title: 'Revisar coincidencias antes de iniciar',
+          text: (respuesta?.msg || 'Hay coincidencias pendientes de resolver.') +
+            ' Cierra esta ventana y utiliza Revisar coincidencias en la programación.',
           confirmButtonText: 'Entendido',
         });
         return;

@@ -133,14 +133,18 @@ export class ProgramacionEmpresaService {
     porDocumento: Array<{
       pacienteId: string; hc: string | null; tipoDoc: string | null; nroDoc: string | null;
       nombreCliente: string; apePatCliente: string; apeMatCliente: string;
-      documentoExacto: boolean; nombresExactos: boolean; vinculacionPermitida: boolean;
+      documentoExacto: boolean; nombresExactos: boolean; vinculacionPermitida: boolean; identificacionPendiente: boolean;
       tipoCoincidencia: string;
+      fechaNacimiento?: string | null; sexoCliente?: string | null;
+      fotoReferencia?: { programacionEmpresaId: string | null; solicitudAtencionId: string | null; fechaCaptura: string } | null;
     }>;
     porNombres: Array<{
       pacienteId: string; hc: string | null; tipoDoc: string | null; nroDoc: string | null;
       nombreCliente: string; apePatCliente: string; apeMatCliente: string;
-      documentoExacto: boolean; nombresExactos: boolean; vinculacionPermitida: boolean;
+      documentoExacto: boolean; nombresExactos: boolean; vinculacionPermitida: boolean; identificacionPendiente: boolean;
       tipoCoincidencia: string;
+      fechaNacimiento?: string | null; sexoCliente?: string | null;
+      fotoReferencia?: { programacionEmpresaId: string | null; solicitudAtencionId: string | null; fechaCaptura: string } | null;
     }>;
     masPorDocumento: boolean; masPorNombres: boolean;
   }> {
@@ -148,14 +152,23 @@ export class ProgramacionEmpresaService {
       { headers: this._auth.getAuthHeaders() });
   }
 
-  vincularPacienteInicial(id:string, pacienteId:string):Observable<any> {
-    return this._http.post<any>(`${this.apiUrl}/${id}/vincular-paciente`, {pacienteId},
+  vincularPacienteInicial(id:string, pacienteId:string, revision?: { motivoDecision?:string; confirmacionExpresa:boolean }):Observable<any> {
+    return this._http.post<any>(`${this.apiUrl}/${id}/vincular-paciente`, {pacienteId, ...(revision ?? {})},
       {headers:this._auth.getAuthHeaders()});
   }
 
-  obtenerHistorialVinculaciones(id:string):Observable<{ok:boolean; historial:Array<{
-    tipo:string; hcAnterior:string|null; hcNueva:string|null; fecha:string; usuario:string
-  }>}> {
+  registrarRevisionCoincidencia(id:string, datos:{ pacienteId:string; decision:'DISTINTO'|'PENDIENTE'; motivo?:string|null }):Observable<any> {
+    return this._http.post<any>(`${this.apiUrl}/${id}/revisar-coincidencia`, datos,
+      {headers:this._auth.getAuthHeaders()});
+  }
+
+  obtenerHistorialVinculaciones(id:string):Observable<{ok:boolean; codProgramacion?:string; historial:Array<{
+    tipo:string; hcAnterior:string|null; hcNueva:string|null; fecha:string;
+    usuario:string; nombreCompletoUsuario?:string|null; ejecutadoPor?:string;
+    origenDocumento?:string; pacienteIdAnterior?:string|null; pacienteIdNuevo?:string|null;
+    tipoResolucion?:string|null; motivoDecision?:string|null;
+  }>; revisiones?:Array<{decision:'DISTINTO'|'PENDIENTE'; pacienteIdCandidato:string; hcCandidata:string|null; documentoCoincidente:boolean; motivo:string|null; fecha:string; ejecutadoPor:string; usuario:string; nombreCompletoUsuario?:string|null}>;
+    estadosCandidatos?:Array<{pacienteId:string; hc:string|null; nombreCompleto:string; documentoCoincidente:boolean; estado:'SIN_REVISAR'|'PENDIENTE'|'PERSONA_DISTINTA'|'CONFLICTO_DOCUMENTAL'}>}> {
     return this._http.get<any>(`${this.apiUrl}/${id}/historial-vinculaciones`,
       {headers:this._auth.getAuthHeaders()});
   }

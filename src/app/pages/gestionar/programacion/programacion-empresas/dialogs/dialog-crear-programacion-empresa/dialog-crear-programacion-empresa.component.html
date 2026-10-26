@@ -31,7 +31,7 @@
               {{ programacionForm.get('hc')?.value ? 'Historia clínica: ' + programacionForm.get('hc')?.value : 'Paciente vinculado al registro' }}
             </p>
           </div>
-          <div class="acciones-paciente" *ngIf="!esModoVista && puedeEditarProgramacion(programacionForm.get('estadoProgramacion')?.value)">
+          <div class="acciones-paciente" *ngIf="!esModoVista && puedeEditarProgramacion(programacionForm.get('estadoProgramacion')?.value) && !(modoDialog === 'edit' && programacionForm.get('pacienteId')?.value)">
             <button mat-stroked-button type="button" class="btn-buscar-paciente" (click)="abrirBusquedaPaciente()">
               <mat-icon>person_search</mat-icon>
               Buscar paciente registrado
@@ -130,7 +130,7 @@
           <div class="telefonos-cabecera">
             <span><mat-icon>phone</mat-icon> Teléfonos de contacto</span>
             <button mat-stroked-button type="button" (click)="agregarTelefono()"
-              *ngIf="!esModoVista && puedeEditarProgramacion(programacionForm.get('estadoProgramacion')?.value)"
+              *ngIf="!esModoVista && puedeEditarProgramacion(programacionForm.get('estadoProgramacion')?.value) && !(modoDialog === 'edit' && programacionForm.get('pacienteId')?.value)"
               [disabled]="guardandoDatosPaciente || phones.length >= 15 || (programacionForm.get('pacienteId')?.value && !puedeActualizarDatosPaciente)">
               <mat-icon>add</mat-icon> Agregar teléfono
             </button>
@@ -150,7 +150,7 @@
                 <mat-error *ngIf="telGroup.get('descriptionPhone')?.hasError('maxlength')">Máximo 30 caracteres</mat-error>
               </mat-form-field>
               <button mat-icon-button type="button" aria-label="Eliminar teléfono"
-                *ngIf="!esModoVista && puedeEditarProgramacion(programacionForm.get('estadoProgramacion')?.value)"
+                *ngIf="!esModoVista && puedeEditarProgramacion(programacionForm.get('estadoProgramacion')?.value) && !(modoDialog === 'edit' && programacionForm.get('pacienteId')?.value)"
                 [disabled]="guardandoDatosPaciente || (programacionForm.get('pacienteId')?.value && !puedeActualizarDatosPaciente)"
                 (click)="eliminarTelefono(i)">
                 <mat-icon>delete_outline</mat-icon>

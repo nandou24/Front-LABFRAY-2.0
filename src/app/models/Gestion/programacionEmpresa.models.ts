@@ -72,16 +72,16 @@ export interface IProgramacionEmpresa {
   apePatCliente: string;
   apeMatCliente: string;
   sexoCliente?: 'Masculino' | 'Femenino' | null;
-  fechaNacimiento?: Date | string;
+  fechaNacimiento?: Date | string | null;
   puesto?: string;
   area?: string;
 
   // Si ya existe como paciente formal
   pacienteId?: string | null;
   hc?: string | null;
-  tipoHC?: 'PRINCIPAL' | 'PROVISIONAL' | null;
-  estadoConciliacion?: 'NO_APLICA' | 'SIN_CONCILIAR' | 'EN_REVISION' | 'CONCILIADA' | null;
-  hcPrincipal?: string | null;
+  identidadTemporalActiva?: boolean;
+  fechaRegularizacionIdentidad?: string | Date | null;
+  accionDocumentoPaciente?: 'REGULARIZAR' | 'CORREGIR' | null;
 
   // PROTOCOLO
 
@@ -108,8 +108,6 @@ export interface IProgramacionEmpresa {
   // ESTADO
 
   estadoProgramacion: EstadoProgramacion;
-  estadoIdentificacionPaciente?: 'PENDIENTE' | 'REGISTRADA' | null;
-  accionDocumentoPaciente?: 'REGULARIZAR' | 'CORREGIR' | null;
   pendientes?: PendienteProgramacion[];
 
   // ATENCIÓN
@@ -151,6 +149,45 @@ export interface IListarProgramacionesQuery {
   fechaFin?: string;
 }
 
+
+// ====== Gestión documental de pacientes ya vinculados ======
+export interface ICambioDocumentoPaciente {
+  campo: 'tipoDoc' | 'nroDoc';
+  valorAnterior: string | null;
+  valorNuevo: string | null;
+}
+
+export interface IHistorialDocumentoPaciente {
+  fecha: Date | string;
+  tipoOperacion: 'REGULARIZACION' | 'CORRECCION_AUTORIZADA' | string;
+  tipoDocAnterior?: string | null;
+  nroDocAnterior?: string | null;
+  tipoDocNuevo?: string | null;
+  nroDocNuevo?: string | null;
+  motivo?: string | null;
+  uid?: string | null;
+  nombreUsuario?: string | null;
+  autorizadoPor?: string | null;
+  usuarioAutorizacion?: string | null;
+  rolAutorizacion?: string | null;
+  cambios: ICambioDocumentoPaciente[];
+}
+
+export interface IVerificacionDocumentoHC {
+  ok: boolean;
+  msg?: string;
+  tipoDoc: TipoDocumentoProgramacion;
+  nroDoc: string;
+  hayCoincidencias: boolean;
+  masResultados: boolean;
+  candidatos: Array<{
+    pacienteId: string;
+    hc: string | null;
+    nombreCompleto: string;
+    coincidencia: 'DOCUMENTO_ACTUAL' | 'HISTORIAL_DOCUMENTO';
+  }>;
+}
+
 export interface IRegularizarDocumentoProgramacionRequest {
   tipoDoc: TipoDocumentoProgramacion;
   nroDoc: string;
@@ -163,109 +200,63 @@ export interface ICorregirDocumentoProgramacionRequest extends IRegularizarDocum
   passwordAutorizador: string;
 }
 
-export interface ICambioDocumentoPaciente {
-  campo: 'tipoDoc' | 'nroDoc';
-  valorAnterior: string | null;
-  valorNuevo: string | null;
-}
-
-export interface IHistorialDocumentoPaciente {
-  fecha: string;
-  tipoOperacion: 'REGULARIZACION' | 'CORRECCION_AUTORIZADA';
-  tipoDocAnterior: string | null;
-  nroDocAnterior: string | null;
-  tipoDocNuevo: string;
-  nroDocNuevo: string;
-  motivo: string;
-  uid: string;
-  nombreUsuario: string | null;
-  autorizadoPor: string | null;
-  usuarioAutorizacion: string | null;
-  rolAutorizacion: string | null;
-  cambios: ICambioDocumentoPaciente[];
-}
-
-export interface IHistorialDocumentoProgramacionResponse {
-  ok: boolean;
-  hc: string;
-  historial: IHistorialDocumentoPaciente[];
-}
-
 export interface IRegularizarDocumentoProgramacionResponse {
   ok: boolean;
   msg?: string;
   codigo?: string;
   programacion?: IProgramacionEmpresa;
-  paciente?: { _id: string; hc: string; estadoIdentificacion: string };
+  paciente?: { _id: string; hc: string };
+  coincidencias?: IVerificacionDocumentoHC | null;
 }
 
-export interface ICandidatoConciliacionHC {
-  pacienteId: string;
-  hc: string;
-  nombreCompleto: string;
-  tipoHC: 'PRINCIPAL' | 'PROVISIONAL' | null;
-  estadoConciliacion: string | null;
-  coincidencia: 'DOCUMENTO_ACTUAL' | 'HISTORIAL_DOCUMENTO';
-}
-
-export interface IVerificacionDocumentoHC {
+export interface IHistorialDocumentoProgramacionResponse {
   ok: boolean;
-  msg: string;
-  tipoDoc: TipoDocumentoProgramacion;
-  nroDoc: string;
-  hayCoincidencias: boolean;
-  masResultados: boolean;
-  candidatos: ICandidatoConciliacionHC[];
+  hc?: string;
+  historial: IHistorialDocumentoPaciente[];
+  msg?: string;
 }
 
-// ====== Revisión masiva previa al registro ======
-export type EstadoValidacionImportacion = 'CORRECTO' | 'REVISAR' | 'BLOQUEADO';
-
+// ====== Importación Excel: conservar el contrato previo ======
 export interface IFilaValidacionImportacion {
   filaExcel: number;
   empresaId: string;
   protocoloId: string;
-  datos: {
-    rucEmpresa: string; razonSocialEmpresa: string;
-    codProtocolo: string; nombreProtocolo: string;
-    fechaProgramada: string; sede: string;
-    tipoEvaluacion: string; tipoAtencion: string; prioridad: string;
-    apePatCliente: string; apeMatCliente: string; nombreCliente: string;
-    tipoDoc: string; nroDoc: string; sexoCliente: string;
-    fechaNacimiento: string; observaciones: string;
-  };
+  datos: Record<string, string>;
 }
 
 export interface IResultadoValidacionImportacion {
   filaExcel: number;
-  estado: EstadoValidacionImportacion;
+  estado: 'CORRECTO' | 'REVISAR' | 'BLOQUEADO';
   errores: string[];
   advertencias: string[];
-  empresa: { _id: string; ruc: string; razonSocial: string } | null;
-  protocolo: { _id: string; codigoProtocolo: string; nombreProtocolo: string } | null;
   paciente: {
-    estado: 'NUEVO' | 'HC_COINCIDE' | 'IDENTIDAD_DIFERENTE' | 'DUPLICADO_DOCUMENTO' | 'SIN_DOCUMENTO' | 'COINCIDENCIA_NOMBRE';
-    hc: string | null;
-    pacienteId: string | null;
-    nombreCompleto: string | null;
-    // Datos disponibles solo cuando el documento identifica una única HC.
+    estado: 'NUEVO' | 'HC_COINCIDE' | 'IDENTIDAD_DIFERENTE' | 'COINCIDENCIA_NOMBRE' | string;
+    pacienteId?: string | null;
+    hc?: string | null;
     datosMaestros?: {
-      tipoDoc: string; nroDoc: string;
-      apePatCliente: string; apeMatCliente: string; nombreCliente: string;
-      sexoCliente: string; fechaNacimiento: string; // Fecha ISO yyyy-MM-dd
+      tipoDoc: string;
+      nroDoc: string;
+      nombreCliente: string;
+      apePatCliente: string;
+      apeMatCliente: string;
+      sexoCliente?: string | null;
+      fechaNacimiento?: string | Date | null;
     } | null;
   };
 }
 
 export interface IValidacionMasivaProgramacionesResponse {
   ok: boolean;
-  soloValidacion: true;
-  fechaValidacion: string;
+  msg?: string;
+  resumen: {
+    total: number;
+    correctos: number;
+    revisar: number;
+    bloqueados: number;
+  };
   resultados: IResultadoValidacionImportacion[];
-  resumen: { total: number; correctos: number; revisar: number; bloqueados: number };
 }
 
-// ====== Registro por lotes con trazabilidad ======
 export interface IFilaRegistroImportacion extends IFilaValidacionImportacion {
   confirmada: boolean;
   advertenciasOriginales: string[];
@@ -273,16 +264,14 @@ export interface IFilaRegistroImportacion extends IFilaValidacionImportacion {
 
 export interface IResultadoRegistroImportacion {
   filaExcel: number;
-  estado: 'REGISTRADA' | 'YA_REGISTRADA';
-  codProgramacion: string;
-  programacionId: string;
-  hc: string | null;
+  estado: string;
+  codProgramacion?: string | null;
+  hc?: string | null;
+  errores?: string[];
 }
 
 export interface IRespuestaRegistroImportacion {
   ok: boolean;
-  importacionId: string;
-  creadas: number;
-  previamenteRegistradas: number;
+  msg?: string;
   resultados: IResultadoRegistroImportacion[];
 }
