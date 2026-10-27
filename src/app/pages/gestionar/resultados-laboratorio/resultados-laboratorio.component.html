@@ -142,14 +142,14 @@
           <ng-container matColumnDef="hc">
             <th mat-header-cell *matHeaderCellDef>HC</th>
             <td mat-cell *matCellDef="let row">
-              {{ row.solicitud.paciente.hc || "-" }}
+              {{ identidadTemporalPendiente(row.solicitud) ? 'Sin HC — Temporal' : (row.solicitud.paciente.hc || '-') }}
             </td>
           </ng-container>
 
           <ng-container matColumnDef="documento">
             <th mat-header-cell *matHeaderCellDef>Documento</th>
             <td mat-cell *matCellDef="let row">
-              {{ obtenerDocumentoPaciente(row) || "-" }}
+              {{ identidadTemporalPendiente(row.solicitud) ? 'Documento pendiente' : (obtenerDocumentoPaciente(row) || '-') }}
             </td>
           </ng-container>
 
@@ -157,6 +157,7 @@
             <th mat-header-cell *matHeaderCellDef>Paciente</th>
             <td mat-cell *matCellDef="let row">
               {{ obtenerNombrePaciente(row) || "-" }}
+              <span *ngIf="identidadTemporalPendiente(row.solicitud)" style="display:inline-block;border:1px solid #edc778;background:#fff5df;color:#965508;border-radius:12px;padding:2px 7px;font-size:11px;font-weight:600;line-height:1.4;vertical-align:middle">Identidad temporal</span>
             </td>
           </ng-container>
 
@@ -373,14 +374,14 @@
           <ng-container matColumnDef="hc">
             <th mat-header-cell *matHeaderCellDef>HC</th>
             <td mat-cell *matCellDef="let row">
-              {{ row.solicitud.paciente.hc || "-" }}
+              {{ identidadTemporalPendiente(row.solicitud) ? 'Sin HC — Temporal' : (row.solicitud.paciente.hc || '-') }}
             </td>
           </ng-container>
 
           <ng-container matColumnDef="documento">
             <th mat-header-cell *matHeaderCellDef>Documento</th>
             <td mat-cell *matCellDef="let row">
-              {{ obtenerDocumentoPaciente(row) || "-" }}
+              {{ identidadTemporalPendiente(row.solicitud) ? 'Documento pendiente' : (obtenerDocumentoPaciente(row) || '-') }}
             </td>
           </ng-container>
 
@@ -388,6 +389,7 @@
             <th mat-header-cell *matHeaderCellDef>Paciente</th>
             <td mat-cell *matCellDef="let row">
               {{ obtenerNombrePaciente(row) || "-" }}
+              <span *ngIf="identidadTemporalPendiente(row.solicitud)" style="display:inline-block;border:1px solid #edc778;background:#fff5df;color:#965508;border-radius:12px;padding:2px 7px;font-size:11px;font-weight:600;line-height:1.4;vertical-align:middle">Identidad temporal</span>
             </td>
           </ng-container>
 
@@ -699,10 +701,18 @@
                   type="button"
                   class="accion-liberar"
                   (click)="liberarResultado(row, resultado)"
-                  [disabled]="estaProcesandoResultado(resultado)"
+                  [disabled]="
+                    estaProcesandoResultado(resultado) ||
+                    identidadTemporalPendiente(row.solicitud)
+                  "
+                  [attr.title]="
+                    identidadTemporalPendiente(row.solicitud)
+                      ? 'Debe regularizar el documento y vincular una HC antes de liberar resultados.'
+                      : null
+                  "
                 >
-                  <mat-icon>publish</mat-icon>
-                  Liberar
+                  <mat-icon>{{ identidadTemporalPendiente(row.solicitud) ? 'lock' : 'publish' }}</mat-icon>
+                  {{ identidadTemporalPendiente(row.solicitud) ? 'Identidad pendiente' : 'Liberar' }}
                 </button>
 
                 <button

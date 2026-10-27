@@ -22,7 +22,7 @@
               </p>
               <table class="tabla-detalles">
                 <tbody>
-                  <tr><th>Historia clínica</th><td>{{ programacion?.hc || 'Sin HC — atención temporal' }}</td></tr>
+                  <tr><th>Historia clínica</th><td>{{ programacion?.hc || (programacion?.nroDoc ? 'Sin HC vinculada — se generará al iniciar atención' : 'Sin HC — atención temporal') }}</td></tr>
                   <tr><th>Tipo de documento</th><td>{{ programacion?.tipoDoc || 'Pendiente' }}</td></tr>
                   <tr><th>Número de documento</th><td>{{ programacion?.nroDoc || 'Pendiente' }}</td></tr>
                   <tr><th>Paciente</th><td class="nombre-paciente">{{ programacion?.apePatCliente }} {{ programacion?.apeMatCliente }} {{ programacion?.nombreCliente }}</td></tr>
@@ -36,8 +36,8 @@
         </section>
 
         <section class="contenedor-tablaCentro">
-          <mat-card class="tarjeta-info tarjeta-foto" *ngIf="!!programacion?.nroDoc || !!programacion?.pacienteId; else fotoTemporal">
-            <mat-card-title><mat-icon aria-hidden="true">photo_camera</mat-icon>Fotografía del paciente</mat-card-title>
+          <mat-card class="tarjeta-info tarjeta-foto">
+            <mat-card-title><mat-icon aria-hidden="true">photo_camera</mat-icon>{{ !programacion?.nroDoc && !programacion?.pacienteId ? 'Fotografía de evaluación temporal' : 'Fotografía del paciente' }}</mat-card-title>
             <mat-card-content>
               <section class="captura-foto">
                 <div class="marco-foto">
@@ -60,17 +60,14 @@
                   </button>
                 </div>
               </section>
+              <p class="alerta-identidad" *ngIf="!programacion?.nroDoc && !programacion?.pacienteId" role="status">
+                <mat-icon aria-hidden="true">info_outline</mat-icon>
+                Vista previa temporal: puedes activar la cámara, capturar y repetir la foto.
+                En MC.1 la imagen aún no se guarda ni se vincula a la programación.
+                Si inicias la atención ahora, se descartará. El guardado se implementará en MC.2.
+              </p>
             </mat-card-content>
           </mat-card>
-          <ng-template #fotoTemporal>
-            <mat-card class="tarjeta-info tarjeta-foto">
-              <mat-card-title><mat-icon>photo_camera</mat-icon>Fotografía de evaluación</mat-card-title>
-              <mat-card-content>
-                Se habilitará al vincular una HC. En esta etapa temporal no se guardarán fotografías
-                para evitar asociarlas a una identidad equivocada.
-              </mat-card-content>
-            </mat-card>
-          </ng-template>
         </section>
 
         <section class="contenedor-tablaDerecha">

@@ -346,10 +346,23 @@ export class DialogIniciarAtencionEmpresaComponent
       if (!confirmacion.isConfirmed) return;
     }
 
-    // ==========================================
-    // 2. SI NO HAY FOTOGRAFÍA
-    // ==========================================
+    // ====== MC.1: captura temporal solo en vista previa ======
+    if (sinDocumento && this.fotoPaciente) {
+      const aviso = await Swal.fire({
+        title: 'Fotografía temporal aún no guardada',
+        text: 'La fotografía solo existe en esta vista previa. Si inicias la atención ahora, ' +
+          'se descartará sin guardarse ni vincularse a la programación. ' +
+          'El registro persistente se habilitará en MC.2.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Continuar sin guardar foto',
+        cancelButtonText: 'Volver a la fotografía',
+        reverseButtons: true,
+      });
+      if (!aviso.isConfirmed) return;
+    }
 
+    // ====== Confirmar foto opcional en atención documentada ======
     if (!this.fotoPaciente && !sinDocumento) {
       const resultado = await Swal.fire({
         title: '¿Iniciar sin fotografía?',
@@ -422,20 +435,22 @@ export class DialogIniciarAtencionEmpresaComponent
       const pacienteId = respuesta?.paciente?._id;
       const fotoCapturada = !!this.fotoPaciente;
       let fotografiaGuardada = false;
-      if (fotoCapturada && pacienteId) {
+      if (fotoCapturada && pacienteId && !sinDocumento) {
         fotografiaGuardada = await this.guardarFotoEvaluacionConReintento(
           String(pacienteId),
           String(this.programacion._id),
         );
-      } else if (fotoCapturada) {
+      } else if (fotoCapturada && !sinDocumento) {
         console.error('La atención no devolvió pacienteId para asociar la fotografía');
       }
 
       const fotografiaPendiente = fotoCapturada && !fotografiaGuardada;
       await Swal.fire({
-        title: fotografiaPendiente ? 'Atención iniciada; foto pendiente' : 'Correcto',
+        title: fotografiaPendiente ? (sinDocumento ? 'Atención temporal iniciada' : 'Atención iniciada; foto pendiente') : 'Correcto',
         text: fotografiaPendiente
-          ? 'Se inició la atención, pero la fotografía no quedó registrada. Debe completarse posteriormente.'
+          ? (sinDocumento
+            ? 'La fotografía se capturó solo en vista previa y no quedó guardada. El registro persistente se habilitará en MC.2.'
+            : 'Se inició la atención, pero la fotografía no quedó registrada. Debe completarse posteriormente.')
           : fotografiaGuardada
             ? 'Atención iniciada y fotografía de evaluación guardada correctamente.'
             : respuesta?.msg || 'La atención fue iniciada correctamente.', 

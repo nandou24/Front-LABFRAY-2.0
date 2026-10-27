@@ -115,6 +115,27 @@ export class DialogLiberacionMasivaComponent implements OnInit {
       : this.columnasParticular;
   }
 
+  // ====== Identidad pendiente: conservamos filas visibles ======
+
+  estaBloqueadaPorIdentidad(fila: IResultadoLiberacionMasivaFila): boolean {
+    const solicitud = fila.solicitud;
+    const paciente = solicitud.paciente;
+    return solicitud.origenAtencion === 'EMPRESA' && (
+      !paciente.clienteId ||
+      !paciente.hc ||
+      !paciente.tipoDoc ||
+      !paciente.nroDoc
+    );
+  }
+
+  get totalLiberables(): number {
+    return this.resultados.filter((fila) => !this.estaBloqueadaPorIdentidad(fila)).length;
+  }
+
+  get totalBloqueados(): number {
+    return this.resultados.length - this.totalLiberables;
+  }
+
   // ====== Selección ======
 
   get totalSeleccionados(): number {
@@ -122,11 +143,11 @@ export class DialogLiberacionMasivaComponent implements OnInit {
   }
 
   get todosSeleccionados(): boolean {
-    return (
-      this.resultados.length > 0 &&
-      this.resultados.every((fila) =>
-        this.seleccionados.has(fila.resultado._id),
-      )
+    const liberables = this.resultados.filter((fila) =>
+      !this.estaBloqueadaPorIdentidad(fila),
+    );
+    return liberables.length > 0 && liberables.every((fila) =>
+      this.seleccionados.has(fila.resultado._id),
     );
   }
 
@@ -142,7 +163,7 @@ export class DialogLiberacionMasivaComponent implements OnInit {
     fila: IResultadoLiberacionMasivaFila,
     cambio: MatCheckboxChange,
   ): void {
-    if (cambio.checked) {
+    if (cambio.checked && !this.estaBloqueadaPorIdentidad(fila)) {
       this.seleccionados.add(fila.resultado._id);
       return;
     }
@@ -152,9 +173,9 @@ export class DialogLiberacionMasivaComponent implements OnInit {
 
   cambiarSeleccionTodos(cambio: MatCheckboxChange): void {
     if (cambio.checked) {
-      this.resultados.forEach((fila) => {
-        this.seleccionados.add(fila.resultado._id);
-      });
+      this.resultados
+        .filter((fila) => !this.estaBloqueadaPorIdentidad(fila))
+        .forEach((fila) => this.seleccionados.add(fila.resultado._id));
       return;
     }
 
@@ -251,8 +272,10 @@ export class DialogLiberacionMasivaComponent implements OnInit {
     }
 
     const seleccionados = this.resultados.filter((fila) =>
-      this.seleccionados.has(fila.resultado._id),
+      this.seleccionados.has(fila.resultado._id) &&
+      !this.estaBloqueadaPorIdentidad(fila),
     );
+    if (!seleccionados.length) return;
 
     const totalAlertas = seleccionados.reduce(
       (total, fila) => total + fila.totalAlertas,

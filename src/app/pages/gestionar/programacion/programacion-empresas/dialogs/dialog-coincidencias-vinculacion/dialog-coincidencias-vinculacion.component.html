@@ -23,7 +23,7 @@
         <span><strong>Documento:</strong> {{ programacion.nroDoc ? programacion.tipoDoc + ' ' + programacion.nroDoc : 'Sin documento' }}</span>
       </div>
       <div class="vacio" *ngIf="!unicos.length"><mat-icon>person_off</mat-icon>
-        <div><strong>Sin coincidencias</strong><p>La programación permanece sin HC. La creación de una nueva HC al iniciar atención corresponde a PE.6.5A.4.</p></div></div>
+        <div><strong>Sin coincidencias</strong><p *ngIf="!programacion.nroDoc">La atención se iniciará con identidad temporal, sin crear HC. El documento deberá regularizarse antes de liberar resultados.</p><p *ngIf="programacion.nroDoc">La programación permanece sin HC. Si no existen coincidencias, se generará una nueva HC al iniciar atención.</p></div></div>
       <ng-container *ngIf="unicos.length">
         <section class="selector-candidatos" *ngIf="unicos.length > 1">
           <h3>Pacientes candidatos ({{ unicos.length }})</h3>

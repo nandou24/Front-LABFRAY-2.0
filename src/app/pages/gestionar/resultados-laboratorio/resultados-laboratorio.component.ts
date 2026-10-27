@@ -659,6 +659,20 @@ export class ResultadosLaboratorioComponent implements OnInit, AfterViewInit {
     }
   }
 
+  // ====== Identidad temporal sin regularizar ======
+
+  identidadTemporalPendiente(
+    solicitud: IBandejaResultadosLaboratorioItem['solicitud'],
+  ): boolean {
+    const paciente = solicitud.paciente;
+    return solicitud.origenAtencion === 'EMPRESA' && (
+      !paciente.clienteId ||
+      !paciente.hc ||
+      !paciente.tipoDoc ||
+      !paciente.nroDoc
+    );
+  }
+
   // ====== Liberar resultado ======
 
   async liberarResultado(
@@ -668,6 +682,7 @@ export class ResultadosLaboratorioComponent implements OnInit, AfterViewInit {
     if (
       !this.puedeLiberarResultados ||
       resultado.estadoResultado !== 'VALIDADO' ||
+      this.identidadTemporalPendiente(row.solicitud) ||
       this.resultadoProcesandoId
     ) {
       return;

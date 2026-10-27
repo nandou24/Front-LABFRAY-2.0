@@ -3,7 +3,7 @@
     <div class="dialog-title">Liberación masiva de resultados</div>
     <div class="dialog-subtitle">
       {{ data.origenAtencion === 'EMPRESA' ? 'Resultados de empresa' : 'Resultados particulares' }}
-      · solo resultados VALIDADOS
+      · resultados VALIDADOS · bloqueo visible por identidad pendiente
     </div>
   </div>
 
@@ -53,7 +53,9 @@
   </form>
 
   <div class="resumen-operativo">
-    <div><strong>{{ resultados.length }}</strong> disponibles</div>
+    <div><strong>{{ resultados.length }}</strong> validados</div>
+    <div><strong>{{ totalLiberables }}</strong> liberables</div>
+    <div><strong>{{ totalBloqueados }}</strong> bloqueados por identidad</div>
     <div><strong>{{ totalSeleccionados }}</strong> seleccionados</div>
   </div>
 
@@ -69,15 +71,15 @@
           <mat-checkbox
             [checked]="todosSeleccionados"
             [indeterminate]="seleccionParcial"
-            [disabled]="procesando"
-            aria-label="Seleccionar todos los resultados"
+            [disabled]="procesando || totalLiberables === 0"
+            aria-label="Seleccionar todos los resultados liberables"
             (change)="cambiarSeleccionTodos($event)"
           ></mat-checkbox>
         </th>
         <td mat-cell *matCellDef="let fila">
           <mat-checkbox
             [checked]="estaSeleccionado(fila)"
-            [disabled]="procesando"
+            [disabled]="procesando || estaBloqueadaPorIdentidad(fila)"
             [attr.aria-label]="'Seleccionar ' + fila.resultado.codPruebaLab"
             (change)="cambiarSeleccion(fila, $event)"
           ></mat-checkbox>
@@ -96,14 +98,19 @@
         <th mat-header-cell *matHeaderCellDef>Paciente</th>
         <td mat-cell *matCellDef="let fila">
           {{ obtenerNombrePaciente(fila) || '-' }}
-          <div class="dato-secundario">HC {{ fila.solicitud.paciente.hc || '-' }}</div>
+          <div class="dato-secundario" *ngIf="estaBloqueadaPorIdentidad(fila)" title="Debe regularizar el documento y vincular una HC antes de liberar resultados.">
+            <mat-icon aria-hidden="true" style="font-size:14px; width:14px; height:14px; vertical-align:middle">lock</mat-icon>
+            No liberable · Identidad temporal
+          </div>
+          <span *ngIf="estaBloqueadaPorIdentidad(fila)" style="display:inline-block;border:1px solid #edc778;background:#fff5df;color:#965508;border-radius:12px;padding:2px 7px;font-size:11px;font-weight:600;line-height:1.4;vertical-align:middle">Identidad temporal</span>
+          <div class="dato-secundario">{{ estaBloqueadaPorIdentidad(fila) ? 'Sin HC — Temporal' : ('HC ' + (fila.solicitud.paciente.hc || '-')) }}</div>
         </td>
       </ng-container>
 
       <ng-container matColumnDef="documento">
         <th mat-header-cell *matHeaderCellDef>Documento</th>
         <td mat-cell *matCellDef="let fila">
-          {{ obtenerDocumentoPaciente(fila) || '-' }}
+          {{ estaBloqueadaPorIdentidad(fila) ? 'Documento pendiente' : (obtenerDocumentoPaciente(fila) || '-') }}
         </td>
       </ng-container>
 
@@ -164,7 +171,7 @@
 
   <div *ngIf="!cargando && resultados.length === 0" class="estado-lista">
     <mat-icon>task_alt</mat-icon>
-    <div>No hay resultados VALIDADOS disponibles para liberación con el criterio seleccionado.</div>
+    <div>No hay resultados VALIDADOS con el criterio seleccionado.</div>
   </div>
 </mat-dialog-content>
 

@@ -111,6 +111,10 @@
               <div class="paciente-linea-hc" *ngIf="row.hc">
                 <span class="paciente-hc">HC {{ row.hc }}</span>
               </div>
+              <div class="paciente-linea-hc" *ngIf="!row.hc && !row.nroDoc && row.estadoProgramacion !== 'PROGRAMADO'">
+                <span class="paciente-hc">Sin HC — Temporal</span>
+                <span style="display:inline-block;border:1px solid #edc778;background:#fff5df;color:#965508;border-radius:12px;padding:2px 7px;font-size:11px;font-weight:600;line-height:1.4;vertical-align:middle">Identidad temporal</span>
+              </div>
             </div>
           </td>
         </ng-container>

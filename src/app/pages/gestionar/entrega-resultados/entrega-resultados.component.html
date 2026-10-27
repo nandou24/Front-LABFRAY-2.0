@@ -308,9 +308,15 @@
             </td>
 
             <td>{{ fila.fechaEmision | date: "dd/MM/yyyy HH:mm" }}</td>
-            <td>{{ fila.paciente.hc }}<div style="font-size: 10px; line-height: 1.2; margin-top: 2px; font-weight: 600" [style.color]="fila.paciente.tipoHC === 'PROVISIONAL' ? '#9f5a00' : fila.paciente.tipoHC === 'PRINCIPAL' ? '#17694b' : '#687384'">{{ fila.paciente.tipoHC === 'PROVISIONAL' ? (fila.paciente.estadoConciliacion === 'CONCILIADA' ? 'Conciliada' : 'Provisional') : fila.paciente.tipoHC === 'PRINCIPAL' ? 'Principal' : 'Sin clasificar' }}</div></td>
-            <td>{{ fila.paciente.documento }}</td>
-            <td class="celda-paciente">{{ fila.paciente.nombreCompleto }}</td>
+            <td>
+              {{ fila.origenAtencion === 'EMPRESA' && !fila.paciente.hc && !fila.paciente.documento ? 'Sin HC — Temporal' : (fila.paciente.hc || '-') }}
+              <div *ngIf="fila.paciente.tipoHC === 'PROVISIONAL' || fila.paciente.tipoHC === 'PRINCIPAL'" style="font-size: 10px; line-height: 1.2; margin-top: 2px; font-weight: 600" [style.color]="fila.paciente.tipoHC === 'PROVISIONAL' ? '#9f5a00' : '#17694b'">{{ fila.paciente.tipoHC === 'PROVISIONAL' ? (fila.paciente.estadoConciliacion === 'CONCILIADA' ? 'Conciliada' : 'Provisional') : fila.paciente.tipoHC === 'PRINCIPAL' ? 'Principal' : '' }}</div>
+            </td>
+            <td>{{ fila.origenAtencion === 'EMPRESA' && !fila.paciente.hc && !fila.paciente.documento ? 'Documento pendiente' : (fila.paciente.documento || '-') }}</td>
+            <td class="celda-paciente">
+              {{ fila.paciente.nombreCompleto }}
+              <span *ngIf="fila.origenAtencion === 'EMPRESA' && !fila.paciente.hc && !fila.paciente.documento" style="display:inline-block;border:1px solid #edc778;background:#fff5df;color:#965508;border-radius:12px;padding:2px 7px;font-size:11px;font-weight:600;line-height:1.4;vertical-align:middle">Identidad temporal</span>
+            </td>
 
             <td *ngIf="tabActivo === 1">
               <strong>{{ fila.empresa?.razonSocialEmpresa || "-" }}</strong>
