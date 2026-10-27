@@ -32,6 +32,21 @@ type EntradaFoto = {
   peticion?: Observable<IFotoEvaluacionCacheada>;
 };
 
+// ====== Auditoría de fotografías temporales sin exponer claves S3 ======
+export interface IFotoTemporalHistorial {
+  _id: string;
+  estadoArchivo: 'ACTIVO' | 'REEMPLAZADO';
+  fechaCaptura: string;
+  createdAt: string;
+  createdBy: string;
+  usuarioRegistro: string | null;
+  reemplazaA?: string | null;
+  reemplazadoPor?: string | null;
+  fechaReemplazo?: string | null;
+  reemplazadoPorUsuario?: string | null;
+  reemplazadoPorNombre?: string | null;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -131,7 +146,13 @@ export class ArchivoPacienteService {
 
   invalidarFotoEvaluacion(datos?: IReferenciaFotoEvaluacion): void {
     this.asegurarSesion();
-    if (!datos) { this.fotosCache.clear(); return; }
+    if (!datos) {
+      // ====== Conservar versiones históricas inmutables; renovar solo fotografías activas ======
+      for (const clave of this.fotosCache.keys()) {
+        if (!clave.startsWith('HIST:')) this.fotosCache.delete(clave);
+      }
+      return;
+    }
     const clave = this.claveFoto(datos);
     if (clave) this.fotosCache.delete(clave);
   }
@@ -187,6 +208,71 @@ export class ArchivoPacienteService {
     return this._http.post<any>(`${this.apiUrl}/${pacienteId}/foto-evaluacion`, formData, {
       headers: this._auth.getAuthHeaders(),
     }).pipe(tap(() => this.invalidarFotoEvaluacion()));
+  }
+
+  // ====== Guardar evaluación temporal sin pacienteId ni HC ======
+  subirFotoEvaluacionTemporal(programacionEmpresaId: string, archivo: Blob): Observable<any> {
+    const formData = new FormData();
+    formData.append('archivo', archivo, 'foto-evaluacion-temporal.jpg');
+    return this._http.post<any>(
+      `${this.apiUrl}/programaciones/${programacionEmpresaId}/foto-evaluacion-temporal`,
+      formData,
+      { headers: this._auth.getAuthHeaders() },
+    ).pipe(tap(() => this.invalidarFotoEvaluacion()));
+  }
+
+  // ====== Historial fotográfico temporal por programación ======
+  obtenerHistorialFotosTemporales(programacionEmpresaId: string): Observable<{ ok: boolean; fotos: IFotoTemporalHistorial[] }> {
+    return this._http.get<{ ok: boolean; fotos: IFotoTemporalHistorial[] }>(
+      `${this.apiUrl}/programaciones/${programacionEmpresaId}/fotos-temporales`,
+      { headers: this._auth.getAuthHeaders() },
+    );
+  }
+
+  obtenerImagenHistoricaTemporal(programacionEmpresaId: string, fotoId: string): Observable<Blob> {
+    return this._http.get(
+      `${this.apiUrl}/programaciones/${programacionEmpresaId}/fotos-temporales/${fotoId}/imagen`,
+      { responseType: 'blob', headers: this._auth.getAuthHeaders() },
+    );
+  }
+
+  // ====== Caché compartido de versiones históricas por programación e ID de fotografía ======
+  obtenerImagenHistoricaTemporalCacheada(programacionEmpresaId: string, fotoId: string): Observable<Blob> {
+    this.asegurarSesion();
+    const clave = `HIST:${programacionEmpresaId}:${fotoId}`;
+    const existente = this.fotosCache.get(clave);
+    if (existente?.valor && existente.vence > Date.now() && existente.valor.imagen) {
+      this.fotosCache.delete(clave);
+      this.fotosCache.set(clave, existente);
+      return of(existente.valor.imagen);
+    }
+    if (existente?.peticion) {
+      return existente.peticion.pipe(map(valor => valor.imagen!));
+    }
+    if (existente) this.fotosCache.delete(clave);
+
+    const entrada: EntradaFoto = { vence: 0 };
+    this.fotosCache.set(clave, entrada);
+    const peticion = this.obtenerImagenHistoricaTemporal(programacionEmpresaId, fotoId).pipe(
+      map(imagen => {
+        if (!imagen.size || !imagen.type.startsWith('image/')) throw new Error('Imagen histórica no válida');
+        return { disponible: true, imagen } as IFotoEvaluacionCacheada;
+      }),
+      tap(valor => {
+        if (this.fotosCache.get(clave) !== entrada) return;
+        entrada.valor = valor;
+        entrada.peticion = undefined;
+        entrada.vence = Date.now() + this.ttlFotoMs;
+        this.limitarCache();
+      }),
+      catchError(error => {
+        if (this.fotosCache.get(clave) === entrada) this.fotosCache.delete(clave);
+        return throwError(() => error);
+      }),
+      shareReplay({ bufferSize: 1, refCount: false }),
+    );
+    entrada.peticion = peticion;
+    return peticion.pipe(map(valor => valor.imagen!));
   }
 
   // ====== Consultar foto de perfil activa ======

@@ -346,22 +346,6 @@ export class DialogIniciarAtencionEmpresaComponent
       if (!confirmacion.isConfirmed) return;
     }
 
-    // ====== MC.1: captura temporal solo en vista previa ======
-    if (sinDocumento && this.fotoPaciente) {
-      const aviso = await Swal.fire({
-        title: 'Fotografía temporal aún no guardada',
-        text: 'La fotografía solo existe en esta vista previa. Si inicias la atención ahora, ' +
-          'se descartará sin guardarse ni vincularse a la programación. ' +
-          'El registro persistente se habilitará en MC.2.',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonText: 'Continuar sin guardar foto',
-        cancelButtonText: 'Volver a la fotografía',
-        reverseButtons: true,
-      });
-      if (!aviso.isConfirmed) return;
-    }
-
     // ====== Confirmar foto opcional en atención documentada ======
     if (!this.fotoPaciente && !sinDocumento) {
       const resultado = await Swal.fire({
@@ -435,7 +419,9 @@ export class DialogIniciarAtencionEmpresaComponent
       const pacienteId = respuesta?.paciente?._id;
       const fotoCapturada = !!this.fotoPaciente;
       let fotografiaGuardada = false;
-      if (fotoCapturada && pacienteId && !sinDocumento) {
+      if (fotoCapturada && sinDocumento) {
+        fotografiaGuardada = await this.guardarFotoTemporalConReintento(String(this.programacion._id));
+      } else if (fotoCapturada && pacienteId && !sinDocumento) {
         fotografiaGuardada = await this.guardarFotoEvaluacionConReintento(
           String(pacienteId),
           String(this.programacion._id),
@@ -446,11 +432,9 @@ export class DialogIniciarAtencionEmpresaComponent
 
       const fotografiaPendiente = fotoCapturada && !fotografiaGuardada;
       await Swal.fire({
-        title: fotografiaPendiente ? (sinDocumento ? 'Atención temporal iniciada' : 'Atención iniciada; foto pendiente') : 'Correcto',
+        title: fotografiaPendiente ? 'Atención iniciada; foto pendiente' : 'Correcto',
         text: fotografiaPendiente
-          ? (sinDocumento
-            ? 'La fotografía se capturó solo en vista previa y no quedó guardada. El registro persistente se habilitará en MC.2.'
-            : 'Se inició la atención, pero la fotografía no quedó registrada. Debe completarse posteriormente.')
+          ? 'La atención ya fue iniciada, pero no se guardó la fotografía. Podrás completar la evidencia posteriormente.' 
           : fotografiaGuardada
             ? 'Atención iniciada y fotografía de evaluación guardada correctamente.'
             : respuesta?.msg || 'La atención fue iniciada correctamente.', 
@@ -592,6 +576,32 @@ export class DialogIniciarAtencionEmpresaComponent
     }
   }
 
+
+  // ====== Guardar/reintentar sin volver a iniciar atención ======
+  private async guardarFotoTemporalConReintento(programacionId: string): Promise<boolean> {
+    if (!this.fotoPaciente) return false;
+    while (true) {
+      try {
+        const respuesta = await firstValueFrom(
+          this._archivoPacienteService.subirFotoEvaluacionTemporal(programacionId, this.fotoPaciente),
+        );
+        if (respuesta?.ok !== true || !respuesta?.archivo?._id || !respuesta?.archivo?.storageKey) {
+          throw new Error('El servidor no confirmó el almacenamiento de la fotografía temporal');
+        }
+        return true;
+      } catch (error: unknown) {
+        console.error('Error al guardar fotografía temporal:', error);
+        const accion = await Swal.fire({
+          title: 'Fotografía temporal no guardada',
+          text: 'La atención ya está iniciada. Puedes reintentar solamente la fotografía, sin crear otra solicitud ni HC.',
+          icon: 'warning', showCancelButton: true,
+          confirmButtonText: 'Reintentar fotografía', cancelButtonText: 'Continuar sin fotografía',
+          allowOutsideClick: false, allowEscapeKey: false, reverseButtons: true,
+        });
+        if (!accion.isConfirmed) return false;
+      }
+    }
+  }
 
   // ====== Reintentar foto sin duplicar solicitudes ni historias clínicas ======
   private async guardarFotoEvaluacionConReintento(pacienteId: string, programacionId: string): Promise<boolean> {

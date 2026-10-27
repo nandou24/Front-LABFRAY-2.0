@@ -62,9 +62,8 @@
               </section>
               <p class="alerta-identidad" *ngIf="!programacion?.nroDoc && !programacion?.pacienteId" role="status">
                 <mat-icon aria-hidden="true">info_outline</mat-icon>
-                Vista previa temporal: puedes activar la cámara, capturar y repetir la foto.
-                En MC.1 la imagen aún no se guarda ni se vincula a la programación.
-                Si inicias la atención ahora, se descartará. El guardado se implementará en MC.2.
+                Fotografía opcional: al iniciar la atención temporal se guardará en la programación,
+                sin crear paciente maestro ni historia clínica. Si cancelas el diálogo, no se guardará.
               </p>
             </mat-card-content>
           </mat-card>

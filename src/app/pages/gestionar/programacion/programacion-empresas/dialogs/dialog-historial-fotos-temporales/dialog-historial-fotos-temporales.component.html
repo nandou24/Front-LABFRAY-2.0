@@ -1,0 +1,49 @@
+<div class="cabecera-historial" mat-dialog-title>
+  <mat-icon>photo_library</mat-icon>
+  <span>Historial de fotografías temporales</span>
+</div>
+<mat-dialog-content>
+  <p class="subtitulo">Programación {{ data.codigoProgramacion }} · Se conservan las fotografías anteriores y su auditoría.</p>
+  <div class="contenido-historial">
+    <section class="panel-historial">
+      <strong>Fotografías registradas ({{ historial.length }})</strong>
+      <p *ngIf="consultando" class="subtitulo">Consultando historial…</p>
+      <p *ngIf="!consultando && !historial.length" class="subtitulo">Aún no hay fotografías registradas.</p>
+      <button type="button" *ngFor="let foto of historial" class="elemento-historial"
+        [class.seleccionado]="seleccionadaId === foto._id" (click)="verFoto(foto)">
+        <strong>{{ foto.estadoArchivo === 'ACTIVO' ? 'Fotografía activa' : 'Fotografía reemplazada' }}</strong>
+        <span>Captura: {{ foto.fechaCaptura | date:'dd/MM/yyyy HH:mm' }}</span>
+        <span>Registró: {{ foto.usuarioRegistro || foto.createdBy }}</span>
+        <span *ngIf="foto.fechaReemplazo">Reemplazada: {{ foto.fechaReemplazo | date:'dd/MM/yyyy HH:mm' }}</span>
+        <span *ngIf="foto.fechaReemplazo">Responsable: {{ foto.reemplazadoPorNombre || foto.reemplazadoPorUsuario || 'No registrado' }}</span>
+      </button>
+    </section>
+    <section class="panel-historial">
+      <strong>{{ fotoNueva ? 'Nueva fotografía sin guardar' : 'Fotografía seleccionada' }}</strong>
+      <div class="foto-vista" style="margin-top:10px">
+        <video #videoCamara *ngIf="camaraActiva" autoplay muted playsinline></video>
+        <img *ngIf="!camaraActiva && (urlNueva || urlHistorica)" [src]="urlNueva || urlHistorica" alt="Fotografía de evaluación temporal" />
+        <span *ngIf="!camaraActiva && !urlNueva && !urlHistorica">Sin vista previa</span>
+      </div>
+      <div class="acciones-foto">
+        <button mat-stroked-button type="button" *ngIf="!camaraActiva && !fotoNueva" (click)="activarCamara()" [disabled]="guardando">
+          <mat-icon>photo_camera</mat-icon> Activar cámara
+        </button>
+        <button mat-flat-button type="button" *ngIf="camaraActiva" (click)="capturarFoto()" [disabled]="guardando">
+          <mat-icon>camera</mat-icon> Capturar
+        </button>
+        <button mat-stroked-button type="button" *ngIf="fotoNueva" (click)="repetirFoto()" [disabled]="guardando">
+          <mat-icon>refresh</mat-icon> Repetir
+        </button>
+        <button mat-flat-button type="button" *ngIf="fotoNueva" (click)="guardarFoto()" [disabled]="guardando">
+          <mat-icon>save</mat-icon> {{ guardando ? 'Guardando…' : (historial.length ? 'Reemplazar foto' : 'Guardar foto') }}
+        </button>
+      </div>
+      <p class="aviso" *ngIf="fotoNueva">La foto anterior se conservará y el reemplazo quedará auditado. No se creará paciente ni HC.</p>
+      <p class="error" *ngIf="mensajeError">{{ mensajeError }}</p>
+    </section>
+  </div>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cerrar()">Cerrar</button>
+</mat-dialog-actions>

@@ -36,6 +36,7 @@ import { DialogRegularizarDocumentoEmpresaComponent } from './dialogs/dialog-reg
 import { DialogImportarProgramacionesEmpresaComponent } from './dialogs/dialog-importar-programaciones-empresa/dialog-importar-programaciones-empresa.component';
 import { DialogCoincidenciasVinculacionComponent } from './dialogs/dialog-coincidencias-vinculacion/dialog-coincidencias-vinculacion.component';
 import { DialogHistorialVinculacionComponent } from './dialogs/dialog-historial-vinculacion/dialog-historial-vinculacion.component';
+import { DialogHistorialFotosTemporalesComponent } from './dialogs/dialog-historial-fotos-temporales/dialog-historial-fotos-temporales.component';
 import { ProgramacionEmpresaService } from '../../../../services/gestion/programacion/programacionEmpresas/programacion-empresa.service';
 import { catchError, of } from 'rxjs';
 import Swal from 'sweetalert2';
@@ -255,6 +256,19 @@ export class ProgramacionEmpresasComponent implements OnInit, AfterViewInit {
       maxHeight: '90vh',
       autoFocus: false,
       data: { programacion },
+    });
+  }
+
+  // ====== Ver y reemplazar fotos de una atención temporal ======
+  verHistorialFotosTemporales(programacion: IProgramacionEmpresa): void {
+    if (!programacion._id || programacion.estadoProgramacion !== 'EN ATENCION' ||
+        programacion.pacienteId || programacion.hc || programacion.nroDoc || programacion.tipoDoc) return;
+    const ref = this.dialog.open(DialogHistorialFotosTemporalesComponent, {
+      width: '94vw', maxWidth: '950px', maxHeight: '92vh', autoFocus: false, disableClose: true,
+      data: { programacionEmpresaId: programacion._id, codigoProgramacion: programacion.codProgramacion },
+    });
+    ref.afterClosed().subscribe(resultado => {
+      if (resultado?.actualizado) this.buscarProgramacion();
     });
   }
 
