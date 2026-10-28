@@ -2,6 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 
+import { DocumentoConsultado, PrevisualizacionRegularizacionTemporalResponse, RegularizarTemporalHCExistenteRequest, RegularizarTemporalHCExistenteResponse } from '../../../../models/Gestion/previsualizacionRegularizacionTemporal.models';
 import { AuthService } from '../../../auth/auth.service';
 import { environment } from '../../../../../environments/environment';
 import {
@@ -234,6 +235,30 @@ export class ProgramacionEmpresaService {
     return this._http.post<IRespuestaRegistroImportacion>(
       `${this.apiUrl}/registrar-importacion`,
       { importacionId, filas },
+      { headers: this._auth.getAuthHeaders() },
+    );
+  }
+
+  // ====== Verificar documento temporal sin registrar cambios ======
+  public previsualizarRegularizacionTemporal(
+    id: string,
+    documento: DocumentoConsultado,
+  ): Observable<PrevisualizacionRegularizacionTemporalResponse> {
+    return this._http.post<PrevisualizacionRegularizacionTemporalResponse>(
+      `${this.apiUrl}/${id}/previsualizar-regularizacion`,
+      documento,
+      { headers: this._auth.getAuthHeaders() },
+    );
+  }
+
+  // ====== B.2.2A Regularizar identidad con HC existente ======
+  public regularizarTemporalHCExistente(
+    id: string,
+    datos: RegularizarTemporalHCExistenteRequest,
+  ): Observable<RegularizarTemporalHCExistenteResponse> {
+    return this._http.post<RegularizarTemporalHCExistenteResponse>(
+      `${this.apiUrl}/${id}/regularizar-hc-existente`,
+      datos,
       { headers: this._auth.getAuthHeaders() },
     );
   }

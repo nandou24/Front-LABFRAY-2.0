@@ -8,21 +8,11 @@
     </div>
 
     <div class="acciones-cabecera-programaciones">
-      <button
-        mat-stroked-button
-        type="button"
-        class="btn-importar-excel"
-        (click)="abrirImportacionExcel()"
-      >
+      <button mat-stroked-button type="button" class="btn-importar-excel" (click)="abrirImportacionExcel()">
         <mat-icon>upload_file</mat-icon>
         Importar Excel
       </button>
-      <button
-        mat-flat-button
-        type="button"
-        class="btn-crear-programacion"
-        (click)="crearProgramacion()"
-      >
+      <button mat-flat-button type="button" class="btn-crear-programacion" (click)="crearProgramacion()">
         <mat-icon>add_circle_outline</mat-icon>
         Crear programación
       </button>
@@ -30,60 +20,24 @@
   </header>
 
   <section class="panel-busqueda" aria-label="Búsqueda de programaciones">
-    <form
-      [formGroup]="myGroupBusqueda"
-      class="busqueda-container"
-      (ngSubmit)="buscarProgramacion()"
-    >
-      <mat-form-field
-        appearance="outline"
-        subscriptSizing="dynamic"
-        class="campo-busqueda"
-      >
+    <form [formGroup]="myGroupBusqueda" class="busqueda-container" (ngSubmit)="buscarProgramacion()">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="campo-busqueda">
         <mat-label>Buscar por documento</mat-label>
-        <input
-          matInput
-          formControlName="terminoBusqueda"
-          placeholder="Número de documento"
-        />
+        <input matInput formControlName="terminoBusqueda" placeholder="Número de documento" />
         <mat-icon matSuffix>search</mat-icon>
       </mat-form-field>
 
-      <mat-form-field
-        appearance="outline"
-        subscriptSizing="dynamic"
-        class="campo-fecha"
-      >
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="campo-fecha">
         <mat-label>Fecha inicio</mat-label>
-        <input
-          matInput
-          [matDatepicker]="pickerInicio"
-          readonly
-          formControlName="fechaInicio"
-        />
-        <mat-datepicker-toggle
-          matSuffix
-          [for]="pickerInicio"
-        ></mat-datepicker-toggle>
+        <input matInput [matDatepicker]="pickerInicio" readonly formControlName="fechaInicio" />
+        <mat-datepicker-toggle matSuffix [for]="pickerInicio"></mat-datepicker-toggle>
         <mat-datepicker #pickerInicio></mat-datepicker>
       </mat-form-field>
 
-      <mat-form-field
-        appearance="outline"
-        subscriptSizing="dynamic"
-        class="campo-fecha"
-      >
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="campo-fecha">
         <mat-label>Fecha fin</mat-label>
-        <input
-          matInput
-          [matDatepicker]="pickerFin"
-          readonly
-          formControlName="fechaFin"
-        />
-        <mat-datepicker-toggle
-          matSuffix
-          [for]="pickerFin"
-        ></mat-datepicker-toggle>
+        <input matInput [matDatepicker]="pickerFin" readonly formControlName="fechaFin" />
+        <mat-datepicker-toggle matSuffix [for]="pickerFin"></mat-datepicker-toggle>
         <mat-datepicker #pickerFin></mat-datepicker>
       </mat-form-field>
 
@@ -92,11 +46,7 @@
         Buscar
       </button>
 
-      <mat-form-field
-        appearance="outline"
-        subscriptSizing="dynamic"
-        class="campo-filtro-local"
-      >
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="campo-filtro-local">
         <mat-label>Filtrar resultados</mat-label>
         <input
           matInput
@@ -114,13 +64,9 @@
       <div class="resultados-identidad">
         <mat-icon aria-hidden="true">view_list</mat-icon>
         <span>Programaciones registradas</span>
-        <span class="contador-resultados">{{
-          dataSourceProgramacion.filteredData.length
-        }}</span>
+        <span class="contador-resultados">{{ dataSourceProgramacion.filteredData.length }}</span>
       </div>
-      <span class="indicacion-expandir"
-        >Selecciona una fila para ver su protocolo y servicios</span
-      >
+      <span class="indicacion-expandir">Selecciona una fila para ver su protocolo y servicios</span>
     </div>
     <div class="table-container">
       <table
@@ -137,18 +83,14 @@
           <th mat-header-cell *matHeaderCellDef mat-sort-header>
             Cod. Programación
           </th>
-          <td mat-cell *matCellDef="let row">
-            <strong class="codigo-programacion">{{
-              row.codProgramacion
-            }}</strong>
-          </td>
+          <td mat-cell *matCellDef="let row"><strong class="codigo-programacion">{{ row.codProgramacion }}</strong></td>
         </ng-container>
 
         <!-- Fecha Programación -->
         <ng-container matColumnDef="fechaProgramacion">
           <th mat-header-cell *matHeaderCellDef mat-sort-header>Fecha</th>
           <td mat-cell *matCellDef="let row">
-            {{ row.fechaProgramada | date: "dd/MM/yyyy" : "UTC" }}
+            {{ row.fechaProgramada | date: "dd/MM/yyyy":"UTC" }}
           </td>
         </ng-container>
 
@@ -158,57 +100,20 @@
           <td mat-cell *matCellDef="let row" class="celda-paciente">
             <div class="paciente-datos">
               <div class="paciente-linea-identidad">
-                <span
-                  class="paciente-documento"
-                  *ngIf="row.nroDoc; else sinDocumento"
-                  >{{ row.tipoDoc }} {{ row.nroDoc }}</span
-                >
+                <span class="paciente-documento" *ngIf="row.nroDoc; else sinDocumento">{{ row.tipoDoc }} {{ row.nroDoc }}</span>
                 <ng-template #sinDocumento>
-                  <span class="paciente-sin-documento"
-                    >Documento pendiente</span
-                  >
+                  <span class="paciente-sin-documento">Documento pendiente</span>
                 </ng-template>
-                <span
-                  class="paciente-nombre"
-                  [title]="
-                    (row.apePatCliente || '') +
-                    ' ' +
-                    (row.apeMatCliente || '') +
-                    ' ' +
-                    (row.nombreCliente || '')
-                  "
-                >
-                  {{ row.apePatCliente }} {{ row.apeMatCliente }}
-                  {{ row.nombreCliente }}
+                <span class="paciente-nombre" [title]="(row.apePatCliente || '') + ' ' + (row.apeMatCliente || '') + ' ' + (row.nombreCliente || '')">
+                  {{ row.apePatCliente }} {{ row.apeMatCliente }} {{ row.nombreCliente }}
                 </span>
               </div>
               <div class="paciente-linea-hc" *ngIf="row.hc">
                 <span class="paciente-hc">HC {{ row.hc }}</span>
               </div>
-              <div
-                class="paciente-linea-hc"
-                *ngIf="
-                  !row.hc &&
-                  !row.nroDoc &&
-                  row.estadoProgramacion !== 'PROGRAMADO'
-                "
-              >
+              <div class="paciente-linea-hc" *ngIf="!row.hc && !row.nroDoc && row.estadoProgramacion !== 'PROGRAMADO'">
                 <span class="paciente-hc">Sin HC — Temporal</span>
-                <span
-                  style="
-                    display: inline-block;
-                    border: 1px solid #edc778;
-                    background: #fff5df;
-                    color: #965508;
-                    border-radius: 12px;
-                    padding: 2px 7px;
-                    font-size: 11px;
-                    font-weight: 600;
-                    line-height: 1.4;
-                    vertical-align: middle;
-                  "
-                  >Identidad temporal</span
-                >
+                <span style="display:inline-block;border:1px solid #edc778;background:#fff5df;color:#965508;border-radius:12px;padding:2px 7px;font-size:11px;font-weight:600;line-height:1.4;vertical-align:middle">Identidad temporal</span>
               </div>
             </div>
           </td>
@@ -217,9 +122,7 @@
         <!-- Empresa -->
         <ng-container matColumnDef="empresa">
           <th mat-header-cell *matHeaderCellDef mat-sort-header>Empresa</th>
-          <td mat-cell *matCellDef="let row" class="celda-empresa">
-            {{ row.razonSocialEmpresa }}
-          </td>
+          <td mat-cell *matCellDef="let row" class="celda-empresa">{{ row.razonSocialEmpresa }}</td>
         </ng-container>
 
         <!-- Sede -->
@@ -260,10 +163,7 @@
         <ng-container matColumnDef="prioridad">
           <th mat-header-cell *matHeaderCellDef mat-sort-header>Prioridad</th>
           <td mat-cell *matCellDef="let row">
-            <span
-              class="prioridad-etiqueta"
-              [class.prioridad-alta]="row.prioridad === 'Alta'"
-            >
+            <span class="prioridad-etiqueta" [class.prioridad-alta]="row.prioridad === 'Alta'">
               <span class="prioridad-punto" aria-hidden="true"></span>
               {{ row.prioridad || "Normal" }}
             </span>
@@ -296,114 +196,85 @@
           <th mat-header-cell *matHeaderCellDef>Acciones</th>
           <td mat-cell *matCellDef="let row" class="celda-acciones">
             <div class="acciones-fila">
-              <button
-                mat-icon-button
-                type="button"
-                title="Editar programación"
-                aria-label="Editar programación"
-                class="btn-accion btn-accion-editar"
-                (click)="$event.stopPropagation(); editarProgramacion(row)"
-              >
-                <mat-icon>edit</mat-icon>
-              </button>
-              <button
-                *ngIf="row.pacienteId && row.accionDocumentoPaciente"
-                mat-icon-button
-                type="button"
-                [title]="
-                  row.accionDocumentoPaciente === 'CORREGIR'
-                    ? 'Corregir documento regularizado con autorización'
-                    : 'Asignar documento pendiente e historial'
-                "
-                [attr.aria-label]="
-                  row.accionDocumentoPaciente === 'CORREGIR'
-                    ? 'Corregir documento previamente regularizado'
-                    : 'Asignar documento pendiente e historial'
-                "
-                class="btn-accion btn-accion-documento"
-                (click)="$event.stopPropagation(); regularizarDocumento(row)"
-              >
-                <mat-icon>{{
-                  row.accionDocumentoPaciente === "CORREGIR"
-                    ? "manage_accounts"
-                    : "badge"
-                }}</mat-icon>
-              </button>
-              <button
-                *ngIf="
-                  row.estadoProgramacion === 'PROGRAMADO' && !row.pacienteId
-                "
-                mat-icon-button
-                type="button"
-                title="Revisar coincidencias y vincular HC existente"
-                aria-label="Revisar coincidencias"
-                class="btn-accion"
-                (click)="$event.stopPropagation(); revisarVinculacion(row)"
-              >
-                <mat-icon>person_search</mat-icon>
-              </button>
-              <button
-                mat-icon-button
-                type="button"
-                title="Historial de vinculación"
-                aria-label="Historial de vinculación"
-                class="btn-accion"
-                (click)="$event.stopPropagation(); verHistorialVinculacion(row)"
-              >
-                <mat-icon>history</mat-icon>
-              </button>
-              <button
-                *ngIf="
-                  row._id &&
-                  row.estadoProgramacion === 'EN ATENCION' &&
-                  !row.pacienteId &&
-                  !row.hc &&
-                  !row.tipoDoc &&
-                  !row.nroDoc
-                "
-                mat-icon-button
-                type="button"
-                title="Historial fotográfico temporal y reemplazo"
-                aria-label="Historial fotográfico temporal"
-                class="btn-accion"
-                (click)="
-                  $event.stopPropagation(); verHistorialFotosTemporales(row)
-                "
-              >
-                <mat-icon>photo_library</mat-icon>
-              </button>
-              <button
-                mat-icon-button
-                type="button"
-                title="Iniciar atención"
-                aria-label="Iniciar atención"
-                class="btn-accion btn-accion-iniciar"
-                (click)="$event.stopPropagation(); iniciarAtencion(row)"
-              >
-                <mat-icon>play_arrow</mat-icon>
-              </button>
-              <button
-                *ngIf="row.estadoProgramacion === 'PROGRAMADO'"
-                mat-icon-button
-                type="button"
-                title="Marcar como no asistió"
-                aria-label="Marcar como no asistió"
-                class="btn-accion btn-accion-no-asistio"
-                (click)="$event.stopPropagation(); marcarNoAsistio(row)"
-              >
-                <mat-icon>person_off</mat-icon>
-              </button>
-              <button
-                *ngIf="row.estadoProgramacion === 'PROGRAMADO'"
-                mat-icon-button
-                type="button"
-                title="Cancelar programación"
-                aria-label="Cancelar programación"
-                class="btn-accion btn-accion-cancelar"
-                (click)="$event.stopPropagation(); anularProgramacion(row)"
-              >
-                <mat-icon>cancel</mat-icon>
-              </button>
+            <button
+              mat-icon-button
+              type="button"
+              title="Editar programación"
+              aria-label="Editar programación"
+              class="btn-accion btn-accion-editar"
+              (click)="$event.stopPropagation(); editarProgramacion(row)"
+            >
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button
+              *ngIf="row.pacienteId && row.accionDocumentoPaciente"
+              mat-icon-button
+              type="button"
+              [title]="row.accionDocumentoPaciente === 'CORREGIR' ? 'Corregir documento regularizado con autorización' : 'Asignar documento pendiente e historial'"
+              [attr.aria-label]="row.accionDocumentoPaciente === 'CORREGIR' ? 'Corregir documento previamente regularizado' : 'Asignar documento pendiente e historial'"
+              class="btn-accion btn-accion-documento"
+              (click)="$event.stopPropagation(); regularizarDocumento(row)"
+            >
+              <mat-icon>{{ row.accionDocumentoPaciente === 'CORREGIR' ? 'manage_accounts' : 'badge' }}</mat-icon>
+            </button>
+            <button
+              *ngIf="puedePrevisualizarRegularizacion(row)"
+              mat-icon-button type="button"
+              title="Regularizar identidad temporal: verificar documento y HC existente"
+              aria-label="Regularizar identidad temporal con HC existente"
+              class="btn-accion btn-accion-documento"
+              (click)="$event.stopPropagation(); previsualizarRegularizacionTemporal(row)">
+              <mat-icon>assignment_ind</mat-icon>
+            </button>
+            <button *ngIf="row.estadoProgramacion === 'PROGRAMADO' && !row.pacienteId"
+              mat-icon-button type="button" title="Revisar coincidencias y vincular HC existente"
+              aria-label="Revisar coincidencias" class="btn-accion"
+              (click)="$event.stopPropagation(); revisarVinculacion(row)">
+              <mat-icon>person_search</mat-icon>
+            </button>
+            <button mat-icon-button type="button" title="Historial de vinculación"
+              aria-label="Historial de vinculación" class="btn-accion"
+              (click)="$event.stopPropagation(); verHistorialVinculacion(row)">
+              <mat-icon>history</mat-icon>
+            </button>
+            <button *ngIf="row._id && row.estadoProgramacion === 'EN ATENCION' && !row.pacienteId && !row.hc && !row.tipoDoc && !row.nroDoc"
+              mat-icon-button type="button" title="Historial fotográfico temporal y reemplazo"
+              aria-label="Historial fotográfico temporal" class="btn-accion"
+              (click)="$event.stopPropagation(); verHistorialFotosTemporales(row)">
+              <mat-icon>photo_library</mat-icon>
+            </button>
+            <button
+              mat-icon-button
+              type="button"
+              title="Iniciar atención"
+              aria-label="Iniciar atención"
+              class="btn-accion btn-accion-iniciar"
+              (click)="$event.stopPropagation(); iniciarAtencion(row)"
+            >
+              <mat-icon>play_arrow</mat-icon>
+            </button>
+            <button
+              *ngIf="row.estadoProgramacion === 'PROGRAMADO'"
+              mat-icon-button
+              type="button"
+              title="Marcar como no asistió"
+              aria-label="Marcar como no asistió"
+              class="btn-accion btn-accion-no-asistio"
+              (click)="$event.stopPropagation(); marcarNoAsistio(row)"
+            >
+              <mat-icon>person_off</mat-icon>
+            </button>
+            <button
+              *ngIf="row.estadoProgramacion === 'PROGRAMADO'"
+              mat-icon-button
+              type="button"
+              title="Cancelar programación"
+              aria-label="Cancelar programación"
+              class="btn-accion btn-accion-cancelar"
+              (click)="$event.stopPropagation(); anularProgramacion(row)"
+            >
+              <mat-icon>cancel</mat-icon>
+            </button>
             </div>
           </td>
         </ng-container>
@@ -445,30 +316,21 @@
               <div class="example-element-detail">
                 <div class="detalle-cabecera">
                   <div class="detalle-protocolo">
-                    <span class="detalle-icono"
-                      ><mat-icon>assignment</mat-icon></span
-                    >
+                    <span class="detalle-icono"><mat-icon>assignment</mat-icon></span>
                     <div>
                       <span class="detalle-subtitulo">PROTOCOLO ASIGNADO</span>
-                      <div class="detalle-nombre">
-                        {{ element.nombreProtocolo }}
-                      </div>
-                      <span class="detalle-codigo">{{
-                        element.codProtocolo
-                      }}</span>
+                      <div class="detalle-nombre">{{ element.nombreProtocolo }}</div>
+                      <span class="detalle-codigo">{{ element.codProtocolo }}</span>
                     </div>
                   </div>
                   <span class="detalle-cantidad">
                     <mat-icon>medical_services</mat-icon>
                     {{ element.serviciosProgramados?.length || 0 }} servicios
                   </span>
-                  <app-foto-paciente-miniatura
-                    *ngIf="isExpandedProgramacion(element)"
-                    tamano="grande"
+                  <app-foto-paciente-miniatura *ngIf="isExpandedProgramacion(element)" tamano="grande"
                     [pacienteId]="element.pacienteId"
                     [hc]="element.hc"
-                    [programacionEmpresaId]="element._id"
-                  >
+                    [programacionEmpresaId]="element._id">
                   </app-foto-paciente-miniatura>
                 </div>
 
@@ -477,13 +339,7 @@
                     <mat-icon>fact_check</mat-icon>
                     Servicios programados
                   </div>
-                  <div
-                    class="tabla-servicios-contenedor"
-                    *ngIf="
-                      element.serviciosProgramados?.length;
-                      else noServicios
-                    "
-                  >
+                  <div class="tabla-servicios-contenedor" *ngIf="element.serviciosProgramados?.length; else noServicios">
                     <table class="tabla-servicios-estilizada">
                       <thead>
                         <tr>
@@ -492,23 +348,15 @@
                         </tr>
                       </thead>
                       <tbody>
-                        <tr
-                          *ngFor="let servicio of element.serviciosProgramados"
-                        >
-                          <td>
-                            <span class="servicio-codigo">{{
-                              servicio.codServicio
-                            }}</span>
-                          </td>
+                        <tr *ngFor="let servicio of element.serviciosProgramados">
+                          <td><span class="servicio-codigo">{{ servicio.codServicio }}</span></td>
                           <td>{{ servicio.nombreServicio }}</td>
                         </tr>
                       </tbody>
                     </table>
                   </div>
                   <ng-template #noServicios>
-                    <p class="sin-servicios">
-                      No hay servicios programados para este paciente.
-                    </p>
+                    <p class="sin-servicios">No hay servicios programados para este paciente.</p>
                   </ng-template>
                 </section>
               </div>
@@ -526,10 +374,7 @@
           class="example-element-row"
           [class.example-expanded-row]="isExpandedProgramacion(element)"
           (click)="toggleProgramacion(element)"
-          (keydown.enter)="
-            $event.target === $event.currentTarget &&
-              toggleProgramacion(element)
-          "
+          (keydown.enter)="$event.target === $event.currentTarget && toggleProgramacion(element)"
           tabindex="0"
           [attr.aria-expanded]="isExpandedProgramacion(element)"
         ></tr>
@@ -539,10 +384,7 @@
           class="example-detail-row"
         ></tr>
       </table>
-      <div
-        class="sin-resultados"
-        *ngIf="dataSourceProgramacion.filteredData.length === 0"
-      >
+      <div class="sin-resultados" *ngIf="dataSourceProgramacion.filteredData.length === 0">
         <mat-icon>event_busy</mat-icon>
         <strong>No se encontraron programaciones</strong>
         <span>Prueba con otras fechas, documento o filtro.</span>

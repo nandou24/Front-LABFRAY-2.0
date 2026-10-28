@@ -1,0 +1,147 @@
+<section class="regularizacion-dialog">
+  <header class="cabecera">
+    <div class="titulo">
+      <mat-icon>assignment_ind</mat-icon>
+      <div>
+        <h2>Regularizar identidad temporal con HC existente</h2>
+        <p>Programación {{ programacion.codProgramacion }} · Verificar documento, revisar identidad y confirmar HC existente <span class="version-instalacion">B.2.2A.2 R3</span></p>
+      </div>
+    </div>
+    <button mat-icon-button type="button" aria-label="Cerrar" (click)="cerrar()"><mat-icon>close</mat-icon></button>
+  </header>
+
+  <div class="contenido">
+    <div class="aviso"><mat-icon>info</mat-icon><span><strong>Primero se consulta:</strong> buscar coincidencias no modifica registros. La vinculación definitiva se realizará únicamente tras elegir una HC existente y confirmar expresamente la identidad.</span></div>
+
+    <div class="datos-programacion">
+      <div><small>Trabajador temporal</small><strong>{{ nombreProgramado() }}</strong></div>
+      <div><small>Historia clínica actual</small><strong>Sin HC — Temporal</strong></div>
+      <div><small>Documento actual</small><strong>Documento pendiente</strong></div>
+      <div><small>Empresa</small><strong>{{ programacion.razonSocialEmpresa }}</strong></div>
+    </div>
+
+    <form class="form-documento" [formGroup]="formulario" (ngSubmit)="consultar()">
+      <mat-form-field appearance="outline">
+        <mat-label>Tipo de documento</mat-label>
+        <mat-select formControlName="tipoDoc">
+          <mat-option *ngFor="let tipo of tipos" [value]="tipo">{{ tipo }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="numero">
+        <mat-label>Número de documento a verificar</mat-label>
+        <input matInput formControlName="nroDoc" autocomplete="off" [maxlength]="formulario.controls.tipoDoc.value === 'DNI' ? 8 : formulario.controls.tipoDoc.value === 'CE' ? 13 : 16" />
+        <mat-hint>Documento propuesto, aún no registrado</mat-hint>
+        <mat-error *ngIf="formulario.controls.nroDoc.touched && formulario.controls.nroDoc.invalid">{{ mensajeFormato }}</mat-error>
+      </mat-form-field>
+      <span class="formato-error" *ngIf="formulario.controls.nroDoc.touched && !formatoValido && formulario.controls.nroDoc.valid">{{ mensajeFormato }}</span>
+      <button mat-flat-button type="submit" class="boton-consultar" [disabled]="cargando || formulario.invalid || !formatoValido">
+        <mat-icon>search</mat-icon> Buscar coincidencias
+      </button>
+    </form>
+
+    <div class="error" role="alert" *ngIf="error"><mat-icon>error_outline</mat-icon>{{ error }}</div>
+    <div class="cargando" *ngIf="cargando"><mat-spinner diameter="28"></mat-spinner><span>Consultando coincidencias en el maestro de pacientes…</span></div>
+
+    <ng-container *ngIf="respuesta as resultado">
+      <div class="resultado-cabecera">
+        <div class="resultado-titulo"><mat-icon>fact_check</mat-icon><strong>Resultado de la verificación</strong><span class="solo-lectura">Consulta previa</span></div>
+        <p>Documento consultado: <strong>{{ resultado.documento.tipoDoc }} {{ resultado.documento.nroDoc }}</strong> · {{ resultado.solicitudes.length }} solicitud(es) asociada(s)</p>
+        <div class="contadores">
+          <span><b>{{ resultado.porDocumento.length }}</b> Por documento</span>
+          <span><b>{{ resultado.porNombres.length }}</b> Por nombres</span>
+          <span><b>{{ resultado.porHistorialDocumento.length }}</b> En historial documental</span>
+          <span><b>{{ candidatos.length }}</b> Pacientes únicos</span>
+        </div>
+      </div>
+
+      <div *ngIf="candidatos.length === 0" class="sin-coincidencias">
+        <mat-icon>person_off</mat-icon>
+        <div><strong>No se encontraron coincidencias</strong><p>La consulta no ha creado ningún paciente ni HC. La eventual creación de una identidad definitiva se realizará después, en B.2.2B.</p></div>
+      </div>
+
+      <ng-container *ngIf="candidatos.length > 0">
+        <div class="advertencia"><mat-icon>warning_amber</mat-icon><span>Existen pacientes candidatos. Compara sus datos y verifica la identidad antes de cualquier vinculación futura. Una coincidencia documental no autoriza por sí sola a reutilizar una HC.</span></div>
+        <div class="comparacion-layout">
+          <div class="panel panel-candidatos">
+            <h3>Pacientes candidatos ({{ candidatos.length }})</h3>
+            <mat-radio-group [formControl]="seleccion" aria-label="Seleccionar paciente para comparación">
+              <div class="candidato" *ngFor="let candidato of candidatos" [class.seleccionado]="seleccion.value === candidato.pacienteId" (click)="seleccion.setValue(candidato.pacienteId)">
+                <mat-radio-button [value]="candidato.pacienteId"></mat-radio-button>
+                <span class="descripcion">
+                  <strong>{{ nombreCompleto(candidato) }}</strong>
+                  <span>HC {{ candidato.hc || 'No informada' }}</span>
+                  <span class="fuentes"><em *ngFor="let fuente of candidato.fuentes">{{ fuente }}</em></span>
+                </span>
+              </div>
+            </mat-radio-group>
+          </div>
+          <div class="panel panel-comparacion" *ngIf="seleccionado as candidato">
+            <h3>Comparación de identidad</h3>
+            <table class="tabla-comparacion">
+              <thead><tr><th>Campo</th><th>Datos informados por empresa / documento propuesto</th><th>Paciente maestro</th><th>Evaluación</th></tr></thead>
+              <tbody>
+                <tr *ngFor="let fila of filasSeleccionado()">
+                  <td>{{ fila.campo }}</td><td>{{ fila.programado }}</td><td>{{ fila.maestro }}</td>
+                  <td><span class="estado" [class.coincide]="fila.estado === 'IGUAL'" [class.difiere]="fila.estado === 'DIFERENTE'">{{ fila.estado === 'IGUAL' ? 'Coincide' : fila.estado === 'DIFERENTE' ? 'Diferente' : 'Sin dato' }}</span></td>
+                </tr>
+              </tbody>
+            </table>
+            <p class="nota" *ngIf="candidato.fuentes.includes('Historial documental')">Este paciente apareció por un documento histórico. El documento maestro actual puede ser diferente.</p>
+            <p class="nota" *ngIf="candidato.identificacionPendiente">La identificación del paciente maestro está pendiente de validación.</p>
+            <p class="nota">Seleccionar una HC solo permite revisarla. No se guardará nada hasta confirmar la regularización.</p>
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- ====== B.2.2A Confirmación de HC existente ====== -->
+      <section class="confirmacion-identidad" *ngIf="seleccionado as candidato">
+        <h3><mat-icon>verified_user</mat-icon> Regularización definitiva con HC existente</h3>
+        <div class="restriccion" *ngIf="!documentoCandidatoVigente">
+          <mat-icon>block</mat-icon>
+          <span>Esta HC no tiene el documento propuesto como documento vigente. Los documentos históricos solo sirven para revisar coincidencias y no permiten vincular automáticamente.</span>
+        </div>
+        <div class="restriccion" *ngIf="candidato.identificacionPendiente || !candidato.hc">
+          <mat-icon>block</mat-icon>
+          <span>El paciente maestro requiere una HC definitiva y una identidad verificada antes de regularizar.</span>
+        </div>
+        <div class="restriccion" *ngIf="identidadIncompatible">
+          <mat-icon>gpp_bad</mat-icon>
+          <span><strong>Identidad incompatible.</strong> No coinciden ni los nombres ni el apellido paterno. Esta vinculación está bloqueada, aunque el DNI coincida. Revisa el documento y la identidad real del trabajador.</span>
+        </div>
+        <ng-container *ngIf="candidatoHabilitado">
+          <div class="resumen-confirmacion">
+            <span>Documento a registrar: <strong>{{ resultado.documento.tipoDoc }} {{ resultado.documento.nroDoc }}</strong></span>
+            <span>HC a vincular: <strong>{{ candidato.hc }}</strong></span>
+            <span>Solicitudes existentes: <strong>{{ resultado.solicitudes.length }}</strong></span>
+          </div>
+          <p class="alerta-foto"><mat-icon>photo_library</mat-icon> La fotografía y su historial se conservarán en la programación original. Su consulta desde la HC definitiva se completará en B.2.2C.</p>
+          <mat-checkbox [formControl]="confirmacionExpresa" [disabled]="guardando">
+            He comprobado la identidad de la persona y confirmo que corresponde a la HC seleccionada.
+          </mat-checkbox>
+          <div class="confirmar-discrepancia" *ngIf="tieneDiscrepancias">
+            <p><mat-icon>warning_amber</mat-icon> Hay diferencias parciales de nombres o apellidos. Debes revisarlas expresamente antes de vincular.</p>
+            <mat-checkbox [formControl]="confirmacionDiscrepancia" [disabled]="guardando">
+              Confirmo que revisé las discrepancias y que se trata de la misma persona.
+            </mat-checkbox>
+          </div>
+          <mat-form-field appearance="outline" class="campo-motivo">
+            <mat-label>Motivo de la decisión (opcional)</mat-label>
+            <textarea matInput [formControl]="motivoDecision" maxlength="300" rows="2"></textarea>
+            <mat-hint align="end">{{ motivoDecision.value.length }}/300</mat-hint>
+          </mat-form-field>
+          <p class="nota-final">La confirmación actualizará documento, HC y referencias de la programación y solicitudes, con auditoría. No se crearán solicitudes nuevas ni se liberarán resultados.</p>
+        </ng-container>
+      </section>
+    </ng-container>
+    <div class="error" role="alert" *ngIf="mensajeGuardado"><mat-icon>error_outline</mat-icon>{{ mensajeGuardado }}</div>
+    <div class="cargando" *ngIf="guardando"><mat-spinner diameter="25"></mat-spinner><span>Validando identidad y actualizando programación y solicitudes…</span></div>
+  </div>
+
+  <footer class="pie">
+    <span class="pie-advertencia"><mat-icon>security</mat-icon> Solo se vincula una HC con identidad verificada.</span>
+    <button mat-stroked-button type="button" [disabled]="guardando" (click)="cerrar()">Cerrar</button>
+    <button mat-flat-button type="button" [disabled]="!puedeConfirmar" (click)="confirmarRegularizacion()">
+      <mat-icon>verified_user</mat-icon> Confirmar HC existente
+    </button>
+  </footer>
+</section>

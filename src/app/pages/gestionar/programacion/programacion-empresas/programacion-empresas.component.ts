@@ -37,6 +37,7 @@ import { DialogImportarProgramacionesEmpresaComponent } from './dialogs/dialog-i
 import { DialogCoincidenciasVinculacionComponent } from './dialogs/dialog-coincidencias-vinculacion/dialog-coincidencias-vinculacion.component';
 import { DialogHistorialVinculacionComponent } from './dialogs/dialog-historial-vinculacion/dialog-historial-vinculacion.component';
 import { DialogHistorialFotosTemporalesComponent } from './dialogs/dialog-historial-fotos-temporales/dialog-historial-fotos-temporales.component';
+import { DialogPrevisualizarRegularizacionTemporalComponent } from './dialogs/dialog-previsualizar-regularizacion-temporal/dialog-previsualizar-regularizacion-temporal.component';
 import { ProgramacionEmpresaService } from '../../../../services/gestion/programacion/programacionEmpresas/programacion-empresa.service';
 import { catchError, of } from 'rxjs';
 import Swal from 'sweetalert2';
@@ -269,6 +270,28 @@ export class ProgramacionEmpresasComponent implements OnInit, AfterViewInit {
     });
     ref.afterClosed().subscribe(resultado => {
       if (resultado?.actualizado) this.buscarProgramacion();
+    });
+  }
+
+  // ====== Consultar documento e identidad temporal sin guardar cambios ======
+  puedePrevisualizarRegularizacion(element: IProgramacionEmpresa): boolean {
+    return Boolean(element._id &&
+      ['EN ATENCION', 'PENDIENTE DE COMPLETAR'].includes(element.estadoProgramacion) &&
+      !element.pacienteId && !element.hc && !element.tipoDoc && !element.nroDoc);
+  }
+
+  previsualizarRegularizacionTemporal(element: IProgramacionEmpresa): void {
+    if (!this.puedePrevisualizarRegularizacion(element)) return;
+    const ref = this.dialog.open(DialogPrevisualizarRegularizacionTemporalComponent, {
+      width: '96vw', maxWidth: '1160px', maxHeight: '92vh',
+      autoFocus: false, disableClose: true,
+      data: { programacion: element },
+    });
+    ref.afterClosed().subscribe(resultado => {
+      if (resultado?.actualizado) {
+        this.buscarProgramacion();
+        this.snackBar.open('Identidad temporal regularizada con HC existente.', 'Cerrar', { duration: 3500 });
+      }
     });
   }
 
